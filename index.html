@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}html,body{overscroll-behavior:none}</style>
+<title>Brew Crew</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one-screen phone game — HUD bar, pixel cafe scene, path meters, tabbed shift panel. Single dark "espresso at closing time" look. */
+:root{
+  --bg:#16110d;
+  --panel:#211913;
+  --panel2:#2b2119;
+  --line:#3d2f24;
+  --cream:#f2e6cf;
+  --muted:#ad9a82;
+  --caramel:#e9a23b;
+  --soul:#86b86a;
+  --pathos:#7f9be0;
+  --chaos:#de6a4c;
+  --bad:#e0574a;
+  --shadow:#0b0806;
+  --pix:'Pixelify Sans','Golos Text',system-ui,sans-serif;
+  --body:'Golos Text',system-ui,-apple-system,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--cream);font-family:var(--body);font-size:14px;margin:0;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--caramel);outline-offset:2px}
+#app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px}
+
+/* HUD */
+.hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-family:var(--pix);font-weight:700;font-size:18px;letter-spacing:.5px;color:var(--caramel)}
+.clock{font-family:var(--pix);font-size:15px;color:var(--cream);font-variant-numeric:tabular-nums}
+.city{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.hud .sp{flex:1}
+.pxbtn{background:var(--panel2);border:2px solid var(--line);box-shadow:2px 2px 0 var(--shadow);padding:4px 9px;font-family:var(--pix);font-size:13px}
+.pxbtn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--shadow)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat{background:var(--panel);border:2px solid var(--line);padding:4px 6px;min-width:0}
+.stat .k{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.stat .v{font-family:var(--pix);font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:5px;background:var(--shadow);margin-top:3px}
+.bar i{display:block;height:100%;background:var(--caramel)}
+
+/* Scene */
+.scene{position:relative;border:3px solid var(--line);box-shadow:3px 3px 0 var(--shadow);background:#000;flex:none}
+#cv{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;aspect-ratio:160/112}
+.offbanner{position:absolute;left:6px;right:6px;bottom:6px;background:rgba(22,17,13,.88);border:2px solid var(--bad);padding:4px 8px;font-size:12px;text-align:center}
+
+/* Meters */
+.meters{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-items:end}
+.meter .k{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.meter .k b{font-weight:600;color:var(--cream)}
+.meter .bar{height:6px}
+.pathline{grid-column:1/-1;font-size:11px;color:var(--muted)}
+.pathline b{color:var(--cream);font-weight:600}
+
+/* Tabs + panel */
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.tab{position:relative;background:var(--panel);border:2px solid var(--line);padding:7px 2px;font-size:12px;font-weight:600;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--panel2);color:var(--cream);border-color:var(--caramel)}
+.badge{position:absolute;top:-7px;right:-4px;background:var(--bad);color:#fff;font-family:var(--pix);font-size:11px;min-width:17px;height:17px;line-height:17px;padding:0 4px;box-shadow:1px 1px 0 var(--shadow)}
+.panel{flex:1;min-height:120px;overflow-y:auto;background:var(--panel);border:2px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:8px}
+.empty{color:var(--muted);font-size:13px;line-height:1.5;padding:6px 2px}
+.h{font-family:var(--pix);font-size:14px;color:var(--caramel);letter-spacing:.5px;margin-top:4px}
+
+.card{background:var(--panel2);border:2px solid var(--line);padding:9px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.card.inc{border-left:4px solid var(--caramel);cursor:pointer;text-align:left}
+.card.inc.urgent{border-left-color:var(--bad)}
+.card .t{font-weight:700;font-size:14px}
+.card .d{font-size:13px;line-height:1.45;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row .sp{flex:1}
+.timer{font-family:var(--pix);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.urgent .timer{color:var(--bad)}
+.btn{background:var(--caramel);color:#1b130c;border:none;box-shadow:2px 2px 0 var(--shadow);padding:7px 11px;font-weight:700;font-size:13px}
+.btn.ghost{background:transparent;color:var(--cream);border:2px solid var(--line);box-shadow:none;padding:5px 10px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:active:not(:disabled){transform:translate(1px,1px);box-shadow:1px 1px 0 var(--shadow)}
+
+.staff{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start}
+.ava{width:40px;height:56px;image-rendering:pixelated;background:var(--bg);border:2px solid var(--line)}
+.mood{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.mood .bar{flex:1;margin:0}
+.chat{display:flex;flex-direction:column;gap:6px}
+.msg{font-size:13px;line-height:1.4;background:var(--panel2);border:2px solid var(--line);padding:6px 9px;max-width:92%}
+.msg .who{font-weight:700;font-size:12px;margin-right:6px}
+.msg .tm{font-family:var(--pix);font-size:11px;color:var(--muted);float:right;margin-left:8px}
+.msg.sys{border-style:dashed;color:var(--muted)}
+.stars{display:inline-flex;gap:2px}
+.stars i{width:9px;height:9px;background:var(--shadow);display:block}
+.stars i.on{background:var(--caramel)}
+
+/* Modal */
+.veil{position:fixed;inset:0;background:rgba(8,6,4,.78);display:flex;align-items:center;justify-content:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20}
+.modal{width:100%;max-width:440px;max-height:100%;overflow-y:auto;background:var(--panel);border:3px solid var(--caramel);box-shadow:5px 5px 0 var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px}
+.modal .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
+.modal h2{font-family:var(--pix);font-size:22px;line-height:1.15;margin:0;color:var(--cream);text-wrap:balance}
+.modal p{margin:0;font-size:15px;line-height:1.5}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{background:var(--panel2);border:2px solid var(--line);box-shadow:2px 2px 0 var(--shadow);padding:10px 12px;text-align:left;font-size:14px;line-height:1.35;font-weight:500}
+.opt:hover{border-color:var(--caramel)}
+.opt:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--shadow)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--pix);font-size:12px;padding:2px 7px;border:2px solid var(--line);background:var(--panel2)}
+.chip.up{border-color:#5f8a4a}
+.chip.down{border-color:#9b3d33}
+.sum{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14px}
+.sum .n{font-family:var(--pix);font-variant-numeric:tabular-nums;text-align:right}
+.sum .tot{border-top:2px solid var(--line);padding-top:4px;font-weight:700}
+
+/* Start screen */
+.start{display:flex;flex-direction:column;gap:14px;padding-block:8px}
+.logo{font-family:var(--pix);font-size:44px;font-weight:700;line-height:1;color:var(--caramel);text-shadow:3px 3px 0 var(--shadow)}
+.tag{color:var(--muted);font-size:15px;margin-top:-6px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice .opt{display:flex;flex-direction:column;gap:4px}
+.choice .opt b{font-family:var(--pix);font-size:17px}
+.choice .opt span{font-size:12px;color:var(--muted);line-height:1.4}
+.opt[aria-pressed="true"]{border-color:var(--caramel);background:#3a2a1b}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));background:var(--panel2);border:2px solid var(--caramel);box-shadow:3px 3px 0 var(--shadow);padding:7px 12px;font-size:13px;z-index:30;max-width:90%;text-align:center}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+<div id="modalRoot"></div>
+
+<script>
+'use strict';
+/* ===================== helpers ===================== */
+const $ = s => document.querySelector(s);
+const R = (a,b) => a + Math.random()*(b-a);
+const RI = (a,b) => Math.floor(R(a,b+1));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/,/g,' ');
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MS_PER_MIN = 333;            // 1 игровой час = 20 секунд
+const OPEN = 8*60, CLOSE = 22*60;
+const KEY = 'brewcrew_v1';
+
+/* ===================== data ===================== */
+const NAMES = ['Гоша','Марина','Артём','Лёха','Карина','Вика','Денис','Толик','Света','Ника','Рустам','Полина','Саня','Жора','Ульяна','Боря','Кеша','Даша','Митя','Лиза','Стас','Зоя','Гена','Мила'];
+const ROLES = {
+  'Бариста':{pay:2800, apron:'#2f6b55'},
+  'Кассир':{pay:2400, apron:'#8c3a36'},
+  'Официант':{pay:2200, apron:'#262626'},
+  'Повар':{pay:3200, apron:'#e7e1d4'},
+  'Уборщик':{pay:1800, apron:'#4b70a8'}
+};
+const TRAITS = {
+  drama:{n:'Гений-драматург', d:'Лучший кофе в районе, обижается на всё.', chat:['я художник, а не машина по производству рафа','если ещё раз попросят сироп, я уйду в монастырь','никто не ценит мою пенку']},
+  late:{n:'Вечно опаздывает', d:'Приходит позже, уходит позже. Иногда не приходит.', chat:['буду через 10 минут','меня задержал голубь, серьёзно','проспал, но морально я уже на смене']},
+  gossip:{n:'Сплетник', d:'Громко обсуждает гостей. Гости это замечают.', chat:['вы видели, в чём пришла женщина за третьим столом','короче, слушайте, что я узнал про управляющего','этот в пиджаке опять без сдачи ушёл, я всё видел']},
+  thief:{n:'Ворует сиропы', d:'Сиропы пропадают. Сам при этом всегда в настроении.', chat:['кто-то брал карамельный сироп? не я','в сиропах какой-то ажиотаж','у меня просто кофе сладкий от природы']},
+  bore:{n:'Душнила', d:'Спорит с гостями о правильном капучино.', chat:['капучино с корицей это преступление','гость назвал флэт уайт плоским белым. я молчал минуту','если вы не различаете кению и эфиопию, это ваши проблемы']},
+  tiktok:{n:'Тикток-звезда', d:'Снимает видео вместо работы. Иногда приводит толпу.', chat:['сняла как взбиваю пенку, 300 просмотров!','можно я сниму вас для тиктока? нет? ладно','у нас тренд: бариста роняет стакан. я уже 4 раза']},
+  vet:{n:'Ветеран', d:'Пережил трёх владельцев. Ничему не удивляется.', chat:['пережил трёх владельцев, переживу и этого','в 2009 тут вообще шаурмичная была. и стало лучше','спокойно, это не первый пожар']},
+  love:{n:'Влюбчивый', d:'Влюбляется в постоянных гостей. Драмы гарантированы.', chat:['парень за пятым столом снова пришёл. это судьба','я влюбилась в курьера. он ушёл. всё кончено','если она закажет раф, я сделаю предложение']},
+  philo:{n:'Философ', d:'Отвечает на заказы цитатами.', chat:['кофе остывает так же, как наши надежды','что есть эспрессо, если не концентрат бытия','гость хотел сдачу. а кто из нас не хотел']},
+  eater:{n:'Халявщик', d:'Ест половину витрины.', chat:['у нас круассаны какие-то маленькие стали','я попробовал все десерты. для контроля качества','кто-то съел чизкейк. возможно, я']},
+  perf:{n:'Перфекционист', d:'Медленный, зато без единой ошибки.', chat:['переделал капучино четыре раза, гость ушёл, но пенка идеальная','кто ставит чашки ручкой влево, признавайтесь','у нас салфетки лежат под углом 47 градусов. это недопустимо']},
+  intern:{n:'Стажёр навсегда', d:'Дешёвый, вечно учится. Иногда случается чудо.', chat:['а где у нас кнопка эспрессо','случайно сделал идеальный раф, повторить не могу','мне сказали прогреть питчер. он теперь в микроволновке']}
+};
+const GENERIC_CHAT = ['кто опять оставил питчер в раковине','у нас кончилось овсяное, я в шоке','гость спросил, есть ли вайфай для кота','скиньте кто-нибудь график на неделю','кассу опять заело, пнул, заработала','кто ел мой сырник из холодильника','там опять дед на своём месте','сегодня народу как на распродаже','уборщица снова спрятала швабру. от себя'];
+const QUIT_REASONS = ['луна в неправильной фазе для работы с молоком','позвали в секту, там соцпакет','кот против','решил стать блогером про хлеб','на ретрите сказали, что кофе — энергетический вампир','бабушке приснилось, что я работаю в шаурмичной','влюбился в кассира из кафе напротив','обнаружил в себе дар целителя','хочу работать с людьми, которые не пьют кофе','приснилось, что я уволился, не хочу разочаровывать себя','ухожу служить. своему коту','понял, что я не бариста, а скорее чайник','астролог сказал, что в октябре нельзя работать с зерном'];
+const RESUMES = ['Работал в трёх кофейнях, из двух уволен за честность.','Умею латте-арт в виде лебедя. Лебедь похож на утку.','Опыт: две недели в шаурмичной, один день в ресторане со звездой (мыл пол).','Знаю 40 сортов зерна, три из них лично.','Хочу работать с людьми, но не очень близко.','Готов выходить утром, вечером и ночью. Днём занят.','Был бариста года в своём подъезде.','Ищу работу, чтобы был повод вставать.','Могу улыбаться до 6 часов подряд. Потом не могу.','Рекомендации: мама.'];
+const COSTUMES = [['dino','костюме динозавра'],['banana','костюме банана'],['fur','шубе до пола'],['pajama','пижаме с утками']];
+
+/* Инциденты: o = [текст ответа, эффекты | функция, итог]. Эффекты: m деньги, rep десятые звезды, mood настроение участника, moodAll вся команда, nerves, soul, pathos, chaos */
+const INC = [
+ {id:'latte',t:'Латте без молока',who:'staff',role:'Бариста',x:'Гость требует латте без молока, «но чтобы был как латте». {s} уже держит питчер и смотрит на тебя.',o:[
+   ['Сделаем на овсяном, будет вкусно',{m:300,soul:3,mood:-5},'Гость счастлив. {s} закатывает глаза так, что слышно.'],
+   ['Латте без молока — это эспрессо. Следующий',{pathos:3,rep:-1},'Гость уходит писать отзыв. Очередь аплодирует.'],
+   ['Налить американо в стакан из-под латте',{m:350,chaos:3,rep:-1},'Гость не заметил. Совесть заметила, но промолчала.']],ig:{rep:-1,chaos:2}},
+ {id:'smoke',t:'Вечный перекур',who:'staff',x:'{s} ушёл на перекур час назад. По слухам, его видели в кафе напротив.',o:[
+   ['Позвонить и наорать',{nerves:-6,mood:-6,pathos:1},'{s} вернулся через 40 минут с чужим стаканом.'],
+   ['Пойти и найти лично',{nerves:-10,soul:2},'{s} сидел у конкурентов и «изучал рынок». Изучение продолжится в его выходной.'],
+   ['Забить, сам вернётся',{chaos:3,rep:-1},'Очередь выросла до двери. {s} вернулся к закрытию с шаурмой.']],ig:{chaos:3,rep:-1}},
+ {id:'blogger',t:'Блогер',who:'guest',x:'Блогер с 340 подписчиками требует бесплатный завтрак за сторис. Уже снимает тебя.',o:[
+   ['Ладно, вот завтрак',{m:-600,soul:1,rep:1},'Сторис посмотрели 41 человек. Двое пришли. Один из них — мама блогера.'],
+   ['Прочитать лекцию о ценности труда',{pathos:3,nerves:-4},'Блогер выложил лекцию. Её посмотрели 12 тысяч. Ты — мем.'],
+   ['Дать скидку 5% и стакан воды',{m:150,chaos:1},'Блогер выпил воду, сделал селфи и ушёл без завтрака.']],ig:{rep:-1}},
+ {id:'turtle',t:'Черепаха',who:'guest',x:'Гость оставил на столе живую черепаху и ушёл. Черепаха смотрит на витрину.',o:[
+   ['Оставить жить на баре',{soul:4,chaos:1},'Черепаху назвали Эспрессо. Гости приходят на неё посмотреть.'],
+   ['Отнести в зоомагазин',{nerves:-5,soul:1},'В зоомагазине сказали, что это их черепаха и она сбегает третий раз.'],
+   ['Продать черепаху гостю',{m:1500,chaos:5,rep:-1},'Через час пришёл хозяин черепахи. Неловко.']],ig:{chaos:2}},
+ {id:'shock',t:'Кофемашина бьётся током',who:'staff',role:'Бариста',x:'Кофемашина бьёт током. Но только по средам и только {s}.',o:[
+   ['Вызвать мастера',{m:-3500,nerves:4,soul:1},'Мастер сказал, что машина «просто не любит» {s}. Взял деньги и ушёл.'],
+   ['Работать в резиновых перчатках',{moodAll:-6,chaos:2},'Пенка теперь с привкусом резины. Гостям кажется, что это крафт.'],
+   ['Объявить, что это фишка заведения',{pathos:3,chaos:2,rep:1},'Появились гости, которые приходят «за разрядом». Странно, но платят.']],ig:{mood:-10,chaos:2}},
+ {id:'laptop',t:'Ноутбучный',who:'guest',x:'Гость сидит шестой час с одним американо и занимает две розетки. Кажется, он здесь живёт.',o:[
+   ['Тихо выключить розетки',{pathos:2,rep:-1},'Гость ушёл. Перед этим 40 минут искал, где у него сел ноутбук.'],
+   ['Принести ему печенье',{m:-50,soul:3},'Гость растроган и заказал ещё один американо. Через 6 часов.'],
+   ['Ввести тариф «розетка — 200 ₽ в час»',{m:400,chaos:2,rep:-1},'Ноутбучные приняли тариф. Теперь у вас коворкинг.']],ig:{rep:-1}},
+ {id:'sugar',t:'Сахар',who:'staff',role:'Бариста',x:'Гость просит сахар в эспрессо. {s} говорит, что если ты дашь сахар, он уволится.',o:[
+   ['Дать гостю сахар',{soul:2,mood:-15},'{s} демонстративно моет один и тот же стакан 20 минут.'],
+   ['Поддержать {s}: сахара нет',{pathos:4,rep:-1,mood:10},'Гость ушёл в шоке. {s} впервые улыбнулся за неделю.'],
+   ['Тайно подсыпать соль',{chaos:5,rep:-2},'Гость сказал, что это лучший эспрессо в его жизни. Вы в ужасе.']],ig:{mood:-5,rep:-1}},
+ {id:'courier',t:'Курьер',who:'guest',x:'Курьер требует отдать заказ №4471. Такого заказа нет. Курьер не уходит.',o:[
+   ['Сделать хоть что-нибудь',{m:-200,soul:2},'Курьер унёс два капучино в неизвестность. Где-то кто-то счастлив.'],
+   ['Выгнать курьера',{pathos:1,nerves:-4},'Курьер ушёл и поставил вам одну звезду в приложении, которого нет.'],
+   ['Отдать чужой заказ',{chaos:4,rep:-1},'Через 10 минут пришёл настоящий хозяин заказа. Он был очень крупный.']],ig:{nerves:-4}},
+ {id:'toilet',t:'Кто-то живёт в туалете',who:'none',x:'Туалет занят третий день. Изнутри иногда доносится кашель и запах лапши.',o:[
+   ['Вежливо постучать и выселить',{nerves:-8,soul:1},'Вышел мужчина в халате, сказал «спасибо за гостеприимство» и оставил 500 ₽.'],
+   ['Брать с жильца арендную плату',{m:600,chaos:5},'Жилец платит исправно. Гости ходят в туалет к конкурентам.'],
+   ['Сделать вид, что так и задумано',{chaos:3,rep:-1},'Жилец повесил на дверь табличку «Не беспокоить».']],ig:{chaos:3,rep:-2}},
+ {id:'proposal',t:'Предложение на смене',who:'staff',x:'{s} встал на одно колено прямо у кассы и делает предложение. Очередь из 9 человек ждёт кофе.',o:[
+   ['Аплодировать и включить музыку',{soul:5,m:-200,mood:15},'Она сказала «да». Очередь заплакала. Половина ушла без кофе.'],
+   ['Сказать «после смены»',{pathos:2,mood:-12},'Предложение перенесли. Романтика умерла, но очередь движется.'],
+   ['Продать гостям торт в честь помолвки',{m:900,chaos:1,mood:5},'Торт «Помолвка» разошёлся за 15 минут. Свадьба будет у вас.']],ig:{mood:-6}},
+ {id:'grandpa',t:'Дед не пришёл',who:'none',path:'soul',x:'Постоянный дед, который сидит у окна с открытия, сегодня не пришёл. Команда волнуется и хочет отнести ему суп.',o:[
+   ['Отпустить кого-нибудь с супом',{soul:5,m:-300,moodAll:6},'Дед простыл. Суп помог. Дед обещал завещать вам свой стул.'],
+   ['Нет, у нас работа',{pathos:1,moodAll:-6},'Команда работает молча. Атмосфера как на поминках.'],
+   ['Отправить суп курьером',{m:-150,soul:2},'Курьер принёс суп не тому деду. Но и тот был рад.']],ig:{moodAll:-4}},
+ {id:'rival',t:'Видео от конкурента',who:'none',path:'pathos',x:'Кофейня напротив выложила видео, что ваше зерно куплено в супермаркете у дома. 20 тысяч просмотров.',o:[
+   ['Снять ответ с обжарщиком',{m:-1000,pathos:4,rep:1},'Обжарщик говорил 12 минут про кислотность. Посмотрели все хипстеры района.'],
+   ['Игнорировать',{rep:-2},'Видео набрало ещё 30 тысяч. Комментарии ужасны.'],
+   ['Признаться и сделать акцию «честный кофе»',{chaos:4,m:300},'Народ повалил за дешёвым честным кофе. Пафос где-то плачет.']],ig:{rep:-2}},
+ {id:'fight',t:'Драка за шаурму',who:'none',path:'chaos',x:'Два таксиста дерутся за последнюю шаурму из витрины. Ставки в зале уже 3 к 1.',o:[
+   ['Разнять',{nerves:-12,soul:1},'Получил локтем, но мир восстановлен. Таксисты разделили шаурму пополам.'],
+   ['Продавать попкорн зрителям',{m:800,chaos:5,rep:-1},'Лучшая выручка за неделю. Победил таксист в жилетке.'],
+   ['Срочно сделать вторую шаурму',{m:200,soul:2,chaos:1},'Таксисты обнялись. Теперь они ходят к вам вдвоём.']],ig:{chaos:4,rep:-2}},
+ {id:'sanbook',t:'Санкнижка',who:'staff',x:'Выяснилось, что медкнижка у {s} нарисована от руки. Очень красиво, кстати.',o:[
+   ['Отправить делать настоящую',{m:-1500,mood:-5,soul:1},'{s} ушёл на полдня. Вернулся с настоящей книжкой и обидой.'],
+   ['Повесить в рамку как арт-объект',{chaos:4,pathos:1},'Гости фотографируют. Санитарная проверка тоже сфотографирует.'],
+   ['Сделать вид, что ничего не видел',{chaos:3},'Риск — дело благородное.']],ig:{chaos:3}},
+ {id:'cognac',t:'Свой коньяк',who:'guest',path:'chaos',x:'Гость принёс свой коньяк и угощает весь зал. Зал не против.',o:[
+   ['Вежливо отобрать',{pathos:2,rep:-1,nerves:-5},'Гость обиделся и ушёл, забыв коньяк. Коньяк остался на кухне.'],
+   ['Продавать к коньяку лимон',{m:400,chaos:4},'Лимонов не хватило. Зал поёт.'],
+   ['Выпить с гостем',{nerves:15,chaos:5,rep:-1},'Нервы как новые. Остальное — завтра.']],ig:{chaos:3}},
+ {id:'kidart',t:'Это искусство',who:'guest',x:'Ребёнок разрисовал маркером стену. Мама говорит, что это искусство и подавлять его нельзя.',o:[
+   ['Оставить и подписать «Автор: Тимофей, 4 года»',{soul:4},'Рисунок стал местной достопримечательностью.'],
+   ['Выставить счёт за покраску',{m:900,pathos:2,rep:-1},'Мама оплатила и написала про вас в чат района.'],
+   ['Дать ребёнку ещё маркер',{chaos:4,soul:1},'Теперь вся стена — искусство.']],ig:{chaos:2}},
+ {id:'tiktok',t:'Съёмки вместо работы',who:'staff',x:'{s} снимает видео, как пенка падает в замедленной съёмке. Очередь — в реальной.',o:[
+   ['Запретить телефоны на смене',{mood:-10,pathos:1},'{s} теперь снимает тайком из-под стойки.'],
+   ['Сняться в видео вместе',{nerves:-4,rep:2,soul:1},'Видео набрало 80 тысяч. Ты танцевал с питчером. Теперь это навсегда.'],
+   ['Забрать телефон до конца смены',{mood:-15,nerves:4},'Работает в два раза быстрее и в три раза злее.']],ig:{rep:-1}},
+ {id:'sour',t:'Кислый кофе',who:'guest',path:'pathos',x:'Гость возмущён: «У вас кофе кислый». Это светлая обжарка, за которую вы заплатили 4000 за килограмм.',o:[
+   ['Объяснить про светлую обжарку',{pathos:4,nerves:-6},'15 минут лекции. Гость ушёл образованным и злым.'],
+   ['Переделать на тёмной обжарке',{m:-150,soul:2},'Гость доволен. Обжарщик плачет где-то далеко.'],
+   ['Молча добавить две ложки сахара',{chaos:3},'«Вот, другое дело». Да, другое.']],ig:{rep:-1}},
+ {id:'eatall',t:'Пустая витрина',who:'staff',x:'Витрина наполовину пуста, а выручки нет. {s} вытирает крошки с губ и говорит «не я».',o:[
+   ['Вычесть из зарплаты',{m:600,mood:-15},'{s} обиделся и съел остальное назло.'],
+   ['Списать и забыть',{m:-800,mood:6},'{s} благодарен. И сыт.'],
+   ['Сказать гостям, что это была дегустация',{chaos:2,rep:1},'Гости требуют дегустацию каждый день.']],ig:{m:-500}},
+ {id:'rent',t:'Арендодатель',who:'none',x:'Пришёл арендодатель. Говорит, что вы «слишком хорошо живёте» и аренда растёт.',o:[
+   ['Торговаться до последнего',{nerves:-15,m:-500},'Торговались час. Аренда выросла, но меньше, чем хотел он.'],
+   ['Согласиться',{m:-3000},'Арендодатель ушёл довольный. Ты — нет.'],
+   ['Подарить годовой абонемент на раф',{m:-600,soul:2},'Арендодатель смягчился. Теперь он приходит каждое утро.']],ig:{m:-3500}},
+ {id:'inspect',t:'Санитарная проверка',who:'none',x:'Пришла проверка. Инспектор в перчатках уже открывает холодильник.',o:[
+   ['Пройти честно',S=>S.meters.chaos<45||S.upg.extinguisher?[{rep:1,soul:1},'Проверка пройдена. Инспектор даже попросил капучино с собой.']:[{m:-5000,rep:-2},'В холодильнике нашли «что-то живое». Штраф.']],
+   ['Задобрить кофе и пирожным',{m:-500,chaos:2},'Инспектор съел пирожное и ничего не заметил. Возможно, специально.'],
+   ['Сказать, что вы музей кофе, а не кафе',{pathos:3,nerves:-10},'Инспектор купил билет. Проверка перенесена.']],ig:{m:-4000,rep:-2}},
+ {id:'pajama',t:'Дресс-код',who:'staff',x:'{s} пришёл на смену в пижаме. Говорит, что это новый дресс-код «уютная кофейня».',o:[
+   ['Отправить переодеваться',{mood:-8,pathos:1},'{s} вернулся в костюме-тройке. Тоже перебор.'],
+   ['Разрешить всей команде',{moodAll:10,soul:3,chaos:1},'Пижамная пятница теперь каждый день.'],
+   ['Сделать из этого акцию',{m:500,chaos:2},'Гостям в пижамах скидка. Пришёл один. В пижаме с утками.']],ig:{}},
+ {id:'refund',t:'Возврат',who:'guest',x:'Гость выпил 90% капучино и требует вернуть деньги. Говорит, последние 10% невкусные.',o:[
+   ['Вернуть 10%',{m:-30,soul:2},'Гость вернул себе 30 рублей и уважение.'],
+   ['Отказать',{pathos:2,rep:-1},'Гость допил последние 10% назло.'],
+   ['Вернуть всё и попросить больше не приходить',{m:-300,chaos:1},'Гость пришёл на следующий день. С другом.']],ig:{rep:-1}},
+ {id:'scooter',t:'Самокат',who:'guest',city:'msk',x:'Бизнесмен въехал в зал на самокате и требует раф с халвой за две минуты. У него созвон.',o:[
+   ['Сделать за две минуты',{m:700,moodAll:-4},'Успели за 1:58. Бизнесмен оставил чаевые и колею на полу.'],
+   ['Попросить выйти с самокатом',{pathos:2,rep:-1},'Бизнесмен уехал к конкурентам. Медленно и демонстративно.'],
+   ['Продать ему место на парковке для самокатов',{m:400,chaos:2},'Теперь у вас парковка. Без самокатов, но с ценой.']],ig:{rep:-1}},
+ {id:'shaverma',t:'Шаверма или шаурма',who:'guest',city:'spb',x:'Гость требует переписать меню: «У нас в Петербурге говорят шаверма». У вас нет ни того, ни другого.',o:[
+   ['Переписать меню',{m:-200,soul:2},'Теперь в меню есть шаверма, которой нет. Гость доволен.'],
+   ['У нас кофейня. Тут говорят «капучино»',{pathos:2,rep:-1},'Гость ушёл говорить «шаверма» в другом месте.'],
+   ['Устроить голосование в зале',{chaos:2,rep:1},'Шаверма победила 7:3. Двое подрались. Один ушёл в Москву.']],ig:{}},
+ {id:'it',t:'Скидка для айти',who:'guest',city:'msk',x:'Гость требует скидку, потому что он «из айти». Показывает бейдж с конференции 2019 года.',o:[
+   ['Дать скидку',{m:-100,soul:1},'Через час пришли ещё 8 человек «из айти».'],
+   ['Сказать, что скидка только для бариста',{pathos:2},'Гость спросил, где учат на бариста.'],
+   ['Поднять ему цену, раз хорошо зарабатывает',{m:300,chaos:2,rep:-1},'Он заплатил и написал об этом тред.']],ig:{}},
+ {id:'stress',t:'Ударение',who:'guest',city:'spb',x:'Интеллигентная старушка поправляет ударения в меню красной ручкой. Прямо в меню.',o:[
+   ['Поблагодарить и напечатать новое',{m:-300,soul:3},'Старушка принесла пирожки. Ударения теперь правильные.'],
+   ['Вежливо забрать ручку',{nerves:-5},'Старушка достала вторую ручку.'],
+   ['Нанять её редактором',{m:-500,chaos:1,soul:2},'Теперь в меню сноски и список литературы.']],ig:{}}
+];
+const COSTUME_INC = {id:'costume',t:'Гость в костюме',who:'staff',x:'Пришёл гость в {c}. {s} ржёт за стойкой так громко, что гость начинает оборачиваться.',o:[
+   ['Сделать {s} замечание',{mood:-6,soul:2},'{s} надулся, но гость ничего не заметил.'],
+   ['Ржать вместе',{mood:6,rep:-2,chaos:3},'Гость заметил. Гость снимает вас на телефон. Гость уходит.'],
+   ['Подарить гостю десерт «за смелость»',{m:-150,soul:3,rep:1},'Гость растроган и теперь приходит только в костюмах.']],ig:{rep:-1,chaos:1}};
+const NIGHT = [
+ {id:'n_party',t:'Утро после ночи',who:'staff',night:true,x:'Утром ты нашёл конфетти в кофемолке и незнакомого мужчину на диване. {s} говорит, что это его дядя.',o:[
+   ['Выгнать дядю',{nerves:-5,pathos:1},'Дядя ушёл и унёс плед. Возможно, это был не дядя.'],
+   ['Налить дяде кофе',{m:-50,soul:3},'Дядя оказался обжарщиком. Обещал скидку на зерно.'],
+   ['Взять с дяди плату за ночлег',{m:1200,chaos:4},'Дядя заплатил и забронировал на следующую пятницу.']],ig:{chaos:2}},
+ {id:'n_cat',t:'Кошка',who:'staff',night:true,x:'Ночью в кофейне поселилась кошка. Никто не знает, откуда. {s} уже назвал её Капучиной.',o:[
+   ['Оставить Капучину',{soul:5,moodAll:8},'Капучина спит на кофемашине. Отзывы стали теплее.'],
+   ['Отдать в приют',{pathos:1,moodAll:-8},'Команда неделю не разговаривает с тобой.'],
+   ['Сделать котокофейню и поднять цены',{m:600,pathos:2,chaos:1},'Капучина работает лучше половины команды.']],ig:{soul:1}},
+ {id:'n_pent',t:'Новая расстановка',who:'staff',night:true,x:'Утром вся мебель стоит пентаграммой. {s} говорит, что так «лучше энергетика».',o:[
+   ['Расставить обратно',{nerves:-6},'Час двигали столы. Энергетика вернулась к обычной.'],
+   ['Оставить, вдруг сработает',{chaos:4,rep:1},'Выручка выросла. Вы не хотите знать почему.'],
+   ['Позвать гадалку для экспертизы',{m:-700,chaos:2,soul:1},'Гадалка сказала, что надо купить неоновую вывеску.']],ig:{chaos:2}},
+ {id:'n_machine',t:'Пропала кофемашина',who:'staff',night:true,x:'Кофемашина исчезла. Нашлась дома у {s}: «Хотел, чтобы она отдохнула».',o:[
+   ['Вернуть и сделать выговор',{mood:-8,nerves:-6},'Кофемашина вернулась отдохнувшей. {s} — нет.'],
+   ['Дать кофемашине выходной раз в неделю',{soul:3,m:-1500},'Кофемашина довольна. Бухгалтерия — нет.'],
+   ['Брать с {s} аренду за кофемашину',{m:800,mood:-10,chaos:2},'{s} платит. И что-то задумал.']],ig:{m:-2000}},
+ {id:'n_graffiti',t:'Граффити',who:'none',night:true,x:'Ночью кто-то нарисовал на стене огромного кота в берете. Гостям нравится.',o:[
+   ['Закрасить',{m:-1000,pathos:1},'Стена снова скучная. Кот грустно смотрит сквозь краску.'],
+   ['Оставить и назвать кофейню в его честь',{soul:3,rep:1},'Кот в берете теперь на ваших стаканах.'],
+   ['Продать фото кота как NFT',{m:400,chaos:3},'Купил один человек. Это был сам художник.']],ig:{}}
+];
+const REVIEWS = {
+ 1:['Одна звезда. Бариста посмотрел на меня как на латте без молока.','Заказал раф, получил экзистенциальный кризис.','Туалет занят третий день. Кем — непонятно.','Кофе холодный, бариста ещё холоднее.','Ждал капучино 40 минут. За это время успел сменить работу.'],
+ 2:['Кофе как кофе. Но кассир назвал меня зайкой, и это было агрессивно.','Пахнет хорошо, но за соседним столом сидела черепаха.','Пришёл за кофе, ушёл с вопросами к себе.','Вкусно, но бариста весь заказ рассказывал о своей бывшей.'],
+ 3:['Нормально. Розетки работают, сотрудники — не всегда.','Средне. Как моя жизнь.','Пришёл за кофе, ушёл с новым другом. Кофе так себе, друг хороший.','Три звезды, потому что четыре жалко.'],
+ 4:['Хороший кофе, странный персонал. Вернусь.','Бариста рассказал мне про обжарку. Не просил, но было интересно.','Уютно. Даже дед у окна уже как родной.','Кофе отличный, ценник бодрит лучше кофе.'],
+ 5:['Лучшее место района. Плачу, когда ухожу.','Бариста нарисовал на пенке мой портрет. Похоже до слёз.','Мне впервые сказали «доброе утро» и ничего не потребовали взамен.','Пять звёзд. Я тут живу. Буквально, я в туалете.']
+};
+const REV_PATH = {
+ soul:['Мне вынесли плед, пока я плакал над рабочей почтой. Пять звёзд.','Тут знают моё имя и мой заказ. Мама так не знает.'],
+ pathos:['Мне отказали в сахаре. Это было унизительно и прекрасно.','Спросил латте с сиропом. Меня попросили выйти. Заслуженно.'],
+ chaos:['Кофе из банки, но атмосфера как на свадьбе в Люберцах.','Пока пил американо, видел драку, помолвку и кошку на кофемашине. Пять звёзд за шоу.']
+};
+const REVIEWERS = ['Анна К.','Дмитрий','Гость без молока','Ирина Петровна','Максим (айти)','Кирилл','Ольга','Серж','Бабушка Зина','Тайный гость','Эдуард','Леся'];
+const UPG = [
+ {id:'machine',n:'Кофемашина на две группы',d:'Чек +10%, очередь движется быстрее.',c:9000},
+ {id:'tables',n:'Ещё два стола',d:'+2 места в зале.',c:6000},
+ {id:'plants',n:'Растения и пледы',d:'Душа +6, репутация +0.1.',c:4000},
+ {id:'neon',n:'Неоновая вывеска',d:'Пафос +6, приходят хипстеры.',c:7000},
+ {id:'sockets',n:'Розетки у каждого стола',d:'Репутация +0.1, ноутбучные счастливы.',c:2500},
+ {id:'camera',n:'Камера над кассой',d:'Сиропы и десерты перестают пропадать.',c:4500},
+ {id:'rest',n:'Комната отдыха',d:'Настроение команды падает вдвое медленнее.',c:8000},
+ {id:'extinguisher',n:'Огнетушитель',d:'Проверки проходят спокойнее.',c:1500},
+ {id:'kitchen',n:'Кухня',d:'Открывает повара, чек +20%, +1 место в команде.',c:18000},
+ {id:'cheap',n:'Растворимый кофе в банке',d:'Аренда и закупка дешевле, Бардак +8, чек −10%.',c:1500}
+];
+const PATHS = {soul:'Хорошая кофейня',pathos:'Крутая кофейня',chaos:'Плохая кофейня'};
+const METER_N = {soul:'Душа',pathos:'Пафос',chaos:'Бардак'};
+const LOCK_LEVEL = 10;
+
+/* ===================== state ===================== */
+let S = null;
+let speed = 1, acc = 0, lastFrame = performance.now();
+let tab = 'inc';
+let modals = [];
+let guests = [], staffPos = {}, bubbles = {};
+let seatGuest = [];
+
+function absNow(){ return S.day*1440 + S.gm; }
+function save(){ if(!S) return; S.lastReal = Date.now(); try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function load(){ try{ const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
+
+function makeLook(role){
+  const hair = pick(['#2b1d14','#5a3a22','#c9a14a','#8b2e1f','#1c1c1c','#d8d0c4','#6b4b8a']);
+  const skin = pick(['#f1c9a5','#e0ac85','#c68c63','#9a6744']);
+  return {hair, skin, apron: role ? ROLES[role].apron : pick(['#3e6fa0','#a05050','#4f7a4f','#7a5a9a','#b07a30','#555'])};
+}
+function makeStaff(role, trait, inherited){
+  const used = new Set((S?S.staff:[]).map(s=>s.name));
+  let name = pick(NAMES); let g=0; while(used.has(name) && g++<30) name = pick(NAMES);
+  trait = trait || pick(Object.keys(TRAITS));
+  let pay = ROLES[role].pay; if(trait==='intern') pay = Math.round(pay*0.6/100)*100;
+  return {id:'s'+Math.random().toString(36).slice(2,8), name, role, trait, mood: inherited?RI(45,65):RI(65,80), pay, look:makeLook(role), resume:pick(RESUMES)};
+}
+function newGame(city, premises){
+  S = {v:1, city, premises, money:0, rep:3.2, nerves:100, xp:0, level:1, meters:{soul:10,pathos:10,chaos:10}, path:null,
+       day:1, gm:OPEN, staff:[], candidates:[], incidents:[], chat:[], reviews:[], upg:{}, seats:[], nextInc:OPEN+20,
+       today:{rev:0,guests:0,solved:0,auto:0}, breakUntil:0, pendingNight:null, paused:false, summary:null, lastReal:Date.now(), uid:1, fxLog:[]};
+  if(premises==='new'){
+    S.money = 10000; S.rent = 6000;
+    S.staff.push(makeStaff('Бариста', pick(['perf','drama','bore','intern'])));
+    S.staff.push(makeStaff('Кассир', pick(['tiktok','love','philo','gossip'])));
+  } else {
+    S.money = 35000; S.rent = 4000; S.rep = 2.7; S.meters.chaos = 22;
+    S.staff.push(makeStaff('Бариста', pick(['thief','late','drama']), true));
+    S.staff.push(makeStaff('Кассир', pick(['gossip','eater','late']), true));
+    S.staff.push(makeStaff('Уборщик', 'vet', true));
+    S.pendingNight = 'used_start';
+  }
+  refreshCandidates();
+  sys('Кофейня открыта. Первый гость уже у двери.');
+  rebuildStaffPos();
+  if(S.premises==='used'){
+    pushIncident({id:'inherit',t:'Наследство',who:'staff',x:'Прошлый владелец оставил долг поставщику молока, тараканов и {s}, который говорит: «Я тут дольше, чем стены».',o:[
+      ['Погасить долг поставщику',{m:-6000,rep:2,soul:2},'Поставщик снова возит молоко. И даже улыбается.'],
+      ['Сказать, что вы новые и ничего не знаете',{pathos:2,rep:-1},'Поставщик ушёл писать претензию. Тараканы остались.'],
+      ['Предложить поставщику абонемент на кофе в счёт долга',{chaos:3,m:-1000},'Поставщик согласился. Теперь он пьёт по шесть рафов в день.']],ig:{rep:-2,chaos:3}}, true);
+  } else {
+    pushIncident(INC[0], true);
+  }
+  S.nextInc = OPEN + RI(60,100);
+  save();
+}
+function refreshCandidates(){
+  const roles = ['Бариста','Кассир','Официант','Уборщик']; if(S.upg.kitchen) roles.push('Повар');
+  S.candidates = [0,1,2].map(()=>{ const c = makeStaff(pick(roles)); c.mood = RI(70,85); return c; });
+}
+
+/* ===================== economy ===================== */
+function hasRole(r){ return S.staff.some(s=>s.role===r); }
+function capacity(){ return 4 + (S.upg.tables?2:0); }
+function maxStaff(){ return 4 + (S.upg.kitchen?1:0); }
+function checkSize(){
+  let m = 1;
+  if(!hasRole('Бариста')) m *= 0.35;
+  if(!hasRole('Кассир')) m *= 0.75;
+  if(hasRole('Официант')) m *= 1.1;
+  if(S.upg.kitchen && hasRole('Повар')) m *= 1.2;
+  if(S.upg.machine) m *= 1.1;
+  if(S.upg.cheap) m *= 0.9;
+  m *= (1 + S.meters.pathos*0.004) * (1 - S.meters.chaos*0.002);
+  return 320*m;
+}
+function arrivalsPerHour(){ return 2 + S.rep*1.8 + (S.upg.neon?1.2:0) + S.meters.chaos*0.02 + (S.upg.machine?0.8:0); }
+function leader(){ const m=S.meters; return Object.keys(m).reduce((a,b)=>m[b]>m[a]?b:a); }
+
+/* ===================== effects ===================== */
+function staffById(id){ return S.staff.find(s=>s.id===id); }
+function applyFx(fx, sid, noXp){
+  const chips = [];
+  const st = sid ? staffById(sid) : null;
+  if(fx.m){ S.money += fx.m; S.today.rev += Math.max(0,fx.m); chips.push([(fx.m>0?'+':'−')+fmt(Math.abs(fx.m))+' ₽', fx.m>0]); }
+  if(fx.rep){ S.rep = clamp(S.rep + fx.rep/10, 0.5, 5); chips.push(['Репутация '+(fx.rep>0?'+':'−')+(Math.abs(fx.rep)/10).toFixed(1), fx.rep>0]); }
+  for(const k of ['soul','pathos','chaos']) if(fx[k]){ S.meters[k] = clamp(S.meters[k]+fx[k]*(S.path&&S.path!==k?0.5:1),0,100); chips.push([METER_N[k]+' '+(fx[k]>0?'+':'−')+Math.abs(fx[k]), null]); }
+  if(fx.nerves){ S.nerves = clamp(S.nerves+fx.nerves,0,100); chips.push(['Нервы '+(fx.nerves>0?'+':'−')+Math.abs(fx.nerves), fx.nerves>0]); }
+  if(fx.mood && st){ st.mood = clamp(st.mood+fx.mood,0,100); chips.push(['Настроение: '+st.name+' '+(fx.mood>0?'+':'−')+Math.abs(fx.mood), fx.mood>0]); }
+  if(fx.moodAll){ S.staff.forEach(s=>s.mood=clamp(s.mood+fx.moodAll,0,100)); chips.push(['Команда '+(fx.moodAll>0?'+':'−')+Math.abs(fx.moodAll), fx.moodAll>0]); }
+  if(!noXp) addXp(12);
+  if(S.nerves<=0 && S.breakUntil<=absNow()){
+    S.breakUntil = absNow()+120; S.nerves = 40;
+    sys('Управляющий сорвался и ушёл в отгул на 2 часа. Кофейня без присмотра.');
+    toast('Срыв. Управляющий в отгуле 2 часа');
+  }
+  return chips;
+}
+function addXp(n){
+  S.xp += n;
+  let need = 40 + S.level*30;
+  while(S.xp >= need){
+    S.xp -= need; S.level++; need = 40 + S.level*30;
+    toast('Уровень '+S.level);
+    if(S.level===LOCK_LEVEL && !S.path){
+      S.path = leader();
+      queueModal({kind:'path'});
+    }
+  }
+}
+
+/* ===================== incidents ===================== */
+function pushIncident(def, force, extra){
+  if(!force && S.incidents.length>=5) expireIncident(S.incidents[0], true);
+  let sid = null;
+  if(def.who==='staff'){
+    const pool = def.role ? S.staff.filter(s=>s.role===def.role) : S.staff;
+    const p = pool.length ? pool : S.staff;
+    if(!p.length) return false;
+    sid = pick(p).id;
+  }
+  S.incidents.push({uid:S.uid++, def:def.id, custom: (def.id==='inherit'?def:null), sid, at:absNow(), c: extra&&extra.c||null});
+  if(sid) bubbles[sid] = {k:'!', until: Infinity};
+  dirty = true;
+  return true;
+}
+function defOf(inc){
+  if(inc.custom) return inc.custom;
+  if(inc.def==='costume') return COSTUME_INC;
+  return INC.find(i=>i.id===inc.def) || NIGHT.find(i=>i.id===inc.def);
+}
+function fill(str, inc){
+  const st = inc.sid ? staffById(inc.sid) : null;
+  return str.replace(/\{s\}/g, st?st.name:'Кто-то').replace(/\{c\}/g, inc.c||'костюме');
+}
+function spawnRandomIncident(){
+  const lead = leader();
+  const pool = INC.filter(i=>{
+    if(i.city && i.city!==S.city) return false;
+    if(S.incidents.some(x=>x.def===i.id)) return false;
+    if(i.who==='staff' && !S.staff.length) return false;
+    if(i.path){ if(S.path) return S.path===i.path; return lead===i.path || Math.random()<0.35; }
+    return true;
+  });
+  if(pool.length) pushIncident(pick(pool));
+}
+function expireIncident(inc, crowded){
+  const def = defOf(inc);
+  applyFx(Object.assign({chaos:1}, def.ig||{}), inc.sid, true);
+  S.incidents = S.incidents.filter(x=>x!==inc);
+  if(inc.sid && bubbles[inc.sid] && bubbles[inc.sid].k==='!') delete bubbles[inc.sid];
+  S.today.auto++; S.autoTotal=(S.autoTotal||0)+1;
+  sys('«'+def.t+'» решилось само'+(crowded?', пока ты разбирался с другими':'')+'. Как обычно, плохо.');
+  dirty = true;
+}
+function resolveIncident(inc, idx){
+  const def = defOf(inc);
+  let [txt, fx, out] = def.o[idx];
+  if(typeof fx === 'function'){ const r = fx(S); fx = r[0]; out = r[1]; }
+  const chips = applyFx(fx, inc.sid);
+  S.incidents = S.incidents.filter(x=>x!==inc);
+  if(inc.sid && bubbles[inc.sid] && bubbles[inc.sid].k==='!') delete bubbles[inc.sid];
+  S.today.solved++;
+  dirty = true; save();
+  return {out: fill(out, inc), chips};
+}
+
+/* ===================== staff events ===================== */
+function quitStaff(st, live){
+  const reason = pick(QUIT_REASONS);
+  if(live){ queueModal({kind:'quit', sid:st.id, reason}); bubbles[st.id] = {k:'!',until:Infinity}; }
+  else { removeStaff(st.id); sys(st.name+' уволился. Причина: '+reason+'.'); report.quits.push(st.name); }
+}
+function removeStaff(id){
+  S.staff = S.staff.filter(s=>s.id!==id);
+  S.incidents = S.incidents.filter(i=>i.sid!==id);
+  delete bubbles[id]; rebuildStaffPos(); dirty = true;
+}
+function say(st, text){
+  S.chat.push({who:st?st.name:null, role:st?st.role:null, text, d:S.day, t:S.gm});
+  if(S.chat.length>80) S.chat.shift();
+  if(st) bubbles[st.id] = bubbles[st.id] && bubbles[st.id].k==='!' ? bubbles[st.id] : {k:'...', until: performance.now()+3500};
+  unreadChat++; dirty = true;
+}
+function sys(text){ say(null, text); }
+
+/* ===================== clock ===================== */
+let report = null; // offline report
+let unreadChat = 0, dirty = true;
+
+function stepMinute(live){
+  if(S.paused) return;
+  S.gm++;
+  const now = absNow();
+  // arrivals
+  if(Math.random() < arrivalsPerHour()/60){
+    S.seats = S.seats.filter(t=>t>now);
+    if(S.seats.length < capacity()){
+      S.seats.push(now + RI(35,70));
+      const pay = checkSize()*R(0.8,1.25);
+      S.money += pay; S.today.rev += pay; S.today.guests++; addXp(1);
+      if(report) report.money += pay;
+      if(live) spawnGuest();
+    }
+  }
+  // hourly
+  if(S.gm % 60 === 0) hourly(live);
+  // incidents
+  if(S.gm >= S.nextInc && S.gm < CLOSE-30){
+    spawnRandomIncident(); if(report) report.inc++;
+    S.nextInc = S.gm + RI(60,170);
+  }
+  for(const inc of S.incidents.slice()) if(now - inc.at > 240) expireIncident(inc);
+  if(S.gm >= CLOSE) endDay(live);
+}
+function hourly(live){
+  S.nerves = clamp(S.nerves+3, 0, 100);
+  const understaffed = S.staff.length < 3;
+  for(const st of S.staff.slice()){
+    let decay = 1.2;
+    if(S.upg.rest) decay *= 0.5;
+    if(st.trait==='vet') decay *= 0.5;
+    if(st.trait==='thief') decay *= 0.6;
+    if(understaffed) decay += 0.8;
+    st.mood = clamp(st.mood - decay, 0, 100);
+    if(st.trait==='thief' && !S.upg.camera){ S.money -= 60; }
+    if(st.trait==='eater' && !S.upg.camera){ S.money -= 45; }
+    if(st.quitting) continue;
+    if((st.mood < 25 && Math.random() < 0.14) || Math.random() < 0.006){ if(live) st.quitting = true; quitStaff(st, live); }
+  }
+  if(S.staff.length && Math.random() < 0.55){
+    const st = pick(S.staff);
+    const lines = Math.random()<0.6 ? TRAITS[st.trait].chat : GENERIC_CHAT;
+    say(st, pick(lines));
+  }
+  if(!hasRole('Бариста') && Math.random()<0.5) sys('Без бариста гости получают кофе от кассира. Это слышно по отзывам.');
+  dirty = true;
+}
+function endDay(live){
+  const wages = S.staff.reduce((a,s)=>a+s.pay,0);
+  const rent = Math.round(S.rent*(S.upg.cheap?0.85:1));
+  S.money -= wages + rent;
+  if(S.staff.some(s=>s.trait==='tiktok')) S.rep = clamp(S.rep + (Math.random()<0.5?0.1:-0.1), 0.5, 5);
+  // reviews
+  const newRev = [];
+  for(let i=0;i<3;i++){
+    let st = clamp(Math.round(S.rep + R(-1.3,1.3)),1,5);
+    let text = pick(REVIEWS[st]);
+    const lead = S.path || leader();
+    if(S.meters[lead] > 30 && Math.random()<0.35){ text = pick(REV_PATH[lead]); st = lead==='pathos'?5:(lead==='chaos'?pick([1,5]):5); }
+    newRev.push({name:pick(REVIEWERS), stars:st, text, d:S.day});
+  }
+  S.reviews = newRev.concat(S.reviews).slice(0,30);
+  const avg = newRev.reduce((a,r)=>a+r.stars,0)/3;
+  S.rep = clamp(S.rep + (avg - S.rep)*0.08, 0.5, 5);
+  if(S.money < 0){
+    S.meters.chaos = clamp(S.meters.chaos+6,0,100);
+    sys('Касса ушла в минус. Пришлось занять у серьёзных людей. Бардак растёт.');
+    S.money += 8000; S.debt = (S.debt||0) + 10000;
+  }
+  // decay toward chaos if many unresolved
+  const unresolved = S.incidents.length;
+  if(unresolved>0 && Math.random() < unresolved*0.1){ S.meters.chaos = clamp(S.meters.chaos+5,0,100); S.rep = clamp(S.rep-0.1,0.5,5); sys('Нерешённые проблемы копились весь день. Кофейня немного скатилась.'); }
+  if(Math.random()<0.6) S.pendingNight = 'random';
+  S.summary = {day:S.day, rev:S.today.rev, guests:S.today.guests, wages, rent, solved:S.today.solved, auto:S.today.auto, reviews:newRev};
+  if(live){ S.paused = true; queueModal({kind:'day'}); }
+  else { if(report) report.days++; startDay(); }
+  dirty = true; save();
+}
+function startDay(){
+  S.paused = false;
+  S.day++; S.gm = OPEN; S.seats = [];
+  S.today = {rev:0,guests:0,solved:0,auto:0};
+  S.staff.forEach(s=>s.mood=clamp(s.mood+5,0,100));
+  refreshCandidates();
+  if(S.debt && S.money > S.debt*2){ S.money -= S.debt; sys('Серьёзные люди забрали долг. Вежливо.'); S.debt = 0; }
+  if(S.pendingNight && S.pendingNight!=='used_start'){
+    const pool = NIGHT.filter(n=>n.who!=='staff'||S.staff.length);
+    if(pool.length) pushIncident(pick(pool), true);
+  }
+  S.pendingNight = null;
+  S.nextInc = OPEN + RI(40,120);
+  guests = []; seatGuest = [];
+  dirty = true; save();
+}
+
+/* ===================== offline catch-up ===================== */
+function catchUp(){
+  if(S.paused){ queueModal({kind:'day'}); return; }
+  const elapsed = Date.now() - (S.lastReal||Date.now());
+  const mins = Math.min(Math.floor(elapsed/MS_PER_MIN), 1100);
+  if(mins < 30) return;
+  report = {mins, money:0, inc:0, quits:[], days:0, auto0:S.today.auto};
+  const autoBefore = S.autoTotal||0;
+  for(let i=0;i<mins;i++){ stepMinute(false); if(S.paused) break; }
+  report.auto = (S.autoTotal||0) - autoBefore;
+  queueModal({kind:'away', r:report});
+  report = null; save();
+}
+let autoTotal = 0;
+function countAuto(){ return S.chat.filter(m=>!m.who && m.text.includes('решилось само')).length; }
+
+/* ===================== scene ===================== */
+const cv = document.createElement('canvas'); cv.width = 160; cv.height = 112; cv.id='cv';
+const ctx = cv.getContext('2d');
+const TABLES = [[98,50],[128,50],[98,78],[128,78],[66,78],[66,52]];
+const QUEUE = [70,34], DOOR = [150,102];
+function tables(){ return TABLES.slice(0, capacity()); }
+function rebuildStaffPos(){
+  const spots = {'Бариста':[[14,13],[26,13]], 'Кассир':[[58,13],[46,13]], 'Повар':[[120,12],[136,12]], 'Уборщик':[[5,44],[5,60]], 'Официант':[[84,60],[84,86]]};
+  const used = {};
+  const next = {};
+  for(const st of S.staff){
+    let role = st.role;
+    if(role==='Повар' && !S.upg.kitchen) role = 'Официант';
+    used[role] = (used[role]||0);
+    const list = spots[role]; const p = list[used[role] % list.length]; used[role]++;
+    const old = staffPos[st.id];
+    next[st.id] = old || {x:p[0], y:p[1]};
+    next[st.id].home = p; next[st.id].walker = role==='Официант' || role==='Уборщик';
+    next[st.id].tx = next[st.id].tx ?? p[0]; next[st.id].ty = next[st.id].ty ?? p[1];
+  }
+  staffPos = next;
+}
+function spawnGuest(){
+  const free = tables().map((_,i)=>i).filter(i=>!seatGuest[i]);
+  if(!free.length || guests.length > 9) return;
+  const seat = pick(free);
+  let costume = null;
+  if(Math.random() < 0.13){ costume = pick(COSTUMES); }
+  const g = {x:DOOR[0], y:DOOR[1], phase:'in', seat, look:makeLook(null), costume: costume?costume[0]:null, cname: costume?costume[1]:null, wait:0, sit:0, done:false};
+  seatGuest[seat] = g; guests.push(g);
+  if(costume && S.staff.length && !S.incidents.some(i=>i.def==='costume') && Math.random()<0.55){
+    const gossipers = S.staff.filter(s=>s.trait==='gossip');
+    const inc = {uid:S.uid++, def:'costume', sid:(gossipers.length?pick(gossipers):pick(S.staff)).id, at:absNow(), c:costume[1]};
+    if(S.incidents.length>=5) expireIncident(S.incidents[0], true);
+    S.incidents.push(inc); bubbles[inc.sid] = {k:'!',until:Infinity}; dirty = true;
+  }
+}
+function moveTo(o, tx, ty, sp){
+  const dx = tx-o.x, dy = ty-o.y;
+  if(Math.abs(dx) > 0.5){ o.x += Math.sign(dx)*Math.min(sp,Math.abs(dx)); return false; }
+  o.x = tx;
+  if(Math.abs(dy) > 0.5){ o.y += Math.sign(dy)*Math.min(sp,Math.abs(dy)); return false; }
+  o.y = ty; return true;
+}
+function updateScene(dt){
+  const sp = 0.035*dt*speed;
+  for(const g of guests){
+    if(g.phase==='in'){ if(moveTo(g, QUEUE[0], QUEUE[1], sp)){ g.phase='order'; g.wait=900; } }
+    else if(g.phase==='order'){ g.wait -= dt*speed; if(g.wait<=0) g.phase='seat'; }
+    else if(g.phase==='seat'){ const t = tables()[g.seat]||TABLES[0]; if(moveTo(g, t[0]-7, t[1]-4, sp)){ g.phase='sit'; g.sit = R(14000,26000); } }
+    else if(g.phase==='sit'){ g.sit -= dt*speed; if(g.sit<=0){ g.phase='out'; seatGuest[g.seat]=null; } }
+    else if(g.phase==='out'){ if(moveTo(g, DOOR[0], DOOR[1]+10, sp)) g.done=true; }
+  }
+  guests = guests.filter(g=>!g.done);
+  for(const id in staffPos){
+    const p = staffPos[id];
+    if(p.walker){
+      if(moveTo(p, p.tx, p.ty, sp*0.7) && Math.random()<0.006){
+        const t = pick(tables()); p.tx = t[0]+2; p.ty = t[1]+8;
+        if(Math.random()<0.3){ p.tx = p.home[0]; p.ty = p.home[1]; }
+      }
+    }
+  }
+}
+const FLOORS = {none:['#5b4636','#523f31'], soul:['#6d5236','#61482f'], pathos:['#4b4b54','#43434b'], chaos:['#5d5a3a','#535033']};
+function dayLight(){ const h=S.gm/60; if(h<10) return '#9cc6e0'; if(h<17) return '#bfe0ef'; if(h<20) return '#e8a868'; return '#2a3050'; }
+function draw(){
+  const c = ctx;
+  const lead = S.path || (Math.max(S.meters.soul,S.meters.pathos,S.meters.chaos) > 18 ? leader() : 'none');
+  const fl = FLOORS[lead];
+  for(let y=11;y<108;y+=8) for(let x=0;x<160;x+=8){ c.fillStyle = ((x+y)/8)%2 ? fl[0] : fl[1]; c.fillRect(x,y,8,8); }
+  // chaos stains
+  if(S.meters.chaos > 30){ c.fillStyle='rgba(40,30,10,.45)'; [[30,70,5,3],[110,95,6,3],[80,40,4,2],[20,96,5,2],[140,64,3,3]].slice(0, Math.floor(S.meters.chaos/18)).forEach(r=>c.fillRect(...r)); }
+  // wall
+  c.fillStyle = lead==='pathos' ? '#2e2f36' : lead==='chaos' ? '#3d3826' : '#3a2a20'; c.fillRect(0,0,160,11);
+  c.fillStyle = '#1c140f'; c.fillRect(0,10,160,1);
+  // window
+  c.fillStyle='#1c140f'; c.fillRect(83,1,30,8); c.fillStyle=dayLight(); c.fillRect(84,2,28,6); c.fillStyle='#1c140f'; c.fillRect(97,2,1,6);
+  // neon
+  if(S.upg.neon){ const on = Math.floor(performance.now()/700)%7!==0; c.fillStyle = on?'#ff6fb0':'#5a2a40'; c.fillRect(30,3,22,1); c.fillRect(30,6,22,1); c.fillStyle = on?'#7fe0ff':'#2a4a55'; c.fillRect(33,4,2,2);c.fillRect(38,4,2,2);c.fillRect(43,4,2,2);c.fillRect(48,4,2,2); }
+  else { c.fillStyle='#c9b48a'; c.fillRect(32,3,18,5); c.fillStyle='#3a2a20'; c.fillRect(34,5,14,1); }
+  // plants
+  if(S.upg.plants){ [[76,6],[118,6],[152,30],[4,88]].forEach(([x,y])=>{ c.fillStyle='#7a4a2a'; c.fillRect(x,y+3,4,3); c.fillStyle='#4f8f45'; c.fillRect(x-1,y,6,3); c.fillRect(x+1,y-2,2,2); }); }
+  // kitchen
+  if(S.upg.kitchen){ c.fillStyle='#6a6a68'; c.fillRect(112,11,48,20); c.fillStyle='#5e5e5c'; for(let x=112;x<160;x+=6) c.fillRect(x,11,3,20);
+    c.fillStyle='#222'; c.fillRect(114,11,14,5); c.fillStyle='#ff8a3a'; c.fillRect(116,12,2,2); c.fillRect(122,12,2,2);
+    c.fillStyle='#8a6a4a'; c.fillRect(112,30,48,3); }
+  // sink
+  c.fillStyle='#9aa4a8'; c.fillRect(0,36,10,7); c.fillStyle='#5f8fb0'; c.fillRect(2,38,6,3);
+  // staff behind counter
+  const sorted = [];
+  for(const st of S.staff){ const p = staffPos[st.id]; if(!p) continue; sorted.push({y:p.y, f:()=>{ drawChar(p.x,p.y,st.look,null,true); drawBubble(p.x,p.y,st.id); }, behind: p.y<20}); }
+  sorted.filter(o=>o.behind).forEach(o=>o.f());
+  // counter
+  c.fillStyle='#7a5536'; c.fillRect(2,22,76,7); c.fillStyle='#9a7048'; c.fillRect(2,22,76,2); c.fillStyle='#4a3220'; c.fillRect(2,28,76,1);
+  // coffee machine
+  c.fillStyle = S.upg.machine ? '#c8ccd0' : '#9ea2a6'; c.fillRect(6,17,S.upg.machine?16:11,6); c.fillStyle='#333'; c.fillRect(8,21,2,2); if(S.upg.machine) c.fillRect(16,21,2,2);
+  c.fillStyle = Math.floor(performance.now()/500)%2 ? '#e05050' : '#702020'; c.fillRect(8,18,1,1);
+  // register
+  c.fillStyle='#2b2b2b'; c.fillRect(56,18,9,5); c.fillStyle='#5fd08a'; c.fillRect(57,19,7,2);
+  if(S.upg.cheap){ c.fillStyle='#d9b23a'; c.fillRect(40,17,5,6); c.fillStyle='#8a2a1a'; c.fillRect(40,19,5,2); }
+  if(S.upg.camera){ c.fillStyle='#222'; c.fillRect(66,1,4,3); c.fillStyle=Math.floor(performance.now()/800)%2?'#f33':'#600'; c.fillRect(69,2,1,1); }
+  // tables, guests, walking staff sorted by y
+  const items = [];
+  tables().forEach(([x,y])=>items.push({y:y+3, f:()=>{ c.fillStyle='#4a3220'; c.fillRect(x+1,y+5,1,3); c.fillRect(x+8,y+5,1,3); c.fillStyle='#8a6446'; c.fillRect(x,y,10,6); c.fillStyle='#a57c58'; c.fillRect(x,y,10,2); c.fillStyle='#f2e6cf'; c.fillRect(x+3,y+1,3,2); }}));
+  guests.forEach(g=>items.push({y:g.y+8, f:()=>drawChar(g.x,g.y,g.look,g.costume,false)}));
+  sorted.filter(o=>!o.behind).forEach(o=>items.push({y:o.y+8, f:o.f}));
+  items.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
+  // costume laugh bubbles
+  guests.forEach(g=>{ if(g.costume && g.phase==='sit'){ /* nothing on guest */ } });
+  // bottom wall with door
+  c.fillStyle='#3a2a20'; c.fillRect(0,108,144,4); c.fillRect(156,108,4,4); c.fillStyle='#c9a14a'; c.fillRect(144,108,1,4); c.fillRect(155,108,1,4);
+  // night/evening tint
+  const h = S.gm/60; if(h>=19){ c.fillStyle='rgba(20,20,60,'+Math.min(0.28,(h-19)*0.09)+')'; c.fillRect(0,0,160,112); }
+  if(S.breakUntil > absNow()){ c.fillStyle='rgba(120,20,20,.18)'; c.fillRect(0,0,160,112); }
+}
+function drawChar(x,y,look,costume,staff){
+  const c = ctx; x = Math.round(x); y = Math.round(y);
+  const bob = staff && Math.floor(performance.now()/450 + x)%2 ? 0 : 0;
+  if(costume==='dino'){ c.fillStyle='#4f9d4a'; c.fillRect(x,y,5,9); c.fillStyle='#2f6e2c'; c.fillRect(x+1,y-1,1,1); c.fillRect(x+3,y-1,1,1); c.fillRect(x+5,y+5,2,2); c.fillRect(x+6,y+7,1,1); c.fillStyle='#fff'; c.fillRect(x+1,y+2,1,1); c.fillRect(x+3,y+2,1,1); c.fillStyle='#111'; c.fillRect(x+1,y+3,3,1); return; }
+  if(costume==='banana'){ c.fillStyle='#f0d040'; c.fillRect(x,y-1,5,10); c.fillStyle='#6a4a1a'; c.fillRect(x+2,y-2,1,1); c.fillStyle=look.skin; c.fillRect(x+1,y+2,3,2); c.fillStyle='#111'; c.fillRect(x+1,y+2,1,1); c.fillRect(x+3,y+2,1,1); return; }
+  c.fillStyle = look.hair; c.fillRect(x,y+bob,5,2);
+  c.fillStyle = look.skin; c.fillRect(x,y+2+bob,5,2);
+  c.fillStyle = '#1a1410'; c.fillRect(x+1,y+3+bob,1,1); c.fillRect(x+3,y+3+bob,1,1);
+  if(costume==='fur'){ c.fillStyle='#7a5030'; c.fillRect(x-1,y+4,7,5); c.fillStyle='#9a6a40'; c.fillRect(x-1,y+4,7,1); return; }
+  if(costume==='pajama'){ c.fillStyle='#a8d0f0'; c.fillRect(x,y+4,5,5); c.fillStyle='#f0d040'; c.fillRect(x+1,y+5,1,1); c.fillRect(x+3,y+7,1,1); return; }
+  c.fillStyle = look.apron; c.fillRect(x,y+4,5,3);
+  if(staff){ c.fillStyle='rgba(255,255,255,.18)'; c.fillRect(x+1,y+4,3,1); }
+  c.fillStyle = '#2a2420'; c.fillRect(x,y+7,2,2); c.fillRect(x+3,y+7,2,2);
+}
+function drawBubble(x,y,id){
+  const b = bubbles[id]; if(!b) return;
+  if(b.until !== Infinity && performance.now() > b.until){ delete bubbles[id]; return; }
+  const c = ctx; x = Math.round(x); y = Math.round(y);
+  c.fillStyle = b.k==='!' ? '#ffe9a8' : '#f2e6cf'; c.fillRect(x-1,y-7,7,5); c.fillRect(x+1,y-2,1,1);
+  c.fillStyle = b.k==='!' ? '#d03a2a' : '#4a3a2a';
+  if(b.k==='!'){ c.fillRect(x+2,y-6,1,2); c.fillRect(x+2,y-3,1,0.9); }
+  else { c.fillRect(x,y-5,1,1); c.fillRect(x+2,y-5,1,1); c.fillRect(x+4,y-5,1,1); }
+}
+function avatarURL(look){
+  const o = document.createElement('canvas'); o.width=10; o.height=14; const c = o.getContext('2d');
+  c.fillStyle='#16110d'; c.fillRect(0,0,10,14);
+  const s=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
+  s(2,1,6,3,look.hair); s(2,4,6,3,look.skin); s(3,5,1,1,'#1a1410'); s(6,5,1,1,'#1a1410'); s(1,7,8,5,look.apron); s(2,12,2,2,'#2a2420'); s(6,12,2,2,'#2a2420');
+  return o.toDataURL();
+}
+
+/* ===================== UI ===================== */
+function el(html){ const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+function toast(msg){ const t = el(`<div class="toast" role="status">${esc(msg)}</div>`); document.body.appendChild(t); setTimeout(()=>t.remove(), 2200); }
+function clockStr(){ const h = Math.floor(S.gm/60), m = S.gm%60; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
+
+function renderStart(){
+  const app = $('#app'); app.innerHTML = '';
+  let city = 'msk', prem = 'new';
+  const w = el(`<div class="start">
+    <div><div class="logo">Brew Crew</div></div>
+    <div class="tag">Кофейня, где все на грани. Ты управляющий. Удачи.</div>
+    <div class="h">Город</div>
+    <div class="choice" id="cityC">
+      <button class="opt" data-v="msk" aria-pressed="true"><b>Москва</b><span>Раф с халвой, бизнесмены на самокатах, вечная спешка.</span></button>
+      <button class="opt" data-v="spb" aria-pressed="false"><b>Петербург</b><span>Шаверма, интеллигентные старушки, дождь за окном.</span></button>
+    </div>
+    <div class="h">Помещение</div>
+    <div class="choice" id="premC">
+      <button class="opt" data-v="new" aria-pressed="true"><b>Новое</b><span>40 000 ₽. Чисто, пусто, два новых сотрудника. На развитие останется 10 000 ₽.</span></button>
+      <button class="opt" data-v="used" aria-pressed="false"><b>Б/у</b><span>15 000 ₽. Тараканы, долги прошлого владельца и три сотрудника со своими привычками. Останется 35 000 ₽.</span></button>
+    </div>
+    <button class="btn" id="go" style="padding:12px;font-size:15px">Открыть кофейню</button>
+    <div class="empty">Прототип: 1 игровой час идёт 20 секунд. Кофейня работает, даже когда ты закрыл игру. Только для 18+.</div>
+  </div>`);
+  app.appendChild(w);
+  const bind = (id, set) => w.querySelectorAll('#'+id+' .opt').forEach(b=>b.onclick=()=>{ w.querySelectorAll('#'+id+' .opt').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); set(b.dataset.v); });
+  bind('cityC', v=>city=v); bind('premC', v=>prem=v);
+  w.querySelector('#go').onclick = () => { newGame(city, prem); renderGame(); };
+}
+
+function renderGame(){
+  const app = $('#app'); app.innerHTML = '';
+  app.appendChild(el(`<div class="hud">
+    <span class="brand">Brew Crew</span>
+    <span class="clock" id="clk"></span>
+    <span class="city" id="city"></span>
+    <span class="sp"></span>
+    <button class="pxbtn" id="spd" aria-label="Скорость времени">x1</button>
+    <button class="pxbtn" id="menu" aria-label="Меню">Меню</button>
+  </div>`));
+  app.appendChild(el(`<div class="stats">
+    <div class="stat"><div class="k">Касса</div><div class="v" id="sMoney"></div></div>
+    <div class="stat"><div class="k">Рейтинг</div><div class="v" id="sRep"></div></div>
+    <div class="stat"><div class="k">Нервы</div><div class="v" id="sNerv"></div><div class="bar"><i id="bNerv"></i></div></div>
+    <div class="stat"><div class="k">Уровень</div><div class="v" id="sLvl"></div><div class="bar"><i id="bXp"></i></div></div>
+  </div>`));
+  const scene = el(`<div class="scene"></div>`); scene.appendChild(cv);
+  scene.appendChild(el(`<div class="offbanner" id="brk" hidden>Управляющий в отгуле. Инциденты пока ждут.</div>`));
+  app.appendChild(scene);
+  app.appendChild(el(`<div class="meters" id="meters"></div>`));
+  app.appendChild(el(`<div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-t="inc">Инциденты<span class="badge" id="bInc" hidden></span></button>
+    <button class="tab" role="tab" data-t="team">Команда</button>
+    <button class="tab" role="tab" data-t="chat">Чат<span class="badge" id="bChat" hidden></span></button>
+    <button class="tab" role="tab" data-t="rev">Отзывы</button>
+    <button class="tab" role="tab" data-t="up">Улучшения</button>
+  </div>`));
+  app.appendChild(el(`<div class="panel" id="panel" role="tabpanel"></div>`));
+  app.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ tab=b.dataset.t; if(tab==='chat') unreadChat=0; dirty=true; renderPanel(); renderHud(); });
+  $('#spd').onclick = () => { speed = speed===1?3:(speed===3?6:1); $('#spd').textContent='x'+speed; };
+  $('#menu').onclick = () => queueModal({kind:'menu'}, true);
+  rebuildStaffPos();
+  renderHud(); renderPanel();
+}
+function renderHud(){
+  if(!$('#clk')) return;
+  $('#clk').textContent = 'День '+S.day+' · '+clockStr();
+  $('#city').textContent = S.city==='msk'?'Москва':'Петербург';
+  $('#sMoney').textContent = fmt(S.money)+' ₽';
+  $('#sMoney').style.color = S.money<0?'var(--bad)':'';
+  $('#sRep').textContent = S.rep.toFixed(1)+' / 5';
+  $('#sNerv').textContent = Math.round(S.nerves);
+  $('#bNerv').style.width = S.nerves+'%'; $('#bNerv').style.background = S.nerves<30?'var(--bad)':'var(--caramel)';
+  $('#sLvl').textContent = S.level;
+  $('#bXp').style.width = Math.min(100, S.xp/(40+S.level*30)*100)+'%';
+  $('#brk').hidden = !(S.breakUntil > absNow());
+  const m = S.meters;
+  $('#meters').innerHTML = ['soul','pathos','chaos'].map(k=>`<div class="meter"><div class="k"><span>${METER_N[k]}</span><b>${Math.round(m[k])}</b></div><div class="bar"><i style="width:${m[k]}%;background:var(--${k})"></i></div></div>`).join('') +
+    `<div class="pathline">${S.path ? 'Путь закреплён: <b>'+PATHS[S.path]+'</b>' : 'Путь закрепится на '+LOCK_LEVEL+'-м уровне. Сейчас ведёт: <b>'+METER_N[leader()]+'</b>'}</div>`;
+  const bi = $('#bInc'); bi.hidden = !S.incidents.length; bi.textContent = S.incidents.length;
+  const bc = $('#bChat'); bc.hidden = !(unreadChat && tab!=='chat'); bc.textContent = Math.min(unreadChat,99);
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected', b.dataset.t===tab));
+}
+function renderPanel(){
+  const p = $('#panel'); if(!p) return;
+  dirty = false;
+  if(tab==='inc'){
+    if(!S.incidents.length){ p.innerHTML = `<div class="empty">Пока тихо. Подозрительно тихо. Новые инциденты появляются каждые 1–3 игровых часа, а нерешённый через 4 часа решается сам — и всегда плохо.</div>`; return; }
+    p.innerHTML = '';
+    S.incidents.slice().reverse().forEach(inc=>{
+      const d = defOf(inc); const left = 240 - (absNow()-inc.at);
+      const card = el(`<button class="card inc ${left<60?'urgent':''}"><div class="row"><span class="t">${esc(d.t)}</span><span class="sp"></span><span class="timer">${Math.max(0,Math.ceil(left/60))} ч</span></div><div class="d">${esc(fill(d.x,inc))}</div></button>`);
+      card.onclick = () => queueModal({kind:'inc', uid:inc.uid}, true);
+      p.appendChild(card);
+    });
+    return;
+  }
+  if(tab==='team'){
+    p.innerHTML = `<div class="h">Команда · ${S.staff.length} из ${maxStaff()}</div>`;
+    if(!S.staff.length) p.appendChild(el(`<div class="empty">Никого. Ты один на кассе, баре и мойке. Найми кого-нибудь ниже.</div>`));
+    S.staff.forEach(st=>{
+      const tr = TRAITS[st.trait];
+      const c = el(`<div class="card staff"><img class="ava" alt="" src="${avatarURL(st.look)}"><div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+        <div class="row"><span class="t">${esc(st.name)}</span><span class="d">${st.role}</span><span class="sp"></span><span class="timer">${fmt(st.pay)} ₽/день</span></div>
+        <div class="d"><b style="color:var(--cream)">${tr.n}.</b> ${tr.d}</div>
+        <div class="mood">Настроение <div class="bar"><i style="width:${st.mood}%;background:${st.mood<25?'var(--bad)':st.mood<50?'var(--caramel)':'var(--soul)'}"></i></div>${Math.round(st.mood)}</div>
+        <div class="row"><button class="btn" data-a="bonus">Премия 1 000 ₽</button><button class="btn ghost" data-a="fire">Уволить</button></div></div></div>`);
+      c.querySelector('[data-a=bonus]').disabled = S.money < 1000;
+      c.querySelector('[data-a=bonus]').onclick = () => { S.money -= 1000; st.mood = clamp(st.mood+20,0,100); say(st, pick(['спасибо, начальник, я вас почти уважаю','на эти деньги куплю себе нормальный кофе. не здесь','о, премия. значит, завтра будет что-то плохое'])); toast(st.name+' доволен'); save(); renderPanel(); renderHud(); };
+      const fb = c.querySelector('[data-a=fire]');
+      fb.onclick = () => { if(fb.dataset.sure){ sys(st.name+' уволен. Забрал с собой кружку и, кажется, кофемолку.'); removeStaff(st.id); save(); renderPanel(); } else { fb.dataset.sure='1'; fb.textContent='Точно уволить?'; } };
+      p.appendChild(c);
+    });
+    p.appendChild(el(`<div class="h">Кандидаты сегодня</div>`));
+    S.candidates.forEach((cd,i)=>{
+      const c = el(`<div class="card staff"><img class="ava" alt="" src="${avatarURL(cd.look)}"><div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+        <div class="row"><span class="t">${esc(cd.name)}</span><span class="d">${cd.role}</span><span class="sp"></span><span class="timer">${fmt(cd.pay)} ₽/день</span></div>
+        <div class="d">${esc(cd.resume)} Характер узнаешь после найма.</div>
+        <div class="row"><button class="btn">Нанять за ${fmt(cd.pay)} ₽</button></div></div></div>`);
+      const b = c.querySelector('button');
+      b.disabled = S.staff.length >= maxStaff() || S.money < cd.pay;
+      if(S.staff.length >= maxStaff()) b.textContent = 'Нет мест в команде';
+      b.onclick = () => { S.money -= cd.pay; S.staff.push(cd); S.candidates.splice(i,1); rebuildStaffPos(); say(cd, pick(['привет всем. где тут розетка','я новенький, не бейте','а кофе для сотрудников бесплатный?'])); toast(cd.name+': '+TRAITS[cd.trait].n); save(); renderPanel(); renderHud(); };
+      p.appendChild(c);
+    });
+    if(!S.candidates.length) p.appendChild(el(`<div class="empty">Кандидаты закончились. Новые придут завтра утром.</div>`));
+    return;
+  }
+  if(tab==='chat'){
+    unreadChat = 0;
+    p.innerHTML = `<div class="h">Чат смены</div>`;
+    const box = el(`<div class="chat"></div>`);
+    S.chat.slice().reverse().slice(0,50).forEach(m=>{
+      const st = S.staff.find(s=>s.name===m.who);
+      const col = st ? st.look.apron : '';
+      const tm = 'Д'+m.d+' '+String(Math.floor(m.t/60)).padStart(2,'0')+':'+String(m.t%60).padStart(2,'0');
+      box.appendChild(el(m.who ? `<div class="msg"><span class="tm">${tm}</span><span class="who" style="color:${col==='#262626'||col==='#2f6b55'?'var(--soul)':'var(--caramel)'}">${esc(m.who)}</span>${esc(m.text)}</div>` : `<div class="msg sys"><span class="tm">${tm}</span>${esc(m.text)}</div>`));
+    });
+    p.appendChild(box); return;
+  }
+  if(tab==='rev'){
+    p.innerHTML = `<div class="h">Отзывы · рейтинг ${S.rep.toFixed(1)}</div>`;
+    if(!S.reviews.length) p.appendChild(el(`<div class="empty">Отзывы приходят после закрытия смены, в 22:00.</div>`));
+    S.reviews.forEach(r=>p.appendChild(el(`<div class="card"><div class="row"><span class="t">${esc(r.name)}</span><span class="sp"></span>${stars(r.stars)}</div><div class="d">${esc(r.text)}</div><div class="timer">День ${r.d}</div></div>`)));
+    return;
+  }
+  if(tab==='up'){
+    p.innerHTML = `<div class="h">Улучшения</div>`;
+    UPG.forEach(u=>{
+      const have = S.upg[u.id];
+      const c = el(`<div class="card"><div class="row"><span class="t">${u.n}</span><span class="sp"></span><span class="timer">${have?'есть':fmt(u.c)+' ₽'}</span></div><div class="d">${u.d}</div>${have?'':'<div class="row"><button class="btn">Купить</button></div>'}</div>`);
+      const b = c.querySelector('button');
+      if(b){ b.disabled = S.money < u.c; b.onclick = () => buy(u); }
+      p.appendChild(c);
+    });
+  }
+}
+function stars(n){ return `<span class="stars" aria-label="${n} из 5">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`; }
+function buy(u){
+  if(S.money < u.c) return;
+  S.money -= u.c; S.upg[u.id] = true;
+  if(u.id==='plants'){ S.meters.soul=clamp(S.meters.soul+6,0,100); S.rep=clamp(S.rep+0.1,0.5,5); }
+  if(u.id==='neon') S.meters.pathos=clamp(S.meters.pathos+6,0,100);
+  if(u.id==='sockets') S.rep=clamp(S.rep+0.1,0.5,5);
+  if(u.id==='cheap') S.meters.chaos=clamp(S.meters.chaos+8,0,100);
+  if(u.id==='kitchen'){ rebuildStaffPos(); refreshCandidates(); }
+  addXp(15);
+  if(S.staff.length) say(pick(S.staff), pick(['о, обновка. кто будет мыть?','а зарплату так же обновим?','красиво. но я всё равно уволюсь когда-нибудь']));
+  toast('Куплено: '+u.n); save(); renderPanel(); renderHud();
+}
+
+/* ===================== modals ===================== */
+function queueModal(m, front){ if(front) modals.unshift(m); else modals.push(m); showModal(); }
+function closeModal(){ modals.shift(); $('#modalRoot').innerHTML=''; showModal(); renderHud(); renderPanel(); }
+function showModal(){
+  const root = $('#modalRoot');
+  if(root.firstChild || !modals.length) return;
+  const m = modals[0];
+  const veil = el(`<div class="veil"><div class="modal" role="dialog" aria-modal="true"></div></div>`);
+  const box = veil.firstChild;
+  const btn = (label, fn, ghost) => { const b = el(`<button class="btn ${ghost?'ghost':''}">${esc(label)}</button>`); b.onclick = fn; return b; };
+
+  if(m.kind==='inc'){
+    const inc = S.incidents.find(i=>i.uid===m.uid);
+    if(!inc){ closeModal(); return; }
+    const d = defOf(inc);
+    if(S.breakUntil > absNow()){
+      box.append(el(`<div class="eyebrow">Инцидент</div>`), el(`<h2>${esc(d.t)}</h2>`), el(`<p>Управляющий в отгуле после срыва. Вернётся через ${Math.ceil((S.breakUntil-absNow())/60)} ч. Пока решить нельзя.</p>`), btn('Понятно', closeModal));
+    } else {
+      box.append(el(`<div class="eyebrow">Инцидент${inc.sid?' · '+esc(staffById(inc.sid)?.name||''):''}</div>`), el(`<h2>${esc(d.t)}</h2>`), el(`<p>${esc(fill(d.x,inc))}</p>`));
+      const opts = el(`<div class="opts"></div>`);
+      d.o.forEach((o,i)=>{
+        if(S.nerves < 25 && i===0 && d.o.length>2) return; // на нервах дипломатия недоступна
+        const b = el(`<button class="opt">${esc(fill(o[0],inc))}</button>`);
+        b.onclick = () => { const r = resolveIncident(inc, i); box.innerHTML=''; box.append(el(`<div class="eyebrow">Итог</div>`), el(`<h2>${esc(d.t)}</h2>`), el(`<p>${esc(r.out)}</p>`), chipsEl(r.chips), btn('Дальше', closeModal)); };
+        opts.appendChild(b);
+      });
+      box.appendChild(opts);
+      if(S.nerves < 25) box.appendChild(el(`<div class="empty">Нервы на пределе: вежливый вариант недоступен.</div>`));
+      box.appendChild(btn('Подумать потом', closeModal, true));
+    }
+  }
+  else if(m.kind==='quit'){
+    const st = staffById(m.sid);
+    if(!st){ closeModal(); return; }
+    box.append(el(`<div class="eyebrow">Увольнение</div>`), el(`<h2>${esc(st.name)} уходит</h2>`), el(`<p>${esc(st.role)} ${esc(st.name)} кладёт фартук на стойку. Причина: ${esc(m.reason)}.</p>`));
+    const opts = el(`<div class="opts"></div>`);
+    const a = el(`<button class="opt">Отпустить с миром</button>`);
+    a.onclick = () => { removeStaff(st.id); sys(st.name+' уволился. Причина: '+m.reason+'.'); save(); box.innerHTML=''; box.append(el(`<h2>Минус один</h2>`), el(`<p>${esc(st.name)} ушёл, не допив свой бесплатный кофе. Кандидаты — во вкладке «Команда».</p>`), btn('Дальше', closeModal)); };
+    const b = el(`<button class="opt">Уговорить остаться: премия 3 000 ₽</button>`);
+    b.disabled = S.money < 3000;
+    b.onclick = () => { S.money -= 3000; let txt;
+      if(Math.random()<0.6){ st.quitting = false; st.mood = clamp(st.mood+35,0,100); txt = st.name+' остаётся. Говорит, что причина «временно рассосалась».'; say(st,'ладно, остаюсь. но луна всё видит'); delete bubbles[st.id]; }
+      else { removeStaff(st.id); txt = st.name+' взял премию, поблагодарил и всё равно ушёл.'; sys(st.name+' уволился с премией. Причина: '+m.reason+'.'); }
+      save(); box.innerHTML=''; box.append(el(`<h2>Переговоры</h2>`), el(`<p>${esc(txt)}</p>`), btn('Дальше', closeModal)); };
+    opts.append(a,b); box.appendChild(opts);
+  }
+  else if(m.kind==='day'){
+    const s = S.summary;
+    box.append(el(`<div class="eyebrow">Смена закрыта · день ${s.day}</div>`), el(`<h2>Итоги дня</h2>`));
+    box.appendChild(el(`<div class="sum">
+      <span>Гостей</span><span class="n">${s.guests}</span>
+      <span>Выручка</span><span class="n">+${fmt(s.rev)} ₽</span>
+      <span>Зарплаты</span><span class="n">−${fmt(s.wages)} ₽</span>
+      <span>Аренда</span><span class="n">−${fmt(s.rent)} ₽</span>
+      <span class="tot">За день</span><span class="n tot">${s.rev-s.wages-s.rent>=0?'+':'−'}${fmt(Math.abs(s.rev-s.wages-s.rent))} ₽</span>
+      <span>Решено инцидентов</span><span class="n">${s.solved}</span>
+      <span>Решились сами</span><span class="n">${s.auto}</span>
+    </div>`));
+    box.appendChild(el(`<div class="h">Новые отзывы</div>`));
+    s.reviews.forEach(r=>box.appendChild(el(`<div class="card"><div class="row"><span class="t">${esc(r.name)}</span><span class="sp"></span>${stars(r.stars)}</div><div class="d">${esc(r.text)}</div></div>`)));
+    box.appendChild(el(`<p class="d" style="color:var(--muted);font-size:13px">Ночью кофейня остаётся с командой. Утром узнаешь, что они натворили.</p>`));
+    box.appendChild(btn('Открыть кофейню утром', ()=>{ startDay(); closeModal(); }));
+  }
+  else if(m.kind==='away'){
+    const r = m.r;
+    box.append(el(`<div class="eyebrow">Пока тебя не было</div>`), el(`<h2>Прошло ${Math.round(r.mins/60)} игровых ч</h2>`));
+    box.appendChild(el(`<div class="sum">
+      <span>Заработано с гостей</span><span class="n">+${fmt(r.money)} ₽</span>
+      <span>Новых инцидентов</span><span class="n">${r.inc}</span>
+      <span>Решились сами</span><span class="n">${Math.max(0,r.auto)}</span>
+      <span>Смен закрыто</span><span class="n">${r.days}</span>
+    </div>`));
+    if(r.quits.length) box.appendChild(el(`<p>Уволились: ${esc(r.quits.join(', '))}. Подробности в чате смены.</p>`));
+    box.appendChild(btn('К делу', closeModal));
+  }
+  else if(m.kind==='path'){
+    const txt = {soul:'Тебя любят гости, команда держится, дед у окна — почти родственник. Денег меньше, кризисов тоже.',
+                 pathos:'Без сахара, без сиропов, без компромиссов. Высокий чек, очереди, капризные звёзды и один шаг до скандала.',
+                 chaos:'Кофе из банки, драки за шаурму, кошка на кофемашине. Хаос, проверки и самые дикие истории района.'}[S.path];
+    box.append(el(`<div class="eyebrow">Уровень ${LOCK_LEVEL}</div>`), el(`<h2>${PATHS[S.path]}</h2>`), el(`<p>${txt}</p>`), el(`<p style="color:var(--muted);font-size:13px">Путь закреплён. Теперь инциденты и гости будут под него, а остальные шкалы растут вдвое медленнее.</p>`), btn('Так тому и быть', closeModal));
+  }
+  else if(m.kind==='menu'){
+    box.append(el(`<h2>Меню</h2>`), el(`<p style="font-size:13px;color:var(--muted)">День ${S.day}, ${S.city==='msk'?'Москва':'Петербург'}, ${S.premises==='new'?'новое помещение':'б/у помещение'}. Прогресс хранится в этом браузере.</p>`));
+    const r = btn('Начать заново', ()=>{ if(r.dataset.sure){ try{localStorage.removeItem(KEY);}catch(e){} S=null; modals=[]; $('#modalRoot').innerHTML=''; guests=[]; staffPos={}; bubbles={}; seatGuest=[]; renderStart(); } else { r.dataset.sure='1'; r.textContent='Точно? Всё пропадёт'; } }, true);
+    box.append(r, btn('Закрыть', closeModal));
+  }
+  root.appendChild(veil);
+}
+function chipsEl(chips){ const w = el(`<div class="chips"></div>`); chips.forEach(([t,up])=>w.appendChild(el(`<span class="chip ${up===true?'up':up===false?'down':''}">${esc(t)}</span>`))); return w; }
+
+/* ===================== loop ===================== */
+let lastSave = 0, hudTick = 0;
+function frame(t){
+  const dt = Math.min(100, t - lastFrame); lastFrame = t;
+  if(S){
+    if(!S.paused){
+      acc += dt*speed;
+      let steps = 0;
+      while(acc >= MS_PER_MIN && steps < 30){ acc -= MS_PER_MIN; stepMinute(true); steps++; }
+      if(steps){ renderHud(); if(dirty && !(tab==='team' && document.activeElement && document.activeElement.closest && document.activeElement.closest('#panel'))) renderPanel(); }
+    }
+    updateScene(dt); draw();
+    if(t - lastSave > 5000){ lastSave = t; save(); }
+  }
+  requestAnimationFrame(frame);
+}
+document.addEventListener('visibilitychange', ()=>{ if(!S) return; if(document.hidden) save(); else { lastFrame = performance.now(); catchUp(); renderHud(); renderPanel(); } });
+window.addEventListener('pagehide', save);
+
+/* ===================== boot ===================== */
+try{ if(window.Telegram && Telegram.WebApp){ const tg=Telegram.WebApp; tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#16110d'); tg.setBackgroundColor && tg.setBackgroundColor('#16110d'); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } }catch(e){}
+S = load();
+if(S && S.v===1){ renderGame(); catchUp(); }
+else { S = null; renderStart(); }
+requestAnimationFrame(frame);
+</script>
+
+</body>
+</html>
