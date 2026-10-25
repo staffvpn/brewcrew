@@ -3160,6 +3160,7 @@ function checkPatience(s){ if(s.pat > 0) return; s.pat = 40; s.mood = clamp(s.mo
 let lastT = performance.now(), hudT = 0, saveT = 0, cloudT = 0, achT = 0, ambT = 0, entT = 0;
 function frame(t){
   const dt = Math.min(0.1, (t - lastT)/1000); lastT = t;
+  try{
   if(S && $('#sMoney')){
     gAcc += dt*1000 / REAL_PER_GMIN; const whole = Math.floor(gAcc); if(whole){ gAcc -= whole; const wasOpen = S.isOpen, d0 = S.day; advanceGameMinutes(whole); if(wasOpen !== S.isOpen || d0 !== S.day){ for(const r of S.rooms) syncScene(r.id); structDirty = true; } }
     const id = S.active;
@@ -3181,6 +3182,7 @@ function frame(t){
     trackT += dt; if(trackT > 60){ trackT = 0; track(); }
     entT += dt; if(entT > 600){ entT = 0; refreshEntitlements(); }
   }
+  }catch(e){ showCrash((e&&e.message)+'\n'+(e&&e.stack)); }
   requestAnimationFrame(frame);
 }
 let syncSig = '';
@@ -3427,6 +3429,14 @@ function holDeco(x, y, k){ const h = holiday(); if(!h) return; const now = perfo
   else if(h.id==='sept1'){ ctx.fillStyle = '#ffd36b'; ctx.beginPath(); ctx.arc(x, y-6, 3, 0, 7); ctx.fill(); rect(x-0.5, y-3, 1, 4, '#4a6a2a'); }
 }
 
+/* ---------- аварийный экран: показывает ошибку и даёт начать заново ---------- */
+let crashShown = false;
+function showCrash(msg){ if(crashShown) return; crashShown = true;
+  const v = el(`<div class="veil" style="z-index:99"><div class="modal"><div class="eyebrow">Что-то сломалось</div><h2>Игра споткнулась</h2><p>Пришли разработчику текст ниже или скриншот этого окна.</p><pre style="white-space:pre-wrap;font-size:11px;background:#fff;padding:8px;max-height:30vh;overflow:auto;margin:0">${esc(String(msg).slice(0,800))}</pre><button class="btn">Перезагрузить</button><button class="btn ghost">Начать заново</button></div></div>`);
+  const bs = v.querySelectorAll('button'); bs[0].onclick = () => location.reload(); bs[1].onclick = () => { if(!bs[1].dataset.sure){ bs[1].dataset.sure = '1'; bs[1].textContent = 'Точно? Пропадёт всё'; return; } v.remove(); crashShown = false; hardReset(); };
+  document.body.appendChild(v); }
+window.addEventListener('error', e => showCrash((e.message||'')+' @'+(e.lineno||'')+':'+(e.colno||'')+'\n'+((e.error&&e.error.stack)||'')));
+window.addEventListener('unhandledrejection', e => { const r = e.reason; if(r && r.stack && !/fetch|JSON|Load failed|NetworkError/i.test(String(r))) showCrash(String(r)+'\n'+r.stack); });
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());
 loadConfig();
