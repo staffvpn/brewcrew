@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Brew Crew</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -153,6 +153,71 @@ label.d{display:flex;align-items:center;gap:6px}
 .hud > div:first-child{min-width:0;overflow:hidden}
 .meta{overflow:hidden;text-overflow:ellipsis}
 .hudrow .inc{text-align:left}
+/* v4: полноэкранная раскладка */
+html,body{height:100%;overflow:hidden}
+#app.game{max-width:560px;height:100%;display:grid;grid-template-rows:auto auto 1fr auto;gap:6px;padding-top:calc(var(--safe-top,0px) + 6px);padding-bottom:calc(var(--safe-bottom,0px) + 6px)}
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.topL{min-width:0}
+.topR{text-align:right}
+.top .money{font-size:26px}
+.top .meta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pills{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;min-height:30px}
+.pills::-webkit-scrollbar{display:none}
+.pill{flex:none;display:flex;align-items:center;gap:6px;background:var(--panel);border:2px solid var(--line);padding:4px 10px;font-size:12px;font-weight:600;color:var(--cream);white-space:nowrap;max-width:85vw;overflow:hidden;text-overflow:ellipsis}
+.pill.story{border-color:#b0413a;background:#3a1f1b}
+.pill.story b{color:#ffb0a0;font-weight:700}
+.pill.warn{border-color:#9b3d33;color:#ffc2b8}
+.pill.good{border-color:#5f8a4a;color:#cfe8bf}
+.pbar{width:34px;height:5px;background:var(--shadow);display:inline-block}
+.pbar i{display:block;height:100%}
+.scene{position:relative;min-height:0;border:3px solid var(--line);box-shadow:3px 3px 0 var(--shadow);background:#000;overflow:hidden}
+.scene #cv{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}
+.notifs{position:absolute;left:6px;top:6px;display:flex;flex-direction:column;gap:5px;max-width:64%;z-index:2}
+.notif{display:flex;align-items:center;gap:7px;background:rgba(23,18,14,.92);border:2px solid var(--caramel);padding:5px 9px 5px 5px;font-size:12px;font-weight:600;text-align:left;box-shadow:2px 2px 0 var(--shadow);animation:pop .25s ease}
+.notif b{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--caramel);color:#1b130c;font-weight:800}
+.notif.story{border-color:#e0574a}.notif.story b{background:#e0574a;color:#fff}
+.notif.absurd{border-color:var(--pathos)}.notif.absurd b{background:var(--pathos)}
+.notif.inspect,.notif.money,.notif.break{border-color:#e0574a}
+.notif span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.notif.more{padding:4px 9px;color:var(--muted)}
+@keyframes pop{from{transform:translateX(-12px);opacity:0}}
+.roomdots{position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;align-items:center;gap:7px;z-index:2;pointer-events:none}
+.rdot{pointer-events:auto;width:10px;height:10px;border:2px solid var(--cream);background:transparent;padding:0}
+.rdot.on{background:var(--caramel);border-color:var(--caramel)}
+.rname{font-size:11px;font-weight:600;background:rgba(23,18,14,.8);padding:2px 7px;margin-left:4px}
+.dock{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.dockb{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;background:var(--panel);border:2px solid var(--line);box-shadow:2px 2px 0 var(--shadow);font-size:13px;font-weight:700;color:var(--cream)}
+.dockb svg{width:26px;height:26px}
+.dockb.on{border-color:var(--caramel);background:var(--panel2);color:var(--caramel)}
+.dockb .badge{position:absolute;top:-7px;right:8px;font-style:normal}
+.dockb .badge:empty{min-width:12px;height:12px;padding:0}
+.sheetwrap{position:fixed;left:0;right:0;top:0;bottom:calc(var(--safe-bottom,0px) + 70px);z-index:12}
+.sheetbg{position:absolute;inset:0;background:rgba(8,6,4,.35)}
+.sheet{position:absolute;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;height:min(76vh,calc(100% - var(--safe-top,0px) - 50px));background:var(--panel);border-top:3px solid var(--caramel);box-shadow:0 -6px 24px rgba(0,0,0,.5);display:flex;flex-direction:column;animation:up .22s ease}
+@keyframes up{from{transform:translateY(40%);opacity:.4}}
+.grab{display:flex;justify-content:center;padding:9px 0 5px;touch-action:none;cursor:grab}
+.grab i{width:44px;height:5px;background:var(--line);display:block}
+.sheethead{padding:0 14px 8px;display:flex;flex-direction:column;gap:8px;border-bottom:2px solid var(--line)}
+.sheettitle{font-family:var(--disp);font-weight:700;font-size:17px;color:var(--cream)}
+.sheethead .subnav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.sheethead .subnav::-webkit-scrollbar{display:none}
+.sheethead .chipbtn{flex:none;font-size:13px;padding:7px 11px}
+.sheetbody{flex:1;overflow-y:auto;padding:10px 14px 18px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch}
+.sheetbody .card .t{font-size:15px}
+.sheetbody .card .d,.sheetbody .eff{font-size:13px}
+.sheetbody .btn{min-height:40px;font-size:14px}
+.up .col{display:flex;flex-direction:column;gap:5px;align-items:stretch}
+.t.big{font-family:var(--disp);font-size:18px}
+.vol{display:grid;grid-template-columns:1fr 1.2fr;gap:10px;align-items:center;font-size:13px;color:var(--muted)}
+.vol input{width:100%;accent-color:var(--caramel)}
+.shop{display:flex;flex-direction:column;gap:8px}
+.shopitem{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding-top:8px;border-top:1px solid var(--line)}
+.modal.paper{background:#efe6d2;color:#2a1f16;border-color:#2a1f16}
+.modal.paper h2{font-family:'Golos Text',serif;font-weight:800;letter-spacing:-.5px;border-bottom:3px double #2a1f16;padding-bottom:6px;color:#2a1f16}
+.modal.paper .eyebrow{color:#6a5a48}
+.modal.paper .btn.ghost{color:#2a1f16;border-color:#6a5a48}
+.newsitem b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#8a2f1f}
+.newsitem p{margin:2px 0 0;font-size:15px;line-height:1.45;color:#2a1f16}
 </style>
 </head>
 <body>
@@ -217,7 +282,7 @@ function sold(id){ return (S.c.byItem && S.c.byItem[id]) || 0; }
 const ROOMS = [
   {id:'main', n:'Кофейня', cost:0, rent:4000, mult:1, d:'Первая точка на 25 квадратов: стойка, витрина и пара столиков.', theme:{wall:'#c99f74', wall2:'#a97f58', trim:'#5b3b25', fa:'#8c6446', fb:'#7f5a3d', counter:'#6e4a30', ctop:'#9b7350'}},
   {id:'hall2', n:'Второй зал', cost:1500000, rent:7000, mult:1.3, need:{t:'Уровень 8 и рейтинг 3,8', f:S=>S.level>=8 && S.rep>=3.8}, d:'Помещение по соседству со своей стойкой. Своя команда и улучшения.', theme:{wall:'#8fab8a', wall2:'#6f8b6b', trim:'#33452f', fa:'#a08566', fb:'#937858', counter:'#3d5a48', ctop:'#58806a'}},
-  {id:'veranda', n:'Веранда', cost:9000000, rent:12000, mult:1.6, outdoor:true, need:{t:'Уровень 16 и 3 месяца работы', f:S=>S.level>=16 && S.day>=45}, d:'Летняя веранда. В солнце очередь до угла, в дождь пусто.', theme:{wall:'#9ec9e4', wall2:'#cfe6f2', trim:'#6b4b2e', fa:'#b48a5f', fb:'#a47c53', counter:'#7a5233', ctop:'#a87a50'}},
+  {id:'veranda', n:'Веранда', cost:9000000, rent:12000, mult:1.6, outdoor:true, need:{t:'Уровень 16 и 3 месяца работы', f:S=>(S.level>=16 && S.day>=45) || (S.story && S.story.flags.permit && S.level>=12)}, d:'Летняя веранда. В солнце очередь до угла, в дождь пусто.', theme:{wall:'#9ec9e4', wall2:'#cfe6f2', trim:'#6b4b2e', fa:'#b48a5f', fb:'#a47c53', counter:'#7a5233', ctop:'#a87a50'}},
   {id:'lounge', n:'Лаунж', cost:60000000, rent:35000, mult:2.6, need:{t:'Уровень 26, путь закреплён, рейтинг 4,5', f:S=>S.level>=26 && S.path && S.rep>=4.5}, d:'Второй этаж с неоном и дорогим меню.', theme:{wall:'#3b3550', wall2:'#2c2740', trim:'#151223', fa:'#4a4458', fb:'#423c50', counter:'#1f1b2c', ctop:'#3c3552'}}
 ];
 const RIVAL_ROOM_THEME = {
@@ -242,7 +307,7 @@ const UPG = [
 ];
 const MAXL = 20;
 function f2(x){ return x.toFixed(2).replace('.',','); }
-function tableCount(L){ return Math.min(12, 2 + Math.ceil(L*0.5)); }
+function tableCount(L){ return Math.min(12, 4 + Math.ceil(L*0.4)); }
 function dessertP(L){ return L<1 ? 0 : Math.min(0.6, 0.08+0.026*L); }
 function petsLine(L){ return L<1?'пока никого':L<3?'миска у двери':L<6?'живёт кошка':L<9?'кошачье дерево':L<12?'аквариум':L<15?'вторая кошка':L<18?'пёс у двери':'попугай на стойке'; }
 function upCost(u, L, roomId){
@@ -321,7 +386,7 @@ let S = null;
 function newState(name, city, carry){
   const s = {v:3, name, city, money:150000 + (carry&&carry.perks? (carry.perks.capital||0)*250000 : 0), xp:0, level:1, rep:3.0,
     meters:{soul:10, pathos:10, chaos:5}, path:null,
-    day:1, gm:7*60+30, hours:{open:8, close:22}, isOpen:false,
+    day:1, gm:9*60, hours:{open:0, close:24}, isOpen:false,
     rooms:[newRoom('main')], active:'main', staff:[], cands:[],
     stock:{beans:5000, cups:600, syrup:1000, tea:100, matcha:0, milk:[{q:24000, exp:4}], desserts:[], food:[]},
     orders:[], autoOrder:false, serviceContract:false, accountant:false,
@@ -699,6 +764,7 @@ function midnight(){
   // подмены
   S.mods = S.mods.filter(m=>m.until > absNow());
   rivalsDay();
+  storyMidnight();
   achCheck();
 }
 function bankruptStep(){
@@ -1024,7 +1090,7 @@ function rivalAction(rid, act){
 function fillText(str, inc){
   const st = inc.sid ? S.staff.find(x=>x.id===inc.sid) : null, st2 = inc.sid2 ? S.staff.find(x=>x.id===inc.sid2) : null;
   const rv = inc.rid ? RIVALS.find(x=>x.id===inc.rid) : null;
-  return String(str).replace(/\{s\}/g, st?st.name:(inc.sname||'Сотрудник')).replace(/\{s2\}/g, st2?st2.name:'коллега').replace(/\{reason\}/g, inc.reason||'').replace(/\{rival\}/g, rv?rv.n:'Соседи').replace(/\{room\}/g, inc.room||'');
+  return String(str).replace(/\{s\}/g, st?st.name:(inc.sname||'Сотрудник')).replace(/\{s2\}/g, st2?st2.name:'коллега').replace(/\{reason\}/g, inc.reason||'').replace(/\{rival\}/g, rv?rv.n:'Соседи').replace(/\{room\}/g, inc.room||'').replace(/\{dl\}/g, S.story ? dlText() : '').replace(/\{price\}/g, inc.price ? fmtR(inc.price) : '').replace(/\{vt\}/g, inc.vt||'').replace(/\{vintro\}/g, inc.vintro||'').replace(/\{sab\}/g, inc.sab||'');
 }
 function evDef(inc){ return inc.id==='absurd' ? absurdDef(inc) : EV[inc.id]; }
 function pushIncident(id, data){
@@ -1034,12 +1100,14 @@ function pushIncident(id, data){
   if(id==='revenge') data.reason = pick(REVENGE);
   if(id==='rival_promo' || id==='rival_coop' || id==='rival_sale'){ if(!data.rid) data.rid = pick(RIVALS).id; }
   const inc = Object.assign({uid:S.uid++, id, at:Date.now(), atG:absNow()}, data);
+  if(d && d.pre && d.pre(inc) === false) return;
+  if(inc.price) S._lastPrice = inc.price;
   if(inc.sid){ const s = S.staff.find(x=>x.id===inc.sid); if(s) inc.sname = s.name; }
   if(d && d.auto){ applyFx(d.auto, inc); HOOK.modal({kind:'result', inc}); return; }
-  if(S.incidents.length >= 5) expireIncident(S.incidents.find(i=>EV[i.id] && EV[i.id].cat!=='inspect') || S.incidents[0]);
+  if(S.incidents.length >= 6) expireIncident(S.incidents.find(i=>EV[i.id] && EV[i.id].cat!=='inspect' && EV[i.id].cat!=='story') || S.incidents[0]);
   S.incidents.push(inc);
   HOOK.sfx('alert'); HOOK.struct();
-  const urgent = d && (d.cat==='inspect' || d.cat==='staff' || d.cat==='break' || d.cat==='money');
+  const urgent = d && (d.cat==='inspect' || d.cat==='staff' || d.cat==='break' || d.cat==='money' || d.cat==='story');
   if(urgent) HOOK.modal({kind:'inc', uid:inc.uid, auto:true});
 }
 HOOK.event = pushIncident;
@@ -1049,7 +1117,8 @@ function expireIncident(inc){
   S.incidents = S.incidents.filter(x=>x!==inc);
   // если долго не решали: проверки и кадры решаются по умолчанию, остальное — мелкий штраф к рейтингу и бардак
   if(d && d.o){
-    if(d.cat==='inspect' || d.cat==='break' || d.cat==='money') resolveIncident(inc, 0, true);
+    if(d.cat==='story'){ let k = d.o.length-1; while(k>0 && d.o[k].req && !d.o[k].req(S, inc)) k--; resolveIncident(inc, k, true); }
+    else if(d.cat==='inspect' || d.cat==='break' || d.cat==='money') resolveIncident(inc, 0, true);
     else if(inc.id==='quit') resolveIncident(inc, 0, true);
     else if(inc.id==='absent' || inc.id==='conflict'){ resolveIncident(inc, inc.id==='absent'?2:2, true); }
     else { applyFx({chaos:2, rep:-1}, inc); }
@@ -1103,6 +1172,7 @@ function applyFx(fx, inc){
   if(fx.complain){ S.flags.complaint = 1; }
   if(fx.openRival && inc && inc.rid){ chips.push(['Переговоры открыты', true]); }
   if(inc && (inc.id==='conflict')){ if(st) st.lastConflict = S.day; if(st2) st2.lastConflict = S.day; S.c.conflicts++; }
+  if(fx.st){ const msg = storyFx(fx.st, inc, chips); if(msg) return {chips, out:msg}; }
   return {chips};
 }
 function resolveIncident(inc, i, auto){
@@ -1110,6 +1180,7 @@ function resolveIncident(inc, i, auto){
   S.incidents = S.incidents.filter(x=>x!==inc);
   let out = o.out || '';
   let fx = o.fx || {};
+  if(typeof fx === 'function'){ const r0 = fx(S, inc) || {}; fx = r0.fx || {}; if(r0.out) out = r0.out; }
   if(o.p !== undefined && !chance(o.p)){ out = o.fail || out; fx = {fire:1, quit:1}; }
   if(o.buyNow){ const k = o.buyNow; const err = orderStock(k, 3, true); if(err) out = err; }
   const r = applyFx(fx, inc);
@@ -1130,7 +1201,8 @@ function processPending(){
   if(!due.length) return;
   S.pending = S.pending.filter(p=>p.at>now);
   for(const p of due){
-    if(p.ev) pushIncident(p.ev, p.data||{});
+    if(p.story){ if(SEASONS[p.story]) SEASONS[p.story].start(); else genStart(); }
+    else if(p.ev) pushIncident(p.ev, p.data||{});
     else if(p.fx){ const r = applyFx(p.fx, p.data||{}); HOOK.modal({kind:'note', title:p.note || 'Последствия', chips:r.chips}); }
   }
 }
@@ -1176,6 +1248,7 @@ function initState(){
   S.staff.push(Object.assign(makeStaff('Бариста', {quirk:'none'}), {room:'main', lvl:2}));
   S.staff.forEach(s=>s.off = [5,6]);
   refreshCands(); rollWeather(); newTask(); S.task.day = S.day;
+  S.story = storyInit(); startSeason(1);
 }
 const ACH = [
   ['first100','Первая сотня','Обслужить 100 гостей',S=>S.c.guests>=100,1],
@@ -1259,10 +1332,12 @@ function hourly(){
 function avgUpg(k){ return S.rooms.reduce((a,r)=>a+r.upg[k],0)/S.rooms.length; }
 
 /* Офлайн: прогон экономики по агрегированным шагам */
+function ownerSub(){ return S.ent && S.ent.sub && S.ent.sub > Date.now(); }
 function simulateOffline(realMs){
-  const capped = Math.min(realMs, 12*3600*1000);
+  const sub = ownerSub();
+  const capped = Math.min(realMs, (sub?24:12)*3600*1000);
   const steps = Math.floor(capped / 60000);
-  const eff = 0.6;
+  const eff = sub ? 0.8 : 0.6;
   const before = S.money, guests0 = S.c.guests;
   HOOK.quiet = true;
   for(let i=0;i<steps;i++){
@@ -1277,6 +1352,253 @@ function simulateOffline(realMs){
   }
   HOOK.quiet = false;
   return {money:S.money-before, guests:S.c.guests-guests0, mins:Math.round(capped/60000)};
+}
+
+/* ================= Brew Crew — бесконечный сюжет ================= */
+const CHARS = {
+  palych:{n:'Валерий Палыч', d:'«Серьёзный человек». Кожаная куртка, двое за спиной, всегда платит за американо.', spr:'guest:0'},
+  viktor:{n:'Виктор', d:'Бывший владелец кофейни. Продал её тебе и исчез с долгами.', spr:'guest:9'},
+  arseniy:{n:'Арсений', d:'Менеджер сети «Кофе Хаус Плюс». Костюм, улыбка, KPI.', spr:'guest:20'},
+  lev:{n:'Лев', d:'Основатель «Бородатого бариста». Ненавидит сети и сахар.', spr:'guest:3'},
+  ashot:{n:'Ашот', d:'Хозяин «Шаурмы и кофе 24». Знает всех в районе.', spr:'guest:6'},
+  alena:{n:'Алёна', d:'Продюсер шоу «Кофейня на грани». Ищет драму.', spr:'guest:1'},
+  somov:{n:'Депутат Сомов', d:'Районный депутат. Решает вопросы за «благодарность».', spr:'old:2'}
+};
+const STORY_REL_FROM_RIVAL = {arseniy:'chain', lev:'hipster', ashot:'shawarma'};
+function storyInit(){ return {season:1, sStart:1, flags:{}, rel:{palych:0, viktor:0, alena:0, somov:0}, karma:0, dl:null, gen:null, newsN:0, week:{}, arcs:{}, log:[]}; }
+function srel(k){ if(STORY_REL_FROM_RIVAL[k]){ const r = S.rivals.find(x=>x.id===STORY_REL_FROM_RIVAL[k]); return r ? r.rel : 0; } return S.story.rel[k]||0; }
+function srelAdd(k, v){ if(STORY_REL_FROM_RIVAL[k]){ const r = S.rivals.find(x=>x.id===STORY_REL_FROM_RIVAL[k]); if(r) r.rel = clamp(r.rel+v, -100, 100); return; } S.story.rel[k] = clamp((S.story.rel[k]||0)+v, -100, 100); }
+function sflag(k){ return S.story.flags[k]; }
+function dlText(){ const d = S.story.dl; if(!d) return ''; return d.amount ? fmtR(d.amount) : d.label; }
+function scheduleBeat(days, id, hour){ const at = (S.day + days)*DAY_MIN + (hour!=null ? hour*60 : RI(10*60, 19*60)); S.pending.push({at, ev:id}); }
+function bestStaff(){ const l = S.staff.filter(s=>s.today!=='sub' && !s.isYou); return l.sort((a,b)=>b.lvl*10+b.shifts-(a.lvl*10+a.shifts))[0]; }
+
+/* --- эффекты сюжета: fx.st --- */
+function storyFx(st, inc, chips){
+  const T = S.story;
+  if(st.f) Object.assign(T.flags, st.f);
+  if(st.rel) for(const k in st.rel){ srelAdd(k, st.rel[k]); chips.push([CHARS[k].n+': '+(st.rel[k]>0?'+':'')+st.rel[k], st.rel[k]>0]); }
+  if(st.karma) T.karma += st.karma;
+  if(st.dl){ T.dl = {amount:st.dl.amount||0, label:st.dl.label, by:S.day+st.dl.days, beat:st.dl.beat, cond:st.dl.cond||null}; scheduleBeat(st.dl.days, st.dl.beat, 13); chips.push([st.dl.label+(st.dl.amount?': '+fmtR(st.dl.amount):'')+' до дня '+T.dl.by, false]); }
+  if(st.clear) T.dl = null;
+  if(st.next) scheduleBeat(st.next[0], st.next[1]);
+  if(st.next2) scheduleBeat(st.next2[0], st.next2[1]);
+  if(st.season) startSeason(T.season+1, st.season);
+  if(st.delay){ const d = T.dl; if(d){ if(srel('palych') >= 0 || chance(0.3)){ d.amount = Math.round(d.amount*1.3/1000)*1000; d.by = S.day+7; scheduleBeat(7, d.beat, 13); chips.push(['Отсрочка на 7 дней, долг +30%', null]); return 'Палыч кивает: «Неделя. И тридцать процентов сверху»'; }
+    const v = bestStaff(); if(v){ removeStaff(v.id); chips.push([v.name+' уволился от страха', false]); } repAdd(-0.2); d.by = S.day+5; scheduleBeat(5, d.beat, 13); chips.push(['Отсрочка 5 дней', null]); return 'Палыч ничего не ответил. Вечером '+(v?v.name+' позвонил и сказал, что больше не придёт: ему «объяснили»':'тебе прокололи шины')+'.'; } }
+  if(st.permMod){ addMod(st.permMod[0], st.permMod[1], 24*400, st.permMod[2]); chips.push([st.permMod[2], st.permMod[1]>=1 === (st.permMod[0]==='traffic'||st.permMod[0]==='check')]); }
+  return null;
+}
+
+/* --- сезоны, написанные руками --- */
+const SEASONS = {
+ 1:{n:'Расписка', start:()=>S.pending.push({at:absNow()+6, ev:'s1_find'})},
+ 2:{n:'Сеть наступает', start:()=>{ scheduleBeat(0,'s2_offer'); scheduleBeat(10,'s2_poach'); }},
+ 3:{n:'Кофейня на грани', start:()=>{ scheduleBeat(0,'s3_call'); scheduleBeat(4,'s3_secret'); }},
+ 4:{n:'Депутат', start:()=>scheduleBeat(0,'s4_somov')},
+ 5:{n:'Аукцион', start:()=>scheduleBeat(0,'s5_news')},
+ 6:{n:'Возвращение Виктора', start:()=>scheduleBeat(0,'s6_viktor')}
+};
+function startSeason(n, delayDays){
+  const T = S.story; T.season = n; T.sStart = S.day + (delayDays||0); T.dl = null;
+  if(SEASONS[n]){ const f = SEASONS[n].start; if(delayDays){ S.pending.push({at:(S.day+delayDays)*DAY_MIN + 11*60, story:n}); } else f(); }
+  else { T.gen = genSeason(); if(delayDays) S.pending.push({at:(S.day+delayDays)*DAY_MIN + 11*60, story:n}); else genStart(); }
+}
+function seasonName(){ const T = S.story; return SEASONS[T.season] ? SEASONS[T.season].n : (T.gen ? T.gen.title : 'Затишье'); }
+
+def('s1_find', {cat:'story', who:null, t:'Находка в подсобке', x:'Разбирая подсобку, находишь в коробке из-под стаканов расписку: «Я, Виктор Сергеевич, должен Валерию Павловичу 600 000 рублей». Дата — неделю назад. Виктор продал тебе кофейню три дня назад и сменил номер.', o:[
+ {t:'Сжечь к чертям', fx:{st:{f:{burned:1}, karma:-1, next:[2,'s1_palych']}}, out:'Расписка красиво горит. Но у Палыча наверняка есть копия.'},
+ {t:'Позвонить Виктору', fx:{st:{f:{called:1}, rel:{viktor:5}, next:[2,'s1_palych']}}, out:'«Абонент недоступен». Через час приходит смс с незнакомого номера: «Прости. Не говори им, где я».'},
+ {t:'Убрать в сейф', fx:{st:{f:{kept:1}, next:[2,'s1_palych']}}, out:'Пусть лежит. Что-то подсказывает, что пригодится.'}]});
+def('s1_palych', {cat:'story', who:'palych', t:'Валерий Палыч', x:'Заходит мужчина в кожаной куртке, с ним двое. «Я Валерий Павлович. Виктор должен мне 600 тысяч. Виктор уехал. Кофейня осталась. Значит, должна кофейня». Кладёт на стойку копию расписки.', o:[
+ {t:'Я тут ни при чём, ищите Виктора', fx:{st:{rel:{palych:-25}, dl:{amount:600000, days:14, label:'Долг Палычу', beat:'s1_deadline'}, next:[6,'s1_paint']}}, out:'Палыч улыбается одними губами: «Две недели. Потом поговорим иначе»'},
+ {t:'Давайте договоримся по-хорошему', fx:{st:{rel:{palych:15}, dl:{amount:450000, days:16, label:'Долг Палычу', beat:'s1_deadline'}, next:[7,'s1_roof']}}, out:'«Уважаю. Четыреста пятьдесят — и разошлись. Шестнадцать дней»'},
+ {t:'Я звоню в полицию', fx:{st:{rel:{palych:-50}, karma:2, f:{police:1}, dl:{amount:600000, days:14, label:'Долг Палычу', beat:'s1_deadline'}, next:[3,'s1_window']}}, out:'Палыч пожимает плечами и уходит. Полиция приезжает через два часа, пишет бумагу и уезжает.'}]});
+def('s1_paint', {cat:'story', t:'Надпись на двери', x:'Утром на двери кофейни красной краской написано «ДОЛГ». Гости фотографируют и выкладывают в чат района.', o:[
+ {t:'Закрасить и молчать', fx:{m:-3000, rep:-1}, out:'Закрасили. Осадочек остался.'},
+ {t:'Оставить: пусть будет арт', fx:{pathos:2, rep:-2, chaos:2}, out:'Хипстеры в восторге. Бабушки обходят стороной.'},
+ {t:'Позвонить Палычу и попросить не позорить', fx:{st:{rel:{palych:8}}}, out:'«Я тут ни при чём», — говорит Палыч. Больше надписей не было.'}]});
+def('s1_window', {cat:'story', t:'Разбитая витрина', x:'Ночью кто-то разбил витрину кирпичом. К кирпичу скотчем примотана записка: «Полиция не поможет».', o:[
+ {t:'Вставить новое стекло', fx:{m:-40000}, out:'Стекольщик сказал, что это уже третья витрина в районе за месяц.'},
+ {t:'Заклеить скотчем и работать', fx:{chaos:6, rep:-2}, out:'Ветер свистит. Гости сидят в куртках.'},
+ {t:'Снять видео и выложить в сеть', fx:{rep:2, soul:3, m:-40000, st:{rel:{palych:-15}, karma:1}}, out:'Город на твоей стороне: сотни репостов и очередь из сочувствующих. Палыч — не на твоей.'}]});
+def('s1_roof', {cat:'story', who:'palych', t:'Предложение Палыча', x:'Палыч заходит один, без охраны, берёт американо. «Слушай, ты нормальный. Давай так: долг прощу наполовину, а ты мне — пятьдесят тысяч каждый месяц. И проверки к тебе ходить перестанут»', o:[
+ {t:'Согласиться на «крышу»', fx:{noInspect:28, st:{f:{roof:1}, karma:-2, rel:{palych:20}, dl:{amount:225000, days:9, label:'Долг Палычу', beat:'s1_deadline'}}}, out:'Палыч жмёт руку. Рука тяжёлая.'},
+ {t:'Отказаться вежливо', fx:{st:{rel:{palych:-5}}}, out:'«Как знаешь». Допивает американо и оставляет ровно без сдачи.'},
+ {t:'Отказаться и пригрозить журналистами', fx:{st:{rel:{palych:-30}, karma:1, rel2:0}}, out:'Палыч долго смотрит тебе в глаза. «Смелый. Посмотрим»'}]});
+def('s1_deadline', {cat:'story', who:'palych', t:'Срок вышел', x:'Палыч пришёл за деньгами. Его люди встали у двери. Сумма: {dl}.', o:[
+ {t:'Отдать {dl}', req:S=>S.story.dl && S.money>=S.story.dl.amount, fx:S=>({fx:{m:-S.story.dl.amount, st:{clear:1, rel:{palych:20}, f:{debt_paid:1}, season:6}}, out:'«Приятно иметь дело». Палыч уходит. Пока что.'})},
+ {t:'Отдать всё, что есть в кассе', req:S=>S.money>0, fx:S=>({fx:{m:-Math.round(S.money*0.9), st:{clear:1, rel:{palych:-10}, f:{debt_partial:1}, season:6}}, out:'«Это не всё. Но я запомню, что ты старался»'})},
+ {t:'Отдать кофемашину', fx:{sell:'machine', st:{clear:1, rel:{palych:-5}, f:{machine_taken:1}, season:6}}, out:'Двое выносят кофемашину. Через час привозят старую, «чтобы было на чём варить».'},
+ {t:'Попросить отсрочку', fx:{st:{delay:1}}, out:''}]});
+
+def('s2_offer', {cat:'story', who:'arseniy', t:'Предложение сети', x:'Арсений из «Кофе Хаус Плюс» в идеально сидящем костюме: «Наша сеть заходит в квартал. Вы нам мешаете. Предлагаю продать нам 30% и стать франчайзи. Или просто не мешать»', o:[
+ {t:'Продать 30%', fx:S=>({fx:{m:Math.round(Math.max(1500000, avgRev()*15)/1000)*1000, st:{f:{chain_part:1}, karma:-1, permMod:['check',0.9,'Доля сети: −10% с каждого чека'], next2:[20,'s2_end']}}, out:'Деньги на счёте. Теперь десятая часть каждого чека уходит сети. Арсений доволен.'})},
+ {t:'Отказать', fx:{st:{rel:{arseniy:-20}, next:[3,'s2_war'], next2:[21,'s2_end']}}, out:'Арсений вежливо кивает. «Тогда увидимся на рынке»'},
+ {t:'Позвать Льва и Ашота объединиться', fx:{st:{next:[2,'s2_alliance'], next2:[21,'s2_end']}}, out:'Звонишь соседям. Оба обещают зайти на днях.'}]});
+def('s2_war', {cat:'story', t:'Ценовая война', x:'Сеть опустила цену капучино до 99 рублей. Пол-района стоит у них.', o:[
+ {t:'Тоже снизить цены', fx:{mod:['check',0.8,72,'Ценовая война: чек −20%'], mod2:['traffic',1.1,72,'Ценовая война: гостей +10%']}, out:'Гости вернулись. Маржа — нет.'},
+ {t:'Держать цены и качество', fx:{pathos:3, mod:['traffic',0.8,72,'Ценовая война: гостей −20%']}, out:'Ценители остались. Остальные пьют за 99.'},
+ {t:'Акция «Кофе без сети»', fx:{m:-20000, soul:2, mod:['traffic',1.25,48,'Акция «Кофе без сети»: гостей +25%']}, out:'Район любит своих. Очередь до угла.'}]});
+def('s2_alliance', {cat:'story', t:'Союз района', x:'Вечером заходят Лев и Ашот. Лев: «Ненавижу их картонные стаканы». Ашот: «Я тоже. Давай вместе против них»', o:[
+ {t:'Общие закупки и общая карта гостя', req:S=>srel('lev')>-20 && srel('ashot')>-20, fx:{st:{f:{alliance:1}, rel:{lev:15, ashot:15}, permMod:['supply',0.92,'Союз района: закупки −8%']}, mod:['traffic',1.1,168,'Союз района: гостей +10%']}, out:'Три кофейни против сети. Арсений нервничает.'},
+ {t:'Только общие закупки', fx:{st:{rel:{lev:5, ashot:5}, permMod:['supply',0.95,'Общие закупки: −5%']}}, out:'Деловой союз без лишних обнимашек.'},
+ {t:'Передумал, справлюсь сам', fx:{st:{rel:{lev:-10, ashot:-10}}}, out:'Лев фыркает. Ашот говорит: «Зря».'}]});
+def('s2_poach', {cat:'story', who:'arseniy', t:'Сеть переманивает', x:'Арсений лично пришёл к твоему лучшему сотруднику и предложил ставку в полтора раза выше. {s} пришёл к тебе посоветоваться.', pre:inc=>{ const b = bestStaff(); if(b){ inc.sid = b.id; inc.sname = b.name; } return !!b; }, o:[
+ {t:'Поднять ставку на 40%', fx:{raise:1.4, mood:20}, out:'{s} остаётся. Арсений уходит без улыбки.'},
+ {t:'Пожелать удачи', fx:{fire:1, quit:1, st:{rel:{arseniy:5}}}, out:'{s} уходит в сеть. Через неделю пишет, что там скучно.'},
+ {t:'Устроить скандал Арсению при гостях', fx:{pathos:2, rep:1, st:{rel:{arseniy:-20}}}, out:'Гости снимают на телефон. Арсений ретируется.'}]});
+def('s2_end', {cat:'story', t:'Вторая точка сети', x:'Сеть решает, открывать ли вторую точку прямо в твоём доме.', o:[
+ {t:'Посмотрим, кто кого', fx:S=>{ const strong = S.rep>=4 || sflag('alliance') || sflag('chain_part');
+   return strong ? {fx:{rep:1, st:{season:5, f:{chain_beaten:1}}}, out:'Сеть передумала: место «бесперспективное». Это победа, хоть и тихая.'}
+                 : {fx:{st:{season:5}, mod:['traffic',0.85,24*30,'Сеть в соседнем подъезде: гостей −15%']}, out:'Через неделю внизу открывается «Кофе Хаус Плюс». Гостей станет меньше, пока ты не станешь лучше.'}; }}]});
+
+def('s3_call', {cat:'story', who:'alena', t:'Звонок с телевидения', x:'Звонит Алёна, продюсер шоу «Кофейня на грани»: «Хотим снять про вас выпуск. Приедем через неделю. Будет честно. Может быть, слишком честно»', o:[
+ {t:'Согласиться', fx:{st:{f:{show:1}, rel:{alena:10}, dl:{days:7, label:'Съёмки шоу: Бардак ниже 30 и рейтинг от 3,8', beat:'s3_film'}}}, out:'«Отлично. И уберите, пожалуйста, гуся, если он у вас есть»'},
+ {t:'Согласиться, но за гонорар', fx:{m:50000, st:{f:{show:1, paid_show:1}, karma:-1, dl:{days:7, label:'Съёмки шоу: Бардак ниже 30 и рейтинг от 3,8', beat:'s3_film'}}}, out:'Гонорар пришёл. Алёна предупредила, что монтаж — их.'},
+ {t:'Отказаться', fx:{st:{rel:{alena:-20}, season:14}}, out:'«Жаль. Снимем у конкурентов». Через две недели у «Бородатого бариста» очередь.'}]});
+def('s3_secret', {cat:'story', t:'Тайна сотрудника', x:'{s} просит поговорить наедине: «Я сын Арсения. Того самого, из сети. Отец не знает, где я работаю. Я ушёл от него, потому что не хочу быть как он»', pre:inc=>{ const b = bestStaff(); if(b){ inc.sid = b.id; inc.sname = b.name; } return !!b; }, o:[
+ {t:'Оставить: это его жизнь', fx:{mood:20, st:{karma:1, f:{son_kept:1}}}, out:'{s} выдыхает и улыбается впервые за месяц.'},
+ {t:'Уволить: вдруг шпион', fx:{fire:1, st:{karma:-1}}, out:'{s} уходит молча. Арсений через неделю узнаёт и смеётся.'},
+ {t:'Попросить поговорить с отцом о нас', fx:{mood:-10, st:{rel:{arseniy:25}, f:{son_bridge:1}}, mod:['traffic',1.1,24*14,'Сеть отступила: гостей +10%']}, out:'Арсений звонит сам: «Мой сын у вас? Ладно. Месяц не трогаем ваш квартал»'}]});
+def('s3_film', {cat:'story', who:'alena', t:'Выпуск вышел', x:'Съёмочная группа отработала день в кофейне. Выпуск выходит сегодня вечером.', o:[
+ {t:'Включить телевизор', fx:S=>{ const good = S.meters.chaos < 30 && S.rep >= 3.8;
+   if(good) return {fx:{rep:3, st:{rel:{alena:15}, f:{tv_star:1}, season:5, clear:1}, mod:['traffic',1.6,120,'После шоу: гостей +60%']}, out:'Вас показали героями: «маленькая кофейня, которая держится». Телефон разрывается.'};
+   if(sflag('paid_show')) return {fx:{rep:-1, st:{season:5, clear:1}}, out:'Монтаж жёсткий, но за гонорар смягчили. Пару дней посмеются и забудут.'};
+   return {fx:{rep:-4, st:{season:5, clear:1}, mod:['traffic',0.8,72,'Позор на всю страну: гостей −20%']}, out:'В выпуске показали грязь под стойкой и бариста, который ковыряет в носу. Мем дня.'}; }}]});
+
+def('s4_somov', {cat:'story', who:'somov', t:'Депутат Сомов', x:'Депутат Сомов садится за лучший столик: «Хотите расширяться? Веранда, второй зал? Разрешения — через меня. Триста тысяч, и через неделю всё будет»', o:[
+ {t:'Заплатить 300 000 ₽', req:S=>S.money>=300000, fx:{m:-300000, st:{f:{permit:1}, karma:-2, rel:{somov:20}, season:20}}, out:'Сомов пересчитывает, не стесняясь. «Приятно работать с понимающими людьми»'},
+ {t:'Отказаться', fx:{st:{rel:{somov:-25}, next:[5,'s4_revenge'], season:22}}, out:'«Ну что ж. Город большой, проверок много»'},
+ {t:'Записать разговор и отдать Алёне', req:S=>srel('alena')>=0, fx:{st:{karma:3, next:[4,'s4_scandal'], season:22}}, out:'Диктофон в кармане фартука сделал своё дело.'}]});
+def('s4_revenge', {cat:'story', t:'Месть депутата', x:'С утра в дверях сразу две проверки: санитарная и пожарная. Говорят, «по обращению граждан».', o:[
+ {t:'Принять обеих честно', fx:S=>{ const r1 = inspectionResult('san','honest'), r2 = inspectionResult('fire','honest'); applyFx(r1.fx,{}); applyFx(r2.fx,{}); return {fx:{}, out:r1.txt+' '+r2.txt}; }},
+ {t:'Позвонить Палычу', req:S=>sflag('roof') || srel('palych')>20, fx:{st:{rel:{palych:-10}}}, out:'Через двадцать минут инспекторы получили звонок и ушли, извинившись.'}]});
+def('s4_scandal', {cat:'story', who:'alena', t:'Сюжет про депутата', x:'Алёна выпустила сюжет с твоей записью.', o:[
+ {t:'Смотреть', fx:S=>chance(0.65) ? {fx:{rep:3, soul:3, st:{f:{permit:1, somov_down:1}, rel:{alena:20}}}, out:'Сомова сняли. Новый депутат дал разрешение бесплатно и зашёл на кофе.'} : {fx:{close:24, rep:-1, st:{rel:{somov:-40}}}, out:'Сомов отбился и мстит: кофейню закрыли на сутки «до выяснения».'}}]});
+
+def('s5_news', {cat:'story', t:'Здание на продажу', x:'Управляющая компания объявила: здание, где стоит кофейня, через три недели уходит с молотка. Кто купит — тот хозяин всех арендаторов. Стартовая цена — {price}.', pre:inc=>{ inc.price = Math.round(Math.max(6000000, avgRev()*40)/100000)*100000; inc.x = inc.x; return true; }, o:[
+ {t:'Начать копить', fx:S=>({fx:{st:{dl:{amount:S._lastPrice, days:20, label:'Выкуп здания', beat:'s5_auction'}}}, out:'Каждый рубль теперь на счету.'})},
+ {t:'Скинуться с Палычем пополам', req:S=>sflag('roof') || srel('palych')>=10, fx:S=>({fx:{st:{f:{palych_half:1}, karma:-2, rel:{palych:10}, dl:{amount:Math.round(S._lastPrice/2), days:20, label:'Твоя половина за здание', beat:'s5_auction'}}}, out:'Палыч доволен: «Будем соседями по собственности»'})},
+ {t:'Скинуться с Львом и Ашотом', req:S=>sflag('alliance'), fx:S=>({fx:{st:{f:{coop_building:1}, rel:{lev:10, ashot:10}, dl:{amount:Math.round(S._lastPrice*0.4), days:20, label:'Твоя доля за здание', beat:'s5_auction'}}}, out:'Союз района покупает здание. Звучит гордо.'})}]});
+def('s5_auction', {cat:'story', t:'Аукцион', x:'Зал управляющей компании. Арсений в костюме, Палыч в куртке, ты в фартуке. Нужно {dl}.', o:[
+ {t:'Сделать ставку: {dl}', req:S=>S.story.dl && S.money>=S.story.dl.amount, fx:S=>({fx:{m:-S.story.dl.amount, rep:2, st:{clear:1, f:{building:1}, permMod:['rent', sflag('palych_half')?0.5:0.2, sflag('palych_half')?'Половина здания твоя: аренда −50%':'Здание твоё: аренда −80%'], season:12}}, out:sflag('palych_half') ? 'Молоток стучит. Здание твоё — наполовину. Вторая половина у Палыча.' : 'Молоток стучит. Ты хозяин здания. Арсений выходит первым.'})},
+ {t:'Не тянем', fx:S=>{ const p = srel('palych') > srel('arseniy'); return {fx:{st:{clear:1, f:{building_lost:1}, permMod:['rent',1.3, p?'Здание у Палыча: аренда +30%':'Здание у сети: аренда +30%'], season:12}}, out:p ? 'Здание купил Палыч. «Аренду поднимем по-дружески»' : 'Здание купила сеть. Аренда растёт, а Арсений присылает открытку.'}; }}]});
+
+def('s6_viktor', {cat:'story', who:'viktor', t:'Возвращение Виктора', x:'Виктор вернулся. Загорелый, с чемоданом. «Я передумал. Кофейня моя. Документы мы тогда оформили криво, юрист подтвердит»', o:[
+ {t:'Показать расписку и выгнать', req:S=>sflag('kept'), fx:{st:{rel:{viktor:-30}, karma:1, season:10}}, out:'Виктор бледнеет при виде расписки и уходит. Говорят, Палыч уже знает, что он в городе.'},
+ {t:'Выкупить его претензию', fx:S=>({fx:{m:-Math.round(Math.max(300000, avgRev()*5)/1000)*1000, st:{rel:{viktor:20}, season:10}}, out:'Виктор берёт деньги и обещает исчезнуть навсегда. В который раз.'})},
+ {t:'Сдать его Палычу', fx:{st:{karma:-3, rel:{palych:30, viktor:-100}, f:{viktor_gone:1}, season:10}}, out:'Один звонок. Виктора больше никто не видел.'},
+ {t:'Взять его бариста', fx:S=>{ const v = makeStaff('Бариста', {quirk:'genius'}); v.name = 'Виктор'; v.lvl = 7; v.rank = 1; v.shifts = 20; hire(v, 'main', 'grey'); return {fx:{st:{rel:{viktor:40}, karma:2, season:10}}, out:'Виктор надевает фартук: «Я ведь всегда хотел просто варить кофе»'}; }}]});
+
+/* --- генератор бесконечных сезонов --- */
+const GEN_VILLAINS = [
+ {n:'Артурчик, племянник Палыча', t:'Племянник', intro:'Артурчик, племянник Палыча, заходит с колонкой и двумя друзьями: «Дядя сказал, тут можно поднять. С сегодняшнего дня 10% выручки — мне»', kind:'money', mul:8},
+ {n:'Эдгар, криптоинвестор', t:'Инвестор', intro:'Эдгар в худи за 90 тысяч предлагает «перезапустить» кофейню в майнинг-кафе и угрожает выкупить твой долг у банка, если откажешь', kind:'rep', rep:4.2},
+ {n:'Тамара Петровна', t:'Инспектор', intro:'Санитарный инспектор Тамара Петровна поскользнулась у вас на пролитом молоке и поклялась закрыть кофейню', kind:'clean'},
+ {n:'Кирилл Правда', t:'Хейтер', intro:'Блогер Кирилл Правда выпустил ролик «Почему эта кофейня — зло» и обещает выпускать по ролику в день, пока ты не извинишься публично', kind:'rep', rep:4.0},
+ {n:'Секта «Утренний свет»', t:'Секта', intro:'Люди в белом хотят каждое утро проводить в зале «медитации с кофе» и платить пожертвованиями. Отказ, говорят, «нарушит баланс вселенной»', kind:'staff'},
+ {n:'Управляющая компания «Уют»', t:'УК', intro:'Управляющая компания решила снести вашу вывеску «как незаконную» и требует согласовать новую за деньги', kind:'money', mul:4},
+ {n:'Бывший сотрудник', t:'Бывший', intro:'Твой бывший сотрудник открыл кофейню через дорогу, переманивает постоянных гостей и рассказывает всем, как ты им орал', kind:'rep', rep:3.9},
+ {n:'Сеть «Кофе Хаус Плюс»', t:'Сеть', intro:'Сеть возвращается с новым менеджером. Он моложе, злее и начинает с демпинга', kind:'staff'}
+];
+function avgRev(){ const h = S.fin.hist.slice(0,7); return h.length ? h.reduce((a,f)=>a+f.rev,0)/h.length : 50000; }
+function genSeason(){
+  const v = pick(GEN_VILLAINS); const amount = Math.round(Math.max(200000, avgRev()*(v.mul||6))/1000)*1000;
+  return {v:GEN_VILLAINS.indexOf(v), title:v.t+': '+v.n, amount, days:RI(12,18)};
+}
+function genStart(){ scheduleBeat(0, 'g_intro'); }
+function gv(){ return GEN_VILLAINS[S.story.gen.v]; }
+function genCond(){ const v = gv(); if(v.kind==='rep') return {label:'Рейтинг от '+v.rep.toFixed(1).replace('.',','), f:S=>S.rep>=v.rep};
+  if(v.kind==='clean') return {label:'Бардак ниже 25', f:S=>S.meters.chaos<25}; if(v.kind==='staff') return {label:'Не меньше 4 сотрудников и никто не уволился', f:S=>S.staff.filter(s=>s.today!=='sub').length>=4}; return {label:'', f:()=>true}; }
+def('g_intro', {cat:'story', t:'{vt}', x:'{vintro}.', pre:inc=>{ const g = S.story.gen; inc.vt = gv().n; inc.vintro = gv().intro; inc.amount = g.amount; return true; }, o:[
+ {t:'Принять условия', fx:S=>{ const g = S.story.gen, v = gv(); if(v.kind==='money') return {fx:{st:{karma:-1, dl:{amount:g.amount, days:g.days, label:v.t+': откупиться', beat:'g_deadline'}, next:[5,'g_sabotage']}}, out:'Сумма: '+fmtR(g.amount)+'. Срок: '+g.days+' дней.'}; return {fx:{st:{karma:-1, dl:{days:g.days, label:v.t+': '+genCond().label, beat:'g_deadline'}, next:[5,'g_sabotage']}}, out:'Условие: '+genCond().label+'. Срок: '+g.days+' дней.'}; }},
+ {t:'Послать нахуй', fx:S=>{ const g = S.story.gen, v = gv(); return {fx:{pathos:2, st:{karma:1, dl:{amount: v.kind==='money'? g.amount : 0, days:g.days, label:v.t+(v.kind==='money'?': откупиться или держаться':': '+genCond().label), beat:'g_deadline'}, next:[3,'g_sabotage']}}, out:'Война объявлена. Пощады не будет.'}; }},
+ {t:'Попросить Палыча разобраться', req:S=>srel('palych')>=15 || sflag('roof'), fx:{st:{rel:{palych:-15}, karma:-2, next:[1,'g_palych']}}, out:'Палыч обещает «поговорить». Звучит страшно.'}]});
+def('g_palych', {cat:'story', who:'palych', t:'Палыч поговорил', x:'Палыч заходит за американо: «Решено. Но теперь ты мне должен одну услугу». Проблема исчезла. Надолго ли — неизвестно.', o:[
+ {t:'Спасибо, Валерий Павлович', fx:{st:{f:{owe_palych:1}, clear:1, season:RI(8,14)}}, out:'Он уходит. Услугу когда-нибудь попросит.'}]});
+def('g_sabotage', {cat:'story', t:'Удар', x:'{vt} переходит к делу: утром в кофейне {sab}.', pre:inc=>{ inc.vt = gv().n; inc.sab = pick(['не работает свет, а электрик говорит, что «кто-то постарался»','разбросаны листовки «Здесь травят кофе»','сидят восемь человек с одним стаканом воды и не уходят','отключили воду «по ошибке»','в отзывах появилось сто одинаковых единиц']); return true; }, o:[
+ {t:'Держать удар', fx:{chaos:4, rep:-1, moodAll:-5}, out:'Выстояли. Злость копится.'},
+ {t:'Ответить тем же', fx:{chaos:3, pathos:3, st:{karma:-1}}, out:'Ты сделал так, что им тоже стало плохо. Карма записала.'},
+ {t:'Поднять район', fx:{soul:3, m:-5000, mod:['traffic',1.15,48,'Район за вас: гостей +15%'], st:{karma:1}}, out:'Постоянные гости приводят друзей. Ты не один.'}]});
+def('g_deadline', {cat:'story', t:'Развязка', x:'Срок вышел. {vt} ждёт ответа.', pre:inc=>{ inc.vt = gv().n; return true; }, o:[
+ {t:'Отдать {dl}', req:S=>S.story.dl && S.story.dl.amount>0 && S.money>=S.story.dl.amount, fx:S=>({fx:{m:-S.story.dl.amount, st:{clear:1, season:RI(6,12)}}, out:'Откупился. Неприятно, но спокойно.'})},
+ {t:'Показать, что условие выполнено', req:S=>gv().kind!=='money' && genCond().f(S), fx:{rep:2, soul:2, st:{clear:1, karma:1, season:RI(6,12)}}, out:'Ты выстоял. Злодей уходит искать кого-то послабее. Газета пишет о тебе.'},
+ {t:'Не сдаваться', fx:S=>{ const k = S.story.karma; const good = k >= 0 ? chance(0.5) : chance(0.25);
+   return good ? {fx:{rep:1, st:{clear:1, season:RI(6,12)}}, out:'Повезло: у них самих начались проблемы, и они исчезли.'}
+               : {fx:{m:-Math.round(Math.max(50000, avgRev()*2)), rep:-2, chaos:5, st:{clear:1, season:RI(6,12)}, mod:['traffic',0.85,72,'Последствия войны: гостей −15%']}, out:'Они ударили напоследок. Больно, но ты всё ещё здесь.'}; }}]});
+
+/* --- арки сотрудников --- */
+const ARCS = ['savings','bets','romance','band'];
+def('a_savings', {cat:'story', t:'Мечта о своём деле', x:'{s} признаётся: копит на свою кофейню и через месяц хочет уйти. Просит совета.', o:[
+ {t:'Помочь бизнес-планом', fx:{mood:15, st:{karma:2, next:[20,'a_savings2']}}, out:'Два вечера вы сидели над цифрами. {s} растроган.'},
+ {t:'Предложить стать управляющим', req:inc=>true, fx:{mood:20, raise:1.25}, out:'{s} подумает. Пока остаётся с прибавкой.'},
+ {t:'Сказать, что ничего не выйдет', fx:{mood:-25, st:{karma:-1}}, out:'{s} молча кивает. Что-то сломалось.'}]});
+def('a_savings2', {cat:'story', t:'Новая кофейня в районе', x:'{s} открыл свою маленькую кофейню у метро и в первый же день прислал фото: «Без тебя бы не смог».', o:[
+ {t:'Порадоваться', fx:{soul:4, rep:1, mod:['supply',0.95,24*30,'Дружеские закупки с бывшим сотрудником']}, out:'Теперь у тебя есть друг-конкурент. Это лучше, чем враг.'}]});
+def('a_bets', {cat:'story', t:'Аванс', x:'{s} просит аванс 30 000 ₽: «Очень надо». Глаза бегают, телефон в руке с открытым приложением ставок.', o:[
+ {t:'Дать аванс', fx:{m:-30000, mood:10, st:{next:[6,'a_bets2']}}, out:'{s} обещает вернуть с зарплаты.'},
+ {t:'Отказать', fx:{mood:-15}, out:'{s} обиделся, но работает.'},
+ {t:'Поговорить про ставки', fx:{mood:-5, st:{karma:1}}, out:'Тяжёлый разговор. {s} удалил приложение. Надолго ли?'}]});
+def('a_bets2', {cat:'story', t:'Коллекторы за сотрудником', x:'В кофейню пришли двое и спросили {s}. Оказывается, он должен букмекеру ещё 80 000 ₽.', o:[
+ {t:'Заплатить за него', fx:{m:-80000, mood:40, st:{karma:2}}, out:'{s} плачет и клянётся отработать. Похоже, правда отработает.'},
+ {t:'Сказать, что он тут не работает', fx:{mood:15, chaos:2}, out:'Ушли. Но вернутся.'},
+ {t:'Уволить', fx:{fire:1, st:{karma:-1}}, out:'Проблема ушла вместе с {s}.'}]});
+def('a_romance', {cat:'story', t:'Служебный роман', x:'{s} и {s2} держатся за руки в подсобке. Все уже знают.', pre:inc=>{ const o = S.staff.filter(x=>x.id!==inc.sid && x.room===(S.staff.find(y=>y.id===inc.sid)||{}).room && x.today!=='sub'); if(!o.length) return false; inc.sid2 = pick(o).id; return true; }, o:[
+ {t:'Порадоваться за них', fx:{mood:15, mood2:15, soul:2, st:{next:[14,'a_wedding']}}, out:'Атмосфера в команде теплее.'},
+ {t:'Запретить отношения на работе', fx:{mood:-20, mood2:-20, pathos:2}, out:'Теперь они встречаются у мусорных баков.'},
+ {t:'Развести по разным сменам', fx:{split:1}, out:'Видятся реже. Скучают сильнее.'}]});
+def('a_wedding', {cat:'story', t:'Свадьба в кофейне', x:'{s} просит устроить свадьбу прямо в кофейне в выходной.', o:[
+ {t:'Устроить за свой счёт', fx:{m:-40000, moodAll:20, soul:5, rep:2}, out:'Лучший вечер в истории кофейни. Видео разошлось по району.'},
+ {t:'Сдать зал за деньги', fx:{m:30000, moodAll:-5}, out:'Свадьба прошла. Молодые обиделись на счёт.'},
+ {t:'Отказать', fx:{mood:-25}, out:'Свадьба прошла в столовой. Без тебя.'}]});
+def('a_band', {cat:'story', t:'Группа бариста', x:'{s} играет в группе и просит дать концерт в зале в пятницу вечером.', o:[
+ {t:'Пусть играют', fx:S=>chance(0.6) ? {fx:{mood:20, mod:['traffic',1.3,6,'Концерт в зале: гостей +30%'], soul:2}, out:'Зал битком. Кто-то даже заплакал.'} : {fx:{mood:20, chaos:5, rep:-1}, out:'Соседи вызвали полицию в 23:05. Но было громко и честно.'}},
+ {t:'Только акустика', fx:{mood:8, soul:1}, out:'Тихо, мило, не очень прибыльно.'},
+ {t:'Нет', fx:{mood:-15}, out:'{s} разочарован.'}]});
+function maybeArc(){
+  if(chance(0.025) === false) return;
+  const free = S.staff.filter(s=>s.today!=='sub' && !s.isYou && !S.story.arcs[s.id] && s.shifts >= 5);
+  if(!free.length) return;
+  const s = pick(free); const arc = pick(ARCS); S.story.arcs[s.id] = arc;
+  S.pending.push({at:absNow()+RI(60, 600), ev:'a_'+arc, data:{sid:s.id}});
+}
+
+/* --- газета, клиффхэнгеры --- */
+function weekNews(){
+  const T = S.story; T.newsN++;
+  const w = S.fin.hist.slice(0,7); const rev = w.reduce((a,f)=>a+f.rev,0), guests = w.reduce((a,f)=>a+f.guests,0);
+  const items = [];
+  items.push(['Итоги недели', '«'+S.name+'» обслужила '+guests+' гостей и заработала '+fmtR(rev)+'.']);
+  const T2 = T.dl;
+  if(T2) items.push(['Сроки', 'Источники сообщают: у «'+S.name+'» осталось '+Math.max(0,T2.by-S.day)+' дней, чтобы закрыть вопрос «'+T2.label+'».']);
+  const pals = [
+    [srel('palych') < -30, 'Криминал', 'Валерия Палыча снова видели у вашего дома. Говорят, он «не забыл».'],
+    [sflag('roof'), 'Слухи', 'Говорят, у одной кофейни района теперь «надёжные друзья».'],
+    [srel('arseniy') < -20, 'Бизнес', '«Кофе Хаус Плюс» ищет новое помещение в квартале. Совпадение?'],
+    [sflag('alliance'), 'Соседи', 'Союз трёх кофеен района выпустил общую карту гостя. Сеть нервничает.'],
+    [S.meters.chaos > 60, 'Жалобы', 'Жители жалуются на шум и «странных людей» у одной из кофеен.'],
+    [S.rep >= 4.5, 'Рейтинг', '«'+S.name+'» вошла в топ кофеен района по отзывам.'],
+    [S.c.absurd > 5, 'Странное', 'Очевидцы сообщают о гусях, медиумах и людях в костюмах кальмара у местной кофейни.'],
+    [S.story.karma < -3, 'Шёпот', 'Про владельца одной кофейни говорят разное. В основном плохое.'],
+    [S.story.karma > 4, 'Люди', 'Пенсионеры района называют одну кофейню «единственным местом, где тебе рады».']
+  ].filter(x=>x[0]);
+  pals.slice(0,3).forEach(x=>items.push([x[1], x[2]]));
+  items.push(['Погода и прочее', pick(['На следующей неделе обещают дождь. Зонты — к кассе.','В районе открылся барбершоп. Бородатые клиенты пойдут за кофе.','Местный гусь замечен в трёх дворах одновременно.','Управляющая компания обещает починить лифт. Опять.'])]);
+  HOOK.modal({kind:'news', n:T.newsN, items});
+}
+function storyMidnight(){
+  if(!S.story) S.story = storyInit();
+  const T = S.story;
+  if(S.day % 7 === 0) weekNews();
+  maybeArc();
+  // карма слегка влияет на поток гостей
+  if(T.karma <= -5 && chance(0.08)) { addMod('traffic', 0.92, 24, 'Дурная слава: гостей −8%'); }
+  if(T.karma >= 5 && chance(0.08)) { addMod('traffic', 1.08, 24, 'Добрая слава: гостей +8%'); }
+  // клиффхэнгер: что будет завтра
+  const soon = S.pending.filter(p=>p.ev && EV[p.ev] && EV[p.ev].cat==='story' && p.at < (S.day+2)*DAY_MIN).sort((a,b)=>a.at-b.at)[0];
+  if(soon){ const tease = {s1_palych:'Говорят, тобой интересовались люди в кожаных куртках.', s1_deadline:'Завтра Палыч придёт за деньгами.', s2_offer:'В район приехал человек в очень дорогом костюме.', s3_call:'Тебе пытались дозвониться с незнакомого московского номера.', s4_somov:'Депутат Сомов спрашивал, где тут хорошая кофейня.', s5_news:'Управляющая компания готовит какое-то объявление.', s6_viktor:'Кто-то видел Виктора в аэропорту. Он вернулся.', s5_auction:'Завтра аукцион.', g_deadline:'Завтра развязка.'}[soon.ev];
+    if(tease) HOOK.toast(tease); }
 }
 
 /* ================= Brew Crew v3 — сцена и интерфейс ================= */
@@ -1314,11 +1636,14 @@ HOOK.struct = () => { structDirty = true; };
 HOOK.modal = m => { if(HOOK.quiet){ if(m.kind!=='result' && m.kind!=='note') quietModals.push(m); return; } queueModal(m); };
 
 /* ---------- сцена: геометрия и рантайм ---------- */
-const W = 360, H = 300;
+let W = 360, H = 300;
 const FEET = 121, COUNTER_Y = 104, QUEUE_Y = 158, QUEUE_X = 214;
 const PICK = [[160,154],[140,160],[120,154],[100,160],[80,154]];
 const DOOR = [384,206];
-const TABLE_SLOTS = [[86,200],[166,200],[86,246],[166,246],[246,246],[322,246],[86,290],[166,290],[246,290],[322,290],[246,204],[322,204]];
+let TABLE_SLOTS = [];
+function layoutSlots(){ const top = 206, bot = H - 66, rows = H > 600 ? 5 : 4; const ys = Array.from({length:rows},(_,i)=>Math.round(top + (bot-top)*i/(rows-1))); const xs = rows===5 ? [78,158,238] : [70,150,230,310];
+  TABLE_SLOTS = []; for(const y of ys) for(const x of xs) TABLE_SLOTS.push([x + (y===ys[0] && x===238 ? 10 : 0), y]); }
+layoutSlots();
 const SPOT = {'Бариста':[[50,FEET],[90,FEET],[70,FEET],[110,FEET]], 'Кассир':[[214,FEET],[232,FEET]], 'Повар':[[150,FEET],[170,FEET]]};
 const RT = {};
 function rt(id){ if(!RT[id]) RT[id] = {guests:[], queue:[], pickup:[], jobs:[], seats:[], pets:[], staff:{}, spawnT:3, acc:0, regDay:{}}; return RT[id]; }
@@ -1330,14 +1655,14 @@ function syncScene(id){
     let p = r.staff[s.id];
     const spots = SPOT[s.role]; let home;
     if(spots){ used[s.role] = (used[s.role]||0); home = spots[used[s.role] % spots.length]; used[s.role]++; }
-    else home = s.role==='Уборщик' ? [40,270] : [200,226];
+    else home = s.role==='Уборщик' ? [40, H-30] : [200,226];
     if(!p) p = r.staff[s.id] = {x: spots ? home[0] : DOOR[0], y:home[1], tx:home[0], ty:home[1], prog:0, flip:false, t:Math.random()*10};
     p.home = home; p.walker = !spots;
   }
   for(const sid in r.staff) if(!list.some(s=>s.id===sid)) delete r.staff[sid];
   const L = room(id).upg.pets, want = [];
   if(L>=3) want.push(POOL.cat[0]); if(L>=12) want.push(POOL.cat[4]||POOL.cat[1]); if(L>=15) want.push(POOL.dog[2]||POOL.dog[0]);
-  while(r.pets.length < want.length){ const sp = want[r.pets.length]; r.pets.push({spr:sp, h:petH(sp), x:R(40,320), y:R(180,290), tx:R(40,320), ty:R(180,290), idle:R(2,6), flip:false, t:0}); }
+  while(r.pets.length < want.length){ const sp = want[r.pets.length]; r.pets.push({spr:sp, h:petH(sp), x:R(40,320), y:R(180,H-10), tx:R(40,320), ty:R(180,H-10), idle:R(2,6), flip:false, t:0}); }
   r.pets.length = want.length;
   const n = tableCount(room(id).upg.tables); while(r.seats.length < n) r.seats.push(null);
 }
@@ -1371,6 +1696,7 @@ function spawnGuest(id, reg){
     patience: (55 + room(id).upg.decor*2.5) * (S.path==='soul'?1.3:1) * (workingStaff(id).some(s=>s.quirk==='talker')?1.2:1) * (workingStaff(id).some(s=>s.quirk==='bore')?0.85:1)});
   if(!reg && chance(0.12)){ const p = pickPet(); g.pet = {spr:p, h:petH(p), x:g.x+14, y:g.y+4, flip:false, t:0}; markSeen('p', p); }
   r.guests.push(g); r.queue.push(g);
+  if(id===S.active) sfx('door');
 }
 function guestLeaves(id, g, why){
   const r = rt(id);
@@ -1401,7 +1727,7 @@ function simRoom(id, dt){
   const baristas = workingStaff(id).filter(s=>s.role==='Бариста');
   for(const b of baristas){ const p = r.staff[b.id]; if(p) p.prog = 0; }
   for(const j of r.jobs){ if(j.by && !baristas.some(b=>b.id===j.by && !b.distract)) j.by = null; }
-  for(const b of baristas){ if(b.distract) continue; if(!r.jobs.some(j=>j.by===b.id)){ const j = r.jobs.find(j=>!j.by); if(j) j.by = b.id; } }
+  for(const b of baristas){ if(b.distract) continue; if(!r.jobs.some(j=>j.by===b.id)){ const j = r.jobs.find(j=>!j.by); if(j){ j.by = b.id; if(!j.snd){ j.snd = 1; if(id===S.active) prepSound(j.milk); } } } }
   for(const j of r.jobs.slice()){
     let sp;
     if(j.by){ const b = S.staff.find(s=>s.id===j.by); sp = staffSpeed(b); if(r.staff[j.by]) r.staff[j.by].prog = j.p; }
@@ -1418,6 +1744,7 @@ function simRoom(id, dt){
     else if(g.state==='toSeat'){ const t = TABLE_SLOTS[g.seat]; if(moveTo(g, t[0]-18, t[1]-2, 46, dt)){ g.state = 'sit'; g.flip = true; g.sit = R(16,30) * (waiters.length ? 0.75 : 1); } }
     else if(g.state==='sit'){ g.sit -= dt; if(g.sit <= 0){ r.seats[g.seat] = null; g.state = 'leave'; } }
     else if(g.state==='leave'){ if(moveTo(g, DOOR[0]+10, DOOR[1], 50, dt)) g.gone = true; }
+    else if(g.state==='chat'){ const st = S.staff.find(x=>x.id===g.chat); if(!st || !st.distract || st.distract.kind!=='chat'){ g.state = 'leave'; } else { moveTo(g, g.tx, QUEUE_Y-4, 46, dt); g.flip = false; } }
     if(g.pet){ const p = g.pet; p.t += dt; moveTo(p, g.x + (g.flip?-14:14), g.y + 3, 60, dt); }
   }
   r.guests = r.guests.filter(g=>!g.gone);
@@ -1427,16 +1754,18 @@ function simRoom(id, dt){
     const p = r.staff[s.id]; if(!p) continue; p.t += dt;
     if(s.distract && s.distract.until < now) s.distract = null;
     if(s.breakUntil && s.breakUntil < now){ s.breakUntil = 0; s.away = false; }
+    if(s.distract && s.distract.kind==='chat' && !s.distract.g && !p.walker){ const gs = pickGuestSprite(); s.distract.g = {spr:gs.spr, h:46, x:DOOR[0], y:QUEUE_Y-2, t:0, walk:true, flip:false, chat:s.id, tx: clamp(p.x+6, 30, 330)}; r.guests.push(Object.assign(s.distract.g, {state:'chat'})); }
+    if(s.distract && s.distract.kind==='chat' && s.distract.g && chance(dt/3) && id===S.active) sfx('babble', RI(3,6), R(150,320), 0.012);
     const gone = (s.distract && s.distract.kind==='smoke') || s.breakUntil > now;
     if(gone){ moveTo(p, DOOR[0]+20, p.walker?DOOR[1]:FEET, 55, dt); continue; }
     if(p.walker){
       if(moveTo(p, p.tx, p.ty, 34, dt)){ p.idle = (p.idle||0) - dt;
         if(p.idle <= 0){ p.idle = R(1.5,4);
           if(s.role==='Официант'){ const occ = r.seats.map((g,i)=>g?i:-1).filter(i=>i>=0); const t = occ.length ? TABLE_SLOTS[pick(occ)] : pick(TABLE_SLOTS.slice(0,r.seats.length)); p.tx = t[0]+16; p.ty = t[1]+4; }
-          else { p.tx = R(30,330); p.ty = R(180,292); } } }
+          else { p.tx = R(30,330); p.ty = R(180,H-8); } } }
     } else moveTo(p, p.home[0], p.home[1], 55, dt);
   }
-  for(const p of r.pets){ p.t += dt; if(moveTo(p, p.tx, p.ty, 18, dt)){ p.idle -= dt; if(p.idle<=0){ p.idle = R(3,9); p.tx = R(30,330); p.ty = R(175,292); } } }
+  for(const p of r.pets){ p.t += dt; if(moveTo(p, p.tx, p.ty, 18, dt)){ p.idle -= dt; if(p.idle<=0){ p.idle = R(3,9); p.tx = R(30,330); p.ty = R(175,H-8); } } }
 }
 function completeOrder(id, g, tapped){
   const r = rt(id);
@@ -1450,7 +1779,8 @@ function completeOrder(id, g, tapped){
   if(g.reg){ const rg = S.regs.find(x=>x.id===g.reg); rg.loyal = clamp(rg.loyal + (g.wait < 20 ? 4 : 1), 0, 100); S.c.regularsMax = Math.max(S.c.regularsMax, rg.loyal); }
   g.item = res.item.n;
   g.pi = r.pickup.length; r.pickup.push(g); g.state = 'toPick'; g.prog = 0;
-  r.jobs.push({g, p:0, by:null, coffee:!!res.item.coffee});
+  r.jobs.push({g, p:0, by:null, coffee:!!res.item.coffee, milk:!!(res.item.need && res.item.need.milk)});
+  if(id===S.active) sfx('babble', 4, R(160,300), 0.018);
 }
 function finishJob(id, j){
   const r = rt(id);
@@ -1463,7 +1793,7 @@ function finishJob(id, j){
 function flyMoney(lx, ly, amt){
   const cvR = cv.getBoundingClientRect(); const mEl = $('#sMoney');
   if(!mEl || !cvR.width || document.hidden) return;
-  const sx = cvR.left + lx/W*cvR.width, sy = cvR.top + ly/H*cvR.height;
+  const sx = cvR.left + (lx-OX)/VW*cvR.width, sy = cvR.top + ly/H*cvR.height;
   const mR = mEl.getBoundingClientRect(); const tx = mR.left + mR.width*0.6, ty = mR.top + mR.height/2;
   const f = el(`<div class="fly">+${fmt(amt)} ₽</div>`); f.style.left = sx+'px'; f.style.top = sy+'px'; document.body.appendChild(f);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1479,7 +1809,11 @@ function flyMoney(lx, ly, amt){
 const cv = document.createElement('canvas'); cv.id = 'cv';
 const ctx = cv.getContext('2d');
 let scale = 1;
-function resizeCanvas(){ const w = cv.clientWidth || 340; const dpr = Math.min(3, window.devicePixelRatio||1); cv.width = Math.round(w*dpr); cv.height = Math.round(w*dpr*H/W); scale = cv.width/W; }
+let OX = 0, VW = 360;
+function resizeCanvas(){ const box = cv.parentElement; const w = (box && box.clientWidth) || cv.clientWidth || 340; const hh = (box && box.clientHeight) || w*300/360; const dpr = Math.min(3, window.devicePixelRatio||1);
+  const css = Math.max(w/W, hh/600); const nh = clamp(Math.round(hh/css), 300, 600); if(nh !== H){ H = nh; layoutSlots(); }
+  VW = w/css; OX = Math.max(0, (W - VW) * 0.6);
+  cv.width = Math.round(w*dpr); cv.height = Math.round(hh*dpr); scale = css*dpr; }
 window.addEventListener('resize', resizeCanvas);
 if(window.ResizeObserver) new ResizeObserver(()=>resizeCanvas()).observe(cv);
 function drawSprite(i, cx, fy, h, flip, rot, alpha){
@@ -1494,8 +1828,8 @@ function rect(x,y,w,h,c){ ctx.fillStyle = c; ctx.fillRect(x,y,w,h); }
 function dayTint(){ const h = S.gm/60; return h<10?'#bfe0f2':h<17?'#d8eef8':h<19?'#f2b872':h<20.5?'#c07a6a':'#2d3456'; }
 
 function drawRoom(id){
-  const r = rt(id), rm = room(id), u = rm.upg, def = roomDef(id), th = def.theme, now = performance.now()/1000;
-  ctx.setTransform(scale,0,0,scale,0,0);
+  const r = rt(id), rm = room(id), u = rm.upg, def = roomDef(id), th = roomTheme(id), now = performance.now()/1000;
+  ctx.setTransform(scale,0,0,scale,-OX*scale,0);
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   // wall
   if(def.outdoor){
@@ -1535,6 +1869,8 @@ function drawRoom(id){
   // stains from chaos
   const nStains = Math.floor(S.meters.chaos/12);
   for(let i=0;i<nStains;i++){ const sx = 30 + (i*97)%300, sy = 175 + (i*53)%115; ctx.fillStyle = 'rgba(60,40,20,.35)'; ctx.beginPath(); ctx.ellipse(sx, sy, 7+(i%3)*2, 3, 0, 0, 7); ctx.fill(); }
+  // витрина на улицу внизу
+  drawFrontWindow(th, now);
   // door
   rect(342,128,18,82,th.trim); rect(345,132,15,76,'#6a4630'); rect(347,166,3,3,'#e0b040');
   // back bar with coffee machine
@@ -1574,7 +1910,8 @@ function drawRoom(id){
   // queue full warning
   if(r.queue.length >= 6){ ctx.fillStyle = 'rgba(224,87,74,.9)'; ctx.font = '700 8px "Golos Text",sans-serif'; ctx.fillText('Очередь полная', 236, 186); }
   // evening tint
-  const hh = S.gm/60; if(hh>=19 && !def.outdoor){ ctx.fillStyle = 'rgba(30,20,60,'+Math.min(0.2,(hh-19)*0.07)+')'; ctx.fillRect(0,0,W,H); }
+  const hh = S.gm/60; const night = hh>=22 || hh<6 ? 0.32 : hh>=19 ? (hh-19)*0.07 : hh<8 ? (8-hh)*0.12 : 0;
+  if(night>0){ ctx.fillStyle = 'rgba(20,16,50,'+Math.min(0.34,night)+')'; ctx.fillRect(0,0,W,H); if(night>0.15 && !def.outdoor){ [100,180,260].forEach(x=>{ const g = ctx.createRadialGradient(x, 30, 2, x, 30, 90); g.addColorStop(0,'rgba(255,210,140,.22)'); g.addColorStop(1,'rgba(255,210,140,0)'); ctx.fillStyle = g; ctx.fillRect(x-90, 0, 180, 140); }); } }
   if(def.outdoor && S.weather==='rain'){ ctx.strokeStyle = 'rgba(200,220,255,.45)'; ctx.lineWidth = 0.8; ctx.beginPath(); for(let i=0;i<40;i++){ const x = (i*53 + now*70) % W, y = (i*71 + now*180) % H; ctx.moveTo(x,y); ctx.lineTo(x-2,y+6); } ctx.stroke(); }
 }
 function drawStaff(s, p, id){
@@ -1585,7 +1922,8 @@ function drawStaff(s, p, id){
   const asleep = s.distract && s.distract.kind==='sleep';
   drawSprite(s.spr, p.x, p.y - bob, 46, p.flip, asleep ? 0.12 : ro);
   const hy = p.y - 50;
-  if(s.distract){ bubble(p.x, hy, s.distract.kind); }
+  if(S.incidents.some(i=>i.sid===s.id)){ ctx.fillStyle = '#e0574a'; ctx.beginPath(); ctx.arc(p.x, hy-6, 6, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = '800 9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('!', p.x, hy-2.5); ctx.textAlign = 'left'; }
+  else if(s.distract){ bubble(p.x, hy, s.distract.kind); if(s.distract.kind==='phone'){ const g = ctx.createRadialGradient(p.x, p.y-34, 1, p.x, p.y-34, 12); g.addColorStop(0,'rgba(120,190,255,.45)'); g.addColorStop(1,'rgba(120,190,255,0)'); ctx.fillStyle = g; ctx.fillRect(p.x-12, p.y-46, 24, 24); } }
   else if(prep) progress(p.x, hy, p.prog, '#eaa33c');
   if(s.boostUntil > Date.now()){ ctx.fillStyle = '#ffd36b'; ctx.font = '800 8px "Golos Text",sans-serif'; ctx.fillText('»', p.x+10, hy+8); }
 }
@@ -1668,6 +2006,16 @@ function drawDecorWall(L, th, now){
 }
 
 
+function drawWindowSmokers(id){
+  const def = roomDef(id); if(def.outdoor) return;
+  const sm = workingStaff(id).filter(s=>s.distract && s.distract.kind==='smoke');
+  sm.slice(0,2).forEach((s,k)=>{ const x = 278 + k*30, y = 57; const t = performance.now()/1000;
+    ctx.save(); ctx.beginPath(); ctx.rect(260,14,76,42); ctx.clip();
+    drawSprite(staffSpr(s), x, y, 30, k%2===1, 0);
+    ctx.fillStyle = 'rgba(240,240,240,.6)'; for(let i=0;i<3;i++){ const yy = y-26 - ((t*10 + i*5) % 14); ctx.beginPath(); ctx.arc(x+7 + Math.sin(t*2+i)*2, yy, 2 + i*0.6, 0, 7); ctx.fill(); }
+    ctx.restore(); });
+}
+
 
 function drawClosed(){
   ctx.fillStyle = 'rgba(10,12,30,.55)'; ctx.fillRect(0,0,W,H);
@@ -1689,9 +2037,13 @@ function drawGuestBadges(id){
 }
 
 /* ---------- ввод на сцене ---------- */
+let swipe0 = null;
+cv.addEventListener('pointerup', e => { if(!swipe0 || S.rooms.length<2) return; const dx = e.clientX - swipe0.x, dy = e.clientY - swipe0.y; swipe0 = null; if(Math.abs(dx) > 70 && Math.abs(dy) < 50){ const ids = S.rooms.map(r=>r.id); const k = ids.indexOf(S.active); switchRoom(ids[(k + (dx<0?1:-1) + ids.length) % ids.length]); } });
 cv.addEventListener('pointerdown', e => {
+  swipe0 = {x:e.clientX, y:e.clientY};
   unlockAudio();
-  const b = cv.getBoundingClientRect(); const x = (e.clientX-b.left)/b.width*W, y = (e.clientY-b.top)/b.height*H;
+  if(sheet){ openSheet(null); return; }
+  const b = cv.getBoundingClientRect(); const x = OX + (e.clientX-b.left)/b.width*VW, y = (e.clientY-b.top)/b.height*H;
   const id = S.active, r = rt(id);
   let best = null;
   for(const s of workingStaff(id)){ const p = r.staff[s.id]; if(!p || p.x>350) continue; const m = META[staffSpr(s)]; const w = m[3]*46/m[4]; if(x>p.x-w/2-4 && x<p.x+w/2+4 && y>p.y-50 && y<p.y+4){ if(!best || p.y > best.p.y) best = {s,p}; } }
@@ -1718,17 +2070,66 @@ function maybeDistract(){
 }
 const DISTRACT = {phone:'Сидит в телефоне', sleep:'Уснул', smoke:'Ушёл курить', chat:'Болтает с гостем'};
 
-/* ---------- звук ---------- */
-let actx = null, soundOn = true;
-function unlockAudio(){ if(actx || !soundOn) return; try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
-function tone(f, d, type, v, delay){ if(!actx || !soundOn) return; const t = actx.currentTime + (delay||0); const o = actx.createOscillator(), g = actx.createGain(); o.type = type||'sine'; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v||0.08, t+0.01); g.gain.exponentialRampToValueAtTime(0.0001, t+d); o.connect(g).connect(actx.destination); o.start(t); o.stop(t+d+0.02); }
-function sfx(k){ if(!actx || !soundOn || document.hidden || HOOK.quiet) return;
-  if(k==='coin'){ tone(1320,0.08,'square',0.03); tone(1760,0.14,'square',0.03,0.07); }
-  else if(k==='buy'){ tone(520,0.07,'triangle',0.07); tone(780,0.1,'triangle',0.07,0.06); tone(1040,0.14,'triangle',0.06,0.12); }
-  else if(k==='tap'){ tone(700,0.04,'triangle',0.05); }
-  else if(k==='alert'){ tone(440,0.12,'sawtooth',0.04); tone(330,0.16,'sawtooth',0.04,0.12); }
-  else if(k==='level'){ [523,659,784,1046].forEach((f,i)=>tone(f,0.16,'triangle',0.06,i*0.09)); }
-  else if(k==='bad'){ tone(200,0.2,'sawtooth',0.05); } }
+/* ---------- звук: зал и техника, всё синтезом ---------- */
+const PREFS_KEY = 'brewcrew_prefs';
+let prefs = {master:0.8, amb:0.6, fx:0.8};
+try{ Object.assign(prefs, JSON.parse(localStorage.getItem(PREFS_KEY)||'{}')); }catch(e){}
+function savePrefs(){ try{ localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); }catch(e){} applyVolumes(); }
+let actx = null, AU = null, soundOn = true;
+function noiseBuffer(sec){ const b = actx.createBuffer(1, actx.sampleRate*sec, actx.sampleRate); const d = b.getChannelData(0); for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1; return b; }
+function unlockAudio(){
+  if(actx){ if(actx.state==='suspended') actx.resume(); return; }
+  try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return; }
+  const master = actx.createGain(), amb = actx.createGain(), fx = actx.createGain();
+  amb.connect(master); fx.connect(master); master.connect(actx.destination);
+  AU = {master, amb, fx, noise:noiseBuffer(2), busyUntil:0, nextClink:0, nextBabble:0};
+  // фоновый гул зала: розоватый шум через полосовой фильтр, громкость следует за числом гостей
+  const src = actx.createBufferSource(); src.buffer = AU.noise; src.loop = true;
+  const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 0.6;
+  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
+  const g = actx.createGain(); g.gain.value = 0;
+  src.connect(bp).connect(lp).connect(g).connect(amb); src.start();
+  const lfo = actx.createOscillator(), lfoG = actx.createGain(); lfo.frequency.value = 0.13; lfoG.gain.value = 0.004; lfo.connect(lfoG).connect(g.gain); lfo.start();
+  AU.room = g;
+  applyVolumes();
+}
+function applyVolumes(){ if(!AU) return; const on = soundOn ? 1 : 0; AU.master.gain.value = prefs.master*on; AU.amb.gain.value = prefs.amb; AU.fx.gain.value = prefs.fx; }
+function env(g, t, a, peak, d){ g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t+a); g.gain.exponentialRampToValueAtTime(0.0001, t+a+d); }
+function tone(f, d, type, v, delay, dest){ if(!AU) return; const t = actx.currentTime + (delay||0); const o = actx.createOscillator(), g = actx.createGain(); o.type = type||'sine'; o.frequency.setValueAtTime(f, t); env(g, t, 0.008, v||0.08, d); o.connect(g).connect(dest||AU.fx); o.start(t); o.stop(t+d+0.05); }
+function noiseHit(dur, filt, freq, q, v, delay, dest, wobble){ if(!AU) return; const t = actx.currentTime + (delay||0); const s = actx.createBufferSource(); s.buffer = AU.noise; const f = actx.createBiquadFilter(); f.type = filt; f.frequency.setValueAtTime(freq, t); f.Q.value = q||1; const g = actx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t+0.05); g.gain.setValueAtTime(v, t+dur-0.15); g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  if(wobble){ const l = actx.createOscillator(), lg = actx.createGain(); l.frequency.value = wobble[0]; lg.gain.value = wobble[1]; l.connect(lg).connect(f.frequency); l.start(t); l.stop(t+dur); }
+  s.connect(f).connect(g).connect(dest||AU.fx); s.start(t, Math.random()); s.stop(t+dur+0.05); }
+const SND = {
+  coin(){ tone(1320,0.08,'square',0.025); tone(1760,0.16,'square',0.025,0.07); },
+  door(){ tone(1568,0.9,'sine',0.035); tone(2349,0.7,'sine',0.02,0.02); tone(1975,0.6,'sine',0.015,0.12); },
+  grinder(){ noiseHit(1.1, 'bandpass', 1900, 2.2, 0.06, 0, null, [11, 350]); tone(118,1.0,'sawtooth',0.012); },
+  pump(delay){ if(!AU) return; const t = actx.currentTime + (delay||0); const o = actx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 52; const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 260; const g = actx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t+0.15); g.gain.setValueAtTime(0.05, t+1.6); g.gain.exponentialRampToValueAtTime(0.0001, t+2.0);
+    const vib = actx.createOscillator(), vg = actx.createGain(); vib.frequency.value = 6; vg.gain.value = 2; vib.connect(vg).connect(o.frequency); vib.start(t); vib.stop(t+2.1);
+    o.connect(lp).connect(g).connect(AU.fx); o.start(t); o.stop(t+2.1); noiseHit(1.6,'bandpass',700,1.5,0.012,delay+0.2); },
+  steam(delay){ noiseHit(1.7, 'highpass', 3200, 0.7, 0.045, delay, null, [7, 900]); noiseHit(0.9, 'bandpass', 380, 3, 0.03, (delay||0)+0.6, null, [9, 120]); },
+  clink(){ const f = R(2600, 4200); tone(f, 0.25, 'sine', 0.012, 0, AU && AU.amb); tone(f*1.5, 0.18, 'sine', 0.006, 0.01, AU && AU.amb); },
+  babble(n, base, loud){ if(!AU) return; base = base || R(170, 300); for(let i=0;i<(n||6);i++){ const t = actx.currentTime + i*0.075 + Math.random()*0.02; const o = actx.createOscillator(); o.type = 'square'; o.frequency.setValueAtTime(base*R(0.8,1.35), t);
+      const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = R(700, 1300); f.Q.value = 3; const g = actx.createGain(); env(g, t, 0.01, (loud||0.02), 0.05); o.connect(f).connect(g).connect(loud ? AU.fx : AU.amb); o.start(t); o.stop(t+0.09); } },
+  tap(){ tone(700,0.04,'triangle',0.04); },
+  buy(){ tone(520,0.07,'triangle',0.06); tone(780,0.1,'triangle',0.06,0.06); tone(1040,0.14,'triangle',0.05,0.12); },
+  alert(){ tone(440,0.12,'sawtooth',0.03); tone(330,0.16,'sawtooth',0.03,0.12); },
+  level(){ [523,659,784,1046].forEach((f,i)=>tone(f,0.16,'triangle',0.05,i*0.09)); },
+  bad(){ tone(200,0.22,'sawtooth',0.04); },
+  story(){ [392,311,262].forEach((f,i)=>tone(f,0.35,'triangle',0.05,i*0.16)); }
+};
+function sfx(k, a, b, c){ if(!AU || !soundOn || document.hidden || HOOK.quiet) return; if(SND[k]) SND[k](a, b, c); }
+function prepSound(milk){ if(!AU || !soundOn || document.hidden) return; const now = actx.currentTime; if(now < AU.busyUntil) return; AU.busyUntil = now + (milk?3.4:2.6); SND.grinder(); SND.pump(1.1); if(milk) SND.steam(2.2); }
+function ambientTick(){
+  if(!AU || !soundOn || document.hidden) return;
+  const r = RT[S.active]; const n = r ? r.guests.length : 0;
+  const target = S.isOpen ? Math.min(0.11, 0.008 + n*0.009) : 0.004;
+  AU.room.gain.setTargetAtTime(target, actx.currentTime, 1.2);
+  const now = actx.currentTime;
+  if(n > 0 && now > AU.nextClink){ AU.nextClink = now + R(1.8, 6) / Math.max(1, n/3); SND.clink(); }
+  if(n > 2 && now > AU.nextBabble){ AU.nextBabble = now + R(2.5, 7); SND.babble(RI(4,9), null, 0); }
+}
 
 /* ---------- сохранение ---------- */
 function snapshot(){ S.savedAt = Date.now(); S.sound = soundOn; const copy = Object.assign({}, S); return JSON.stringify(copy, (k,v)=> k==='distract' ? undefined : v); }
@@ -1757,7 +2158,8 @@ function catchUp(){
   const before = {money:S.money, day:S.day, staff:S.staff.length};
   const r = simulateOffline(gap);
   for(const id in RT){ RT[id].guests = []; RT[id].queue = []; RT[id].pickup = []; RT[id].jobs = []; RT[id].seats = RT[id].seats.map(()=>null); }
-  queueModal({kind:'away', mins:r.mins, money:r.money, guests:r.guests, days:S.day-before.day, gone:before.staff - S.staff.length, capped: gap > 12*3600*1000});
+  const subHint = ownerSub() ? 0 : Math.max(0, Math.round(r.money>0 ? r.money*(0.8/0.6-1) + (gap>12*3600000 ? r.money*0.5 : 0) : 0));
+  queueModal({kind:'away', mins:r.mins, money:r.money, guests:r.guests, days:S.day-before.day, gone:before.staff - S.staff.length, capped: gap > (ownerSub()?24:12)*3600*1000, subHint: subHint > 5000 ? subHint : 0});
   quietModals.splice(0).forEach(m=>queueModal(m));
 }
 
@@ -1772,7 +2174,7 @@ function renderStart(){
   let name = CAFE_NAMES[0], cityId = 'msk';
   const w = el(`<div class="start">
     <div class="logo">Brew Crew</div>
-    <div class="empty" style="font-size:15px">Открой кофейню на 25 квадратов. Считай каждое зерно, плати аренду и зарплаты, переживи проверки, прогулы и гусей. Доведи сеть до франшизы.</div>
+    <div class="empty" style="font-size:15px">Ты только что купил маленькую кофейню у человека по имени Виктор. Он очень спешил уехать. Скоро поймёшь почему.</div>
     <div class="h">Название кофейни</div>
     <div class="names" id="nm">${CAFE_NAMES.map((n,i)=>`<button class="opt" aria-pressed="${i===0}" data-v="${esc(n)}">${esc(n)}</button>`).join('')}</div>
     <input class="field" id="own" maxlength="20" placeholder="Или впиши своё" autocomplete="off">
@@ -1782,73 +2184,207 @@ function renderStart(){
       <button class="opt" aria-pressed="false" data-v="spb"><b>Петербург</b><span>Дожди загоняют гостей внутрь.</span></button>
     </div>
     <button class="btn" id="go" style="padding:12px;font-size:15px">Открыть кофейню</button>
-    <div class="empty" style="font-size:12px">Игровой месяц длится реальную неделю. Кофейня работает и без тебя, но хуже. Только для 18+.</div>
+    <div class="empty" style="font-size:12px">Кофейня работает круглосуточно, даже когда игра закрыта, но без тебя хуже. Только для 18+.</div>
   </div>`);
   app.appendChild(w);
   w.querySelectorAll('#nm .opt').forEach(b=>b.onclick=()=>{ w.querySelectorAll('#nm .opt').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); name = b.dataset.v; w.querySelector('#own').value=''; });
   w.querySelector('#own').oninput = e => { const v = e.target.value.trim(); if(v){ name = v; w.querySelectorAll('#nm .opt').forEach(x=>x.setAttribute('aria-pressed','false')); } };
   w.querySelectorAll('#ct .opt').forEach(b=>b.onclick=()=>{ w.querySelectorAll('#ct .opt').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); cityId = b.dataset.v; });
-  w.querySelector('#go').onclick = () => { unlockAudio(); S = newState(name, cityId); initState(); save(); renderGame(); };
+  w.querySelector('#go').onclick = () => { unlockAudio(); S = newState(name, cityId); initState(); S.interior = {}; S.streak = {last:new Date(Date.now()+3*3600000).toISOString().slice(0,10), n:1}; save(); renderGame(); refreshEntitlements(); };
 }
-const TABS = [['up','Улучшения'],['team','Команда'],['stock','Склад'],['fin','Деньги'],['ev','События'],['more','Ещё']];
+/* ---------- новый экран: верх, сцена, док, шторки ---------- */
+const ICONS = {
+  hall:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3c0 2 2 2 2 4M12 3c0 2 2 2 2 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  up:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 7h-4v8H9v-8H5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  set:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+};
+let sheet = null, hallTab = 'team';
+const HALL_TABS = [['team','Команда'],['stock','Склад'],['money','Деньги'],['events','События'],['district','Район'],['rooms','Залы'],['menu','Меню'],['regs','Постоянные'],['story','Сюжет'],['book','Гости'],['ach','Достижения'],['owner','Опыт владельца']];
 function renderGame(){
-  const app = $('#app'); app.innerHTML = '';
-  app.appendChild(el(`<div class="hud">
-    <div style="min-width:0"><div class="cafe" id="cafe"></div><div class="meta num" id="clk"></div></div>
-    <div><div class="money num" id="sMoney"></div></div>
-    <div class="hudrow"><span class="inc num" id="sInc"></span></div>
-    <div class="hudrow"><span>Рейтинг <b id="sRep" class="num"></b></span><span class="lvl">Ур. <b id="sLvl" class="num"></b><span class="bar"><i id="bXp"></i></span></span><span class="sp"></span><button class="pxbtn" id="menu">Меню</button></div>
-  </div>`));
-  app.appendChild(el(`<div class="task" id="task"></div>`));
-  app.appendChild(el(`<div class="mods" id="mods"></div>`));
-  app.appendChild(el(`<div class="rooms" id="rooms"></div>`));
-  const sc = el(`<div class="scene"></div>`); sc.appendChild(cv); app.appendChild(sc);
-  app.appendChild(el(`<div class="meters" id="meters"></div>`));
-  app.appendChild(el(`<div class="tabs" role="tablist">${TABS.map(([k,n])=>`<button class="tab" role="tab" data-t="${k}">${n}<span class="badge" id="b_${k}" hidden></span></button>`).join('')}</div>`));
-  app.appendChild(el(`<div class="panel" id="panel" role="tabpanel"></div>`));
-  app.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ tab = b.dataset.t; structDirty = true; renderPanel(); renderHud(); });
-  $('#menu').onclick = () => queueModal({kind:'menu'}, true);
+  const app = $('#app'); app.innerHTML = ''; app.className = 'game';
+  app.appendChild(el(`<header class="top">
+    <div class="topL"><div class="cafe" id="cafe"></div><div class="meta num" id="clk"></div></div>
+    <div class="topR"><div class="money num" id="sMoney"></div><div class="meta num" id="sInc"></div></div>
+  </header>`));
+  app.appendChild(el(`<div class="pills" id="pills"></div>`));
+  const sc = el(`<div class="scene" id="scene"><div class="notifs" id="notifs"></div><div class="roomdots" id="roomdots"></div></div>`);
+  sc.insertBefore(cv, sc.firstChild); app.appendChild(sc);
+  app.appendChild(el(`<nav class="dock">
+    <button class="dockb" data-s="hall">${ICONS.hall}<span>Зал</span><i class="badge" id="b_hall" hidden></i></button>
+    <button class="dockb" data-s="up">${ICONS.up}<span>Улучшения</span><i class="badge" id="b_up" hidden></i></button>
+    <button class="dockb" data-s="set">${ICONS.set}<span>Настройки</span></button>
+  </nav>`));
+  app.querySelectorAll('.dockb').forEach(b=>b.onclick=()=>{ sfx('tap'); openSheet(sheet===b.dataset.s ? null : b.dataset.s); });
+  if(!$('#sheetRoot')) document.body.appendChild(el(`<div id="sheetRoot"></div>`));
   requestAnimationFrame(resizeCanvas);
   S.rooms.forEach(r=>syncScene(r.id));
-  renderHud(); renderPanel();
+  renderHud(); renderSheet();
+}
+function openSheet(k, tabKey){ sheet = k; if(tabKey) hallTab = tabKey; structDirty = true; renderSheet(); renderHud(); }
+function renderSheet(){
+  const root = $('#sheetRoot'); if(!root) return;
+  structDirty = false;
+  if(!sheet){ root.innerHTML = ''; return; }
+  let sh = root.querySelector('.sheet');
+  const fresh = !sh || sh.dataset.k !== sheet;
+  if(fresh){
+    root.innerHTML = '';
+    const wrap = el(`<div class="sheetwrap"><div class="sheetbg"></div><section class="sheet" data-k="${sheet}" role="dialog" aria-label="Панель"><div class="grab"><i></i></div><div class="sheethead"></div><div class="sheetbody" id="panel"></div></section></div>`);
+    root.appendChild(wrap);
+    wrap.querySelector('.sheetbg').onclick = () => openSheet(null);
+    const grab = wrap.querySelector('.grab'); let y0 = null; const sec = wrap.querySelector('.sheet');
+    grab.addEventListener('pointerdown', e=>{ y0 = e.clientY; grab.setPointerCapture(e.pointerId); });
+    grab.addEventListener('pointermove', e=>{ if(y0==null) return; const dy = Math.max(0, e.clientY-y0); sec.style.transform = `translateY(${dy}px)`; });
+    grab.addEventListener('pointerup', e=>{ const dy = e.clientY-(y0||e.clientY); y0 = null; sec.style.transform = ''; if(dy > 70) openSheet(null); });
+    sh = sec;
+  }
+  const head = sh.querySelector('.sheethead');
+  if(sheet==='hall'){
+    head.innerHTML = `<div class="sheettitle">${esc(roomDef(S.active).n)}</div><div class="subnav" id="hallnav">${HALL_TABS.map(([k,n])=>`<button class="chipbtn" aria-pressed="${hallTab===k}" data-t="${k}">${n}${k==='events'&&S.incidents.length?' · '+S.incidents.length:''}</button>`).join('')}</div>`;
+    head.querySelectorAll('#hallnav button').forEach(b=>b.onclick=()=>{ hallTab = b.dataset.t; renderSheet(); });
+    const act = head.querySelector('[aria-pressed="true"]'); if(act && fresh) act.scrollIntoView({inline:'center', block:'nearest'});
+  } else head.innerHTML = `<div class="sheettitle">${sheet==='up'?'Улучшения · '+esc(roomDef(S.active).n):'Настройки'}</div>`;
+  const p = sh.querySelector('#panel'); const st = p.scrollTop; p.innerHTML = '';
+  const id = S.active;
+  if(sheet==='up') renderUpgrades(p, id);
+  else if(sheet==='set') renderSettings(p);
+  else {
+    if(hallTab==='team') renderTeam(p, id);
+    else if(hallTab==='stock') renderStock(p, id);
+    else if(hallTab==='money') renderFin(p);
+    else if(hallTab==='events') renderEvents(p);
+    else if(hallTab==='story') renderStory(p);
+    else { sub = {district:'district', rooms:'rooms', menu:'menu', regs:'regs', book:'book', ach:'ach', owner:'fr'}[hallTab]; renderMore(p); }
+  }
+  p.scrollTop = st;
+  refreshAfford();
+}
+function renderPanel(){ renderSheet(); }
+function renderUpgrades(p, id){
+  const rm = room(id);
+  UPG.forEach(u=>{
+    const L = rm.upg[u.id], max = L >= MAXL, c = upCost(u, L, id);
+    const wall = !max && (L+1)%5===0;
+    const card = el(`<div class="card up"><div><div class="t">${u.n} <span class="tag num">${L}/${MAXL}</span>${wall?' <span class="tag warn">порог</span>':''}</div><div class="eff">${esc(u.eff(L))}</div>${max?'':'<div class="eff">Дальше: <b>'+esc(u.eff(L+1))+'</b></div>'}</div>
+      <div class="col">${max?'<span class="tag">Максимум</span>':btnHtml(fmt(c)+' ₽', c, false)+btnHtml('Макс', c, false, 'ghost')}</div>${pips(L)}</div>`);
+    const bs = card.querySelectorAll('button');
+    if(bs[0]) bs[0].onclick = () => buyUpg(u, id, 1);
+    if(bs[1]) bs[1].onclick = () => buyUpg(u, id, 20);
+    p.appendChild(card);
+  });
+}
+function renderStory(p){
+  const T = S.story;
+  p.appendChild(el(`<div class="card"><div class="eyebrow">Сезон ${T.season}</div><div class="t big">${esc(seasonName())}</div>${T.dl?`<div class="d" style="color:var(--bad)">${esc(T.dl.label)}${T.dl.amount?': '+fmt(T.dl.amount)+' ₽':''} — осталось ${Math.max(0,T.dl.by-S.day)} дн.</div>`:'<div class="d">Пока тихо. Это ненадолго.</div>'}</div>`));
+  p.appendChild(el(`<div class="h">Люди района</div>`));
+  Object.keys(CHARS).forEach(k=>{
+    const c = CHARS[k], v = srel(k); const met = k==='palych' ? (T.season>1 || T.flags.burned!==undefined || T.flags.kept || T.flags.called) : true;
+    if(!met && T.season===1) return;
+    p.appendChild(el(`<div class="card"><div class="row"><span class="t">${c.n}</span><span class="sp"></span><span class="tag num ${v<-20?'warn':v>20?'g':''}">${v>20?'Друг':v<-20?'Враг':'Нейтрально'}</span></div><div class="d">${esc(c.d)}</div><div class="mood">Отношения ${bar((v+100)/2, v<-20?'var(--bad)':v>20?'var(--good)':'var(--caramel)')}<span class="num">${Math.round(v)}</span></div></div>`));
+  });
+  p.appendChild(el(`<div class="empty" style="font-size:12px">Решения необратимы. Персонажи помнят, как ты с ними обошёлся, и это всплывёт позже. Раз в игровую неделю выходит газета «Районные вести».</div>`));
+}
+function renderSettings(p){
+  const vol = (k, n) => { const row = el(`<label class="vol"><span>${n}</span><input type="range" min="0" max="100" value="${Math.round(prefs[k]*100)}" id="vol_${k}"></label>`); row.querySelector('input').oninput = e => { prefs[k] = e.target.value/100; savePrefs(); }; return row; };
+  const snd = el(`<div class="card"><div class="row"><span class="t">Звук</span><span class="sp"></span><button class="btn ${soundOn?'':'ghost'}" id="sndT">${soundOn?'Включён':'Выключен'}</button></div></div>`);
+  snd.appendChild(vol('master','Общая громкость')); snd.appendChild(vol('amb','Шум зала')); snd.appendChild(vol('fx','Кофемашина, касса, дверь'));
+  snd.querySelector('#sndT').onclick = () => { soundOn = !soundOn; unlockAudio(); applyVolumes(); save(); renderSheet(); };
+  p.appendChild(snd);
+  // поддержать игру
+  const sup = el(`<div class="card"><div class="t">Поддержать игру</div><div class="d">Игра полностью бесплатная. Покупки ничего не решают в сюжете и экономике.</div><div class="shop" id="shop"></div></div>`);
+  const shop = sup.querySelector('#shop');
+  const can = !!(tg && tg.initData && tg.openInvoice);
+  const sub = ownerSub();
+  const items = [
+    ['sub_owner','Подписка «Владелец»', sub ? 'Активна до '+new Date(S.ent.sub).toLocaleDateString('ru-RU') : 'Кофейня без тебя работает до 24 часов вместо 12, офлайн-доход 80% вместо 60%. На 30 дней.', 150, sub],
+    ['int_loft','Интерьер «Лофт»','Кирпич, бетон, лампочки. Только внешний вид.', 75, hasInterior('int_loft')],
+    ['int_scandi','Интерьер «Скандинавский»','Светлое дерево и воздух.', 100, hasInterior('int_scandi')],
+    ['int_soviet','Интерьер «Столовая»','Кафель, клеёнка и плакаты.', 100, hasInterior('int_soviet')],
+    ['int_neon','Интерьер «Неон»','Тёмный зал и розовый неон.', 150, hasInterior('int_neon')],
+    ['tip_50','Угостить бариста кофе','Чаевые разработчику.', 50, false],
+    ['tip_150','Угостить всю смену','Чаевые разработчику.', 150, false],
+    ['tip_500','Купить команде кофемашину','Чаевые разработчику.', 500, false]];
+  items.forEach(([id,n,d,stars,owned])=>{
+    const row = el(`<div class="shopitem"><div><div class="t">${n}</div><div class="d">${esc(d)}</div></div>${owned && !id.startsWith('tip')?'<span class="tag g">Есть</span>':`<button class="btn ghost" ${can?'':'disabled'}>${stars} ★</button>`}</div>`);
+    const b = row.querySelector('button'); if(b) b.onclick = () => buyStars(id);
+    shop.appendChild(row);
+  });
+  if(!can) shop.appendChild(el(`<div class="d">Покупки работают, когда игра открыта в Telegram.</div>`));
+  if(S.ent && S.ent.tips) shop.appendChild(el(`<div class="d" style="color:var(--good)">Спасибо за поддержку: ${S.ent.tips} ★. Команда передаёт привет.</div>`));
+  p.appendChild(sup);
+  // интерьер
+  const own = (S.ent && S.ent.interiors) || [];
+  if(own.length){
+    const ic = el(`<div class="card"><div class="t">Интерьер зала «${esc(roomDef(S.active).n)}»</div><div class="subnav"></div></div>`);
+    const nav = ic.querySelector('.subnav');
+    [['','Обычный']].concat(own.map(k=>[k, INTERIORS[k].n])).forEach(([k,n])=>{ const b = el(`<button class="chipbtn" aria-pressed="${(S.interior||{})[S.active]===k || (!k && !(S.interior||{})[S.active])}">${n}</button>`); b.onclick = () => { S.interior = S.interior || {}; S.interior[S.active] = k; save(); renderSheet(); }; nav.appendChild(b); });
+    p.appendChild(ic);
+  }
+  const misc = el(`<div class="card"><div class="t">Игра</div><div class="d">«${esc(S.name)}», ${city().n}, игровой день ${S.day}. Прогресс сохраняется на устройстве${cloudOK()?' и в облаке Telegram':''}.</div><div class="row wrap"></div></div>`);
+  const row = misc.lastElementChild;
+  const rs = el(`<button class="btn ghost">Начать заново</button>`);
+  rs.onclick = () => { if(!rs.dataset.sure){ rs.dataset.sure='1'; rs.textContent='Точно? Пропадёт всё'; return; } try{ localStorage.removeItem(KEY); }catch(e){} if(cloudOK()){ try{ tg.CloudStorage.setItem('bc3_n','0'); }catch(e){} } S = null; modals = []; sheet = null; $('#modalRoot').innerHTML=''; $('#sheetRoot').innerHTML=''; for(const k in RT) delete RT[k]; renderStart(); };
+  row.appendChild(rs);
+  p.appendChild(misc);
+}
+const INTERIORS = {
+  int_loft:{n:'Лофт', theme:{wall:'#8a5a44', wall2:'#6b4434', trim:'#2a2a2a', fa:'#7a7a78', fb:'#6e6e6c', counter:'#2e2e2e', ctop:'#4a4a48'}, brick:true},
+  int_scandi:{n:'Скандинавский', theme:{wall:'#eae4da', wall2:'#d8d0c2', trim:'#9a8a72', fa:'#d9c4a0', fb:'#ccb690', counter:'#f2ede4', ctop:'#c9b48e'}},
+  int_soviet:{n:'Столовая', theme:{wall:'#9fc1b0', wall2:'#e8e2d2', trim:'#5a6e64', fa:'#c94a3a', fb:'#e8e2d2', counter:'#b8b2a2', ctop:'#8a8474'}, tiles:true},
+  int_neon:{n:'Неон', theme:{wall:'#1e1a2e', wall2:'#151226', trim:'#ff4fa8', fa:'#26213a', fb:'#201c32', counter:'#120f20', ctop:'#ff4fa8'}, neon:true}
+};
+function hasInterior(k){ return !!(S.ent && S.ent.interiors && S.ent.interiors.includes(k)); }
+function roomTheme(id){ const k = (S.interior||{})[id]; if(k && INTERIORS[k] && hasInterior(k)) return INTERIORS[k].theme; return roomDef(id).theme; }
+function apiPost(path, data){ return fetch(path, {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData: tg && tg.initData}, data||{}))}).then(r=>r.json()); }
+function refreshEntitlements(){ if(!tg || !tg.initData) return; apiPost('/api/purchases').then(r=>{ if(r && r.ok){ S.ent = {sub:r.sub, interiors:r.interiors, tips:r.tips, at:Date.now()}; save(); structDirty = true; } }).catch(()=>{}); }
+function buyStars(item){
+  if(!tg || !tg.openInvoice) return;
+  apiPost('/api/invoice', {item}).then(r=>{
+    if(!r || !r.ok){ toast('Не получилось создать счёт. Попробуй позже'); return; }
+    tg.openInvoice(r.link, status => { if(status==='paid'){ toast('Спасибо! Покупка появится через пару секунд'); sfx('level'); setTimeout(refreshEntitlements, 2500); setTimeout(refreshEntitlements, 8000); } });
+  }).catch(()=>toast('Нет связи с сервером'));
 }
 function renderHud(){
   if(!$('#sMoney')) return;
   $('#cafe').textContent = '«'+S.name+'»';
-  $('#clk').textContent = WEEKDAYS[weekday()]+', день '+S.day+', '+clockStr()+' · '+WEATHER[S.weather].n+(isHalloween()?' · Хэллоуин':'')+' · '+city().n;
+  $('#clk').textContent = WEEKDAYS[weekday()]+', день '+S.day+' · '+clockStr()+' · '+WEATHER[S.weather].n;
   const m = $('#sMoney'); m.textContent = fmt(S.money)+' ₽'; m.style.color = S.money<0 ? 'var(--bad)' : '';
   const ipm = S.rooms.reduce((a,r)=>a+incomePerMin(r.id),0);
-  $('#sInc').textContent = S.isOpen ? '≈ '+fmt(ipm*60)+' ₽ выручки в час' : 'Закрыто до '+String(S.hours.open).padStart(2,'0')+':00';
-  $('#sRep').textContent = S.rep.toFixed(1).replace('.',',');
-  $('#sLvl').textContent = S.level;
-  $('#bXp').style.width = Math.min(100, S.xp/xpNeed()*100)+'%';
+  $('#sInc').textContent = '≈ '+fmt(ipm*60)+' ₽/ч · ★ '+S.rep.toFixed(1).replace('.',',')+' · ур. '+S.level;
+  // плашки: сюжет, задание, предупреждения
+  const pills = [];
+  const T = S.story;
+  if(T && T.dl) pills.push(`<button class="pill story" data-go="story"><b>${esc(T.dl.label)}</b>${T.dl.amount?' · '+fmt(T.dl.amount)+' ₽':''} · ${Math.max(0,T.dl.by-S.day)} дн.</button>`);
   const t = S.task;
-  $('#task').innerHTML = t ? `<span class="t">Задание дня: ${esc(t.label)} — <b class="num">${t.kind==='earn'?fmt(t.prog)+' из '+fmt(t.goal)+' ₽':t.kind==='noangry'?(t.failed?'провалено':'пока держимся'):Math.floor(t.prog)+' из '+t.goal}</b>${t.done?' · выполнено':''}</span><span class="bar"><i style="width:${(t.kind==='noangry'?(t.failed?0:100):t.prog/t.goal*100)}%;background:${t.done?'var(--good)':t.failed?'var(--bad)':'var(--caramel)'}"></i></span><span class="num" style="color:var(--muted)">+${fmt(t.reward)} ₽</span>` : '';
-  const mods = activeMods();
-  const mEl = $('#mods'); const warn = [];
-  if(S.debt.stage>=1) warn.push(['Долги: стадия '+S.debt.stage+' из 3', 'b']);
-  if(S.debt.loan>0) warn.push(['Долг «серьёзным людям»: '+fmt(S.debt.loan)+' ₽', 'b']);
-  if(S.closedUntil > absNow()) warn.push(['Закрыто ещё '+Math.ceil((S.closedUntil-absNow())/60)+' игр. ч', 'b']);
-  const ls = lowStock(); if(ls.length) warn.push(['Заканчивается: '+ls.map(k=>STOCK[k].n.toLowerCase()).join(', '), 'b']);
-  for(const r of S.rooms){ const later = S.isOpen || S.gm >= S.hours.close*60; const tomorrow = S.day + (later?1:0); const nb = !S.staff.some(x=>x.room===r.id && x.role==='Бариста' && x.today!=='sub' && scheduledToday(x, tomorrow)); if(nb) warn.push([(S.rooms.length>1?roomDef(r.id).n+': ':'')+(later?'завтра':'сегодня')+' нет бариста', 'b']); }
-  for(const r of S.rooms) for(const k in r.broken) if(r.broken[k]) warn.push([EQ[k].n+' сломана', 'b']);
-  mEl.innerHTML = warn.concat(mods.map(m=>[m.label + ' · '+Math.ceil((m.until-absNow())/60)+' ч', (m.mul>=1) === (m.k==='traffic'||m.k==='check') ? 'g' : 'b'])).map(([t,c])=>`<span class="chip ${c}">${esc(t)}</span>`).join('');
-  mEl.hidden = !mEl.innerHTML;
-  const mt = S.meters;
-  $('#meters').innerHTML = ['soul','pathos','chaos'].map(k=>`<div class="meter"><div class="k"><span>${METER_N[k]}</span><b class="num">${Math.round(mt[k])}</b></div><div class="bar"><i style="width:${mt[k]}%;background:var(--${k})"></i></div></div>`).join('') +
-    `<div class="path">${S.path ? '<b>'+PATHS[S.path]+'</b>' : 'Путь на '+LOCK_LEVEL+' ур.'}</div>`;
-  const rooms = $('#rooms'); const sig = S.rooms.map(r=>r.id).join()+'|'+S.active;
-  if(rooms.dataset.sig !== sig){ rooms.dataset.sig = sig;
-    rooms.innerHTML = S.rooms.map(r=>`<button class="room" data-r="${r.id}" aria-pressed="${r.id===S.active}">${esc(roomDef(r.id).n)}<small class="num"></small></button>`).join('');
-    rooms.querySelectorAll('.room').forEach(b=>b.onclick=()=>{ S.active = b.dataset.r; syncScene(S.active); structDirty = true; renderHud(); renderPanel(); }); }
-  rooms.querySelectorAll('.room').forEach(b=>{ b.querySelector('small').textContent = S.isOpen ? '≈'+fmt(incomePerMin(b.dataset.r)*60)+'/ч' : ''; });
-  rooms.hidden = S.rooms.length < 2;
-  // бейджи
-  const badges = {up: UPG.some(u=>{ const L = room(S.active).upg[u.id]; return L<MAXL && S.money >= upCost(u,L,S.active); }) ? '•' : '',
-    ev: S.incidents.length || '', team: S.staff.some(s=>s.distract) ? '!' : '', stock: (lowStock().length || Object.values(room(S.active).broken).some(Boolean)) ? '!' : ''};
-  for(const [k] of TABS){ const b = $('#b_'+k); if(!b) continue; const v = badges[k]; b.hidden = !v; b.textContent = v; }
-  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected', b.dataset.t===tab));
+  if(t){ const pr = t.kind==='noangry' ? (t.failed?0:1) : t.prog/t.goal; pills.push(`<button class="pill task" data-go="task"><span class="pbar"><i style="width:${Math.round(pr*100)}%;background:${t.done?'var(--good)':t.failed?'var(--bad)':'var(--caramel)'}"></i></span>${t.done?'Задание выполнено':esc(t.label)} · +${fmt(t.reward)} ₽</button>`); }
+  const warn = [];
+  if(S.debt.stage>=1) warn.push(['Долги '+S.debt.stage+'/3','money']);
+  if(S.closedUntil > absNow()) warn.push(['Закрыто '+Math.ceil((S.closedUntil-absNow())/60)+' ч','events']);
+  const ls = lowStock(); if(ls.length) warn.push(['Мало: '+ls.map(k=>STOCK[k].n.toLowerCase()).join(', '),'stock']);
+  for(const r of S.rooms){ const nb = !S.staff.some(x=>x.room===r.id && x.role==='Бариста' && x.today!=='sub' && scheduledToday(x, S.day+1)); if(nb) warn.push([(S.rooms.length>1?roomDef(r.id).n+': ':'')+'завтра нет бариста','team']); }
+  for(const r of S.rooms) for(const k in r.broken) if(r.broken[k]) warn.push([EQ[k].n+' сломана','stock']);
+  warn.forEach(([w,go])=>pills.push(`<button class="pill warn" data-go="${go}">${esc(w)}</button>`));
+  activeMods().slice(0,3).forEach(md=>pills.push(`<span class="pill ${(md.mul>=1)===(md.k==='traffic'||md.k==='check')?'good':'warn'}">${esc(md.label)}</span>`));
+  const pe = $('#pills'); const html = pills.join('');
+  if(pe.dataset.h !== html){ pe.dataset.h = html; pe.innerHTML = html; pe.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ const g = b.dataset.go; if(g==='task'){ toast(S.task.label+': '+(S.task.kind==='earn'?fmt(S.task.prog)+' из '+fmt(S.task.goal)+' ₽':S.task.kind==='noangry'?(S.task.failed?'провалено':'пока никто не ушёл'):Math.floor(S.task.prog)+' из '+S.task.goal)); return; } openSheet('hall', g); }); }
+  // уведомления о событиях на сцене
+  const nt = $('#notifs'); const sig = S.incidents.map(i=>i.uid).join();
+  if(nt.dataset.s !== sig){ nt.dataset.s = sig; nt.innerHTML = '';
+    S.incidents.slice(-3).reverse().forEach(inc=>{ const d = evDef(inc); if(!d) return; const b = el(`<button class="notif ${d.cat}"><b>!</b><span>${esc(fillText(d.t, inc))}</span></button>`); b.onclick = () => { sfx('tap'); queueModal({kind:'inc', uid:inc.uid}, true); }; nt.appendChild(b); });
+    if(S.incidents.length > 3){ const more = el(`<button class="notif more">Ещё ${S.incidents.length-3}</button>`); more.onclick = () => openSheet('hall','events'); nt.appendChild(more); } }
+  // точки залов
+  const rd = $('#roomdots'); const rs = S.rooms.map(r=>r.id).join()+'|'+S.active;
+  if(rd.dataset.s !== rs){ rd.dataset.s = rs; rd.innerHTML = S.rooms.length>1 ? S.rooms.map(r=>`<button class="rdot ${r.id===S.active?'on':''}" data-r="${r.id}" aria-label="${esc(roomDef(r.id).n)}"></button>`).join('') + `<span class="rname">${esc(roomDef(S.active).n)}</span>` : '';
+    rd.querySelectorAll('.rdot').forEach(b=>b.onclick=()=>switchRoom(b.dataset.r)); }
+  // бейджи дока
+  const upB = UPG.some(u=>{ const L = room(S.active).upg[u.id]; return L<MAXL && S.money >= upCost(u,L,S.active); });
+  const hallN = S.incidents.length + (S.staff.some(s=>s.distract)?1:0);
+  const bu = $('#b_up'); bu.hidden = !upB; bu.textContent = '';
+  const bh = $('#b_hall'); bh.hidden = !hallN; bh.textContent = hallN || '';
+  document.querySelectorAll('.dockb').forEach(b=>b.classList.toggle('on', b.dataset.s===sheet));
 }
+function switchRoom(id){ if(!room(id)) return; S.active = id; syncScene(id); structDirty = true; renderHud(); toast(roomDef(id).n); }
+
 function lowStock(){ return Object.keys(STOCK).filter(k=>{ if(k==='matcha' && !isUnlocked('matcha')) return false; if(k==='food' && !isUnlocked('breakfast') && !isUnlocked('shawarma')) return false; if(k==='desserts' && !isUnlocked('dessert')) return false; return stockQty(k) < stockCap(k)*0.2; }); }
 function refreshAfford(){ document.querySelectorAll('[data-cost]').forEach(b=>{ const c = +b.dataset.cost; b.disabled = b.dataset.lock==='1' || S.money < c; }); }
 function pips(L){ return `<div class="pips">${Array.from({length:MAXL},(_,i)=>`<i class="${i<L?'on':''} ${(i+1)%5===0?'wall':''}"></i>`).join('')}</div>`; }
@@ -1856,30 +2392,6 @@ function btnHtml(label, cost, lock, cls){ return `<button class="btn num ${cls||
 function bar(v, col){ return `<span class="bar"><i style="width:${clamp(v,0,100)}%;background:${col}"></i></span>`; }
 function moodCol(v){ return v<30?'var(--bad)':v<60?'var(--caramel)':'var(--good)'; }
 
-function renderPanel(){
-  const p = $('#panel'); if(!p) return; structDirty = false;
-  const id = S.active, rm = room(id);
-  p.innerHTML = '';
-  if(tab==='up'){
-    p.appendChild(el(`<div class="h">Улучшения · ${esc(roomDef(id).n)}</div>`));
-    UPG.forEach(u=>{
-      const L = rm.upg[u.id], max = L >= MAXL, c = upCost(u, L, id);
-      const wall = !max && (L+1)%5===0;
-      const card = el(`<div class="card up"><div><div class="t">${u.n} <span class="tag num">${L}/${MAXL}</span>${wall?' <span class="tag warn">порог</span>':''}</div><div class="eff">${esc(u.eff(L))}</div>${max?'':'<div class="eff">Дальше: <b>'+esc(u.eff(L+1))+'</b></div>'}</div>
-        <div class="row">${max?'<span class="tag">Максимум</span>':btnHtml(fmt(c)+' ₽', c, false)+btnHtml('Макс', c, false, 'ghost')}</div>${pips(L)}</div>`);
-      const bs = card.querySelectorAll('button');
-      if(bs[0]) bs[0].onclick = () => buyUpg(u, id, 1);
-      if(bs[1]) bs[1].onclick = () => buyUpg(u, id, 20);
-      p.appendChild(card);
-    });
-  }
-  else if(tab==='team') renderTeam(p, id);
-  else if(tab==='stock') renderStock(p, id);
-  else if(tab==='fin') renderFin(p);
-  else if(tab==='ev') renderEvents(p);
-  else if(tab==='more') renderMore(p);
-  refreshAfford();
-}
 function buyUpg(u, id, n){
   const rm = room(id); let k = 0;
   while(k < n && rm.upg[u.id] < MAXL){ const c = upCost(u, rm.upg[u.id], id); if(S.money < c) break; spend(c, 'other'); rm.upg[u.id]++; addXp(6); k++; }
@@ -2000,14 +2512,6 @@ function renderFin(p){
     const lb = d.querySelector('button'); if(lb) lb.onclick = () => { if(S.money < S.debt.loan) return; spend(S.debt.loan,'other'); S.debt.loan = 0; toast('Долг погашен. Люди в кожанках больше не заходят'); save(); renderPanel(); };
     p.appendChild(d);
   }
-  // часы работы
-  const maxClose = S.level >= 18 ? 24 : 23;
-  const hrs = el(`<div class="card"><div class="t">Часы работы</div><div class="d">Дольше открыт — больше выручки, но смены длиннее: сотрудники устают быстрее, а зарплата и коммуналка выше.${S.level<18?' Работа до полуночи и круглосуточно открывается на 18 уровне.':''}</div>
-    <div class="row wrap"><label class="d">Открытие <select id="hOpen">${[0,6,7,8,9,10].filter(h=>h>0||S.level>=18).map(h=>`<option value="${h}" ${h===S.hours.open?'selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('')}</select></label>
-    <label class="d">Закрытие <select id="hClose">${[20,21,22,23,24].filter(h=>h<=maxClose).map(h=>`<option value="${h}" ${h===S.hours.close?'selected':''}>${h===24?'24:00':h+':00'}</option>`).join('')}</select></label></div></div>`);
-  hrs.querySelector('#hOpen').onchange = e => { S.hours.open = +e.target.value; save(); toast('Новые часы работы с завтрашнего дня'); renderHud(); };
-  hrs.querySelector('#hClose').onchange = e => { S.hours.close = +e.target.value; save(); toast('Время закрытия изменено'); renderHud(); };
-  p.appendChild(hrs);
 }
 
 /* ---------- события ---------- */
@@ -2028,9 +2532,6 @@ function renderEvents(p){
 /* ---------- ещё ---------- */
 const SUBS = [['district','Район'],['rooms','Залы'],['menu','Меню'],['regs','Постоянные'],['ach','Достижения'],['book','Гости'],['fr','Франшиза']];
 function renderMore(p){
-  const nav = el(`<div class="subnav">${SUBS.map(([k,n])=>`<button class="chipbtn" aria-pressed="${sub===k}" data-s="${k}">${n}</button>`).join('')}</div>`);
-  nav.querySelectorAll('button').forEach(b=>b.onclick=()=>{ sub = b.dataset.s; renderPanel(); });
-  p.appendChild(nav);
   if(sub==='district'){
     p.appendChild(el(`<div class="empty" style="font-size:12px">Соседи по району. Они переманивают гостей и сотрудников, устраивают акции и иногда предлагают сотрудничать. Если конкурент ослабнет, его помещение можно выкупить — если уговоришь хозяина.</div>`));
     S.rivals.forEach(r=>{
@@ -2079,8 +2580,8 @@ function renderMore(p){
   }
   else if(sub==='ach'){
     const got = ACH.filter(a=>S.ach[a[0]]).length;
-    p.appendChild(el(`<div class="h">Достижения · ${got} из ${ACH.length} · доли франшизы: ${S.shares}</div>`));
-    ACH.forEach(([id,n,d,f,rw])=>{ const ok = S.ach[id]; p.appendChild(el(`<div class="card ach ${ok?'ok':''}"><div class="row"><span class="t">${ok?esc(n):'???'}</span><span class="sp"></span>${rw?`<span class="tag">+${rw} ${rw===1?'доля':rw<5?'доли':'долей'}</span>`:''}</div><div class="d">${ok?esc(d):'Откроется само, когда случится.'}</div></div>`)); });
+    p.appendChild(el(`<div class="h">Достижения · ${got} из ${ACH.length}</div>`));
+    ACH.forEach(([id,n,d,f,rw])=>{ const ok = S.ach[id]; p.appendChild(el(`<div class="card ach ${ok?'ok':''}"><div class="row"><span class="t">${ok?esc(n):'???'}</span><span class="sp"></span>${rw?`<span class="tag">+${rw} опыта</span>`:''}</div><div class="d">${ok?esc(d):'Откроется само, когда случится.'}</div></div>`)); });
   }
   else if(sub==='book'){
     const all = GUESTS.concat(KIDS);
@@ -2096,14 +2597,17 @@ function renderMore(p){
   }
   else if(sub==='fr'){
     const need = franchiseNeed(), e = S.c.earnedRun||0, sh = franchiseShares();
-    p.appendChild(el(`<div class="card"><div class="t">Франшиза</div><div class="d">Когда сеть заработает ${fmt(need)} ₽, её можно продать и начать заново в другом городе. За продажу дают доли: каждая навсегда даёт +3% к доходу и тратится на вечные улучшения. Достижения тоже дают доли.</div>
+    p.appendChild(el(`<div class="card"><div class="t">Опыт владельца: ${S.shares}</div><div class="d">Это твой опыт как хозяина. Каждое очко навсегда даёт +3% к доходу во всех будущих кофейнях. Сейчас доход ×${shareMult().toFixed(2).replace('.',',')}. Опыт дают достижения и продажа сети. Его можно потратить на вечные бонусы ниже.</div></div>`));
+    const fr = el(`<div class="card"><div class="t">Продать сеть и начать в новом городе</div><div class="d">Когда сеть заработает ${fmt(need)} ₽, её можно продать. Залы, команда и деньги уйдут покупателю, а ты получишь опыт и начнёшь заново в другом городе с новым сюжетом.</div>
       <div class="mood">Заработано ${bar(e/need*100,'var(--caramel)')}<span class="num">${fmt(e)}</span></div>
-      <div class="d">Сейчас за продажу: <b>${sh}</b> ${sh===1?'доля':'долей'}. Ваши доли: ${S.shares} (доход ×${shareMult().toFixed(2).replace('.',',')}). Продано франшиз: ${S.franchises}.</div>
-      <div class="row">${btnHtml('Продать сеть', 0, sh<=0)}</div></div>`)).querySelector('button').onclick = () => { if(sh>0) queueModal({kind:'franchise'}, true); };
-    p.appendChild(el(`<div class="h">Вечные улучшения</div>`));
+      <div class="d">За продажу сейчас: <b>${sh}</b> опыта. Продано сетей: ${S.franchises}.</div>
+      <div class="row">${btnHtml('Продать сеть', 0, sh<=0)}</div></div>`);
+    fr.querySelector('button').onclick = () => { if(sh>0) queueModal({kind:'franchise'}, true); };
+    p.appendChild(fr);
+    p.appendChild(el(`<div class="h">Вечные бонусы</div>`));
     PERKS.forEach(pk=>{ const L = perk(pk.id), c = pk.cost(L), max = L>=pk.max;
-      const card = el(`<div class="card up"><div><div class="t">${pk.n} <span class="tag num">${L}/${pk.max}</span></div><div class="eff">${pk.d}</div></div>${max?'<span class="tag">Максимум</span>':`<button class="btn" ${S.shares<c?'disabled':''}>${c} ${c===1?'доля':c<5?'доли':'долей'}</button>`}</div>`);
-      const b = card.querySelector('button'); if(b) b.onclick = () => { if(S.shares < c) return; S.shares -= c; S.perks[pk.id] = L+1; if(pk.id==='autoorder') S.autoOrder = true; sfx('buy'); save(); renderPanel(); };
+      const card = el(`<div class="card up"><div><div class="t">${pk.n} <span class="tag num">${L}/${pk.max}</span></div><div class="eff">${pk.d}</div></div>${max?'<span class="tag">Максимум</span>':`<button class="btn" ${S.shares<c?'disabled':''}>${c} опыта</button>`}</div>`);
+      const b = card.querySelector('button'); if(b) b.onclick = () => { if(S.shares < c) return; S.shares -= c; S.perks[pk.id] = L+1; if(pk.id==='autoorder') S.autoOrder = true; sfx('buy'); save(); renderSheet(); };
       p.appendChild(card); });
   }
 }
@@ -2129,11 +2633,12 @@ function showModal(){
     const inc = S.incidents.find(i=>i.uid===m.uid); if(!inc){ closeModal(); return; }
     const d = evDef(inc);
     const st = inc.sid ? S.staff.find(s=>s.id===inc.sid) : null;
-    const tag = {absurd:'Абсурд', inspect:'Проверка', staff:'Команда', break:'Поломка', money:'Деньги'}[d.cat] || 'Событие';
-    const head = el(`<div class="row">${st?`<div class="spr" style="${sprStyle(staffSpr(st),56)}"></div>`:''}<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="eyebrow">${tag}${st?' · '+esc(st.name):''}</div><h2>${esc(fillText(d.t, inc))}</h2></div></div>`);
+    const tag = {absurd:'Абсурд', inspect:'Проверка', staff:'Команда', break:'Поломка', money:'Деньги', story:'Сюжет · '+seasonName()}[d.cat] || 'Событие';
+    const ch = d.who ? CHARS[d.who] : null;
+    const head = el(`<div class="row">${ch?`<div class="spr" style="${sprStyle(charSpr(d.who),60)}"></div>`:st?`<div class="spr" style="${sprStyle(staffSpr(st),56)}"></div>`:''}<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="eyebrow">${esc(tag)}${ch?' · '+esc(ch.n):st?' · '+esc(st.name):''}</div><h2>${esc(fillText(d.t, inc))}</h2></div></div>`);
     box.append(head, el(`<p>${esc(fillText(d.x, inc))}</p>`));
     const opts = el(`<div class="opts"></div>`);
-    d.o.forEach((o,i)=>{ if(o.cond && !o.cond(st)) return; const b = el(`<button class="opt">${esc(fillText(o.t,inc))}</button>`);
+    d.o.forEach((o,i)=>{ if(o.cond && !o.cond(st)) return; if(o.req && !o.req(S, inc)) return; const b = el(`<button class="opt">${esc(fillText(o.t,inc))}</button>`);
       b.onclick = () => { const r = resolveIncident(inc, i); sfx('tap'); save(); box.innerHTML = '';
         box.append(el(`<div class="eyebrow">Итог</div>`), el(`<h2>${esc(r.title)}</h2>`), el(`<p>${esc(r.out)}</p>`), chipsEl(r.chips));
         const row = el(`<div class="row"></div>`); row.append(btn('Поделиться', ()=>share(r.title+'. '+r.out), 'ghost'), btn('Дальше', closeModal)); box.appendChild(row); };
@@ -2146,6 +2651,13 @@ function showModal(){
     box.append(el(`<div class="eyebrow">Последствия</div>`), el(`<h2>${esc(fillText(d.t, m.inc))}</h2>`), el(`<p>${esc(fillText(d.x, m.inc))}</p>`), chipsEl(applyFxPreview(d.auto)));
     const row = el(`<div class="row"></div>`); row.append(btn('Поделиться', ()=>share(fillText(d.t,m.inc)+'. '+fillText(d.x,m.inc)), 'ghost'), btn('Понятно', closeModal)); box.appendChild(row);
   }
+  else if(m.kind==='news'){
+    box.classList.add('paper');
+    box.append(el(`<div class="eyebrow">Районные вести · выпуск ${m.n}</div>`), el(`<h2>Новости квартала</h2>`));
+    m.items.forEach(([h,t])=>box.appendChild(el(`<div class="newsitem"><b>${esc(h)}</b><p>${esc(t)}</p></div>`)));
+    const row = el(`<div class="row"></div>`); row.append(btn('Поделиться', ()=>share('Районные вести: '+m.items.map(x=>x[1]).slice(0,2).join(' ')), 'ghost'), btn('Читать дальше', closeModal)); box.appendChild(row);
+  }
+  else if(m.kind==='streak'){ box.append(el(`<div class="eyebrow">С возвращением</div>`), el(`<h2>${m.n} ${m.n===1?'день':m.n<5?'дня':'дней'} подряд</h2>`), el(`<p>Команда рада тебя видеть. Бонус за серию: +${fmt(m.bonus)} ₽.</p>`), btn('К делу', closeModal)); }
   else if(m.kind==='note'){ box.append(el(`<div class="eyebrow">Последствия</div>`), el(`<h2>${esc(m.title)}</h2>`), chipsEl(m.chips), btn('Понятно', closeModal)); }
   else if(m.kind==='staff') staffModal(box, m, btn);
   else if(m.kind==='sched'){
@@ -2174,16 +2686,16 @@ function showModal(){
   else if(m.kind==='away'){
     const h = Math.floor(m.mins/60), mm = m.mins%60;
     box.append(el(`<div class="eyebrow">Пока тебя не было</div>`), el(`<h2>${m.money>=0?'+':''}${fmt(m.money)} ₽</h2>`),
-      el(`<p>Прошло ${h?h+' ч ':''}${mm} мин${m.capped?' (кофейня работала без тебя только первые 12 часов)':''}. Обслужено гостей: ${m.guests}. Игровых дней: ${m.days}. Без тебя команда работает хуже, а события решаются сами.${m.gone>0?' Ушли из команды: '+m.gone+'.':''}</p>`), btn('К делу', closeModal));
+      el(`<p>Прошло ${h?h+' ч ':''}${mm} мин${m.capped?' (кофейня работала без тебя только первые 12 часов)':''}. Обслужено гостей: ${m.guests}. Игровых дней: ${m.days}. Без тебя команда работает хуже, а события решаются сами.${m.gone>0?' Ушли из команды: '+m.gone+'.':''}</p>`), ...(m.subHint ? [el(`<div class="d" style="font-size:12px;color:var(--muted)">С подпиской «Владелец» кофейня заработала бы ещё около ${fmt(m.subHint)} ₽.</div>`)] : []), btn('К делу', closeModal));
   }
   else if(m.kind==='path'){ box.append(el(`<div class="eyebrow">Уровень ${LOCK_LEVEL}</div>`), el(`<h2>${PATHS[S.path]}</h2>`), el(`<p>Путь закреплён по тому, как ты вёл дела. Бонус: ${PATH_BONUS[S.path]}. Остальные шкалы теперь растут вдвое медленнее.</p>`), btn('Так тому и быть', closeModal)); }
-  else if(m.kind==='ach'){ box.append(el(`<div class="eyebrow">Достижение</div>`), el(`<h2>${esc(m.n)}</h2>`), el(`<p>${esc(m.d)}${m.reward?' Награда: '+m.reward+' '+(m.reward===1?'доля':m.reward<5?'доли':'долей')+' франшизы.':''}</p>`), btn('Отлично', closeModal)); }
+  else if(m.kind==='ach'){ box.append(el(`<div class="eyebrow">Достижение</div>`), el(`<h2>${esc(m.n)}</h2>`), el(`<p>${esc(m.d)}${m.reward?' Награда: +'+m.reward+' опыта владельца (+'+(m.reward*3)+'% к доходу навсегда).':''}</p>`), btn('Отлично', closeModal)); }
   else if(m.kind==='bankrupt'){
-    box.append(el(`<div class="eyebrow">Конец</div>`), el(`<h2>Банкротство</h2>`), el(`<p>Две недели в минусе. Помещение опечатано, команда разошлась, «серьёзные люди» забрали кофемашину. Достижения, гостевая книга и доли франшизы остаются. Начинаем с нуля в том же городе.</p>`), btn('Начать заново', ()=>{ goBankrupt(); for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; save(); renderGame(); }));
+    box.append(el(`<div class="eyebrow">Конец</div>`), el(`<h2>Банкротство</h2>`), el(`<p>Две недели в минусе. Помещение опечатано, команда разошлась, «серьёзные люди» забрали кофемашину. Достижения, гостевая книга и опыт владельца остаются. Начинаем с нуля в том же городе.</p>`), btn('Начать заново', ()=>{ goBankrupt(); for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; save(); renderGame(); }));
   }
   else if(m.kind==='franchise'){
     const sh = franchiseShares();
-    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} ${sh===1?'долю':'долей'}?</h2>`), el(`<p>Залы, команда, деньги и улучшения уйдут новому владельцу. Останутся доли, вечные улучшения, достижения и гостевая книга. Где открываемся дальше?</p>`));
+    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} опыта?</h2>`), el(`<p>Залы, команда, деньги и улучшения уйдут новому владельцу. Останутся опыт владельца, вечные бонусы, достижения и гостевая книга. Где открываемся дальше?</p>`));
     const opts = el(`<div class="opts"></div>`);
     Object.keys(CITIES).forEach(cid=>{ const c = CITIES[cid]; const b = el(`<button class="opt"><b>${c.n}</b> · аренда ×${c.rent.toFixed(2).replace('.',',')}, чек ×${c.check.toFixed(2).replace('.',',')}, гостей ×${c.traffic.toFixed(2).replace('.',',')}</button>`); b.onclick = () => { sellFranchise(cid); for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; save(); renderGame(); toast('Новая кофейня в городе '+c.n); }; opts.appendChild(b); });
     box.append(opts, btn('Пока нет', closeModal, 'ghost'));
@@ -2238,7 +2750,7 @@ function staffModal(box, m, btn){
 function checkPatience(s){ if(s.pat > 0) return; s.pat = 40; s.mood = clamp(s.mood-10,0,100); pushIncident('revenge', {sid:s.id}); }
 
 /* ---------- главный цикл ---------- */
-let lastT = performance.now(), hudT = 0, saveT = 0, cloudT = 0, achT = 0;
+let lastT = performance.now(), hudT = 0, saveT = 0, cloudT = 0, achT = 0, ambT = 0, entT = 0;
 function frame(t){
   const dt = Math.min(0.1, (t - lastT)/1000); lastT = t;
   if(S && $('#sMoney')){
@@ -2251,13 +2763,15 @@ function frame(t){
     if(S.isOpen && S.closedUntil <= absNow()) for(const r of S.rooms){ if(r.id===S.active) continue; const rr = rt(r.id); const st = stats(r.id); rr.acc += Math.min(st.lambda, st.through) * dt * 0.9; while(rr.acc >= 1){ rr.acc -= 1; const res = sellOne(r.id); if(res.fail){ S.c.angry++; } } }
     maybeDistract();
     scheduleEvents(Date.now());
+    ambT += dt; if(ambT > 0.5){ ambT = 0; ambientTick(); }
     for(const inc of S.incidents.slice()) if(Date.now() - inc.at > 20*60000) expireIncident(inc);
     draw();
-    hudT += dt; if(hudT > 0.3){ hudT = 0; renderHud(); refreshAfford(); if(structDirty) renderPanel(); }
+    hudT += dt; if(hudT > 0.3){ hudT = 0; renderHud(); refreshAfford(); if(structDirty && sheet && !sheetBusy()) renderSheet(); }
     achT += dt; if(achT > 5){ achT = 0; achCheck(); }
     saveT += dt; if(saveT > 6){ saveT = 0; save(); }
     cloudT += dt; if(cloudT > 30){ cloudT = 0; saveCloud(); }
     trackT += dt; if(trackT > 60){ trackT = 0; track(); }
+    entT += dt; if(entT > 600){ entT = 0; refreshEntitlements(); }
   }
   requestAnimationFrame(frame);
 }
@@ -2267,9 +2781,11 @@ function draw(){
   if(!cv.width) resizeCanvas();
   ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);
   drawRoom(S.active);
-  ctx.setTransform(scale,0,0,scale,0,0);
+  ctx.setTransform(scale,0,0,scale,-OX*scale,0);
   drawGuestBadges(S.active);
-  if(!S.isOpen || S.closedUntil > absNow()) drawClosed();
+  drawWindowSmokers(S.active);
+  drawStoryVisitor();
+  if(S.closedUntil > absNow()) drawClosed();
 }
 document.addEventListener('visibilitychange', ()=>{ if(!S) return; if(document.hidden){ save(); saveCloud(); track(true); } else { lastT = performance.now(); catchUp(); renderHud(); structDirty = true; } });
 window.addEventListener('pagehide', ()=>{ if(S){ save(); saveCloud(); } });
@@ -2277,13 +2793,61 @@ window.addEventListener('pagehide', ()=>{ if(S){ save(); saveCloud(); } });
 /* ---------- запуск ---------- */
 try{ if(tg){ tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#17120e'); tg.setBackgroundColor && tg.setBackgroundColor('#17120e'); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } }catch(e){}
 function boot(data){
-  if(data && data.v===3){ S = data; soundOn = S.sound!==false; S.staff.forEach(s=>{ s.distract = null; }); renderGame(); catchUp(); }
+  if(data && data.v===3){ S = data; migrate(); soundOn = S.sound!==false; S.staff.forEach(s=>{ s.distract = null; }); renderGame(); catchUp(); }
   else { S = null; renderStart(); }
 }
+function migrate(){
+  S.hours = {open:0, close:24};
+  if(!S.story){ S.story = storyInit(); startSeason(1); }
+  S.interior = S.interior || {};
+}
+function streakCheck(){
+  const d = new Date(Date.now()+3*3600000).toISOString().slice(0,10);
+  const y = new Date(Date.now()+3*3600000-86400000).toISOString().slice(0,10);
+  const st = S.streak || {last:'', n:0};
+  if(st.last === d) return;
+  st.n = st.last === y ? st.n + 1 : 1; st.last = d; S.streak = st;
+  if(st.n >= 2){ const bonus = Math.round(Math.max(10000, avgRev()*0.1) * Math.min(st.n, 7) / 1000) * 1000; income(bonus); queueModal({kind:'streak', n:st.n, bonus}); }
+}
+try{ if(tg && tg.isVersionAtLeast && tg.isVersionAtLeast('8.0') && tg.requestFullscreen && !tg.isFullscreen && /Android|iPhone|iPad/i.test(navigator.userAgent)) tg.requestFullscreen(); }catch(e){}
+function applySafe(){ if(!tg) return; const s = tg.safeAreaInset || {}, c = tg.contentSafeAreaInset || {}; const r = document.documentElement.style;
+  r.setProperty('--safe-top', ((s.top||0)+(c.top||0))+'px'); r.setProperty('--safe-bottom', ((s.bottom||0)+(c.bottom||0))+'px'); r.setProperty('--safe-left', (s.left||0)+'px'); r.setProperty('--safe-right', (s.right||0)+'px'); }
+try{ if(tg){ applySafe(); tg.onEvent && ['safeAreaChanged','contentSafeAreaChanged','fullscreenChanged','viewportChanged'].forEach(e=>tg.onEvent(e, ()=>{ applySafe(); resizeCanvas(); })); } }catch(e){}
 boot(loadLocal());
-loadCloud(cloud=>{ if(cloud && cloud.v===3 && (!S || (cloud.savedAt||0) > (S.savedAt||0) + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); } });
+if(S){ streakCheck(); refreshEntitlements(); }
+loadCloud(cloud=>{ if(cloud && cloud.v===3 && (!S || (cloud.savedAt||0) > (S.savedAt||0) + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
 document.addEventListener('pointerdown', unlockAudio, {once:true});
 requestAnimationFrame(frame);
+
+function sheetBusy(){ const a = document.activeElement; return a && a.tagName==='INPUT' && a.type==='range'; }
+function charSpr(k){ const c = CHARS[k]; if(c._s==null){ const [pool, i] = c.spr.split(':'); const arr = POOL[pool] || GUESTS; c._s = arr[(+i) % arr.length]; } return c._s; }
+function drawStoryVisitor(){
+  const inc = S.incidents.find(i=>{ const d = evDef(i); return d && d.who; }); if(!inc) return;
+  const d = evDef(inc); const t = performance.now()/1000;
+  const x = 286, y = QUEUE_Y + 30;
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x, y, 10, 3.5, 0, 0, 7); ctx.fill();
+  drawSprite(charSpr(d.who), x, y - Math.abs(Math.sin(t*1.5))*0.6, 50, false, 0);
+  if(d.who==='palych'){ drawSprite(GUESTS[0], x+26, y+4, 48, true, 0, 0.9); drawSprite(GUESTS[2]||GUESTS[0], x-26, y+4, 48, false, 0, 0.9); }
+  const name = CHARS[d.who].n; ctx.font = '700 8px "Golos Text",sans-serif'; const w = ctx.measureText(name).width + 8;
+  ctx.fillStyle = 'rgba(224,87,74,.95)'; ctx.fillRect(x - w/2, y - 66, w, 11); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(name, x, y - 57.5); ctx.textAlign = 'left';
+}
+
+function drawFrontWindow(th, now){
+  const y0 = H - 40, def = roomDef(S.active);
+  if(def.outdoor){ rect(0, y0+26, W, 14, th.trim); for(let x=4;x<W;x+=14) rect(x, y0+18, 3, 12, th.trim); rect(0, y0+18, W, 2, th.trim); return; }
+  rect(0, y0, W, 40, th.trim);
+  const sky = dayTint();
+  rect(6, y0+4, W-12, 32, sky);
+  rect(6, y0+24, W-12, 12, '#7d7a74'); rect(6, y0+23, W-12, 2, '#9a978f');
+  // прохожие
+  for(let i=0;i<4;i++){ const sp = 12 + i*5, dir = i%2 ? 1 : -1; let x = ((now*sp + i*97) % (W+40)); if(dir<0) x = W - x; const px = x - 20;
+    if(px>8 && px<W-14){ rect(px, y0+15, 6, 9, ['#3a4a6a','#6a3a3a','#3a5a3a','#5a4a2a'][i]); rect(px+1, y0+11, 4, 4, '#e0b090'); rect(px, y0+24, 2, 3, '#222'); rect(px+4, y0+24, 2, 3, '#222'); } }
+  if(S.weather==='rain'){ ctx.strokeStyle = 'rgba(220,235,255,.6)'; ctx.lineWidth = 0.7; ctx.beginPath(); for(let i=0;i<30;i++){ const x = 6 + ((i*37 + now*60) % (W-12)), y = y0+4 + ((i*53 + now*140) % 30); ctx.moveTo(x,y); ctx.lineTo(x-1.5,y+4); } ctx.stroke(); }
+  if(S.weather==='snow'){ ctx.fillStyle = '#fff'; for(let i=0;i<24;i++){ const x = 6 + ((i*29 + now*8) % (W-12)), y = y0+4 + ((i*41 + now*20) % 30); ctx.fillRect(x,y,1.4,1.4); } }
+  for(let x=6; x<W; x+=88) rect(x, y0+4, 3, 32, th.trim);
+  ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(6, y0+4, W-12, 6);
+  ctx.save(); ctx.font = '800 9px "Unbounded","Golos Text",sans-serif'; ctx.fillStyle = 'rgba(243,232,211,.55)'; ctx.textAlign = 'center'; ctx.translate(W/2, y0+18); ctx.scale(-1,1); ctx.fillText(S.name.toUpperCase(), 0, 0); ctx.restore();
+}
 
 </script>
 </body>
