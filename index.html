@@ -3202,9 +3202,13 @@ window.addEventListener('pagehide', ()=>{ if(S){ save(); saveCloud(); } });
 /* ---------- запуск ---------- */
 try{ if(tg){ tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#17120e'); tg.setBackgroundColor && tg.setBackgroundColor('#17120e'); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } }catch(e){}
 function boot(data){
-  if(data && data.v===3){ S = data; migrate(); soundOn = S.sound!==false; S.staff.forEach(s=>{ s.distract = null; }); renderGame(); catchUp(); }
+  if(data && data.v===3){ try{ S = data; migrate(); soundOn = S.sound!==false; S.staff.forEach(s=>{ s.distract = null; }); renderGame(); catchUp(); }catch(e){ console.error(e); renderBroken(e); } }
   else { S = null; renderStart(); }
 }
+function hardReset(){ try{ localStorage.removeItem(KEY); }catch(e){} if(cloudOK()){ try{ tg.CloudStorage.setItem('bc3_n','0'); }catch(e){} } S = null; modals = []; sheet = null; const mr = $('#modalRoot'); if(mr) mr.innerHTML=''; const sr = $('#sheetRoot'); if(sr) sr.innerHTML=''; for(const k in RT) delete RT[k]; renderStart(); }
+function renderBroken(e){ S = null; const app = $('#app'); app.className = 'startapp'; app.innerHTML = '';
+  const w = el(`<div class="start"><div class="logo">Brew Crew</div><div class="note kraft"><p>Старое сохранение не открылось в новой версии. Можно начать заново: пустое помещение, новый бюджет.</p></div><button class="btn big">Начать заново</button></div>`);
+  w.querySelector('button').onclick = hardReset; app.appendChild(w); }
 function migrate(){
   S.hours = {open:0, close:24};
   if(!S.story){ S.story = storyInit(); startSeason(1); }
@@ -3230,12 +3234,7 @@ try{ if(tg && tg.isVersionAtLeast && tg.isVersionAtLeast('8.0') && tg.requestFul
 function applySafe(){ if(!tg) return; const s = tg.safeAreaInset || {}, c = tg.contentSafeAreaInset || {}; const r = document.documentElement.style;
   r.setProperty('--safe-top', ((s.top||0)+(c.top||0))+'px'); r.setProperty('--safe-bottom', ((s.bottom||0)+(c.bottom||0))+'px'); r.setProperty('--safe-left', (s.left||0)+'px'); r.setProperty('--safe-right', (s.right||0)+'px'); }
 try{ if(tg){ applySafe(); tg.onEvent && ['safeAreaChanged','contentSafeAreaChanged','fullscreenChanged','viewportChanged'].forEach(e=>tg.onEvent(e, ()=>{ applySafe(); resizeCanvas(); })); } }catch(e){}
-boot(loadLocal());
-loadConfig();
-if(S){ streakCheck(); refreshEntitlements(); loadFriends(); }
-loadCloud(cloud=>{ if(cloud && cloud.v===3 && (!S || (cloud.savedAt||0) > (S.savedAt||0) + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
-document.addEventListener('pointerdown', unlockAudio, {once:true});
-requestAnimationFrame(frame);
+
 
 function sheetBusy(){ const a = document.activeElement; return a && a.tagName==='INPUT' && a.type==='range'; }
 const CHAR_SPR = {palych:70, viktor:37, arseniy:50, lev:35, ashot:67, alena:64, somov:62};
@@ -3427,6 +3426,14 @@ function holDeco(x, y, k){ const h = holiday(); if(!h) return; const now = perfo
   else if(h.id==='valentine' || h.id==='march8') heart(x, y-6, 3, h.id==='march8' ? '#ff8ad8' : '#e0574a');
   else if(h.id==='sept1'){ ctx.fillStyle = '#ffd36b'; ctx.beginPath(); ctx.arc(x, y-6, 3, 0, 7); ctx.fill(); rect(x-0.5, y-3, 1, 4, '#4a6a2a'); }
 }
+
+/* ---------- запуск: в самом конце, когда всё объявлено ---------- */
+boot(loadLocal());
+loadConfig();
+if(S){ streakCheck(); refreshEntitlements(); loadFriends(); }
+loadCloud(cloud=>{ if(cloud && cloud.v===3 && (!S || (cloud.savedAt||0) > (S.savedAt||0) + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
+document.addEventListener('pointerdown', unlockAudio, {once:true});
+requestAnimationFrame(frame);
 
 </script>
 </body>
