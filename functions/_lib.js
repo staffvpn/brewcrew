@@ -55,3 +55,22 @@ export const SHOP = {
   tip_150: { title: 'Угостить всю смену', desc: 'Чаевые разработчику. Огромное спасибо!', stars: 150 },
   tip_500: { title: 'Купить команде кофемашину', desc: 'Чаевые разработчику. Ты лучший.', stars: 500 }
 };
+
+// Отправка накопившихся напоминаний (вызывается из трекинга и вебхука — «ленивый крон»)
+export async function dispatchReminders(env, limit = 15) {
+  if (!env.DB || !env.BOT_TOKEN) return 0;
+  const now = Date.now();
+  const due = (await env.DB.prepare('SELECT r.id, r.tg_id, r.text FROM reminders r JOIN players p ON p.tg_id = r.tg_id WHERE r.sent = 0 AND r.at <= ?1 AND p.write_ok = 1 ORDER BY r.at LIMIT ?2').bind(now, limit).all()).results || [];
+  for (const r of due) {
+    await env.DB.prepare('UPDATE reminders SET sent = 1 WHERE id = ?1').bind(r.id).run();
+    try { await tgApi(env, 'sendMessage', { chat_id: r.tg_id, text: r.text, reply_markup: { inline_keyboard: [[{ text: 'Открыть кофейню', web_app: { url: env.APP_URL || 'https://brewcrew.pages.dev' } }]] } }); } catch {}
+  }
+  return due.length;
+}
+let botInfo = null;
+export async function getBot(env) {
+  if (botInfo) return botInfo;
+  const r = await tgApi(env, 'getMe', {});
+  if (r.ok) botInfo = r.result;
+  return botInfo;
+}

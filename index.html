@@ -7,7 +7,7 @@
 <style>:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Brew Crew</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Golos+Text:wght@400;500;600;700&family=Caveat:wght@600;700&family=PT+Mono&display=swap" rel="stylesheet">
 <style>
 /* Layout: one-screen phone tapper — HUD, day task strip, room switcher, live cafe scene, path meters, tabbed management panel. Single warm-dark look around bright pixel art. */
 :root{
@@ -218,6 +218,170 @@ html,body{height:100%;overflow:hidden}
 .modal.paper .btn.ghost{color:#2a1f16;border-color:#6a5a48}
 .newsitem b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#8a2f1f}
 .newsitem p{margin:2px 0 0;font-size:15px;line-height:1.45;color:#2a1f16}
+/* ===== v5: кофейня изнутри — крафт, мел, чек, бейджи, стикеры ===== */
+:root{
+  --bg:#1d1410; --panel:#2a1d15; --panel2:#352519; --line:#4d3727; --cream:#f4ead8; --muted:#b9a38a;
+  --caramel:#e8a548; --red:#c8322b; --kraft:#c9a477; --kraft2:#b8915f; --chalk:#ecebe4; --board:#26302a; --foam:#f6efe2; --ink:#2a1d15;
+  --bad:#e0574a; --good:#86c46e;
+  --chalkf:'Caveat','Golos Text',cursive; --mono:'PT Mono',ui-monospace,monospace;
+}
+body{background:var(--bg) radial-gradient(120% 60% at 50% 0%, #2c1e15 0%, #1d1410 60%)}
+/* пиксельные кнопки: ступенчатые углы */
+.btn,.opt,.chipbtn,.dockb,.pill,.bopt,.att{clip-path:polygon(0 3px,3px 3px,3px 0,calc(100% - 3px) 0,calc(100% - 3px) 3px,100% 3px,100% calc(100% - 3px),calc(100% - 3px) calc(100% - 3px),calc(100% - 3px) 100%,3px 100%,3px calc(100% - 3px),0 calc(100% - 3px))}
+.btn{background:var(--caramel);color:#1d1410;box-shadow:inset -3px -3px 0 rgba(0,0,0,.25),inset 3px 3px 0 rgba(255,255,255,.25);border:none;letter-spacing:.2px}
+.btn:active:not(:disabled){transform:translateY(1px);box-shadow:inset 3px 3px 0 rgba(0,0,0,.25)}
+.btn.ghost{background:rgba(255,255,255,.06);color:inherit;border:none;box-shadow:inset 0 0 0 2px currentColor;opacity:.92}
+.btn.red{background:var(--red);color:#fff}
+.btn.big{padding:14px;font-size:16px;font-family:var(--disp)}
+.chalk{font-family:var(--chalkf)!important;font-weight:700;color:var(--chalk);letter-spacing:.3px}
+.h.chalk{font-size:24px;line-height:1;margin-top:6px;text-shadow:0 0 1px rgba(255,255,255,.4)}
+.h.chalk.big{font-size:34px}
+.h .cd{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:8px;font-weight:400}
+/* шапка: касса */
+.top .cafe{font-family:var(--chalkf);font-size:26px;line-height:1;color:var(--chalk);font-weight:700}
+.top .cafe small{font-family:var(--body);font-size:11px;color:var(--muted);font-weight:600;margin-left:4px;text-transform:uppercase;letter-spacing:1px}
+.register{background:#1a1612;border:3px solid #0d0a08;box-shadow:inset 0 0 0 2px #3d2f22,3px 3px 0 var(--red);padding:4px 9px 3px}
+.register .money{font-family:var(--mono);font-weight:700;font-size:24px;color:#ffcf6b;text-shadow:0 0 6px rgba(255,190,80,.45)}
+.register .meta{font-family:var(--mono);font-size:11px;color:#c9b48a}
+/* плашки как бумажные ярлыки */
+.pill{background:var(--foam);color:var(--ink);border:none;font-weight:700}
+.pill.task{background:var(--kraft)}
+.pill.onb{background:var(--caramel);color:#1d1410}
+.pill.story{background:var(--red);color:#fff}.pill.story b{color:#fff}
+.pill.warn{background:#f2c9bd;color:#7a1d16}
+.pill.good{background:#d5ebc6;color:#25451a}
+.pill.hol{background:#2b1f3a;color:#ffd0ea}
+.pbar{background:rgba(0,0,0,.2)}
+/* сцена */
+.scene{border:4px solid #120c09;box-shadow:0 0 0 2px #4d3727,4px 4px 0 #0a0705}
+.notifs{left:auto;top:auto;right:8px;bottom:10px;align-items:flex-end;max-width:62%}
+.roomdots{bottom:auto;top:8px}
+@keyframes stick{from{transform:scale(.6) rotate(-8deg);opacity:0}}
+.notif{position:relative;background:#ffe27a;color:#2a1d15;border:none;padding:8px 10px 8px 8px;box-shadow:2px 3px 0 rgba(0,0,0,.4);animation:stick .25s ease;font-weight:700;clip-path:none}
+.notif::before{content:'';position:absolute;top:-5px;left:50%;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--red);box-shadow:inset -2px -2px 0 rgba(0,0,0,.3)}
+.notif.s0{transform:rotate(-2deg)}.notif.s1{transform:rotate(1.5deg);background:#ffc4d6}.notif.s2{transform:rotate(-1deg);background:#bfe3ff}.notif.s3{transform:rotate(2deg);background:#c9f0b5}
+.notif b{background:#2a1d15;color:#ffe27a}
+.notif.story b,.notif.inspect b,.notif.money b,.notif.break b{background:var(--red);color:#fff}
+.notif.more{background:var(--foam);color:var(--ink)}
+/* док */
+.dock{gap:8px}
+.dockb{background:var(--kraft);color:var(--ink);border:none;box-shadow:inset -3px -3px 0 rgba(0,0,0,.2),inset 3px 3px 0 rgba(255,255,255,.25)}
+.dockb svg{width:28px;height:28px}
+.dockb.on{background:var(--foam);color:var(--red)}
+.dockb .badge{background:var(--red);clip-path:none;border:2px solid var(--bg)}
+/* шторка: меловая доска в деревянной раме */
+.sheet{background:var(--board);background-image:radial-gradient(60% 40% at 30% 20%,rgba(255,255,255,.05),transparent 70%),radial-gradient(50% 30% at 80% 70%,rgba(255,255,255,.04),transparent 70%);border-top:8px solid #6b4528;box-shadow:0 -3px 0 #3d2716,0 -8px 24px rgba(0,0,0,.55)}
+.sheettitle.chalk{font-size:28px;line-height:1}
+.grab i{background:#8a6a4a}
+.sheethead{border-bottom:2px dashed rgba(236,235,228,.25)}
+.sheethead .chipbtn{background:transparent;color:rgba(236,235,228,.7);border:none;box-shadow:inset 0 0 0 2px rgba(236,235,228,.25);font-weight:700;position:relative}
+.sheethead .chipbtn[aria-pressed="true"]{background:var(--chalk);color:var(--board)}
+.chipbtn .tb{display:none}
+.chipbtn .tb.n,.chipbtn .tb.u{display:inline-block;margin-left:5px;min-width:8px;height:8px;background:var(--caramel);vertical-align:middle;font-style:normal}
+.chipbtn .tb.u{min-width:16px;height:16px;line-height:16px;font-size:11px;background:var(--red);color:#fff;padding:0 3px;text-align:center}
+.attn{display:flex;flex-direction:column;gap:4px}
+.attn:empty{display:none}
+.att{display:flex;gap:8px;align-items:center;text-align:left;background:rgba(236,235,228,.08);border:none;padding:6px 8px;font-size:12px;color:var(--chalk)}
+.att b{flex:none;background:var(--chalk);color:var(--board);padding:1px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.att.u b{background:var(--red);color:#fff}
+.att span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* карточки внутри шторки — бумага */
+.sheet .card{--cream:#2a1d15;--muted:#6d5a46;--line:#cdb894;--panel:#e9dcc3;--panel2:#f6efe2;--shadow:rgba(0,0,0,.25);background:var(--foam);color:var(--cream);border:none;box-shadow:2px 3px 0 rgba(0,0,0,.35);position:relative}
+.sheet .card .tag{border-color:#bda783;color:#5a4836}
+.sheet .card .tag.warn{border-color:var(--red);color:var(--red)}
+.sheet .card .tag.g{border-color:#4a7a35;color:#3a6a25}
+.sheet .empty{color:rgba(236,235,228,.7)}
+.sheet .h{color:var(--chalk)}
+.sheet .card .btn.ghost{color:#2a1d15}
+.sheet .card .bar,.sheet .pips i{background:rgba(0,0,0,.12)}
+.sheet .card.chalkboard{background:#1f2823;color:var(--chalk);box-shadow:inset 0 0 0 3px #3a4a40;--muted:rgba(236,235,228,.7)}
+.sheet .card.chalkboard .t.chalk{font-size:24px}
+.deadline{color:#ffb0a0!important;font-weight:700}
+.note.kraft,.sheet .card.kraft{background:var(--kraft);color:var(--ink);--muted:#4d3a28}
+.note.kraft::after,.sheet .card.kraft::after{content:'';position:absolute;top:-8px;left:40%;width:70px;height:18px;background:rgba(246,239,226,.6);transform:rotate(-3deg)}
+/* бейджи сотрудников на шнурке */
+.badge-card{padding-top:14px!important;border-top:10px solid var(--red)!important}
+.badge-card .lanyard{position:absolute;top:-10px;left:50%;width:26px;height:6px;margin-left:-13px;background:var(--bg);border-radius:3px;margin-top:2px}
+.badge-card.cand{border-top-color:#4a6fb0!important}
+.badge-card.you{border-top-color:var(--caramel)!important}
+.badge-card .spr{background-color:#e3d6bd;outline:2px solid #cdb894;outline-offset:0}
+/* штампы */
+.stamp{display:inline-block;font-family:var(--disp);font-weight:800;font-size:10px;letter-spacing:1px;padding:2px 6px;border:2px solid currentColor;transform:rotate(-6deg);color:var(--red);opacity:.9;white-space:nowrap}
+.stamp.green{color:#3a7a25}.stamp.gold{color:#a8781a}
+.card > .stamp{position:absolute;right:8px;top:6px;z-index:1}
+/* отношения: ровная шкала с меткой */
+.mood{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.bar{display:block;flex:1;min-width:30px;height:6px}
+.rel{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:11px;color:var(--muted)}
+.relbar{position:relative;height:8px;background:linear-gradient(90deg,#e7a59b,#e9dcc3 50%,#b8ddab)}
+.relbar .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;background:rgba(0,0,0,.3)}
+.relbar b{position:absolute;top:-4px;width:8px;height:16px;margin-left:-4px;box-shadow:0 0 0 2px #2a1d15}
+/* характер */
+.charbar{display:flex;height:12px;box-shadow:0 0 0 2px #2a1d15}
+.charbar i,.charleg i{display:block}
+.charbar .soul,.charleg .soul{background:#6aa84f}.charbar .pathos,.charleg .pathos{background:#5a7fd6}.charbar .chaos,.charleg .chaos{background:#d0543a}
+.charleg{display:flex;gap:12px;font-size:11px;color:var(--muted)}
+.charleg span{display:flex;align-items:center;gap:4px}.charleg i{width:9px;height:9px}
+/* чек */
+.receipt-card{background:#fbf8f1!important;font-family:var(--mono);padding-bottom:18px!important;-webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/14px 8px repeat-x;mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/14px 8px repeat-x}
+.rhead{text-align:center;font-weight:700;font-size:12px;letter-spacing:1px;border-bottom:2px dashed #2a1d15;padding-bottom:6px}
+.receipt-card .fin{font-family:var(--mono);font-size:12px}
+.receipt-card .fin .tot{border-top:2px dashed #2a1d15}
+.receipt-card .d{font-family:var(--body)}
+/* меню мелом */
+.menu-item .dots{flex:1;border-bottom:2px dotted #bda783;margin:0 6px;align-self:flex-end;margin-bottom:5px}
+.menu-item .price{font-family:var(--mono);font-weight:700}
+.menu-item.day{box-shadow:0 0 0 3px var(--red),2px 3px 0 rgba(0,0,0,.35)!important}
+.task-card.done{opacity:.85}
+.hint{font-size:12px;color:#5a4836;background:rgba(232,165,72,.18);padding:5px 7px;border-left:3px solid var(--caramel)}
+.steps{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.steps div{display:flex;align-items:center;gap:8px}
+.steps i{width:12px;height:12px;box-shadow:inset 0 0 0 2px #2a1d15;flex:none}
+.steps .ok{text-decoration:line-through;opacity:.6}.steps .ok i{background:#3a7a25}
+.steps .cur{font-weight:700}.steps .cur i{background:var(--caramel)}
+/* стикеры событий в списке */
+.sheet .card.sticker{background:#ffe27a;transform:rotate(-.6deg)}
+.sheet .card.sticker.s1{background:#ffc4d6;transform:rotate(.5deg)}.sheet .card.sticker.s2{background:#bfe3ff}.sheet .card.sticker.s3{background:#c9f0b5;transform:rotate(.4deg)}
+.sheet .card.sticker.hot{box-shadow:0 0 0 3px var(--red),2px 3px 0 rgba(0,0,0,.35)}
+.friends{display:flex;flex-direction:column;gap:5px}
+.friend{display:flex;flex-direction:column;background:rgba(255,255,255,.35);padding:5px 8px}
+.friend span{font-size:12px;color:#4d3a28}
+/* старт и стройка */
+#app.startapp{overflow-y:auto;height:100%;padding-top:calc(var(--safe-top,0px) + 12px);padding-bottom:calc(var(--safe-bottom,0px) + 16px)}
+.start .logo{font-size:44px;color:var(--caramel);text-shadow:4px 4px 0 var(--red)}
+.note{position:relative;padding:14px;box-shadow:2px 3px 0 rgba(0,0,0,.4)}
+.note p{margin:0;font-size:15px;line-height:1.5}
+.note .gift{margin-top:8px;font-weight:700;color:var(--red)}
+.start .opt{background:var(--panel2);border:none;box-shadow:inset 0 0 0 2px var(--line)}
+.start .opt[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--caramel);background:#45301f}
+.receipt{background:#fbf8f1;color:#2a1d15;font-family:var(--mono);font-size:13px;padding:10px 12px 16px;position:sticky;top:0;z-index:3;box-shadow:0 4px 10px rgba(0,0,0,.4);-webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/14px 8px repeat-x;mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/14px 8px repeat-x}
+.rrow{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+.rrow.tot{border-top:2px dashed #2a1d15;margin-top:4px;padding-top:5px;font-weight:700}
+.rrow b.neg{color:var(--red)}
+.rnote{font-family:var(--body);font-size:12px;color:var(--red);margin-top:4px}
+.buildrow{display:flex;flex-direction:column;gap:6px}
+.buildrow .bt{font-family:var(--chalkf);font-size:24px;font-weight:700;color:var(--chalk)}
+.bopts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.bopt{display:flex;flex-direction:column;gap:3px;text-align:left;background:var(--foam);color:var(--ink);border:none;padding:8px 7px;min-width:0}
+.bopt .tier{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#8a6a4a;font-weight:700}
+.bopt b{font-size:12px;line-height:1.2}
+.bopt i{font-style:normal;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--red)}
+.bopt small{font-size:11px;line-height:1.25;color:#6d5a46}
+.bopt[aria-pressed="true"]{background:var(--caramel);box-shadow:inset 0 0 0 3px #2a1d15}
+.bopt:disabled{opacity:.4}
+/* модалки */
+.modal{background:var(--foam);color:var(--ink);border:none;box-shadow:0 0 0 4px #2a1d15,6px 6px 0 4px rgba(0,0,0,.5);--cream:#2a1d15;--muted:#6d5a46;--line:#cdb894;--panel2:#efe3cc;--panel:#e9dcc3}
+.modal .opt{background:#fff;color:var(--ink);border:none;box-shadow:inset 0 0 0 2px #cdb894}
+.modal .opt:hover{box-shadow:inset 0 0 0 2px var(--caramel)}
+.modal .btn.ghost{color:var(--ink)}
+.modal .chip{background:#fff;border-color:#cdb894}
+.modal.kraftbox{background:var(--kraft)}
+.introl{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.4}
+.toast{background:var(--foam);color:var(--ink);border:none;box-shadow:0 0 0 3px #2a1d15,3px 3px 0 3px rgba(0,0,0,.4);font-weight:600}
+.fly{color:#ffcf6b;font-family:var(--mono)}
+.vol{color:var(--muted)}
+.shopitem{border-top:1px dashed #cdb894}
+.bopt b{overflow-wrap:anywhere;hyphens:auto}
 </style>
 </head>
 <body>
@@ -274,7 +438,12 @@ const MENU = [
   {id:'breakfast', n:'Завтраки', price:420, w:0.9, need:{food:1}, food:1, unlock:{t:'Повар в команде, 6 столиков и 3 дня без штрафов', f:S=>S.staff.some(s=>s.role==='Повар') && maxUpg('tables')>=8 && S.c.daysNoFine>=3}},
   {id:'matcha', n:'Матча', price:340, w:0.9, need:{matcha:4, milk:200, cups:1}, unlock:{t:'Рейтинг 4,5 и Пафос 40', f:S=>S.rep>=4.5 && S.meters.pathos>=40}},
   {id:'shawarma', n:'Шаверма', price:290, w:1.3, need:{food:1}, food:1, unlock:{t:'Бардак 50 и 5 драк в зале', f:S=>S.meters.chaos>=50 && S.c.fights>=5}},
-  {id:'pumpkin', n:'Тыквенный раф', price:340, w:1.6, need:{beans:18, milk:150, syrup:25, cups:1}, coffee:1, season:'halloween'}
+  {id:'pumpkin', n:'Тыквенный раф', price:340, w:1.6, need:{beans:18, milk:150, syrup:25, cups:1}, coffee:1, season:'halloween'},
+  {id:'ginger', n:'Пряничный раф', price:360, w:1.8, need:{beans:18, milk:150, syrup:25, cups:1}, coffee:1, season:'newyear'},
+  {id:'lovelatte', n:'Латте «Любовь»', price:330, w:1.6, need:{beans:18, milk:200, syrup:20, cups:1}, coffee:1, season:'valentine'},
+  {id:'lavender', n:'Лавандовый раф', price:350, w:1.7, need:{beans:18, milk:150, syrup:25, cups:1}, coffee:1, season:'march8'},
+  {id:'cocoa', n:'Какао для первоклашек', price:190, w:1.4, need:{milk:200, syrup:15, cups:1}, season:'sept1'},
+  {id:'tonic', n:'Эспрессо-тоник', price:290, w:1.5, need:{beans:18, syrup:15, cups:1}, coffee:1, season:'summer'}
 ];
 function sold(id){ return (S.c.byItem && S.c.byItem[id]) || 0; }
 
@@ -351,12 +520,14 @@ const QUIRKS = {
   lover:{n:'Влюбчивый', d:'Влюбляется в коллег и гостей. Ссоры и драмы гарантированы.'}
 };
 const LEGENDS = [
-  {name:'Тётя Люда', role:'Уборщик', quirk:'none', legend:'Гасит любой конфликт взглядом. Бардак уходит втрое быстрее.', mult:3},
-  {name:'Шеф Эдуард', role:'Повар', quirk:'genius', legend:'«Работал в Мишлене». Десерты и завтраки вдвое дороже.', mult:2},
-  {name:'Кира-латтеарт', role:'Бариста', quirk:'none', legend:'Чемпионка по латте-арту. Рейтинг растёт сам, скорость +30%.', mult:1.3},
-  {name:'Вечный стажёр Гоша', role:'Кассир', quirk:'none', legend:'Работает за полставки и раз в день случайно делает что-то гениальное.', mult:1},
-  {name:'Бариста-бариста', role:'Бариста', quirk:'none', legend:'Так и представляется. Молчит, не отвлекается, скорость ×1,6.', mult:1.6}
+  {name:'Тётя Люда', sex:'f', role:'Уборщик', quirk:'none', legend:'Гасит любой конфликт взглядом. Бардак уходит втрое быстрее.', mult:3},
+  {name:'Шеф Эдуард', sex:'m', role:'Повар', quirk:'genius', legend:'«Работал в Мишлене». Десерты и завтраки вдвое дороже.', mult:2},
+  {name:'Кира-латтеарт', sex:'f', role:'Бариста', quirk:'none', legend:'Чемпионка по латте-арту. Рейтинг растёт сам, скорость +30%.', mult:1.3},
+  {name:'Вечный стажёр Гоша', sex:'m', role:'Кассир', quirk:'none', legend:'Работает за полставки и раз в день случайно делает что-то гениальное.', mult:1},
+  {name:'Бариста-бариста', sex:'m', role:'Бариста', quirk:'none', legend:'Так и представляется. Молчит, не отвлекается, скорость ×1,6.', mult:1.6}
 ];
+const NAMES_M = ['Гоша','Артём','Лёха','Денис','Толик','Рустам','Саня','Жора','Боря','Кеша','Митя','Стас','Гена','Ваня','Егор','Тимур','Влад','Паша','Костя','Макс','Дима','Олег','Серёга','Никита'];
+const NAMES_F = ['Марина','Карина','Вика','Света','Ника','Полина','Ульяна','Даша','Лиза','Зоя','Мила','Оля','Аня','Женя','Соня','Катя','Настя','Юля','Алина','Таня','Лена','Ира','Маша','Вера'];
 const NAMES = ['Гоша','Марина','Артём','Лёха','Карина','Вика','Денис','Толик','Света','Ника','Рустам','Полина','Саня','Жора','Ульяна','Боря','Кеша','Даша','Митя','Лиза','Стас','Зоя','Гена','Мила','Оля','Ваня','Егор','Аня','Тимур','Женя','Влад','Соня'];
 
 /* ---------- прочие данные ---------- */
@@ -384,7 +555,7 @@ const RIVALS = [
 /* ================= состояние ================= */
 let S = null;
 function newState(name, city, carry){
-  const s = {v:3, name, city, money:150000 + (carry&&carry.perks? (carry.perks.capital||0)*250000 : 0), xp:0, level:1, rep:3.0,
+  const s = {v:3, name, city, money:START_CAPITAL + (carry&&carry.perks? (carry.perks.capital||0)*250000 : 0), xp:0, level:1, rep:3.0,
     meters:{soul:10, pathos:10, chaos:5}, path:null,
     day:1, gm:9*60, hours:{open:0, close:24}, isOpen:false,
     rooms:[newRoom('main')], active:'main', staff:[], cands:[],
@@ -410,6 +581,15 @@ function staffIn(id){ return S.staff.filter(s=>s.room===id); }
 function absNow(){ return S.day*DAY_MIN + S.gm; }
 function weekday(d){ return ((d===undefined?S.day:d)-1) % 7; }
 function hoursOpen(){ return S.hours.close - S.hours.open; }
+function holiday(){ const d = new Date(); const m = d.getMonth()+1, day = d.getDate();
+  if((m===10 && day>=24) || (m===11 && day<=2)) return {id:'halloween', n:'Хэллоуин'};
+  if((m===12 && day>=20) || (m===1 && day<=10)) return {id:'newyear', n:'Новый год'};
+  if(m===2 && day>=10 && day<=15) return {id:'valentine', n:'День влюблённых'};
+  if(m===3 && day>=5 && day<=9) return {id:'march8', n:'8 марта'};
+  if((m===8 && day>=29) || (m===9 && day<=3)) return {id:'sept1', n:'1 сентября'};
+  if(m>=6 && m<=8) return {id:'summer', n:'Лето'};
+  return null; }
+function holidayEvents(){ const h = holiday(); return h && EV['h_'+h.id] ? ['h_'+h.id] : []; }
 function isHalloween(){ const d = new Date(); const m = d.getMonth(), day = d.getDate(); return (m===9 && day>=24) || (m===10 && day<=2); }
 function city(){ return CITIES[S.city] || CITIES.msk; }
 function perk(k){ return S.perks[k]||0; }
@@ -453,7 +633,7 @@ function orderStock(k, packs, express){
   const limit = S.debt.stage>=1 ? 0 : 50000;
   if(S.money - price < -limit) return S.debt.stage>=1 ? 'Поставщики работают только по предоплате, а денег не хватает' : 'Не хватает денег даже с отсрочкой';
   spend(price, 'supply');
-  const eta = express ? absNow()+180 : nextOpenAbs()+RI(0,90);
+  const eta = express ? absNow()+15 : absNow()+60;
   S.orders.push({k, q:st.pack*packs, eta, price});
   return null;
 }
@@ -496,11 +676,13 @@ function autoOrder(){
 }
 
 /* ---------- меню и продажи ---------- */
-function isUnlocked(id){ const m = MENU.find(x=>x.id===id); if(!m) return false; if(m.season) return m.season==='halloween' && isHalloween(); if(!m.unlock) return true; if(S.flags['un_'+id]) return true; if(m.unlock.f(S)){ S.flags['un_'+id] = true; HOOK.toast('В меню появилось: '+m.n); HOOK.struct(); return true; } return false; }
+function isUnlocked(id){ const m = MENU.find(x=>x.id===id); if(!m) return false; if(m.season){ const h = holiday(); return !!h && m.season===h.id; } if(!m.unlock) return true; if(S.flags['un_'+id]) return true; if(m.unlock.f(S)){ S.flags['un_'+id] = true; HOOK.toast('В меню появилось: '+m.n); HOOK.struct(); return true; } return false; }
+function promoW(m){ const p = S.promo || {}; return m.w * (p.day===m.id ? 3 : 1) * ((p.rec||[]).includes(m.id) ? 1.6 : 1); }
 function itemPrice(m, roomId){
   const rm = room(roomId);
   let p = m.price * (1+0.04*rm.upg.menu) * city().check * roomMult(roomId) * modMul('check');
   if(S.path==='pathos') p *= 1.2;
+  if(S.promo && S.promo.day===m.id) p *= 0.85;
   if(m.id==='dessert' || m.id==='breakfast'){ const leg = S.staff.find(s=>s.room===roomId && s.legendId===2 && s.today==='work'); if(leg) p *= 2; }
   return Math.round(p/10)*10;
 }
@@ -525,8 +707,8 @@ function sellOne(roomId){
   if(!av.length) return {fail:'empty'};
   // терминал сломан — платят только наличными
   if(rm.broken.terminal && chance(0.55)) return {fail:'card'};
-  const tw = av.reduce((a,m)=>a+m.w,0); let r = Math.random()*tw, item = av[0];
-  for(const m of av){ r -= m.w; if(r<=0){ item = m; break; } }
+  const tw = av.reduce((a,m)=>a+promoW(m),0); let r = Math.random()*tw, item = av[0];
+  for(const m of av){ r -= promoW(m); if(r<=0){ item = m; break; } }
   let amount = itemPrice(item, roomId); takeStock(item.need); let cogs = needCost(item.need);
   let dessert = false;
   const dm = MENU.find(x=>x.id==='dessert');
@@ -541,12 +723,13 @@ function sellOne(roomId){
   if(rm.broken.kkt && !rm.noCheck) {} // продажа без чека
   if(rm.broken.kkt) S.fin.noCheck += amount;
   S.c.earnedRun = (S.c.earnedRun||0) + amount;
-  if(S.task && S.task.kind==='sell' && S.task.item===item.id) taskProg('sell', 1);
+  taskProg('sell', 1, item.id);
   S.c.sold++; S.c.byItem[item.id] = (S.c.byItem[item.id]||0)+1; S.c.guests++;
   // износ
-  const wear = (1 - 0.03*rm.upg.machine) * (S.serviceContract?0.5:1) * modMul('wear');
+  const q = S.q || {wear:1, term:1, fridge:1};
+  const wear = (1 - 0.03*rm.upg.machine) * (S.serviceContract?0.5:1) * modMul('wear') * (roomId==='main' ? q.wear : 1);
   if(item.coffee) rm.eq.machine = Math.max(0, rm.eq.machine - 0.018*wear);
-  if(card) rm.eq.terminal = Math.max(0, rm.eq.terminal - 0.007*wear);
+  if(card) rm.eq.terminal = Math.max(0, rm.eq.terminal - 0.007*wear*(roomId==='main' ? q.term/q.wear : 1));
   rm.eq.kkt = Math.max(0, rm.eq.kkt - 0.005*wear);
   addXp(1); taskProg('serve', 1); taskProg('earn', amount);
   return {amount, item, dessert};
@@ -554,7 +737,8 @@ function sellOne(roomId){
 
 /* ---------- поток гостей и пропускная способность ---------- */
 function hourCurve(h){ if(h<6) return 0.25; if(h<8) return 0.7; if(h<10) return 1.6; if(h<12) return 1.0; if(h<14) return 1.3; if(h<17) return 0.9; if(h<19) return 1.2; if(h<21) return 0.8; return 0.55; }
-function workingStaff(roomId){ return S.staff.filter(s=>s.room===roomId && (s.today==='work' || s.today==='sub') && !s.away && !(s.lateUntil && s.lateUntil > absNow()) && !(s.breakUntil && s.breakUntil > Date.now())); }
+function youNeeded(roomId){ if(roomId!=='main') return false; const w = S.staff.filter(s=>!s.isYou && s.room===roomId && (s.today==='work'||s.today==='sub') && !s.away); return !w.some(s=>s.role==='Бариста') || !w.some(s=>s.role==='Кассир'); }
+function workingStaff(roomId){ return S.staff.filter(s=>s.room===roomId && (s.isYou ? youNeeded(roomId) : true) && (s.today==='work' || s.today==='sub') && !s.away && !(s.lateUntil && s.lateUntil > absNow()) && !(s.breakUntil && s.breakUntil > Date.now())); }
 function staffSpeed(s){
   let f = (1 + 0.06*(s.lvl-1)) * (0.6 + s.mood*0.005) * (1 + 0.1*s.rank) * (1 - Math.max(0, s.fatigue-50)*0.006);
   if(s.quirk==='genius') f *= 1.25;
@@ -570,11 +754,13 @@ function stats(roomId){
   const h = S.gm/60;
   let lambda = (1/30) * (1+0.07*u.sign) * (1+0.04*u.decor) * (1+0.02*u.pets) * (1+0.015*tableCount(u.tables)) * (0.4+0.2*S.rep) * wf * hourCurve(h) * city().traffic * modMul('traffic') * (1+0.03*perk('word'));
   if(S.path==='chaos') lambda *= 1.2;
+  const hol = holiday(); if(hol && hol.id!=='summer') lambda *= 1.15; if(hol && hol.id==='summer' && def.outdoor) lambda *= 1.4;
   const rivalDrag = S.rivals.filter(r=>r.status==='open').reduce((a,r)=>a + r.power*0.0018, 0);
   lambda *= Math.max(0.6, 1 - rivalDrag);
   if(!S.isOpen || S.closedUntil > absNow()) lambda = 0;
   const ws = workingStaff(roomId);
-  const cashiers = ws.filter(s=>s.role==='Кассир' && !s.distract), baristas = ws.filter(s=>s.role==='Бариста' && !s.distract);
+  let cashiers = ws.filter(s=>s.role==='Кассир' && !s.distract && !s.isYou), baristas = ws.filter(s=>s.role==='Бариста' && !s.distract && !s.isYou);
+  const you = ws.find(s=>s.isYou); if(you){ if(!cashiers.length) cashiers = [you]; if(!baristas.length) baristas = [you]; }
   const orderSpeed = cashiers.length ? cashiers.reduce((a,s)=>a+staffSpeed(s),0) : (baristas.length ? 0.5 : 0);
   const orderT = orderSpeed ? 3.2 / (1+0.15*u.register) / orderSpeed : Infinity;
   const prepSpeed = baristas.length ? baristas.reduce((a,s)=>a+staffSpeed(s),0) : 0;
@@ -584,7 +770,7 @@ function stats(roomId){
 }
 function estCheck(roomId){
   const av = available(roomId); if(!av.length) return 0;
-  const tw = av.reduce((a,m)=>a+m.w,0); let c = av.reduce((a,m)=>a+itemPrice(m,roomId)*m.w,0)/tw;
+  const tw = av.reduce((a,m)=>a+promoW(m),0); let c = av.reduce((a,m)=>a+itemPrice(m,roomId)*promoW(m),0)/tw;
   if(isUnlocked('dessert')) c += dessertP(room(roomId).upg.showcase) * itemPrice(MENU.find(x=>x.id==='dessert'), roomId);
   return c;
 }
@@ -595,22 +781,30 @@ function rollWeather(){
   const c = city(); const m = new Date().getMonth(); const r = Math.random();
   S.weather = r < c.rain ? 'rain' : r < c.rain+0.3 ? 'cloud' : ((m>=10||m<=2) && (c.snow ? r>0.6 : r>0.88)) ? 'snow' : 'sun';
 }
-function newTask(){
-  const kinds = ['serve','earn','praise','noangry','sell'];
-  const kind = pick(kinds); let goal, label, item = null;
+const TASK_HINT = {serve:'Больше гостей: вывеска, интерьер, акции и быстрая касса.', earn:'Подними средний чек: позиция дня, десерты, меню.', praise:'Нажми на сотрудника в зале и похвали.', noangry:'Следи за очередью: подгоняй, вызывай подмену, ставь кассира.', sell:'Поставь эту позицию «позицией дня» или в рекомендации в меню.'};
+function newTasks(){
   const daily = Math.max(30000, (S.fin.hist[0]||{}).rev || 40000);
-  if(kind==='serve'){ goal = Math.round(daily/220*0.9/10)*10; label = 'Обслужить гостей'; }
-  if(kind==='earn'){ goal = Math.round(daily*0.95/1000)*1000; label = 'Выручка за день'; }
-  if(kind==='praise'){ goal = 3; label = 'Похвалить сотрудников'; }
-  if(kind==='noangry'){ goal = 1; label = 'Ни одного ушедшего из очереди до закрытия'; }
-  if(kind==='sell'){ const av = MENU.filter(m=>!m.side && !m.season && isUnlocked(m.id)); item = pick(av).id; goal = 40; label = 'Продать: '+MENU.find(x=>x.id===item).n; }
-  S.task = {kind, goal, prog:0, label, item, reward: Math.round(daily*0.25/1000)*1000, done:false, failed:false};
+  const kinds = ['serve','earn','praise','noangry','sell','sell'].sort(()=>Math.random()-0.5);
+  const used = new Set(); S.tasks = [];
+  for(const kind of kinds){ if(S.tasks.length>=3) break; if(used.has(kind) && kind!=='sell') continue; used.add(kind);
+    let goal, label, item = null;
+    if(kind==='serve'){ goal = Math.round(daily/220*0.8/10)*10; label = 'Обслужить '+goal+' гостей'; }
+    if(kind==='earn'){ goal = Math.round(daily*0.9/1000)*1000; label = 'Выручка за день '+fmtR(goal); }
+    if(kind==='praise'){ goal = 3; label = 'Похвалить сотрудников 3 раза'; }
+    if(kind==='noangry'){ goal = 1; label = 'Ни один гость не ушёл из очереди'; }
+    if(kind==='sell'){ const av = MENU.filter(m=>!m.side && !m.season && isUnlocked(m.id) && !S.tasks.some(t=>t.item===m.id)); if(!av.length) continue; item = pick(av).id; goal = 25 + RI(0,3)*5; label = 'Продать '+goal+': '+MENU.find(x=>x.id===item).n.toLowerCase(); }
+    S.tasks.push({kind, goal, prog:0, label, item, hint:TASK_HINT[kind], reward: Math.round(daily*0.12/1000)*1000 + 5000, done:false, failed:false, day:S.day});
+  }
+  S.task = S.tasks[0];
 }
+function newTask(){ newTasks(); }
 function taskProg(kind, v, item){
-  const t = S.task; if(!t || t.done || t.failed) return;
-  if(t.kind !== kind) return;
-  t.prog += v;
-  if(t.prog >= t.goal){ t.prog = t.goal; t.done = true; income(t.reward); HOOK.toast('Задание дня выполнено: +'+fmtR(t.reward)); HOOK.sfx('level'); addXp(30); }
+  for(const t of (S.tasks||[])){
+    if(t.done || t.failed || t.kind !== kind) continue;
+    if(kind==='sell' && t.item !== item) continue;
+    t.prog += v;
+    if(t.prog >= t.goal){ t.prog = t.goal; t.done = true; income(t.reward); HOOK.toast('Задание выполнено: +'+fmtR(t.reward)); HOOK.sfx('level'); addXp(30); }
+  }
 }
 function fmtR(n){ n = Math.round(n); return (n<0?'−':'')+Math.abs(n).toLocaleString('ru-RU').replace(/ |,/g,' ')+' ₽'; }
 
@@ -618,21 +812,26 @@ function fmtR(n){ n = Math.round(n); return (n<0?'−':'')+Math.abs(n).toLocaleS
 function makeStaff(role, opts){
   opts = opts || {};
   const used = new Set(S.staff.map(s=>s.name).concat(S.cands.map(s=>s.name)));
-  let name = pick(NAMES), g = 0; while(used.has(name) && g++<50) name = pick(NAMES);
+  let spr = null, sex = chance(0.5) ? 'm' : 'f';
+  if(HOOK.pickSpr){ const r0 = HOOK.pickSpr(role, opts.sex); spr = r0.spr; sex = r0.sex; }
+  const list = sex==='f' ? NAMES_F : NAMES_M;
+  let name = pick(list), g = 0; while(used.has(name) && g++<50) name = pick(list);
   let quirk = opts.quirk || (chance(0.33) ? pick(Object.keys(QUIRKS).filter(k=>k!=='none')) : 'none');
   const s = {id:'s'+Math.random().toString(36).slice(2,9), name, role, room:null, lvl:1, rank:0, shifts:0, mood:75, pat:100, fatigue:0, quirk,
-    contract:'white', sched:'5/2', off:[5,6], phase:0, today:'off', consec:0, absences:0, recentAbs:0, legendId:0, spr:null, examAt:0, promise:0, notice:0, lastConflict:-99};
+    contract:'white', sched:'5/2', off:[5,6], phase:0, today:'off', consec:0, absences:0, recentAbs:0, legendId:0, spr, sex, examAt:0, promise:0, notice:0, lastConflict:-99};
   return s;
 }
 function makeLegend(){
   const used = new Set(S.staff.map(s=>s.legendId));
   const opts = LEGENDS.map((l,i)=>i+1).filter(i=>!used.has(i)); if(!opts.length) return null;
   const id = pick(opts); const L = LEGENDS[id-1];
-  const s = makeStaff(L.role, {quirk:L.quirk}); s.name = L.name; s.legendId = id; s.lvl = 6; s.rank = 1; s.shifts = 15; return s;
+  const s = makeStaff(L.role, {quirk:L.quirk, sex:L.sex}); s.name = L.name; s.legendId = id; s.lvl = 6; s.rank = 1; s.shifts = 15; return s;
 }
 function refreshCands(){
-  S.cands = [];
-  for(let i=0;i<3;i++){ const c = makeStaff(pick(Object.keys(ROLES))); c.lvl = RI(1,3); S.cands.push(c); }
+  S.cands = []; S.candsAt = Date.now() + 5*60000;
+  const crew = S.staff.filter(x=>!x.isYou && x.room==='main'); const must = [];
+  if(!crew.some(x=>x.role==='Бариста')) must.push('Бариста'); if(!crew.some(x=>x.role==='Кассир')) must.push('Кассир');
+  for(let i=0;i<3;i++){ const c = makeStaff(must[i] || pick(Object.keys(ROLES))); c.lvl = RI(1,3); S.cands.push(c); }
   const legP = 0.04 + 0.02*perk('agency');
   if(chance(legP)){ const l = makeLegend(); if(l) S.cands.push(l); }
 }
@@ -679,6 +878,7 @@ function openDay(){
   const wd = weekday();
   for(const s of S.staff){
     s.away = false; s.distract = null;
+    if(s.isYou){ s.today = 'work'; continue; }
     if(s.today==='training'){ s.today = 'off'; }
     if(s.trainNext){ s.today = 'training'; s.trainNext = false; s.lvl = Math.min(RANK_CAP[s.rank], s.lvl+1); HOOK.toast(s.name+' на обучении, уровень '+s.lvl); continue; }
     if(s.vacation && s.vacation >= S.day){ s.today = 'off'; continue; }
@@ -695,8 +895,7 @@ function openDay(){
   }
   if(chance(0.25)) S.staff.filter(s=>s.today==='work' && s.quirk==='genius' && chance(0.4)).forEach(s=>{ s.away = true; s.awayUntil = absNow()+RI(60,150); HOOK.toast(s.name+' обиделся и ушёл в подсобку'); });
   rollWeather();
-  if(!S.task || S.task.done || S.task.failed || S.task.day !== S.day){ newTask(); S.task.day = S.day; }
-  if(S.day % 1 === 0) refreshCands();
+  if(!S.tasks || !S.tasks.length || S.tasks[0].day !== S.day) newTasks();
   dailyEventsRoll();
   HOOK.struct();
 }
@@ -706,6 +905,7 @@ function closeDay(){
   const unpaid = S.money < 0;
   // зарплаты
   for(const s of S.staff){
+    if(s.isYou){ s.today = 'work'; continue; }
     if(s.today==='work' || s.today==='sub' || s.today==='training'){
       const pay = s.today==='sub' ? s.subPay : shiftPay(s);
       spend(pay, 'wages');
@@ -717,7 +917,7 @@ function closeDay(){
     if(s.quirk==='thief' || s.quirk==='drinker') s.mood = clamp(s.mood+3,0,100);
     if(s.quirk==='thief' && stockQty('desserts')>0){ takeStock({desserts:Math.min(stockQty('desserts'), RI(1,3))}); }
   }
-  S.staff = S.staff.filter(s=>s.today!=='sub');
+  S.staff = S.staff.filter(s=>s.today!=='sub' || s.isYou);
   // аренда и коммуналка
   for(const r of S.rooms){ const d = roomDef(r.id); spend(Math.round(d.rent * city().rent * modMul('rent')), 'rent'); spend(Math.round((350 + 45*hoursOpen()) * roomMult(r.id)), 'util'); }
   // кредит
@@ -725,9 +925,10 @@ function closeDay(){
   // ежедневные проверки
   if(f.rev > S.c.maxDayRev) S.c.maxDayRev = f.rev;
   if(f.fines === 0) S.c.daysNoFine++; else S.c.daysNoFine = 0;
-  if(S.task && S.task.kind==='noangry' && !S.task.failed && !S.task.done){ S.task.prog = 1; S.task.done = true; income(S.task.reward); HOOK.toast('Задание дня выполнено: +'+fmtR(S.task.reward)); }
+  for(const t of (S.tasks||[])) if(t.kind==='noangry' && !t.failed && !t.done){ t.prog = 1; t.done = true; income(t.reward); HOOK.toast('Задание выполнено: +'+fmtR(t.reward)); }
   // увольнения по желанию
   for(const s of S.staff){
+    if(s.isYou) continue;
     if(s.notice && s.notice <= S.day){ removeStaff(s.id); S.c.quits++; HOOK.toast(s.name+' отработал и ушёл'); continue; }
     if(s.promise && s.promise < S.day && s.rank < s.promiseRank){ HOOK.event('promise_broken', {sid:s.id}); s.promise = 0; continue; }
     let p = (s.mood<35 ? 0.07 : 0.004) + (s.fatigue>75 ? 0.04 : 0) + (unpaid ? 0.12 : 0);
@@ -738,7 +939,7 @@ function closeDay(){
     }
   }
   // ссоры
-  for(const r of S.rooms){ const ws = S.staff.filter(s=>s.room===r.id && s.today==='work'); if(ws.length>=2 && chance(0.05 + (ws.some(s=>s.quirk==='lover')?0.05:0) - (ws.some(s=>s.legendId===1)?0.05:0))){ const [a,b] = pickTwo(ws); HOOK.event('conflict', {sid:a.id, sid2:b.id}); } }
+  for(const r of S.rooms){ const ws = S.staff.filter(s=>s.room===r.id && s.today==='work' && !s.isYou); if(ws.length>=2 && chance(0.05 + (ws.some(s=>s.quirk==='lover')?0.05:0) - (ws.some(s=>s.legendId===1)?0.05:0))){ const [a,b] = pickTwo(ws); HOOK.event('conflict', {sid:a.id, sid2:b.id}); } }
   S.fin.hist.unshift(Object.assign({day:S.day}, f));
   S.fin.hist = S.fin.hist.slice(0, 30);
   S.fin.today = blankFin();
@@ -1208,16 +1409,16 @@ function processPending(){
 }
 function scheduleEvents(nowReal){
   if(!S.isOpen) return;
-  if(!S.nextEv) S.nextEv = nowReal + 6*60000;
-  if(!S.nextAbsurd) S.nextAbsurd = nowReal + 18*60000;
+  if(!S.nextEv) S.nextEv = nowReal + 3*60000;
+  if(!S.nextAbsurd) S.nextAbsurd = nowReal + 9*60000;
   if(nowReal >= S.nextEv){
-    S.nextEv = nowReal + R(14, 24)*60000;
-    const pool = ['blogger','dog','laptop','school','critic','milk_out','courier','fakebill'].filter(id=>!S.incidents.some(x=>x.id===id) && (!EV[id].cond || EV[id].cond(S)));
+    S.nextEv = nowReal + R(4, 8)*60000;
+    const pool = ['blogger','dog','laptop','school','critic','milk_out','courier','fakebill','e_wifi','e_birthday','e_proposal','e_parking','e_umbrella','e_photo','e_tiktok','e_rain','e_loud','e_tourists','e_pensioner','e_cert'].concat(holidayEvents()).filter(id=>EV[id] && !S.incidents.some(x=>x.id===id) && (!EV[id].cond || EV[id].cond(S)));
     if(pool.length) pushIncident(pick(pool));
   }
-  if(nowReal >= S.nextAbsurd){ S.nextAbsurd = nowReal + R(30, 50)*60000; const a = makeAbsurd(); pushIncident('absurd', a); }
+  if(nowReal >= S.nextAbsurd){ S.nextAbsurd = nowReal + R(14, 22)*60000; const a = makeAbsurd(); pushIncident('absurd', a); }
   // поломки техники по износу — раз в игровой час
-  for(const r of S.rooms){ for(const k of ['machine','terminal','kkt']){ if(!r.broken[k] && r.eq[k] < 40 && chance((40 - r.eq[k])/400/60)) breakdown(r.id, k); } if(!r.broken.fridge){ r.eq.fridge = Math.max(0, r.eq.fridge - 0.0006*(S.serviceContract?0.5:1)); if(r.eq.fridge<40 && chance((40-r.eq.fridge)/400/60)) breakdown(r.id,'fridge'); } }
+  for(const r of S.rooms){ for(const k of ['machine','terminal','kkt']){ if(!r.broken[k] && r.eq[k] < 40 && chance((40 - r.eq[k])/400/60)) breakdown(r.id, k); } if(!r.broken.fridge){ r.eq.fridge = Math.max(0, r.eq.fridge - 0.0006*(S.serviceContract?0.5:1)*(r.id==='main' && S.q ? S.q.fridge : 1)); if(r.eq.fridge<40 && chance((40-r.eq.fridge)/400/60)) breakdown(r.id,'fridge'); } }
 }
 function serviceCost(r){ let c = 0; for(const k of Object.keys(EQ)) c += (100 - r.eq[k]) * EQ[k].fix / 300; return Math.round(c/100)*100; }
 function doService(r){ const c = serviceCost(r); if(!canSpend(c)) return false; spend(c, 'repairs'); for(const k of Object.keys(EQ)) r.eq[k] = 100; return true; }
@@ -1244,10 +1445,51 @@ function goBankrupt(){
   const name = S.name, cityId = S.city;
   S = newState(name, cityId, carry); initState();
 }
+const START_CAPITAL = 900000;
+const BUILD = [
+ {id:'machine', n:'Кофемашина', need:true, opts:[
+   {n:'Б/у с Авито', price:70000, d:'Ломается вдвое чаще, медленная.', set:{machine:0}, q:{wear:2}},
+   {n:'Нормальная, двухгруппная', price:220000, d:'Надёжная рабочая лошадка.', set:{machine:2}, q:{wear:1}},
+   {n:'Итальянская топовая', price:520000, d:'Быстрая, почти не ломается, кофе вкуснее.', set:{machine:5}, q:{wear:0.55, rep:0.2}}]},
+ {id:'register', n:'Касса и терминал', need:true, opts:[
+   {n:'Самая простая', price:25000, d:'Медленно пробивает, терминал капризный.', set:{register:0}, q:{term:1.8}},
+   {n:'Онлайн-касса с терминалом', price:70000, d:'Как у всех.', set:{register:2}, q:{term:1}},
+   {n:'Две кассы и QR-оплата', price:160000, d:'Очередь двигается быстро.', set:{register:4}, q:{term:0.6}}]},
+ {id:'storage', n:'Холодильник и склад', opts:[
+   {n:'Бытовой холодильник', price:30000, d:'Мало места, молоко портится быстрее.', set:{storage:0}, q:{fridge:1.8}},
+   {n:'Профессиональный', price:110000, d:'Нормальный запас продуктов.', set:{storage:2}, q:{fridge:1}},
+   {n:'Холодильная комната', price:240000, d:'Много места, всё хранится дольше.', set:{storage:4}, q:{fridge:0.6}}]},
+ {id:'tables', n:'Мебель', opts:[
+   {n:'Табуретки и пара столов', price:25000, d:'4 места, гости не задерживаются.', set:{tables:0}, q:{}},
+   {n:'Нормальные столы', price:90000, d:'5 мест, уютнее.', set:{tables:2, decor:1}, q:{}},
+   {n:'Дизайнерская мебель', price:260000, d:'6 мест и вау-эффект.', set:{tables:4, decor:2}, q:{rep:0.1}}]},
+ {id:'decor', n:'Ремонт', opts:[
+   {n:'Как есть', price:0, d:'Обшарпанные стены. Бардак +15.', set:{}, q:{chaos:15}},
+   {n:'Косметический', price:120000, d:'Свежая покраска и свет.', set:{decor:2}, q:{}},
+   {n:'Дизайнерский', price:380000, d:'Фотографируют прямо с порога.', set:{decor:5}, q:{rep:0.3}}]},
+ {id:'showcase', n:'Витрина', opts:[
+   {n:'Без витрины', price:0, d:'Десертов не будет, пока не купишь.', set:{}, q:{}},
+   {n:'Простая витрина', price:60000, d:'Десерты к кофе.', set:{showcase:1}, q:{}},
+   {n:'Подсвеченная витрина', price:150000, d:'Десерты берут чаще.', set:{showcase:3}, q:{}}]},
+ {id:'sign', n:'Вывеска', opts:[
+   {n:'Лист А4 на двери', price:2000, d:'Тебя почти не видно.', set:{}, q:{}},
+   {n:'Световой короб', price:60000, d:'Видно с улицы.', set:{sign:2}, q:{}},
+   {n:'Неон и штендер', price:170000, d:'Заметно с другого конца квартала.', set:{sign:4}, q:{}}]}
+];
+function applyBuild(choice){
+  const rm = room('main'); let total = 0; S.q = {wear:1, term:1, fridge:1};
+  for(const b of BUILD){ const o = b.opts[choice[b.id] || 0]; total += o.price;
+    for(const k in o.set) rm.upg[k] = Math.max(rm.upg[k], o.set[k]);
+    if(o.q.wear) S.q.wear = o.q.wear; if(o.q.term) S.q.term = o.q.term; if(o.q.fridge) S.q.fridge = o.q.fridge;
+    if(o.q.rep) S.rep = clamp(S.rep + o.q.rep, 1, 5); if(o.q.chaos) S.meters.chaos += o.q.chaos; }
+  S.money -= total; S.fin.today.other += total; S.build = choice;
+  return total;
+}
+function makeYou(){ const y = makeStaff('Бариста', {quirk:'none'}); Object.assign(y, {name:'Ты', isYou:true, room:'main', lvl:2, today:'work', sched:'every', contract:'white'}); return y; }
 function initState(){
-  S.staff.push(Object.assign(makeStaff('Бариста', {quirk:'none'}), {room:'main', lvl:2}));
-  S.staff.forEach(s=>s.off = [5,6]);
-  refreshCands(); rollWeather(); newTask(); S.task.day = S.day;
+  S.staff.push(makeYou());
+  refreshCands(); rollWeather(); newTasks();
+  addMod('traffic', 1.6, 72, 'Новая кофейня: гостей +60%');
   S.story = storyInit(); startSeason(1);
 }
 const ACH = [
@@ -1601,6 +1843,82 @@ function storyMidnight(){
     if(tease) HOOK.toast(tease); }
 }
 
+/* ---------- дополнительные события ---------- */
+def('e_wifi', {cat:'normal', t:'Пароль от вайфая', x:'Гость требует пароль от вайфая. Пароль никто не помнит. На роутере написано «не трогать, Виктор».', o:[
+ {t:'Перезагрузить роутер', fx:{chaos:1}, out:'Интернет пропал у всех на 10 минут. Пароль оказался «12345678».'},
+ {t:'Сказать, что у нас место без интернета', fx:{pathos:2, soul:1}, out:'Гость сначала злился, потом впервые за год поговорил с соседом по столу.'},
+ {t:'Продать вайфай за 50 ₽', fx:{m:50, chaos:1, rep:-1}, out:'Он заплатил. И оставил отзыв «вайфай за деньги, вы серьёзно?»'}]});
+def('e_birthday', {cat:'normal', t:'День рождения', x:'Компания из шести человек празднует день рождения и просит свечку в торт, которого у вас нет.', o:[
+ {t:'Воткнуть свечку в круассан и спеть', fx:{soul:3, rep:1, m:1200}, out:'Пели всем залом. Именинница плакала. Чаевые хорошие.'},
+ {t:'Продать им всю витрину', fx:{m:3500, chaos:2}, out:'Витрина пуста, компания довольна, в зале крошки.'},
+ {t:'Попросить потише', fx:{pathos:1, rep:-1}, out:'Ушли праздновать к конкурентам.'}]});
+def('e_proposal', {cat:'normal', t:'Предложение в зале', x:'Парень встаёт на колено перед девушкой прямо у кассы и просит выключить музыку.', o:[
+ {t:'Выключить музыку и приглушить свет', fx:{soul:4, rep:1}, out:'Она сказала «да». Зал аплодирует. Видео разлетелось по району.', then:[{after:[60,240], p:0.7, fx:{mod:['traffic',1.2,6,'Видео с предложением: гостей +20%']}, note:'Видео предложения набрало просмотры'}]},
+ {t:'Включить «Мальчик хочет в Тамбов»', fx:{chaos:2, pathos:1}, out:'Она засмеялась так, что не смогла ответить. Ответила потом, но уже не вам.'},
+ {t:'Продать им шампанское, которого нет', fx:{m:1500, chaos:1}, out:'Сбегали в магазин и продали с наценкой. Бизнес есть бизнес.'}]});
+def('e_parking', {cat:'normal', t:'Перекрыли вход', x:'Чёрный внедорожник встал прямо у входа. Гости протискиваются боком. Водитель пьёт кофе у вас.', o:[
+ {t:'Вежливо попросить переставить', fx:{soul:1}, out:'Он переставил и оставил чаевые. Хороший мужик.'},
+ {t:'Вызвать эвакуатор', fx:{pathos:2, st:{rel:{palych:-5}}}, out:'Машину увезли. Оказалось, это машина знакомого Палыча.'},
+ {t:'Повесить на машину рекламу кофейни', fx:{chaos:2, mod:['traffic',1.1,3,'Реклама на чужой машине: гостей +10%']}, out:'Хозяин уехал с вашей рекламой по всему району.'}]});
+def('e_umbrella', {cat:'normal', t:'Забытые зонты', x:'В углу скопилось 14 забытых зонтов. Один — с ручкой в виде утки.', o:[
+ {t:'Сделать «зонтичный обмен» для гостей', fx:{soul:3, rep:1}, out:'Гости берут зонт в дождь и приносят обратно. Иногда.'},
+ {t:'Продать на Авито', fx:{m:2800}, out:'Утку купили первой.'},
+ {t:'Выбросить', fx:{chaos:-1}, out:'Через час пришёл хозяин утки.'}]});
+def('e_photo', {cat:'normal', t:'Фотосессия', x:'Девушка с фотографом хотят снимать «кофейную фотосессию» в зале два часа. Свет, отражатели, переодевания.', o:[
+ {t:'Разрешить бесплатно', fx:{soul:2, chaos:2}, out:'Фото вышли красивые, а вас отметили в профиле с 40 тысячами подписчиков.', then:[{after:[120,400], p:0.6, fx:{mod:['traffic',1.2,8,'Фото в профиле: гостей +20%']}, note:'Фотосессия привела гостей'}]},
+ {t:'Взять 5 000 ₽ за аренду зала', fx:{m:5000, pathos:1}, out:'Заплатили без вопросов. Надо было просить больше.'},
+ {t:'Отказать', fx:{pathos:2}, out:'Ушли снимать к «Бородатому бариста».'}]});
+def('e_tiktok', {cat:'normal', t:'Тренд в тиктоке', x:'В тиктоке новый тренд: заказывать «тот самый раф» и снимать реакцию бариста. К вам пришли трое с телефонами.', o:[
+ {t:'Подыграть и сделать шоу', fx:{soul:2, mod:['traffic',1.25,4,'Тикток-тренд: гостей +25%']}, out:'Бариста сыграл шок так, что видео разлетелось.'},
+ {t:'Запретить съёмку', fx:{pathos:2, rep:-1}, out:'Сняли, как вы запрещаете. Это видео разлетелось ещё сильнее.'},
+ {t:'Сделать «тот самый раф» за 600 ₽', fx:{m:1800, chaos:1}, out:'Трое купили, сняли и ушли. Рецепт так никто и не понял.'}]});
+def('e_rain', {cat:'normal', t:'Ливень', x:'Начался ливень. Под навесом у входа толпятся двадцать человек без зонтов.', o:[
+ {t:'Пустить всех и раздать салфетки', fx:{soul:3, m:2500, chaos:3}, out:'Половина что-то купила. Пол мокрый, зато сердца тёплые.'},
+ {t:'Пускать только с заказом', fx:{m:3200, pathos:2}, out:'Заказывали все. Улыбались не все.'},
+ {t:'Закрыть дверь', fx:{rep:-2}, out:'Люди мокли и смотрели на тебя через стекло.'}]});
+def('e_loud', {cat:'normal', t:'Громкий созвон', x:'Мужчина в наушниках третий час проводит созвон на весь зал. Слышно, как он увольняет кого-то в Новосибирске.', o:[
+ {t:'Попросить говорить тише', fx:{soul:1}, out:'Он извинился и перешёл на шёпот. Уволил шёпотом.'},
+ {t:'Включить музыку погромче', fx:{chaos:2, pathos:1}, out:'Теперь громко всё.'},
+ {t:'Продать ему переговорную', fx:{m:2000}, out:'Подсобка стала переговорной за 2 000 ₽ в час.'}]});
+def('e_tourists', {cat:'normal', t:'Экскурсия', x:'Экскурсовод привёл группу из 25 туристов: «А здесь вы попробуете настоящий местный кофе».', o:[
+ {t:'Обслужить всех быстро', fx:{m:7000, chaos:4, moodAll:-4}, out:'Двадцать пять капучино за десять минут. Бариста тяжело дышит.'},
+ {t:'Договориться с гидом о постоянных визитах', fx:{m:4000, st:{f:{guide:1}}, mod:['traffic',1.1,24*7,'Экскурсии: гостей +10%']}, out:'Гид будет водить группы каждую неделю за 10% с чека.'},
+ {t:'Не пускать: у нас тесно', fx:{pathos:2}, out:'Туристы ушли в сетевую кофейню. Гид обиделся.'}]});
+def('e_pensioner', {cat:'normal', t:'Пенсионерка с купоном', x:'Бабушка принесла купон «Кофе бесплатно» из газеты. Газета 2011 года, и это вообще не ваша кофейня.', o:[
+ {t:'Налить бесплатно', fx:{soul:3, m:-240}, out:'Бабушка рассказала про вас всему подъезду.', then:[{after:[600,2000], p:0.6, fx:{mod:['traffic',1.1,24,'Бабушки подъезда: гостей +10%']}, note:'Бабушка рассказала подъезду'}]},
+ {t:'Объяснить про дату', fx:{pathos:1}, out:'Бабушка ушла, сказав, что «раньше было лучше».'},
+ {t:'Предложить скидку 50%', fx:{soul:1, m:120}, out:'Сошлись на компромиссе. Бабушка довольна.'}]});
+def('e_cert', {cat:'normal', t:'Подарочные сертификаты', x:'Офис напротив хочет заказать 40 сертификатов на кофе для сотрудников к празднику.', o:[
+ {t:'Продать по полной цене', fx:{m:12000}, out:'Деньги сразу. Сорок человек придут в течение месяца.', then:[{after:[300,1500], p:1, fx:{mod:['traffic',1.15,24*3,'Офис с сертификатами: гостей +15%']}, note:'Офис пошёл по сертификатам'}]},
+ {t:'Сделать скидку 20% за объём', fx:{m:9600, soul:2}, out:'Офис доволен и обещает заказывать ещё.'},
+ {t:'Отказаться: возни много', fx:{}, out:'Офис заказал у сети.'}]});
+
+/* праздники */
+def('h_halloween', {cat:'normal', t:'Сладость или гадость', x:'В дверях дети в костюмах привидений: «Сладость или гадость!»', o:[
+ {t:'Раздать конфеты', fx:{m:-500, soul:3, rep:1}, out:'Дети ушли счастливыми и привели родителей.'},
+ {t:'Напугать в ответ', fx:{pathos:1, chaos:1}, out:'Бариста выскочил из-за стойки в маске. Визг на всю улицу.'},
+ {t:'Продать родителям тыквенный раф', fx:{m:2400}, out:'Родители взяли по два.'}]});
+def('h_newyear', {cat:'normal', t:'Корпоратив', x:'Офис напротив хочет снять кофейню вечером под корпоратив с Дедом Морозом. Дед Мороз уже пьян.', o:[
+ {t:'Согласиться за 40 000 ₽', fx:{m:40000, chaos:6}, out:'Дед Мороз уснул под ёлкой. Ёлка упала. Деньги остались.'},
+ {t:'Только без алкоголя', fx:{m:20000, soul:2}, out:'Скучновато, но никто не упал.'},
+ {t:'Отказать: у нас обычные гости', fx:{soul:1}, out:'Постоянные гости оценили.'}]});
+def('h_valentine', {cat:'normal', t:'Свидание вслепую', x:'Сразу три пары пришли на свидания вслепую и перепутали столики.', o:[
+ {t:'Помочь всем рассесться', fx:{soul:3}, out:'Одна из перепутанных пар осталась вместе. Так тоже бывает.'},
+ {t:'Продать «сет для двоих»', fx:{m:4200}, out:'Два раф «Любовь» и пирожное за 900. Ушло шесть сетов.'},
+ {t:'Наблюдать и ничего не делать', fx:{chaos:2}, out:'Было весело. Вам.'}]});
+def('h_march8', {cat:'normal', t:'Цветы для гостей', x:'Бариста предлагает дарить всем гостьям по тюльпану. Тюльпаны стоят 120 ₽ за штуку.', o:[
+ {t:'Купить 100 тюльпанов', fx:{m:-12000, soul:4, rep:2}, out:'Весь район говорит о вас. Женщины, мужчины и даже Палыч.'},
+ {t:'Только к кофе от 300 ₽', fx:{m:-4000, soul:2}, out:'Средний чек вырос. Хитро.'},
+ {t:'Обойдёмся открыткой', fx:{}, out:'Открытка висит у кассы.'}]});
+def('h_sept1', {cat:'normal', t:'Первоклашки', x:'После линейки пришла толпа первоклассников с родителями и букетами.', o:[
+ {t:'Какао всем за счёт заведения', fx:{m:-3000, soul:4, rep:1}, out:'Родители запомнят. И вернутся.'},
+ {t:'Поставить букеты в воду и продать кофе родителям', fx:{m:5000}, out:'Букеты стоят на всех столах. Красиво.'},
+ {t:'Попросить не шуметь', fx:{pathos:1, rep:-1}, out:'Тише не стало.'}]});
+def('h_summer', {cat:'normal', t:'Жара', x:'+34 в тени. Кондиционер не справляется, все хотят холодный кофе.', o:[
+ {t:'Сделать акцию на эспрессо-тоник', fx:{mod:['check',1.1,8,'Жара и тоник: чек +10%']}, out:'Тоник уходит литрами.'},
+ {t:'Купить второй кондиционер', fx:{m:-45000, rep:1}, out:'В зале прохладно, гости сидят дольше.'},
+ {t:'Открыть двери настежь', fx:{chaos:2}, out:'Залетели осы. Две.'}]});
+
 /* ================= Brew Crew v3 — сцена и интерфейс ================= */
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -1617,6 +1935,17 @@ const KIDS = POOL.kid || [];
 const PETS = (POOL.dog||[]).concat(POOL.cat||[], (POOL.pet||[]).filter(i=>i!==110));
 const ITEM = {bowl:114, bed:127, tree:128, carrier:126, aquarium:110, parrot:92, duck:119, ball:117};
 const ROLE_SPR = {'Бариста':POOL.barista, 'Кассир':POOL.host, 'Официант':POOL.waiter, 'Уборщик':POOL.clean, 'Повар':POOL.chef.concat(POOL.kitchen)};
+// пол спрайтов, размечен вручную по атласу
+const FEM = new Set([1,3,6,14,15,16,17,18,19,20,29,34,36,41,42,44,46,47,49,51,60,63,64,66,71,53,54]);
+const SEXPOOL = {
+  'Бариста':{m:[21,22,23,24], f:[15,16,18]},
+  'Кассир':{m:[8,11,12,13], f:[14,15,16,17,18,19,20]},
+  'Официант':{m:[8,9,10,11,12,13], f:[17,19,20]},
+  'Уборщик':{m:[30,31,32], f:[29]},
+  'Повар':{m:[0,2,4,5,25,26,27,28], f:[1,3,6]}};
+const sexOf = i => FEM.has(i) ? 'f' : 'm';
+HOOK.pickSpr = (role, sex) => { sex = sex || (Math.random()<0.5?'m':'f'); const p = (SEXPOOL[role]||{m:POOL.guest,f:POOL.guest})[sex]; return {spr:pick(p), sex}; };
+function nameSex(n){ const L = LEGENDS.find(l=>l.name===n); if(L) return L.sex; return NAMES_F.includes(n) ? 'f' : 'm'; }
 // редкость гостей и питомцев
 const RARITY = {};
 GUESTS.concat(KIDS).forEach((i,k)=>{ RARITY['g'+i] = k%11===5 ? 2 : k%4===1 ? 1 : 0; });
@@ -1626,7 +1955,12 @@ const RNAME = ['Обычный','Редкий','Легендарный'];
 const atlas = new Image(); let atlasReady = false; atlas.onload = () => { atlasReady = true; }; atlas.src = 'sprites.png';
 function sprStyle(i, h){ const m = META[i]; const s = h/m[4]; return `width:${Math.round(m[3]*s)}px;height:${h}px;background-image:url(sprites.png);background-position:${-m[1]*s}px ${-m[2]*s}px;background-size:${1400*s}px auto`; }
 function petH(i){ const c = META[i][0]; return c==='dog' ? 27 : c==='cat' ? 23 : 19; }
-function staffSpr(s){ if(s.spr==null){ const pool = s.isYou ? POOL.host : ROLE_SPR[s.role]; s.spr = s.legendId ? pool[(s.legendId*3) % pool.length] : pick(pool); } return s.spr; }
+function staffSpr(s){
+  if(s.isYou){ if(s.spr==null || s.spr<21 || s.spr>24) s.spr = 23; return s.spr; }
+  if(!s.sex) s.sex = nameSex(s.name);
+  if(s.spr==null || sexOf(s.spr)!==s.sex || !(SEXPOOL[s.role]||{})[s.sex] || !SEXPOOL[s.role][s.sex].includes(s.spr)){ const p = (SEXPOOL[s.role]||{})[s.sex] || ROLE_SPR[s.role]; s.spr = s.legendId ? p[(s.legendId*3) % p.length] : pick(p); }
+  return s.spr; }
+const REG_SPR = {mihalych:59, zina:60, gleb:45, anya:51, oleg:50, tima:52, sema:65, vera:63};
 
 /* ---------- хуки ядра ---------- */
 let modals = [], structDirty = true, quietModals = [];
@@ -1690,7 +2024,7 @@ function spawnGuest(id, reg){
   const r = rt(id);
   if(r.queue.length >= 7){ meter('chaos', 0.3); return; }
   let g;
-  if(reg){ const def = REGULARS.find(x=>x.id===reg.id); if(reg.spr==null) reg.spr = pick(def.pool==='old' ? POOL.old : POOL.guest); g = {spr:reg.spr, h:46, reg:reg.id, name:def.n}; }
+  if(reg){ const def = REGULARS.find(x=>x.id===reg.id); reg.spr = REG_SPR[reg.id] != null ? REG_SPR[reg.id] : (reg.spr != null ? reg.spr : pick(POOL.guest)); g = {spr:reg.spr, h:46, reg:reg.id, name:def.n}; }
   else { const p = pickGuestSprite(); g = {spr:p.spr, h:p.kid?34:46}; markSeen('g', p.spr); }
   Object.assign(g, {x:DOOR[0], y:DOOR[1]+R(-6,6), state:'toQueue', prog:0, flip:false, t:Math.random()*10, walk:true, pet:null, wait:0,
     patience: (55 + room(id).upg.decor*2.5) * (S.path==='soul'?1.3:1) * (workingStaff(id).some(s=>s.quirk==='talker')?1.2:1) * (workingStaff(id).some(s=>s.quirk==='bore')?0.85:1)});
@@ -1703,7 +2037,7 @@ function guestLeaves(id, g, why){
   r.queue = r.queue.filter(x=>x!==g); r.pickup = r.pickup.filter(x=>x!==g); r.pickup.forEach((x,i)=>x.pi=i);
   g.state = 'leave'; g.angry = why;
   S.c.angry++; repAdd(-0.006);
-  if(S.task && S.task.kind==='noangry') S.task.failed = true;
+  for(const t of (S.tasks||[])) if(t.kind==='noangry' && !t.done) t.failed = true;
   if(g.reg){ const rg = S.regs.find(x=>x.id===g.reg); rg.loyal = clamp(rg.loyal - 8, 0, 100); if(rg.loyal <= 10 && !rg.gone){ rg.gone = true; toast(g.name+' ушёл к конкурентам насовсем'); } }
 }
 function simRoom(id, dt){
@@ -1852,12 +2186,12 @@ function drawRoom(id){
     if(S.weather==='snow'){ ctx.fillStyle = '#fff'; for(let i=0;i<12;i++){ const x = 260 + ((i*29 + now*8) % 76), y = 14 + ((i*41 + now*20) % 42); ctx.fillRect(x,y,1.4,1.4); } }
     rect(296,14,2,42,th.trim); rect(260,34,76,2,th.trim);
     rect(252,58,92,4,th.ctop);
-    if(isHalloween()){ pumpkin(266,58); pumpkin(326,58); }
+    holDeco(266,58,1); holDeco(326,58,0);
   }
   // menu board
   const lines = 2 + Math.floor(u.menu/2);
   rect(14,8,92,54,'#4a3426'); rect(17,11,86,48,'#2a2f2a');
-  ctx.fillStyle = '#f0ece0'; ctx.font = '700 7px "Golos Text",sans-serif'; ctx.fillText('МЕНЮ', 22, 20); if(isHalloween()) pumpkin(96, 20);
+  ctx.fillStyle = '#f0ece0'; ctx.font = '700 7px "Golos Text",sans-serif'; ctx.fillText('МЕНЮ', 22, 20); holDeco(96, 20, 1);
   for(let i=0;i<Math.min(lines,12);i++){ const col = i%2, row = Math.floor(i/2); const x = 22 + col*42, y = 26 + row*5.5; rect(x, y, 22 + (i*7%10), 1.6, 'rgba(240,236,224,.75)'); rect(x+30, y, 6, 1.6, 'rgba(234,163,60,.85)'); }
   // sign
   drawSign(u.sign, th, now);
@@ -1887,7 +2221,7 @@ function drawRoom(id){
   drawShowcase(u.showcase, r);
   drawRegister(u.register);
   if(u.pets>=18) drawSprite(ITEM.parrot, 236, COUNTER_Y+1, 22, false, Math.sin(now*3)*0.05);
-  if(isHalloween()) pumpkin(22, COUNTER_Y+1);
+  holDeco(22, COUNTER_Y+1, 0);
   // floor items, tables, guests, walking staff, pets
   if(u.pets>=1) items.push({y:214, f:()=>drawSprite(ITEM.bowl, 326, 214, 9)});
   if(u.pets>=3) items.push({y:296, f:()=>drawSprite(ITEM.bed, 30, 296, 14)});
@@ -2047,11 +2381,13 @@ cv.addEventListener('pointerdown', e => {
   const id = S.active, r = rt(id);
   let best = null;
   for(const s of workingStaff(id)){ const p = r.staff[s.id]; if(!p || p.x>350) continue; const m = META[staffSpr(s)]; const w = m[3]*46/m[4]; if(x>p.x-w/2-4 && x<p.x+w/2+4 && y>p.y-50 && y<p.y+4){ if(!best || p.y > best.p.y) best = {s,p}; } }
-  if(best){ sfx('tap'); queueModal({kind:'staff', sid:best.s.id}, true); return; }
+  if(best){ sfx('tap'); if(best.s.isYou){ toast('Это ты. Тапай по гостю у кассы, по кофемашине и по гостям на выдаче — так работа идёт быстрее'); return; } queueModal({kind:'staff', sid:best.s.id}, true); return; }
   for(const g of r.guests){ if(x>g.x-12 && x<g.x+12 && y>g.y-g.h && y<g.y+4){
     if(r.queue[0]===g && g.state==='queue' && Math.hypot(g.x-QUEUE_X,g.y-QUEUE_Y)<3){ completeOrder(id, g, true); return; }
+    if(g.state==='wait' || g.state==='toPick'){ const j = r.jobs.find(j=>j.g===g); if(j){ j.p += 0.22; tapFx(g.x, g.y-g.h-8); sfx('tap'); if(j.p>=1) finishJob(id, j); return; } }
     if(g.reg){ const def = REGULARS.find(d=>d.id===g.reg); const rg = S.regs.find(q=>q.id===g.reg); toast(def.n+': '+def.d+' Лояльность '+Math.round(rg.loyal)); return; }
   } }
+  if(x>8 && x<136 && y>40 && y<COUNTER_Y+20 && r.jobs.length){ const j = r.jobs[0]; j.p += 0.2; tapFx(60, 70); sfx('tap'); if(j.p>=1) finishJob(id, j); return; }
   if(x>186 && x<246 && y>70 && y<COUNTER_Y+30){ const h = r.queue[0]; if(h && h.state==='queue' && Math.hypot(h.x-QUEUE_X,h.y-QUEUE_Y)<3){ h.prog += 0.3; sfx('tap'); if(h.prog>=1) completeOrder(id, h, true); } }
 });
 
@@ -2146,7 +2482,7 @@ function loadCloud(cb){ if(!cloudOK()) return cb(null);
 let trackT = 0, trackStart = true;
 function track(force){
   if(!S || !tg || !tg.initData) return;
-  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart}});
+  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).catch(()=>{}); }catch(e){}
 }
@@ -2169,42 +2505,76 @@ function toast(msg){ const t = el(`<div class="toast" role="status">${esc(msg)}<
 function clockStr(){ const h = Math.floor(S.gm/60), m = Math.floor(S.gm%60); return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
 const CAFE_NAMES = ['Без молока','Пенка','Зерно и точка','Кофе на бегу','Двойной','Перекур','Смена','Крема','Чашка','Капучинная'];
 
+function startParam(){ try{ const p = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || new URLSearchParams(location.search).get('tgWebAppStartParam') || ''; return /^ref_\d{3,15}$/.test(p) ? p : ''; }catch(e){ return ''; } }
 function renderStart(){
-  const app = $('#app'); app.innerHTML = '';
+  const app = $('#app'); app.innerHTML = ''; app.className = 'startapp';
   let name = CAFE_NAMES[0], cityId = 'msk';
+  const ref = startParam();
   const w = el(`<div class="start">
     <div class="logo">Brew Crew</div>
-    <div class="empty" style="font-size:15px">Ты только что купил маленькую кофейню у человека по имени Виктор. Он очень спешил уехать. Скоро поймёшь почему.</div>
-    <div class="h">Название кофейни</div>
+    <div class="note kraft"><p>Ты снял пустое помещение на первом этаже. Голые стены, розетка и запах чужого ремонта. Денег — ${fmt(START_CAPITAL)} ₽. Дальше всё сам.</p>${ref?'<p class="gift">Тебя позвал друг: +100 000 ₽ к стартовому капиталу.</p>':''}</div>
+    <div class="h chalk">Как назовёшь</div>
     <div class="names" id="nm">${CAFE_NAMES.map((n,i)=>`<button class="opt" aria-pressed="${i===0}" data-v="${esc(n)}">${esc(n)}</button>`).join('')}</div>
     <input class="field" id="own" maxlength="20" placeholder="Или впиши своё" autocomplete="off">
-    <div class="h">Город</div>
+    <div class="h chalk">Город</div>
     <div class="two" id="ct">
       <button class="opt" aria-pressed="true" data-v="msk"><b>Москва</b><span>Дорогая аренда, высокий чек.</span></button>
       <button class="opt" aria-pressed="false" data-v="spb"><b>Петербург</b><span>Дожди загоняют гостей внутрь.</span></button>
     </div>
-    <button class="btn" id="go" style="padding:12px;font-size:15px">Открыть кофейню</button>
-    <div class="empty" style="font-size:12px">Кофейня работает круглосуточно, даже когда игра закрыта, но без тебя хуже. Только для 18+.</div>
+    <button class="btn big" id="go">Дальше: обставить зал</button>
+    <div class="empty" style="font-size:12px">Кофейня работает круглосуточно, даже когда игра закрыта. Только для 18+.</div>
   </div>`);
   app.appendChild(w);
   w.querySelectorAll('#nm .opt').forEach(b=>b.onclick=()=>{ w.querySelectorAll('#nm .opt').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); name = b.dataset.v; w.querySelector('#own').value=''; });
   w.querySelector('#own').oninput = e => { const v = e.target.value.trim(); if(v){ name = v; w.querySelectorAll('#nm .opt').forEach(x=>x.setAttribute('aria-pressed','false')); } };
   w.querySelectorAll('#ct .opt').forEach(b=>b.onclick=()=>{ w.querySelectorAll('#ct .opt').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); cityId = b.dataset.v; });
-  w.querySelector('#go').onclick = () => { unlockAudio(); S = newState(name, cityId); initState(); S.interior = {}; S.streak = {last:new Date(Date.now()+3*3600000).toISOString().slice(0,10), n:1}; save(); renderGame(); refreshEntitlements(); };
+  w.querySelector('#go').onclick = () => { unlockAudio(); sfx('tap'); renderBuild(name, cityId, ref); };
+}
+function renderBuild(name, cityId, ref){
+  const app = $('#app'); app.innerHTML = ''; app.className = 'startapp';
+  const budget = START_CAPITAL + (ref ? 100000 : 0);
+  const choice = {}; BUILD.forEach(b=>choice[b.id] = 1);
+  const w = el(`<div class="start build"><div class="h chalk big">Обставить зал</div><div class="receipt" id="rc"></div><div id="bl"></div><button class="btn big" id="open">Открыть двери</button><button class="btn ghost" id="back">Назад</button></div>`);
+  app.appendChild(w);
+  const total = () => BUILD.reduce((a,b)=>a+b.opts[choice[b.id]].price, 0);
+  const draw = () => {
+    const t = total(), left = budget - t;
+    w.querySelector('#rc').innerHTML = `<div class="rrow"><span>Бюджет</span><b>${fmt(budget)}</b></div><div class="rrow"><span>Оборудование и ремонт</span><b>−${fmt(t)}</b></div><div class="rrow tot"><span>Останется на команду и закупки</span><b class="${left<120000?'neg':''}">${fmt(left)}</b></div>${left<120000?'<div class="rnote">Мало. Нужно хотя бы 120 000 ₽ на первые зарплаты и аренду.</div>':''}`;
+    const bl = w.querySelector('#bl'); bl.innerHTML = '';
+    BUILD.forEach(b=>{
+      const card = el(`<div class="buildrow"><div class="bt">${b.n}</div><div class="bopts"></div></div>`);
+      b.opts.forEach((o,k)=>{ const can = budget - (t - b.opts[choice[b.id]].price + o.price) >= 0;
+        const bt = el(`<button class="bopt" aria-pressed="${choice[b.id]===k}" ${can?'':'disabled'}><span class="tier">${['Дёшево','Нормально','Дорого'][k]}</span><b>${esc(o.n)}</b><i class="num">${o.price?fmt(o.price)+' ₽':'бесплатно'}</i><small>${esc(o.d)}</small></button>`);
+        bt.onclick = () => { choice[b.id] = k; sfx('tap'); draw(); }; card.lastElementChild.appendChild(bt); });
+      bl.appendChild(card); });
+    w.querySelector('#open').disabled = budget - t < 120000;
+  };
+  draw();
+  w.querySelector('#back').onclick = () => renderStart();
+  w.querySelector('#open').onclick = () => { unlockAudio();
+    S = newState(name, cityId); if(ref){ S.money += 100000; S.ref = ref; }
+    applyBuild(choice); initState();
+    for(const k of ['beans','cups','syrup','tea','milk','desserts']){ if(k==='desserts' && !isUnlocked('dessert')) continue; const want = stockCap(k)*0.6 - stockQty(k); if(want>0){ if(STOCK[k].perish) S.stock[k].push({q:Math.round(want), exp:S.day+STOCK[k].perish}); else S.stock[k] += Math.round(want); } } S.interior = {}; S.promo = {day:null, rec:[]}; S.onb = {};
+    S.streak = {last:new Date(Date.now()+3*3600000).toISOString().slice(0,10), n:1};
+    save(); renderGame(); refreshEntitlements(); track();
+    queueModal({kind:'intro'}); };
 }
 /* ---------- новый экран: верх, сцена, док, шторки ---------- */
+// пиксельные иконки 16×16, нарисованы вручную
+function pxIcon(rows, col){ let r = ''; rows.forEach((line,y)=>{ for(let x=0;x<line.length;x++){ const c = line[x]; if(c==='#') r += `<rect x="${x}" y="${y}" width="1" height="1"/>`; else if(c==='o') r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${col||'#e8c08a'}"/>`; } }); return `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">${r}</svg>`; }
 const ICONS = {
-  hall:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3c0 2 2 2 2 4M12 3c0 2 2 2 2 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-  up:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 7h-4v8H9v-8H5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
-  set:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+  hall:pxIcon(['....#..#........','...#..#.........','....#..#........','...#..#.........','................','.###########....','.#ooooooooo#....','.#ooooooooo####.','.#ooooooooo#..#.','.#ooooooooo#..#.','.#ooooooooo####.','..#ooooooo#.....','...#######......','#############...','.###########....','................']),
+  up:pxIcon(['................','.......##.......','......####......','.....######.....','....########....','...##########...','..############..','......####......','......####......','......####......','......####......','......####......','......####......','....########....','....########....','................']),
+  set:pxIcon(['................','......####......','..##..#..#..##..','..#.##....##.#..','...#........#...','..#...####...#..','###..#....#..###','#....#....#....#','#....#....#....#','###..#....#..###','..#...####...#..','...#........#...','..#.##....##.#..','..##..#..#..##..','......####......','................'])
 };
 let sheet = null, hallTab = 'team';
-const HALL_TABS = [['team','Команда'],['stock','Склад'],['money','Деньги'],['events','События'],['district','Район'],['rooms','Залы'],['menu','Меню'],['regs','Постоянные'],['story','Сюжет'],['book','Гости'],['ach','Достижения'],['owner','Опыт владельца']];
+const HALL_TABS = [['team','Команда'],['tasks','Дела'],['stock','Склад'],['money','Касса'],['menu','Меню'],['guests','Гости'],['district','Район'],['rooms','Залы'],['story','Сюжет'],['owner','Опыт']];
+const TAB_N = Object.assign(Object.fromEntries(HALL_TABS), {up:'Улучшения'});
 function renderGame(){
   const app = $('#app'); app.innerHTML = ''; app.className = 'game';
   app.appendChild(el(`<header class="top">
     <div class="topL"><div class="cafe" id="cafe"></div><div class="meta num" id="clk"></div></div>
-    <div class="topR"><div class="money num" id="sMoney"></div><div class="meta num" id="sInc"></div></div>
+    <div class="topR register"><div class="money num" id="sMoney"></div><div class="meta num" id="sInc"></div></div>
   </header>`));
   app.appendChild(el(`<div class="pills" id="pills"></div>`));
   const sc = el(`<div class="scene" id="scene"><div class="notifs" id="notifs"></div><div class="roomdots" id="roomdots"></div></div>`);
@@ -2221,6 +2591,29 @@ function renderGame(){
   renderHud(); renderSheet();
 }
 function openSheet(k, tabKey){ sheet = k; if(tabKey) hallTab = tabKey; structDirty = true; renderSheet(); renderHud(); }
+/* что требует внимания: [вкладка, текст, срочно] */
+function attention(){
+  const out = [], id = S.active;
+  for(const inc of S.incidents){ const d = evDef(inc); if(d) out.push(['tasks', fillText(d.t, inc), true]); }
+  if(youNeeded('main')){ const crew = S.staff.filter(x=>!x.isYou && x.room==='main'); out.push(['team', !crew.some(x=>x.role==='Бариста') && !crew.some(x=>x.role==='Кассир') ? 'Ты один за стойкой: найми бариста и кассира' : !crew.some(x=>x.role==='Бариста') ? 'Нет бариста: ты варишь кофе сам' : 'Нет кассира: ты стоишь на кассе сам', true]); }
+  for(const st of S.staff){ if(st.isYou) continue;
+    if(st.distract) out.push(['team', st.name+': '+DISTRACT[st.distract.kind].toLowerCase(), false]);
+    else if(st.today==='absent') out.push(['team', st.name+' не вышел на смену', true]);
+    else if(st.pat < 35) out.push(['team', st.name+' вот-вот сорвётся', false]);
+    else if(st.mood < 30) out.push(['team', st.name+': плохое настроение', false]); }
+  const ls = lowStock(); if(ls.length) out.push(['stock', 'Заканчивается: '+ls.map(k=>STOCK[k].n.toLowerCase()).join(', '), true]);
+  for(const r of S.rooms) for(const k in r.broken) if(r.broken[k]) out.push(['stock', EQ[k].n+' сломана', true]);
+  const rm = room(id); for(const k in rm.eq) if(!rm.broken[k] && rm.eq[k] < 40) { out.push(['stock', EQ[k].n+': износ, пора обслужить', false]); break; }
+  if(S.debt.stage>=1 || S.money<0) out.push(['money', 'Касса в минусе', true]);
+  if(S.fin.taxDueDay - S.day <= 2 && S.money < S.fin.taxAcc) out.push(['money', 'Скоро налог, а денег не хватает', true]);
+  if(S.story && S.story.dl) out.push(['story', S.story.dl.label+': осталось '+Math.max(0,S.story.dl.by-S.day)+' дн.', true]);
+  const tl = (S.tasks||[]).filter(t=>!t.done && !t.failed).length; if(tl) out.push(['tasks', 'Задания дня: осталось '+tl, false]);
+  if(S.rivals.some(r=>r.status==='sale')) out.push(['district', 'Конкурент продаёт помещение', false]);
+  if(FR.unclaimed>0) out.push(['district', 'Друзья принесли награду', true]);
+  const step = onbStep(); if(step) out.push([step.tab, 'Первые шаги: '+step.t, false]);
+  return out;
+}
+function tabBadges(att){ const b = {}; att.forEach(([t,,u])=>{ b[t] = b[t] || {n:0,u:false}; b[t].n++; if(u) b[t].u = true; }); return b; }
 function renderSheet(){
   const root = $('#sheetRoot'); if(!root) return;
   structDirty = false;
@@ -2240,21 +2633,26 @@ function renderSheet(){
   }
   const head = sh.querySelector('.sheethead');
   if(sheet==='hall'){
-    head.innerHTML = `<div class="sheettitle">${esc(roomDef(S.active).n)}</div><div class="subnav" id="hallnav">${HALL_TABS.map(([k,n])=>`<button class="chipbtn" aria-pressed="${hallTab===k}" data-t="${k}">${n}${k==='events'&&S.incidents.length?' · '+S.incidents.length:''}</button>`).join('')}</div>`;
-    head.querySelectorAll('#hallnav button').forEach(b=>b.onclick=()=>{ hallTab = b.dataset.t; renderSheet(); });
-    const act = head.querySelector('[aria-pressed="true"]'); if(act && fresh) act.scrollIntoView({inline:'center', block:'nearest'});
-  } else head.innerHTML = `<div class="sheettitle">${sheet==='up'?'Улучшения · '+esc(roomDef(S.active).n):'Настройки'}</div>`;
+    const att = attention(), bd = tabBadges(att);
+    let nav = head.querySelector('#hallnav');
+    if(!nav){ head.innerHTML = `<div class="sheettitle chalk">${esc(roomDef(S.active).n)}</div><div class="subnav" id="hallnav">${HALL_TABS.map(([k,n])=>`<button class="chipbtn" data-t="${k}">${n}<i class="tb"></i></button>`).join('')}</div><div class="attn" id="attn"></div>`;
+      nav = head.querySelector('#hallnav');
+      nav.querySelectorAll('button').forEach(b=>b.onclick=()=>{ hallTab = b.dataset.t; sfx('tap'); renderSheet(); sh.querySelector('#panel').scrollTop = 0; }); }
+    head.querySelector('.sheettitle').textContent = roomDef(S.active).n;
+    nav.querySelectorAll('button').forEach(b=>{ const k = b.dataset.t, x = bd[k]; b.setAttribute('aria-pressed', String(hallTab===k)); const i = b.querySelector('.tb'); i.className = 'tb'+(x?(x.u?' u':' n'):''); i.textContent = x && x.u ? x.n : ''; });
+    if(fresh){ const act = nav.querySelector('[aria-pressed="true"]'); if(act) nav.scrollLeft = Math.max(0, act.offsetLeft - nav.clientWidth/2 + act.offsetWidth/2); }
+    const at = head.querySelector('#attn'); const other = att.filter(a=>a[0]!==hallTab).slice(0,3);
+    const sig = other.map(a=>a.join('|')).join('#');
+    if(at.dataset.s !== sig){ at.dataset.s = sig; at.innerHTML = other.length ? other.map(([t,x,u],k)=>`<button class="att ${u?'u':''}" data-k="${k}"><b>${TAB_N[t]}</b><span>${esc(x)}</span></button>`).join('') : '';
+      at.querySelectorAll('.att').forEach(b=>b.onclick=()=>{ if(other[+b.dataset.k][0]==='up'){ openSheet('up'); return; } hallTab = other[+b.dataset.k][0]; sfx('tap'); renderSheet(); sh.querySelector('#panel').scrollTop = 0; nav.querySelector(`[data-t="${hallTab}"]`).scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'}); }); }
+  } else head.innerHTML = `<div class="sheettitle chalk">${sheet==='up'?'Улучшения · '+esc(roomDef(S.active).n):'Настройки'}</div>`;
   const p = sh.querySelector('#panel'); const st = p.scrollTop; p.innerHTML = '';
   const id = S.active;
   if(sheet==='up') renderUpgrades(p, id);
   else if(sheet==='set') renderSettings(p);
   else {
-    if(hallTab==='team') renderTeam(p, id);
-    else if(hallTab==='stock') renderStock(p, id);
-    else if(hallTab==='money') renderFin(p);
-    else if(hallTab==='events') renderEvents(p);
-    else if(hallTab==='story') renderStory(p);
-    else { sub = {district:'district', rooms:'rooms', menu:'menu', regs:'regs', book:'book', ach:'ach', owner:'fr'}[hallTab]; renderMore(p); }
+    const f = {team:()=>renderTeam(p,id), tasks:()=>renderTasks(p), stock:()=>renderStock(p,id), money:()=>renderFin(p), menu:()=>renderMenu(p), guests:()=>renderGuests(p), district:()=>renderDistrict(p), rooms:()=>{ sub='rooms'; renderMore(p); }, story:()=>renderStory(p), owner:()=>renderOwner(p)}[hallTab];
+    (f || (()=>renderTeam(p,id)))();
   }
   p.scrollTop = st;
   refreshAfford();
@@ -2273,23 +2671,19 @@ function renderUpgrades(p, id){
     p.appendChild(card);
   });
 }
-function renderStory(p){
-  const T = S.story;
-  p.appendChild(el(`<div class="card"><div class="eyebrow">Сезон ${T.season}</div><div class="t big">${esc(seasonName())}</div>${T.dl?`<div class="d" style="color:var(--bad)">${esc(T.dl.label)}${T.dl.amount?': '+fmt(T.dl.amount)+' ₽':''} — осталось ${Math.max(0,T.dl.by-S.day)} дн.</div>`:'<div class="d">Пока тихо. Это ненадолго.</div>'}</div>`));
-  p.appendChild(el(`<div class="h">Люди района</div>`));
-  Object.keys(CHARS).forEach(k=>{
-    const c = CHARS[k], v = srel(k); const met = k==='palych' ? (T.season>1 || T.flags.burned!==undefined || T.flags.kept || T.flags.called) : true;
-    if(!met && T.season===1) return;
-    p.appendChild(el(`<div class="card"><div class="row"><span class="t">${c.n}</span><span class="sp"></span><span class="tag num ${v<-20?'warn':v>20?'g':''}">${v>20?'Друг':v<-20?'Враг':'Нейтрально'}</span></div><div class="d">${esc(c.d)}</div><div class="mood">Отношения ${bar((v+100)/2, v<-20?'var(--bad)':v>20?'var(--good)':'var(--caramel)')}<span class="num">${Math.round(v)}</span></div></div>`));
-  });
-  p.appendChild(el(`<div class="empty" style="font-size:12px">Решения необратимы. Персонажи помнят, как ты с ними обошёлся, и это всплывёт позже. Раз в игровую неделю выходит газета «Районные вести».</div>`));
-}
 function renderSettings(p){
   const vol = (k, n) => { const row = el(`<label class="vol"><span>${n}</span><input type="range" min="0" max="100" value="${Math.round(prefs[k]*100)}" id="vol_${k}"></label>`); row.querySelector('input').oninput = e => { prefs[k] = e.target.value/100; savePrefs(); }; return row; };
   const snd = el(`<div class="card"><div class="row"><span class="t">Звук</span><span class="sp"></span><button class="btn ${soundOn?'':'ghost'}" id="sndT">${soundOn?'Включён':'Выключен'}</button></div></div>`);
   snd.appendChild(vol('master','Общая громкость')); snd.appendChild(vol('amb','Шум зала')); snd.appendChild(vol('fx','Кофемашина, касса, дверь'));
   snd.querySelector('#sndT').onclick = () => { soundOn = !soundOn; unlockAudio(); applyVolumes(); save(); renderSheet(); };
   p.appendChild(snd);
+  const shc = el(`<div class="card"><div class="t">Похвастаться кофейней</div><div class="d">Карточка с твоим залом и чеком: в сторис или друзьям в чат. На ней ссылка на игру.</div><div class="row wrap"><button class="btn">В сторис</button><button class="btn ghost">Отправить в чат</button><button class="btn ghost">Позвать друга</button></div></div>`);
+  const sb = shc.querySelectorAll('button'); sb[0].onclick = shareStory; sb[1].onclick = sendCard; sb[2].onclick = invite;
+  p.appendChild(shc);
+  const rmc = el(`<div class="card"><div class="row"><span class="t">Напоминания от бота</span><span class="sp"></span><button class="btn ${S.remind?'':'ghost'}">${S.remind?'Включены':'Выключены'}</button></div><div class="d">Бот напишет, когда подходит срок по сюжету, кончаются продукты или кофейня слишком долго без тебя. Не чаще трёх сообщений.</div></div>`);
+  rmc.querySelector('button').onclick = () => setRemind(!S.remind);
+  p.appendChild(rmc);
+  if(CFG.channel){ const ch = el(`<div class="card"><div class="row"><span class="t">Канал игры</span><span class="sp"></span><button class="btn ghost">Открыть</button></div><div class="d">Новости, сезонные события и лучшие кофейни недели.</div></div>`); ch.querySelector('button').onclick = () => { if(tg && tg.openTelegramLink) tg.openTelegramLink(CFG.channel); else window.open(CFG.channel, '_blank'); }; p.appendChild(ch); }
   // поддержать игру
   const sup = el(`<div class="card"><div class="t">Поддержать игру</div><div class="d">Игра полностью бесплатная. Покупки ничего не решают в сюжете и экономике.</div><div class="shop" id="shop"></div></div>`);
   const shop = sup.querySelector('#shop');
@@ -2346,7 +2740,7 @@ function buyStars(item){
 }
 function renderHud(){
   if(!$('#sMoney')) return;
-  $('#cafe').textContent = '«'+S.name+'»';
+  $('#cafe').innerHTML = '«'+esc(S.name)+'» <small>'+charName()+'</small>';
   $('#clk').textContent = WEEKDAYS[weekday()]+', день '+S.day+' · '+clockStr()+' · '+WEATHER[S.weather].n;
   const m = $('#sMoney'); m.textContent = fmt(S.money)+' ₽'; m.style.color = S.money<0 ? 'var(--bad)' : '';
   const ipm = S.rooms.reduce((a,r)=>a+incomePerMin(r.id),0);
@@ -2355,32 +2749,35 @@ function renderHud(){
   const pills = [];
   const T = S.story;
   if(T && T.dl) pills.push(`<button class="pill story" data-go="story"><b>${esc(T.dl.label)}</b>${T.dl.amount?' · '+fmt(T.dl.amount)+' ₽':''} · ${Math.max(0,T.dl.by-S.day)} дн.</button>`);
-  const t = S.task;
-  if(t){ const pr = t.kind==='noangry' ? (t.failed?0:1) : t.prog/t.goal; pills.push(`<button class="pill task" data-go="task"><span class="pbar"><i style="width:${Math.round(pr*100)}%;background:${t.done?'var(--good)':t.failed?'var(--bad)':'var(--caramel)'}"></i></span>${t.done?'Задание выполнено':esc(t.label)} · +${fmt(t.reward)} ₽</button>`); }
+  const ts = S.tasks || [];
+  if(ts.length){ const done = ts.filter(t=>t.done).length; const cur = ts.find(t=>!t.done && !t.failed); const pr = cur ? (cur.kind==='noangry' ? 0 : cur.prog/cur.goal) : 1;
+    pills.push(`<button class="pill task" data-go="tasks"><span class="pbar"><i style="width:${Math.round(pr*100)}%;background:${cur?'var(--caramel)':'var(--good)'}"></i></span>Задания ${done}/${ts.length}${cur?' · '+esc(cur.label):' · все выполнены'}</button>`); }
+  const step = onbStep(); if(step) pills.push(`<button class="pill onb" data-go="${step.tab}">Шаг: ${esc(step.t)}</button>`);
   const warn = [];
+  if(youNeeded('main')) warn.push(['Ты за стойкой','team']);
   if(S.debt.stage>=1) warn.push(['Долги '+S.debt.stage+'/3','money']);
-  if(S.closedUntil > absNow()) warn.push(['Закрыто '+Math.ceil((S.closedUntil-absNow())/60)+' ч','events']);
+  if(S.closedUntil > absNow()) warn.push(['Закрыто '+Math.ceil((S.closedUntil-absNow())/60)+' ч','tasks']);
   const ls = lowStock(); if(ls.length) warn.push(['Мало: '+ls.map(k=>STOCK[k].n.toLowerCase()).join(', '),'stock']);
-  for(const r of S.rooms){ const nb = !S.staff.some(x=>x.room===r.id && x.role==='Бариста' && x.today!=='sub' && scheduledToday(x, S.day+1)); if(nb) warn.push([(S.rooms.length>1?roomDef(r.id).n+': ':'')+'завтра нет бариста','team']); }
   for(const r of S.rooms) for(const k in r.broken) if(r.broken[k]) warn.push([EQ[k].n+' сломана','stock']);
   warn.forEach(([w,go])=>pills.push(`<button class="pill warn" data-go="${go}">${esc(w)}</button>`));
+  const hd = holiday(); if(hd) pills.push(`<span class="pill hol">${esc(hd.n)}</span>`);
   activeMods().slice(0,3).forEach(md=>pills.push(`<span class="pill ${(md.mul>=1)===(md.k==='traffic'||md.k==='check')?'good':'warn'}">${esc(md.label)}</span>`));
   const pe = $('#pills'); const html = pills.join('');
-  if(pe.dataset.h !== html){ pe.dataset.h = html; pe.innerHTML = html; pe.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ const g = b.dataset.go; if(g==='task'){ toast(S.task.label+': '+(S.task.kind==='earn'?fmt(S.task.prog)+' из '+fmt(S.task.goal)+' ₽':S.task.kind==='noangry'?(S.task.failed?'провалено':'пока никто не ушёл'):Math.floor(S.task.prog)+' из '+S.task.goal)); return; } openSheet('hall', g); }); }
-  // уведомления о событиях на сцене
+  if(pe.dataset.h !== html){ const sl = pe.scrollLeft; pe.dataset.h = html; pe.innerHTML = html; pe.scrollLeft = sl; pe.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ sfx('tap'); const g = b.dataset.go; if(g==='up') openSheet('up'); else openSheet('hall', g); }); }
+  // уведомления о событиях на сцене: стикеры справа снизу
   const nt = $('#notifs'); const sig = S.incidents.map(i=>i.uid).join();
   if(nt.dataset.s !== sig){ nt.dataset.s = sig; nt.innerHTML = '';
-    S.incidents.slice(-3).reverse().forEach(inc=>{ const d = evDef(inc); if(!d) return; const b = el(`<button class="notif ${d.cat}"><b>!</b><span>${esc(fillText(d.t, inc))}</span></button>`); b.onclick = () => { sfx('tap'); queueModal({kind:'inc', uid:inc.uid}, true); }; nt.appendChild(b); });
-    if(S.incidents.length > 3){ const more = el(`<button class="notif more">Ещё ${S.incidents.length-3}</button>`); more.onclick = () => openSheet('hall','events'); nt.appendChild(more); } }
+    S.incidents.slice(-3).reverse().forEach((inc,k)=>{ const d = evDef(inc); if(!d) return; const b = el(`<button class="notif ${d.cat} s${(inc.uid||k)%4}"><b>!</b><span>${esc(fillText(d.t, inc))}</span></button>`); b.onclick = () => { sfx('tap'); queueModal({kind:'inc', uid:inc.uid}, true); }; nt.appendChild(b); });
+    if(S.incidents.length > 3){ const more = el(`<button class="notif more">Ещё ${S.incidents.length-3}</button>`); more.onclick = () => openSheet('hall','tasks'); nt.appendChild(more); } }
   // точки залов
   const rd = $('#roomdots'); const rs = S.rooms.map(r=>r.id).join()+'|'+S.active;
   if(rd.dataset.s !== rs){ rd.dataset.s = rs; rd.innerHTML = S.rooms.length>1 ? S.rooms.map(r=>`<button class="rdot ${r.id===S.active?'on':''}" data-r="${r.id}" aria-label="${esc(roomDef(r.id).n)}"></button>`).join('') + `<span class="rname">${esc(roomDef(S.active).n)}</span>` : '';
     rd.querySelectorAll('.rdot').forEach(b=>b.onclick=()=>switchRoom(b.dataset.r)); }
   // бейджи дока
   const upB = UPG.some(u=>{ const L = room(S.active).upg[u.id]; return L<MAXL && S.money >= upCost(u,L,S.active); });
-  const hallN = S.incidents.length + (S.staff.some(s=>s.distract)?1:0);
+  const att = attention(); const hallN = att.filter(a=>a[2]).length;
   const bu = $('#b_up'); bu.hidden = !upB; bu.textContent = '';
-  const bh = $('#b_hall'); bh.hidden = !hallN; bh.textContent = hallN || '';
+  const bh = $('#b_hall'); bh.hidden = !att.length; bh.textContent = hallN || '';
   document.querySelectorAll('.dockb').forEach(b=>b.classList.toggle('on', b.dataset.s===sheet));
 }
 function switchRoom(id){ if(!room(id)) return; S.active = id; syncScene(id); structDirty = true; renderHud(); toast(roomDef(id).n); }
@@ -2421,23 +2818,28 @@ function renderTeam(p, id){
   const list = staffIn(id).filter(s=>s.today!=='sub' || true);
   p.appendChild(el(`<div class="h">Команда · ${esc(roomDef(id).n)}</div>`));
   // покрытие недели
-  const roles = Object.keys(ROLES).filter(r=>list.some(s=>s.role===r) || r==='Бариста' || r==='Кассир');
+  const roles = Object.keys(ROLES).filter(r=>list.some(s=>s.role===r && !s.isYou) || r==='Бариста' || r==='Кассир');
   const cov = el(`<div class="card"><div class="t">Кто выходит на неделе</div><div class="cov"><span></span>${WEEKDAYS.map((d,i)=>`<b class="${i===weekday()?'today':''}">${d}</b>`).join('')}${roles.map(r=>{ const c = coverage(id, r); return `<span>${r}</span>`+c.map(v=>`<i class="${v===0?'zero':v===1?'one':''}">${v}</i>`).join(''); }).join('')}</div><div class="d">Ноль — в этот день на точке никого. Поменять график можно в карточке сотрудника.</div></div>`);
   p.appendChild(cov);
-  if(!list.length) p.appendChild(el(`<div class="empty">Здесь пока никто не работает.</div>`));
-  list.forEach(s=>{
+  const you = list.find(s=>s.isYou);
+  if(you){ const on = youNeeded(id); p.appendChild(el(`<div class="card staff badge-card you"><div class="lanyard"></div><div class="spr" style="${sprStyle(staffSpr(you),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row wrap"><span class="t">Ты</span><span class="tag">Владелец</span><span class="stamp ${on?'red':'green'}">${on?'ЗА СТОЙКОЙ':'ОТДЫХАЕШЬ'}</span></div><div class="d">${on?'Пока в команде нет бариста или кассира, ты работаешь сам: медленнее, но бесплатно. Тапай по гостю у кассы, по кофемашине и по гостям у выдачи, чтобы ускорить работу.':'Команда справляется без тебя. Если бариста или кассир не выйдет, ты снова встанешь за стойку.'}</div></div></div>`)); }
+  const crew = list.filter(s=>!s.isYou);
+  if(!crew.length) p.appendChild(el(`<div class="empty">Команды пока нет. Ниже кандидаты: начни с бариста и кассира.</div>`));
+  crew.forEach(s=>{
     const [cls, txt] = staffStatus(s);
-    const card = el(`<button class="card staff"><div class="spr" style="${sprStyle(staffSpr(s),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+    const stamp = s.legendId ? '<span class="stamp gold">ЛЕГЕНДА</span>' : s.today==='absent' ? '<span class="stamp red">ПРОГУЛ</span>' : s.notice ? '<span class="stamp red">УХОДИТ</span>' : '';
+    const card = el(`<button class="card staff badge-card"><div class="lanyard"></div>${stamp}<div class="spr" style="${sprStyle(staffSpr(s),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0">
       <div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${s.role}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl}</span>${s.legendId?'<span class="tag gold">Легенда</span>':''}${s.quirk!=='none'?`<span class="tag">${QUIRKS[s.quirk].n}</span>`:''}${s.contract==='grey'?'<span class="tag warn">В серую</span>':''}<span class="tag ${cls}">${txt}</span></div>
       <div class="mood">Настроение ${bar(s.mood, moodCol(s.mood))}<span class="num">${Math.round(s.mood)}</span> Усталость ${bar(s.fatigue, s.fatigue>70?'var(--bad)':'var(--muted)')}</div>
       <div class="d">${s.today==='sub'?'Подмена на сегодня':s.sched==='every'?'Без выходных':s.sched==='2/2'?'2 через 2':'5/2, выходные: '+s.off.map(d=>WEEKDAYS[d]).join(', ')} · ${fmt(s.today==='sub'?s.subPay:shiftPay(s))} ₽ за смену · смен ${s.shifts}</div></div></button>`);
     card.onclick = () => { if(s.today!=='sub') queueModal({kind:'staff', sid:s.id}, true); };
     p.appendChild(card);
   });
-  p.appendChild(el(`<div class="h">Кандидаты на сегодня</div>`));
+  const left = Math.max(0, (S.candsAt||0) - Date.now()); const mm = Math.floor(left/60000), ss = Math.floor(left/1000)%60;
+  p.appendChild(el(`<div class="h chalk">Кандидаты <span class="cd num" id="candcd">новые через ${mm}:${String(ss).padStart(2,'0')}</span></div>`));
   S.cands.forEach(c=>{
-    const cnt = list.filter(s=>s.role===c.role && s.today!=='sub').length, full = cnt >= ROLES[c.role].max;
-    const card = el(`<div class="card staff"><div class="spr" style="${sprStyle(staffSpr(c),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+    const cnt = list.filter(s=>s.role===c.role && s.today!=='sub' && !s.isYou).length, full = cnt >= ROLES[c.role].max;
+    const card = el(`<div class="card staff badge-card cand"><div class="lanyard"></div><div class="spr" style="${sprStyle(staffSpr(c),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:5px;min-width:0">
       <div class="row wrap"><span class="t">${esc(c.name)}</span><span class="tag">${c.role}</span><span class="tag num">ур. ${c.lvl}</span>${c.legendId?'<span class="tag gold">Легенда</span>':''}${c.quirk!=='none'?`<span class="tag">${QUIRKS[c.quirk].n}</span>`:''}</div>
       <div class="d">${c.legendId?esc(LEGENDS[c.legendId-1].legend):esc(ROLES[c.role].d)}${c.quirk!=='none'?' '+esc(QUIRKS[c.quirk].d):''}</div>
       <div class="d">Смена: ${fmt(shiftPay(Object.assign({}, c, {contract:'white'})))} ₽ официально или ${fmt(shiftPay(Object.assign({}, c, {contract:'grey'})))} ₽ в серую</div>
@@ -2447,7 +2849,7 @@ function renderTeam(p, id){
     if(bs[1]) bs[1].onclick = () => doHire(c, id, 'grey', hireCost(c)*0.7);
     p.appendChild(card);
   });
-  if(!S.cands.length) p.appendChild(el(`<div class="empty">Кандидаты закончились. Новые придут завтра.</div>`));
+  if(!S.cands.length) p.appendChild(el(`<div class="empty">Кандидаты закончились. Новые придут через несколько минут.</div>`));
   p.appendChild(el(`<div class="empty" style="font-size:12px">Оформление стоит две смены: медкнижка, документы. В серую дешевле, но трудовая инспекция и обиженные сотрудники могут устроить проблемы.</div>`));
 }
 function doHire(c, id, contract, cost){
@@ -2471,7 +2873,7 @@ function renderStock(p, id){
       <div class="d">Упаковка ${st.packN}: ${fmt(price)} ₽${st.perish?' · хранится '+st.perish+' дн.':''}${pend.length?' · в пути: '+st.show(pend.reduce((a,o)=>a+o.q,0)):''}</div>
       <div class="row wrap">${btnHtml('1 уп.', price, false)}${btnHtml('5 уп. −8%', price*5*0.92, false, 'ghost')}${btnHtml('Срочно +35%', price*1.35, false, 'ghost')}</div></div>`);
     const bs = card.querySelectorAll('button');
-    const go = (n, ex) => { const err = orderStock(k, n, ex); if(err) toast(err); else { toast(ex ? 'Срочная доставка через 3 игровых часа' : 'Доставка к открытию'); sfx('buy'); } save(); structDirty = true; renderPanel(); renderHud(); };
+    const go = (n, ex) => { const err = orderStock(k, n, ex); if(err) toast(err); else { S.flags.ordered = true; toast(ex ? 'Срочная доставка через 15 игровых минут' : 'Доставка через игровой час'); sfx('buy'); } save(); structDirty = true; renderPanel(); renderHud(); };
     bs[0].onclick = () => go(1); bs[1].onclick = () => go(5); bs[2].onclick = () => go(1, true);
     p.appendChild(card);
   });
@@ -2499,8 +2901,8 @@ function renderFin(p){
   const t = S.fin.today, y = S.fin.hist[0];
   const week = S.fin.hist.slice(0,7);
   const sum = k => week.reduce((a,f)=>a+(f[k]||0),0);
-  p.appendChild(el(`<div class="h">Деньги</div>`));
-  const tbl = el(`<div class="card"><div class="fin"><span></span><b>Сегодня</b><b>Вчера</b><b>7 дней</b>${FIN_ROWS.map(([k,n,sg])=>`<span>${n}</span><i class="num">${fmt((sg<0?-1:1)*t[k])}</i><i class="num">${y?fmt((sg<0?-1:1)*y[k]):'—'}</i><i class="num">${week.length?fmt((sg<0?-1:1)*sum(k)):'—'}</i>`).join('')}
+
+  const tbl = el(`<div class="card receipt-card"><div class="rhead">«${esc(S.name)}»<br>ДЕНЬ ${S.day} · КАССОВЫЙ ОТЧЁТ</div><div class="fin"><span></span><b>Сегодня</b><b>Вчера</b><b>7 дней</b>${FIN_ROWS.map(([k,n,sg])=>`<span>${n}</span><i class="num">${fmt((sg<0?-1:1)*t[k])}</i><i class="num">${y?fmt((sg<0?-1:1)*y[k]):'—'}</i><i class="num">${week.length?fmt((sg<0?-1:1)*sum(k)):'—'}</i>`).join('')}
     <span class="tot">Итого</span><i class="num tot">${fmt(cashFlow(t))}</i><i class="num tot">${y?fmt(cashFlow(y)):'—'}</i><i class="num tot">${week.length?fmt(week.reduce((a,f)=>a+cashFlow(f),0)):'—'}</i></div>
     <div class="d">Покупка улучшений и найм идут в «Прочее». Списано просрочки сегодня: ${fmt(t.spoil)} ₽. Гостей сегодня: ${t.guests}.</div></div>`);
   p.appendChild(tbl);
@@ -2516,12 +2918,12 @@ function renderFin(p){
 
 /* ---------- события ---------- */
 function renderEvents(p){
-  p.appendChild(el(`<div class="h">События</div>`));
+  p.appendChild(el(`<div class="h chalk">События</div>`));
   if(!S.incidents.length) p.appendChild(el(`<div class="empty">Пока тихо. Нерешённые события через 20 минут решаются сами, и почти всегда хуже, чем решил бы ты.</div>`));
   S.incidents.slice().reverse().forEach(inc=>{
     const d = evDef(inc); if(!d) return; const left = Math.max(0, 20 - (Date.now()-inc.at)/60000);
     const tag = {absurd:'Абсурд', inspect:'Проверка', staff:'Команда', break:'Поломка', money:'Деньги'}[d.cat] || 'Событие';
-    const card = el(`<button class="card" style="text-align:left;border-left:4px solid ${d.cat==='absurd'?'var(--pathos)':left<5?'var(--bad)':'var(--caramel)'}"><div class="row"><span class="tag">${tag}</span><span class="t">${esc(fillText(d.t, inc))}</span><span class="sp"></span><span class="tag num">${Math.ceil(left)} мин</span></div><div class="d">${esc(fillText(d.x, inc))}</div></button>`);
+    const card = el(`<button class="card sticker s${inc.uid%4} ${left<5?'hot':''}" style="text-align:left"><div class="row"><span class="tag">${tag}</span><span class="t">${esc(fillText(d.t, inc))}</span><span class="sp"></span><span class="tag num">${Math.ceil(left)} мин</span></div><div class="d">${esc(fillText(d.x, inc))}</div></button>`);
     card.onclick = () => queueModal({kind:'inc', uid:inc.uid}, true);
     p.appendChild(card);
   });
@@ -2657,6 +3059,11 @@ function showModal(){
     m.items.forEach(([h,t])=>box.appendChild(el(`<div class="newsitem"><b>${esc(h)}</b><p>${esc(t)}</p></div>`)));
     const row = el(`<div class="row"></div>`); row.append(btn('Поделиться', ()=>share('Районные вести: '+m.items.map(x=>x[1]).slice(0,2).join(' ')), 'ghost'), btn('Читать дальше', closeModal)); box.appendChild(row);
   }
+  else if(m.kind==='intro'){
+    box.classList.add('kraftbox');
+    box.append(el(`<div class="eyebrow">День первый</div>`), el(`<h2>Двери открыты</h2>`), el(`<p>Команды пока нет, так что ты сам стоишь на кассе и сам варишь кофе. Медленно, но бесплатно.</p>`),
+      el(`<ol class="introl"><li><b>Найми бариста и кассира.</b> Зал → Команда. Новые кандидаты каждые 5 минут.</li><li><b>Выбери позицию дня.</b> Зал → Меню. Её берут втрое чаще.</li><li><b>Тапай по гостям</b> у кассы и на выдаче, и по кофемашине, чтобы работать быстрее.</li><li><b>Три задания каждый день</b> — во вкладке «Дела». Там же события.</li></ol>`), btn('Поехали', ()=>{ closeModal(); openSheet('hall','team'); }));
+  }
   else if(m.kind==='streak'){ box.append(el(`<div class="eyebrow">С возвращением</div>`), el(`<h2>${m.n} ${m.n===1?'день':m.n<5?'дня':'дней'} подряд</h2>`), el(`<p>Команда рада тебя видеть. Бонус за серию: +${fmt(m.bonus)} ₽.</p>`), btn('К делу', closeModal)); }
   else if(m.kind==='note'){ box.append(el(`<div class="eyebrow">Последствия</div>`), el(`<h2>${esc(m.title)}</h2>`), chipsEl(m.chips), btn('Понятно', closeModal)); }
   else if(m.kind==='staff') staffModal(box, m, btn);
@@ -2762,11 +3169,12 @@ function frame(t){
     // остальные залы считаются по средним
     if(S.isOpen && S.closedUntil <= absNow()) for(const r of S.rooms){ if(r.id===S.active) continue; const rr = rt(r.id); const st = stats(r.id); rr.acc += Math.min(st.lambda, st.through) * dt * 0.9; while(rr.acc >= 1){ rr.acc -= 1; const res = sellOne(r.id); if(res.fail){ S.c.angry++; } } }
     maybeDistract();
+    if(Date.now() > (S.candsAt||0)){ refreshCands(); structDirty = true; }
     scheduleEvents(Date.now());
     ambT += dt; if(ambT > 0.5){ ambT = 0; ambientTick(); }
     for(const inc of S.incidents.slice()) if(Date.now() - inc.at > 20*60000) expireIncident(inc);
     draw();
-    hudT += dt; if(hudT > 0.3){ hudT = 0; renderHud(); refreshAfford(); if(structDirty && sheet && !sheetBusy()) renderSheet(); }
+    hudT += dt; if(hudT > 0.3){ hudT = 0; renderHud(); refreshAfford(); onbCheck(); const cd = $('#candcd'); if(cd){ const l = Math.max(0,(S.candsAt||0)-Date.now()); cd.textContent = 'новые через '+Math.floor(l/60000)+':'+String(Math.floor(l/1000)%60).padStart(2,'0'); } if(structDirty && sheet && !sheetBusy()) renderSheet(); }
     achT += dt; if(achT > 5){ achT = 0; achCheck(); }
     saveT += dt; if(saveT > 6){ saveT = 0; save(); }
     cloudT += dt; if(cloudT > 30){ cloudT = 0; saveCloud(); }
@@ -2785,9 +3193,10 @@ function draw(){
   drawGuestBadges(S.active);
   drawWindowSmokers(S.active);
   drawStoryVisitor();
+  drawTaps(1/60);
   if(S.closedUntil > absNow()) drawClosed();
 }
-document.addEventListener('visibilitychange', ()=>{ if(!S) return; if(document.hidden){ save(); saveCloud(); track(true); } else { lastT = performance.now(); catchUp(); renderHud(); structDirty = true; } });
+document.addEventListener('visibilitychange', ()=>{ if(!S) return; if(document.hidden){ save(); saveCloud(); track(true); pushReminders(); } else { lastT = performance.now(); catchUp(); renderHud(); structDirty = true; } });
 window.addEventListener('pagehide', ()=>{ if(S){ save(); saveCloud(); } });
 
 /* ---------- запуск ---------- */
@@ -2800,6 +3209,14 @@ function migrate(){
   S.hours = {open:0, close:24};
   if(!S.story){ S.story = storyInit(); startSeason(1); }
   S.interior = S.interior || {};
+  S.q = S.q || {wear:1, term:1, fridge:1};
+  S.promo = S.promo || {day:null, rec:[]};
+  if(!S.staff.some(x=>x.isYou)) S.staff.push(makeYou());
+  S.staff.forEach(x=>{ if(!x.isYou && !x.sex) x.sex = nameSex(x.name); });
+  S.regs.forEach(rg=>{ if(REG_SPR[rg.id]!=null) rg.spr = REG_SPR[rg.id]; });
+  if(!S.tasks || !S.tasks.length) newTasks();
+  if(!S.onb) S.onb = {hb:1, hc:1, upg:1, order:1};
+  S.candsAt = S.candsAt || 0;
 }
 function streakCheck(){
   const d = new Date(Date.now()+3*3600000).toISOString().slice(0,10);
@@ -2814,13 +3231,15 @@ function applySafe(){ if(!tg) return; const s = tg.safeAreaInset || {}, c = tg.c
   r.setProperty('--safe-top', ((s.top||0)+(c.top||0))+'px'); r.setProperty('--safe-bottom', ((s.bottom||0)+(c.bottom||0))+'px'); r.setProperty('--safe-left', (s.left||0)+'px'); r.setProperty('--safe-right', (s.right||0)+'px'); }
 try{ if(tg){ applySafe(); tg.onEvent && ['safeAreaChanged','contentSafeAreaChanged','fullscreenChanged','viewportChanged'].forEach(e=>tg.onEvent(e, ()=>{ applySafe(); resizeCanvas(); })); } }catch(e){}
 boot(loadLocal());
-if(S){ streakCheck(); refreshEntitlements(); }
+loadConfig();
+if(S){ streakCheck(); refreshEntitlements(); loadFriends(); }
 loadCloud(cloud=>{ if(cloud && cloud.v===3 && (!S || (cloud.savedAt||0) > (S.savedAt||0) + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
 document.addEventListener('pointerdown', unlockAudio, {once:true});
 requestAnimationFrame(frame);
 
 function sheetBusy(){ const a = document.activeElement; return a && a.tagName==='INPUT' && a.type==='range'; }
-function charSpr(k){ const c = CHARS[k]; if(c._s==null){ const [pool, i] = c.spr.split(':'); const arr = POOL[pool] || GUESTS; c._s = arr[(+i) % arr.length]; } return c._s; }
+const CHAR_SPR = {palych:70, viktor:37, arseniy:50, lev:35, ashot:67, alena:64, somov:62};
+function charSpr(k){ const c = CHARS[k]; if(c._s==null){ if(CHAR_SPR[k]!=null) c._s = CHAR_SPR[k]; else { const [pool, i] = c.spr.split(':'); const arr = POOL[pool] || GUESTS; c._s = arr[(+i) % arr.length]; } } return c._s; }
 function drawStoryVisitor(){
   const inc = S.incidents.find(i=>{ const d = evDef(i); return d && d.who; }); if(!inc) return;
   const d = evDef(inc); const t = performance.now()/1000;
@@ -2847,6 +3266,166 @@ function drawFrontWindow(th, now){
   for(let x=6; x<W; x+=88) rect(x, y0+4, 3, 32, th.trim);
   ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(6, y0+4, W-12, 6);
   ctx.save(); ctx.font = '800 9px "Unbounded","Golos Text",sans-serif'; ctx.fillStyle = 'rgba(243,232,211,.55)'; ctx.textAlign = 'center'; ctx.translate(W/2, y0+18); ctx.scale(-1,1); ctx.fillText(S.name.toUpperCase(), 0, 0); ctx.restore();
+}
+
+/* ================= v5: дела, меню, гости, район, опыт ================= */
+function charShares(){ const m = S.meters, t = Math.max(1, m.soul + m.pathos + m.chaos); return {soul:m.soul/t, pathos:m.pathos/t, chaos:m.chaos/t}; }
+function charName(){ if(S.path) return {soul:'душевная', pathos:'пафосная', chaos:'бардачная'}[S.path]; const k = leader(); return {soul:'душевная', pathos:'пафосная', chaos:'бардачная'}[k]; }
+function charCard(){
+  const sh = charShares(), k = S.path || leader();
+  return el(`<div class="card"><div class="row"><span class="t">Характер: ${charName()}</span><span class="sp"></span>${S.path?'<span class="stamp green">ЗАКРЕПЛЁН</span>':'<span class="tag num">закрепится на ур. '+LOCK_LEVEL+'</span>'}</div>
+    <div class="charbar"><i class="soul" style="flex:${sh.soul.toFixed(3)}"></i><i class="pathos" style="flex:${sh.pathos.toFixed(3)}"></i><i class="chaos" style="flex:${sh.chaos.toFixed(3)}"></i></div>
+    <div class="charleg"><span><i class="soul"></i>Душа</span><span><i class="pathos"></i>Пафос</span><span><i class="chaos"></i>Бардак</span></div>
+    <div class="d">${k==='soul'?'Гости терпеливее, постоянные приводят друзей.':k==='pathos'?'Чек выше, но гости придирчивее.':'Гостей больше, но всё грязнее и проверки злее.'} Душу растят похвала, интерьер и добрые решения. Пафос — вывеска и жёсткие решения. Бардак — грязь, ругань и драки; его убирают уборщик и улучшение «Чистота».</div></div>`);
+}
+/* --- первые шаги --- */
+const ONB = [
+  {id:'hb', t:'нанять бариста', tab:'team', f:()=>S.staff.some(x=>!x.isYou && x.role==='Бариста')},
+  {id:'hc', t:'нанять кассира', tab:'team', f:()=>S.staff.some(x=>!x.isYou && x.role==='Кассир')},
+  {id:'promo', t:'выбрать позицию дня', tab:'menu', f:()=>!!(S.promo && S.promo.day)},
+  {id:'upg', t:'купить улучшение', tab:'up', f:()=>S.c.bought>0},
+  {id:'order', t:'заказать закупку', tab:'stock', f:()=>!!S.flags.ordered || S.orders.length>0}
+];
+const ONB_REWARD = 15000;
+function onbStep(){ if(!S.onb) return null; return ONB.find(o=>!S.onb[o.id]) || null; }
+function onbCheck(){ if(!S.onb) return; for(const o of ONB){ if(S.onb[o.id]) continue; if(o.f()){ S.onb[o.id] = 1; income(ONB_REWARD); toast('Первые шаги: '+o.t+' · +'+fmt(ONB_REWARD)+' ₽'); sfx('level'); structDirty = true; } break; } }
+/* --- дела: задания дня и события --- */
+const TASK_GO = {serve:['up','Улучшения'], earn:['menu','Меню'], praise:['team','Команда'], noangry:['team','Команда']};
+function renderTasks(p){
+  const step = onbStep();
+  if(step){ const box = el(`<div class="card note kraft"><div class="t">Первые шаги</div><div class="steps">${ONB.map(o=>`<div class="${S.onb[o.id]?'ok':o===step?'cur':''}"><i></i>${o.t[0].toUpperCase()+o.t.slice(1)}</div>`).join('')}</div><div class="d">За каждый шаг +${fmt(ONB_REWARD)} ₽.</div><div class="row"><button class="btn">${esc(step.t[0].toUpperCase()+step.t.slice(1))}</button></div></div>`);
+    box.querySelector('.btn').onclick = () => step.tab==='up' ? openSheet('up') : openSheet('hall', step.tab); p.appendChild(box); }
+  p.appendChild(el(`<div class="h chalk">Задания дня</div>`));
+  (S.tasks||[]).forEach(t=>{
+    const pr = t.kind==='noangry' ? (t.failed?0:t.done?1:0.5) : t.prog/t.goal;
+    const card = el(`<div class="card task-card ${t.done?'done':t.failed?'fail':''}">${t.done?'<span class="stamp green">ГОТОВО</span>':t.failed?'<span class="stamp red">ПРОВАЛ</span>':''}<div class="row"><span class="t">${esc(t.label)}</span><span class="sp"></span><span class="tag num">+${fmt(t.reward)} ₽</span></div>${bar(pr*100, t.done?'var(--good)':t.failed?'var(--bad)':'var(--caramel)')}
+      <div class="d">${t.kind==='noangry'?(t.failed?'Кто-то ушёл, не дождавшись.':'До конца дня никто не должен уйти из очереди.'):(t.kind==='earn'?fmt(t.prog)+' из '+fmt(t.goal)+' ₽':Math.floor(t.prog)+' из '+t.goal)}</div>
+      ${t.done||t.failed?'':`<div class="hint">Как ускорить: ${esc(t.hint||'')}</div><div class="row wrap"></div>`}</div>`);
+    const row = card.querySelector('.row.wrap');
+    if(row){
+      if(t.kind==='sell'){ const m = MENU.find(x=>x.id===t.item); const isDay = S.promo && S.promo.day===t.item; const b = el(`<button class="btn ${isDay?'ghost':''}">${isDay?'Уже позиция дня':'Сделать позицией дня'}</button>`); b.disabled = isDay; b.onclick = () => { setPromoDay(t.item); renderSheet(); }; row.appendChild(b);
+        const rec = (S.promo.rec||[]).includes(t.item); const b2 = el(`<button class="btn ghost">${rec?'В рекомендациях':'Посоветовать гостям'}</button>`); b2.disabled = rec; b2.onclick = () => { toggleRec(t.item); renderSheet(); }; row.appendChild(b2); }
+      else { const [go, n] = TASK_GO[t.kind] || ['team','Команда']; const b = el(`<button class="btn ghost">Открыть: ${n}</button>`); b.onclick = () => go==='up' ? openSheet('up') : openSheet('hall', go); row.appendChild(b); }
+    }
+    p.appendChild(card);
+  });
+  p.appendChild(el(`<div class="empty" style="font-size:12px">Новые задания каждый игровой день.</div>`));
+  renderEvents(p);
+}
+/* --- меню и акции --- */
+function setPromoDay(id){ S.promo = S.promo || {day:null, rec:[]}; S.promo.day = S.promo.day===id ? null : id; sfx('buy'); if(S.promo.day) toast(MENU.find(m=>m.id===id).n+': позиция дня. Цена −15%, берут втрое чаще'); save(); structDirty = true; }
+function toggleRec(id){ S.promo = S.promo || {day:null, rec:[]}; const r = S.promo.rec; if(r.includes(id)) S.promo.rec = r.filter(x=>x!==id); else { r.push(id); if(r.length>2) r.shift(); toast('Бариста теперь советует: '+MENU.find(m=>m.id===id).n.toLowerCase()); } sfx('tap'); save(); structDirty = true; }
+function renderMenu(p){
+  p.appendChild(el(`<div class="card chalkboard"><div class="t chalk">Как продавать больше</div><div class="d">Позиция дня: на 15% дешевле и её берут втрое чаще. Рекомендации (до двух): бариста советует их каждому гостю, берут в 1,6 раза чаще по полной цене. Цены растут с уровнем «Меню», новые позиции открываются по достижениям.</div></div>`));
+  const P = S.promo || {day:null, rec:[]};
+  MENU.forEach(m=>{
+    if(m.season && !isUnlocked(m.id)) return;
+    const un = isUnlocked(m.id), isDay = P.day===m.id, rec = (P.rec||[]).includes(m.id);
+    const card = el(`<div class="card menu-item ${isDay?'day':''}">${isDay?'<span class="stamp red">ПОЗИЦИЯ ДНЯ</span>':rec?'<span class="stamp green">СОВЕТУЕМ</span>':''}<div class="row"><span class="t">${m.n}</span><span class="dots"></span>${un?`<span class="price num">${fmt(itemPrice(m, S.active))} ₽</span>`:'<span class="tag">Закрыто</span>'}</div><div class="d">${un?'Себестоимость ≈'+fmt(needCost(m.need))+' ₽ · продано '+sold(m.id):esc(m.unlock.t)}${m.season?' · сезонное':''}</div>${un&&!m.side?'<div class="row wrap"></div>':''}</div>`);
+    const row = card.querySelector('.row.wrap');
+    if(row){ const b = el(`<button class="btn ${isDay?'':'ghost'}">${isDay?'Снять с позиции дня':'Позиция дня'}</button>`); b.onclick = () => { setPromoDay(m.id); renderSheet(); }; row.appendChild(b);
+      const b2 = el(`<button class="btn ghost">${rec?'Не советовать':'Советовать'}</button>`); b2.onclick = () => { toggleRec(m.id); renderSheet(); }; row.appendChild(b2); }
+    p.appendChild(card);
+  });
+}
+/* --- гости: постоянные и книга --- */
+function renderGuests(p){ p.appendChild(el(`<div class="h chalk">Постоянные гости</div>`)); sub = 'regs'; renderMore(p); sub = 'book'; renderMore(p); }
+/* --- опыт: франшиза и достижения --- */
+function renderOwner(p){ sub = 'fr'; renderMore(p); sub = 'ach'; renderMore(p); }
+/* --- друзья и приглашения --- */
+const FR = {loaded:0, friends:[], inviter:null, unclaimed:0, id:null};
+let CFG = {bot:null, app:null, channel:null};
+function loadConfig(){ fetch('/api/config').then(r=>r.json()).then(c=>{ if(c && c.ok) CFG = c; structDirty = true; }).catch(()=>{}); }
+function loadFriends(claim){ if(!tg || !tg.initData) return Promise.resolve(null); return apiPost('/api/friends', claim?{claim:true}:{}).then(r=>{ if(r && r.ok){ FR.loaded = Date.now(); FR.friends = r.friends||[]; FR.inviter = r.inviter; FR.unclaimed = r.unclaimed||0; FR.id = r.id; if(r.granted){ const sum = r.granted*150000; income(sum); toast('Награда за друзей: +'+fmt(sum)+' ₽'); sfx('level'); save(); } structDirty = true; } return r; }).catch(()=>null); }
+function myId(){ return (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) || FR.id; }
+function inviteLink(){ const id = myId(); if(!CFG.bot || !id) return 'https://brewcrew.pages.dev'; return CFG.app ? `https://t.me/${CFG.bot}/${CFG.app}?startapp=ref_${id}` : `https://t.me/${CFG.bot}?start=ref_${id}`; }
+function invite(){ const url = inviteLink(), txt = 'Открыл кофейню «'+S.name+'» в Brew Crew. Заходи, по моей ссылке +100 000 ₽ на старте, а твоя кофейня появится в моём районе.';
+  if(tg && tg.openTelegramLink){ tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(txt)); return; }
+  try{ navigator.clipboard.writeText(txt+' '+url).then(()=>toast('Ссылка скопирована')); }catch(e){} }
+function renderDistrict(p){
+  if(tg && tg.initData && Date.now() - FR.loaded > 120000){ FR.loaded = Date.now(); loadFriends(); }
+  const fc = el(`<div class="card note kraft"><div class="t">Друзья по району</div><div class="d">Позови друга: он начнёт с +100 000 ₽, а его кофейня откроется в твоём районе. Когда друг дойдёт до 3 уровня, тебе +150 000 ₽.</div><div class="friends"></div><div class="row wrap"><button class="btn">Позвать друга</button></div></div>`);
+  const fl = fc.querySelector('.friends');
+  if(FR.inviter) fl.appendChild(el(`<div class="friend"><b>«${esc(FR.inviter.cafe||'Без названия')}»</b><span>${esc(FR.inviter.first_name||'')} · пригласил тебя · ур. ${FR.inviter.level||1}</span></div>`));
+  FR.friends.forEach(f=>fl.appendChild(el(`<div class="friend"><b>«${esc(f.cafe||'Без названия')}»</b><span>${esc(f.first_name||'')} · ур. ${f.level||1}${(f.level||1)>=3?' · награда засчитана':' · до награды ур. 3'}</span></div>`)));
+  if(!FR.inviter && !FR.friends.length) fl.appendChild(el(`<div class="d">${tg&&tg.initData?'Пока никого. Соседний зал пустует.':'Друзья появятся, когда игра открыта в Telegram.'}</div>`));
+  const row = fc.querySelector('.row.wrap'); fc.querySelector('.btn').onclick = invite;
+  if(FR.unclaimed>0){ const b = el(`<button class="btn red">Забрать ${fmt(FR.unclaimed*150000)} ₽</button>`); b.onclick = () => { b.disabled = true; loadFriends(true).then(()=>renderSheet()); }; row.appendChild(b); }
+  p.appendChild(fc);
+  p.appendChild(el(`<div class="h chalk">Конкуренты</div>`));
+  sub = 'district'; renderMore(p);
+}
+/* --- сюжет и характер --- */
+function renderStory(p){
+  const T = S.story;
+  p.appendChild(el(`<div class="card chalkboard"><div class="eyebrow">Сезон ${T.season}</div><div class="t big chalk">${esc(seasonName())}</div>${T.dl?`<div class="d deadline">${esc(T.dl.label)}${T.dl.amount?': '+fmt(T.dl.amount)+' ₽':''} — осталось ${Math.max(0,T.dl.by-S.day)} дн.</div>`:'<div class="d">Пока тихо. Это ненадолго.</div>'}</div>`));
+  p.appendChild(charCard());
+  p.appendChild(el(`<div class="h chalk">Люди района</div>`));
+  Object.keys(CHARS).forEach(k=>{
+    const c = CHARS[k], v = srel(k); const met = k==='palych' ? (T.season>1 || T.flags.burned!==undefined || T.flags.kept || T.flags.called) : true;
+    if(!met && T.season===1) return;
+    const col = v<-20?'var(--bad)':v>20?'var(--good)':'var(--caramel)';
+    p.appendChild(el(`<div class="card staff badge-card"><div class="spr" style="${sprStyle(charSpr(k),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:5px;min-width:0"><div class="row"><span class="t">${c.n}</span><span class="sp"></span><span class="tag num ${v<-20?'warn':v>20?'g':''}">${v>20?'Друг':v<-20?'Враг':'Нейтрально'}</span></div><div class="d">${esc(c.d)}</div><div class="rel"><span>Враг</span><div class="relbar"><i class="mid"></i><b style="left:${clamp((v+100)/2,0,100)}%;background:${col}"></b></div><span>Друг</span></div></div></div>`));
+  });
+  p.appendChild(el(`<div class="empty" style="font-size:12px">Решения необратимы. Персонажи помнят, как ты с ними обошёлся. Раз в игровую неделю выходит газета «Районные вести».</div>`));
+}
+/* --- карточка для сторис и чатов --- */
+function makeCard(){
+  const c = document.createElement('canvas'); c.width = 1080; c.height = 1920; const x = c.getContext('2d');
+  x.fillStyle = '#c9a477'; x.fillRect(0,0,1080,1920);
+  for(let i=0;i<900;i++){ x.fillStyle = `rgba(${Math.random()<.5?'90,60,30':'255,240,210'},${Math.random()*0.08})`; x.fillRect(Math.random()*1080, Math.random()*1920, 2+Math.random()*6, 1+Math.random()*2); }
+  x.fillStyle = '#1d1410'; x.font = '800 92px Unbounded, sans-serif'; x.textAlign = 'center'; x.fillText('BREW CREW', 540, 190);
+  x.font = '700 64px Caveat, "Golos Text", sans-serif'; x.fillStyle = '#8a2a20'; x.fillText('моя кофейня', 540, 270);
+  x.fillStyle = '#1d1410'; x.font = '800 70px Unbounded, sans-serif'; const nm = '«'+S.name+'»'; x.fillText(nm.length>16?nm.slice(0,16)+'…':nm, 540, 380);
+  // кадр зала
+  x.save(); x.translate(90, 440); x.rotate(-0.02); x.fillStyle = '#f6efe2'; x.fillRect(-18,-18,936,736); x.drawImage(cv, 0, 0, cv.width, cv.height, 0, 0, 900, Math.min(700, 900*cv.height/cv.width)); x.restore();
+  // чек
+  x.save(); x.translate(170, 1230); x.rotate(0.015); x.fillStyle = '#fbf8f1'; x.fillRect(0,0,740,520);
+  x.fillStyle = '#1d1410'; x.font = '700 34px "PT Mono", monospace'; x.textAlign = 'left';
+  const rows = [['ГОРОД', city().n], ['ДЕНЬ', String(S.day)], ['РЕЙТИНГ', S.rep.toFixed(1).replace('.',',')], ['ГОСТЕЙ', fmt(S.c.guests)], ['ЗАРАБОТАНО', fmt(S.c.earnedRun||0)+' ₽'], ['КОМАНДА', String(S.staff.filter(s=>!s.isYou).length)], ['ХАРАКТЕР', charName().toUpperCase()]];
+  rows.forEach(([a,b],i)=>{ const y = 70 + i*62; x.textAlign = 'left'; x.fillText(a, 40, y); x.textAlign = 'right'; x.fillText(b, 700, y); x.fillStyle = 'rgba(29,20,16,.25)'; for(let d=40; d<700; d+=16) x.fillRect(d, y+16, 8, 2); x.fillStyle = '#1d1410'; });
+  x.restore();
+  x.fillStyle = '#1d1410'; x.textAlign = 'center'; x.font = '700 60px Caveat, "Golos Text", sans-serif'; x.fillText('Открой свою — заходи в игру', 540, 1840);
+  return c.toDataURL('image/jpeg', 0.86);
+}
+function shareStory(){
+  if(!tg || !tg.initData){ share('день '+S.day+', рейтинг '+S.rep.toFixed(1)); return; }
+  toast('Готовлю карточку...');
+  apiPost('/api/card', {png:makeCard()}).then(r=>{ if(!r || !r.ok){ toast('Не получилось сделать карточку'); return; }
+    if(tg.shareToStory && tg.isVersionAtLeast && tg.isVersionAtLeast('7.8')){ const prm = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.is_premium; const o = {text:'Моя кофейня «'+S.name+'» в Brew Crew'}; if(prm) o.widget_link = {url:inviteLink(), name:'Играть'}; try{ tg.shareToStory(r.url, o); }catch(e){ toast('Сторис недоступны в этой версии Telegram'); } }
+    else toast('Сторис недоступны в этой версии Telegram'); }).catch(()=>toast('Нет связи с сервером'));
+}
+function sendCard(){
+  if(!tg || !tg.initData){ share('день '+S.day+', рейтинг '+S.rep.toFixed(1)); return; }
+  toast('Готовлю карточку...');
+  apiPost('/api/card', {png:makeCard(), send:true, caption:'Моя кофейня «'+S.name+'» в Brew Crew: день '+S.day+', рейтинг '+S.rep.toFixed(1).replace('.',',')+'.'}).then(r=>{ toast(r && r.ok ? 'Карточка в чате с ботом. Перешли её друзьям' : 'Не получилось отправить'); }).catch(()=>toast('Нет связи с сервером'));
+}
+/* --- напоминания --- */
+function remindItems(){
+  const now = Date.now(), out = [], gMs = REAL_PER_GMIN;
+  const cap = (ownerSub()?24:12)*3600000;
+  out.push({at: now + cap, text:'«'+S.name+'» уже '+(ownerSub()?'сутки':'12 часов')+' работает без тебя. Дальше кофейня стоит и не зарабатывает.'});
+  if(S.story && S.story.dl){ const left = (S.story.dl.by - S.day - 1)*DAY_MIN - S.gm + DAY_MIN; const at = now + left*gMs; if(left > 0) out.push({at: Math.max(now+11*60000, at - 6*3600000), text:S.story.dl.label+': срок почти вышел. Тебя ждут в кофейне.'}); }
+  if(!S.autoOrder) out.push({at: now + 5*3600000, text:'На складе «'+S.name+'» заканчиваются зерно и молоко. Пора заказать.'});
+  return out.sort((a,b)=>a.at-b.at).slice(0,3);
+}
+function pushReminders(){ if(!S || !S.remind || !tg || !tg.initData) return; try{ fetch('/api/remind', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({initData:tg.initData, items:remindItems()}), keepalive:true}).catch(()=>{}); }catch(e){} }
+function setRemind(on){
+  if(!tg || !tg.initData){ toast('Работает, когда игра открыта в Telegram'); return; }
+  if(!on){ S.remind = false; apiPost('/api/remind', {enable:false}).catch(()=>{}); save(); renderSheet(); return; }
+  const go = () => { S.remind = true; apiPost('/api/remind', {enable:true, items:[]}).then(()=>toast('Бот будет напоминать о важном')).catch(()=>{}); save(); renderSheet(); };
+  if(tg.requestWriteAccess && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9')) tg.requestWriteAccess(ok=>{ if(ok) go(); else toast('Без разрешения бот не может писать'); }); else go();
+}
+/* --- мелочи сцены --- */
+const TAPS = [];
+function tapFx(x, y){ TAPS.push({x, y, t:0}); }
+function drawTaps(dt){ for(const f of TAPS){ f.t += dt; ctx.globalAlpha = Math.max(0, 1 - f.t*2); ctx.fillStyle = '#ffd36b'; ctx.font = '800 10px "Golos Text",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('+', f.x, f.y - f.t*24); ctx.textAlign = 'left'; ctx.globalAlpha = 1; } for(let i=TAPS.length-1;i>=0;i--) if(TAPS[i].t > 0.5) TAPS.splice(i,1); }
+function heart(x, y, s, c){ ctx.fillStyle = c||'#e0574a'; ctx.beginPath(); ctx.arc(x-s/2, y, s/2, 0, 7); ctx.arc(x+s/2, y, s/2, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(x-s, y+1); ctx.lineTo(x, y+s*1.4); ctx.lineTo(x+s, y+1); ctx.fill(); }
+function holDeco(x, y, k){ const h = holiday(); if(!h) return; const now = performance.now()/1000;
+  if(h.id==='halloween') pumpkin(x, y);
+  else if(h.id==='newyear'){ if(k===0){ ctx.fillStyle = '#2e6a3a'; ctx.beginPath(); ctx.moveTo(x, y-22); ctx.lineTo(x-9, y-2); ctx.lineTo(x+9, y-2); ctx.fill(); rect(x-1.5, y-2, 3, 3, '#5a3a22'); [[-4,-8,'#e0574a'],[3,-12,'#ffd36b'],[0,-5,'#6ab0ff']].forEach(([dx,dy,c])=>{ ctx.fillStyle = c; ctx.fillRect(x+dx, y+dy, 2, 2); }); } else { for(let i=0;i<5;i++){ ctx.fillStyle = ['#e0574a','#ffd36b','#6ab0ff','#7fc76a','#ff8ad8'][(i + Math.floor(now*2))%5]; ctx.beginPath(); ctx.arc(x-12+i*6, y-4+Math.sin(i)*1.5, 1.6, 0, 7); ctx.fill(); } } }
+  else if(h.id==='valentine' || h.id==='march8') heart(x, y-6, 3, h.id==='march8' ? '#ff8ad8' : '#e0574a');
+  else if(h.id==='sept1'){ ctx.fillStyle = '#ffd36b'; ctx.beginPath(); ctx.arc(x, y-6, 3, 0, 7); ctx.fill(); rect(x-0.5, y-3, 1, 4, '#4a6a2a'); }
 }
 
 </script>

@@ -6,3 +6,7 @@ compatibility_date = "2024-09-23"
 binding = "DB"
 database_name = "brewcrew"
 database_id = "4279ca47-c1f8-4933-afcd-1b1d9f59ed6f"
+
+[[kv_namespaces]]
+binding = "CARDS"
+id = "67845f8920704d01affc957daa03b9fa"

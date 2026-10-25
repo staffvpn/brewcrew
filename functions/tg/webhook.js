@@ -1,5 +1,5 @@
 // POST /tg/webhook — сюда Telegram присылает сообщения боту. Команды: /start, /admin (только для админов).
-import { ADMINS, json, mskDay, tgApi, SHOP } from '../_lib.js';
+import { ADMINS, json, mskDay, tgApi, SHOP, dispatchReminders } from '../_lib.js';
 
 const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/ |,/g, ' ');
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -53,7 +53,8 @@ async function adminReport(env) {
   return lines.join('\n');
 }
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, waitUntil }) {
+  if (waitUntil) waitUntil(dispatchReminders(env));
   if (env.WEBHOOK_SECRET && request.headers.get('X-Telegram-Bot-Api-Secret-Token') !== env.WEBHOOK_SECRET) {
     return json({ ok: false }, 403);
   }
@@ -95,12 +96,23 @@ export async function onRequestPost({ request, env }) {
       await tgApi(env, 'sendMessage', { chat_id: chat, parse_mode: 'HTML', text: await adminReport(env),
         reply_markup: { inline_keyboard: [[{ text: 'Открыть игру', web_app: { url: origin } }]] } });
     }
+  } else if (text.startsWith('/digest')) {
+    if (!ADMINS.includes(from)) return json({ ok: true });
+    if (!env.CHANNEL_ID) { await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Добавьте CHANNEL_ID (например @brewcrew_news) в переменные Cloudflare и сделайте бота админом канала.' }); return json({ ok: true }); }
+    const top = (await env.DB.prepare('SELECT cafe, city, level, earned FROM players ORDER BY earned DESC LIMIT 5').all()).results || [];
+    const week = await env.DB.prepare('SELECT COUNT(*) n FROM players WHERE created_at >= ?1').bind(Date.now() - 7 * 86400000).first();
+    const total = await env.DB.prepare('SELECT COUNT(*) n FROM players').first();
+    const cityName = { msk: 'Москва', spb: 'Петербург', kzn: 'Казань', sochi: 'Сочи', nsk: 'Новосибирск', kgd: 'Калининград' };
+    const body = ['<b>Районные вести · итоги недели</b>', '', `В городе ${total.n} кофеен, за неделю открылось ${week.n} новых.`, '', '<b>Самые прибыльные</b>',
+      ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${cityName[t.city] || ''}, ур. ${t.level} — ${fmt(t.earned)} ₽`), '', 'А у тебя как дела за стойкой?'].join('\n');
+    const r = await tgApi(env, 'sendMessage', { chat_id: env.CHANNEL_ID, parse_mode: 'HTML', text: body, reply_markup: { inline_keyboard: [[{ text: 'Открыть свою кофейню', url: `https://t.me/${(await tgApi(env, 'getMe', {})).result.username}?start=channel` }]] } });
+    await tgApi(env, 'sendMessage', { chat_id: chat, text: r.ok ? 'Дайджест опубликован в канале.' : 'Не получилось: ' + (r.description || '') });
   } else if (text.startsWith('/paysupport')) {
     await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Проблема с покупкой? Напиши, что купил и когда, мы разберёмся и при необходимости вернём звёзды.' });
   } else if (text.startsWith('/start') || text.startsWith('/play')) {
     await tgApi(env, 'sendMessage', { chat_id: chat,
       text: 'Brew Crew — кофейня, где все на грани. Нанимай команду, прокачивай зал, разбирайся с проверками, прогулами и гусями. 18+',
-      reply_markup: { inline_keyboard: [[{ text: 'Открыть кофейню', web_app: { url: origin } }]] } });
+      reply_markup: { inline_keyboard: [[{ text: 'Открыть кофейню', web_app: { url: origin + (text.split(' ')[1] ? '?tgWebAppStartParam=' + encodeURIComponent(text.split(' ')[1]) : '') } }]] } });
   }
   return json({ ok: true });
 }
