@@ -1,5 +1,6 @@
 // POST /tg/webhook — сюда Telegram присылает сообщения боту. Команды: /start, /admin (только для админов).
 import { ADMINS, json, mskDay, tgApi, SHOP, dispatchReminders } from '../_lib.js';
+import { adminCommand, adminCallback } from '../_admin.js';
 
 const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/ |,/g, ' ');
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -9,18 +10,16 @@ async function adminReport(env) {
   const today = mskDay(now);
   const day7 = mskDay(now - 6 * 86400000), day30 = mskDay(now - 29 * 86400000);
   const q = (sql, ...b) => env.DB.prepare(sql).bind(...b).first();
-  const [total, newToday, dau, wau, mau, online, avg, cities, top, days, pay] = await Promise.all([
+  const [total, newToday, wau, mau, online, avg, cities, top, pay] = await Promise.all([
     q('SELECT COUNT(*) n FROM players'),
     q('SELECT COUNT(*) n FROM players WHERE created_at >= ?1', Date.parse(today + 'T00:00:00+03:00')),
-    q('SELECT COUNT(*) n FROM days WHERE day = ?1', today),
     q('SELECT COUNT(DISTINCT tg_id) n FROM days WHERE day >= ?1', day7),
     q('SELECT COUNT(DISTINCT tg_id) n FROM days WHERE day >= ?1', day30),
     q('SELECT COUNT(*) n FROM players WHERE last_seen >= ?1', now - 3 * 60000),
-    q('SELECT AVG(level) lvl, AVG(play_seconds) sec, SUM(franchises) fr, SUM(bankrupt) bk, AVG(sessions) ses FROM players'),
+    q('SELECT AVG(play_seconds) sec, SUM(franchises) fr, SUM(bankrupt) bk, SUM(banned) ban FROM players'),
     env.DB.prepare('SELECT city, COUNT(*) n FROM players GROUP BY city ORDER BY n DESC LIMIT 6').all(),
     env.DB.prepare('SELECT cafe, first_name, username, level, earned FROM players ORDER BY earned DESC LIMIT 5').all(),
-    env.DB.prepare('SELECT day, COUNT(*) n FROM days WHERE day >= ?1 GROUP BY day ORDER BY day').bind(day7).all(),
-    q("SELECT COALESCE(SUM(stars),0) s, COUNT(*) n, COUNT(DISTINCT tg_id) u, COALESCE(SUM(CASE WHEN created_at >= ?1 THEN stars ELSE 0 END),0) t, SUM(CASE WHEN item = 'sub_owner' AND expires_at > ?2 THEN 1 ELSE 0 END) subs FROM purchases WHERE refunded = 0", Date.parse(today + 'T00:00:00+03:00'), now)
+    q("SELECT COALESCE(SUM(stars),0) s, COUNT(*) n, COUNT(DISTINCT tg_id) u, COALESCE(SUM(CASE WHEN created_at >= ?1 THEN stars ELSE 0 END),0) t, SUM(CASE WHEN item = 'sub_owner' AND expires_at > ?2 THEN 1 ELSE 0 END) subs FROM purchases WHERE refunded = 0 AND stars > 0", Date.parse(today + 'T00:00:00+03:00'), now)
   ]);
   const cityName = { msk: 'Москва', spb: 'Петербург', kzn: 'Казань', sochi: 'Сочи', nsk: 'Новосибирск', kgd: 'Калининград' };
   const lines = [
@@ -29,26 +28,26 @@ async function adminReport(env) {
     `Онлайн сейчас: <b>${online.n}</b>`,
     `Всего игроков: <b>${total.n}</b>`,
     `Новых сегодня: <b>${newToday.n}</b>`,
-    `Заходили сегодня: <b>${dau.n}</b>`,
     `За 7 дней: <b>${wau.n}</b> · за 30 дней: <b>${mau.n}</b>`,
     '',
-    `Средний уровень: ${(avg.lvl || 0).toFixed(1)}`,
     `Среднее время в игре: ${Math.round((avg.sec || 0) / 60)} мин`,
-    `Сессий на игрока: ${(avg.ses || 0).toFixed(1)}`,
-    `Франшиз продано: ${avg.fr || 0} · банкротств: ${avg.bk || 0}`,
+    `Франшиз продано: ${avg.fr || 0} · банкротств: ${avg.bk || 0} · в бане: ${avg.ban || 0}`,
     '',
     '<b>Звёзды</b>',
     `Всего: ${pay.s} ★ · сегодня: ${pay.t} ★`,
     `Покупок: ${pay.n} · платящих: ${pay.u} · активных подписок: ${pay.subs || 0}`,
     '',
-    '<b>По дням</b>',
-    ...(days.results || []).map(d => `${d.day.slice(5)}: ${d.n}`),
-    '',
     '<b>Города</b>',
     ...(cities.results || []).map(c => `${cityName[c.city] || c.city || 'не выбран'}: ${c.n}`),
     '',
     '<b>Топ по заработку</b>',
-    ...(top.results || []).map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}» — ${esc(t.first_name || '')}${t.username ? ' @' + esc(t.username) : ''}, ур. ${t.level}, ${fmt(t.earned)} ₽`)
+    ...(top.results || []).map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}» — ${esc(t.first_name || '')}${t.username ? ' @' + esc(t.username) : ''}, ур. ${t.level}, ${fmt(t.earned)} ₽`),
+    '',
+    '<b>Управление игроками</b>',
+    '<code>/u</code> ID, @username, имя или кофейня — карточка игрока',
+    '<code>/give ID сумма</code> · <code>/take ID сумма</code> · <code>/set ID сумма</code>',
+    '<code>/msg ID текст</code> · <code>/ban ID</code> · <code>/unban ID</code>',
+    '<code>/online</code> · <code>/top</code> · <code>/last</code> · <code>/ops</code> — журнал действий'
   ];
   return lines.join('\n');
 }
@@ -65,6 +64,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const q = upd.pre_checkout_query; let ok = false;
     try { const p = JSON.parse(q.invoice_payload); ok = Boolean(SHOP[p.i]) && p.u === q.from.id && q.currency === 'XTR' && q.total_amount === SHOP[p.i].stars; } catch {}
     await tgApi(env, 'answerPreCheckoutQuery', ok ? { pre_checkout_query_id: q.id, ok: true } : { pre_checkout_query_id: q.id, ok: false, error_message: 'Товар не найден, попробуй ещё раз из игры' });
+    return json({ ok: true });
+  }
+  if (upd.callback_query) {
+    if (String(upd.callback_query.data || '').startsWith('a:') && env.DB) await adminCallback(env, upd.callback_query);
+    else await tgApi(env, 'answerCallbackQuery', { callback_query_id: upd.callback_query.id });
     return json({ ok: true });
   }
   const msg = upd.message;
@@ -87,14 +91,22 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const text = msg.text.trim();
   const origin = new URL(request.url).origin;
 
+  if (text.startsWith('/') && env.DB && await adminCommand(env, chat, from, text)) return json({ ok: true });
   if (text.startsWith('/admin')) {
     if (!ADMINS.includes(from)) {
       await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Эта команда только для администраторов.' });
     } else if (!env.DB) {
       await tgApi(env, 'sendMessage', { chat_id: chat, text: 'База не подключена: добавьте привязку DB в настройках Cloudflare Pages.' });
     } else {
+      // кнопкам админки нужны callback_query: включаем их в вебхуке и показываем админу его команды
+      if (waitUntil && env.WEBHOOK_SECRET) waitUntil(Promise.all([
+        tgApi(env, 'setWebhook', { url: origin + '/tg/webhook', secret_token: env.WEBHOOK_SECRET, allowed_updates: ['message', 'pre_checkout_query', 'callback_query'] }),
+        tgApi(env, 'setMyCommands', { scope: { type: 'chat', chat_id: chat }, commands: [
+          { command: 'admin', description: 'Статистика' }, { command: 'u', description: 'Найти игрока' }, { command: 'online', description: 'Кто сейчас в игре' },
+          { command: 'top', description: 'Топ по заработку' }, { command: 'last', description: 'Новые игроки' }, { command: 'ops', description: 'Журнал действий' }, { command: 'start', description: 'Открыть кофейню' }] })
+      ]));
       await tgApi(env, 'sendMessage', { chat_id: chat, parse_mode: 'HTML', text: await adminReport(env),
-        reply_markup: { inline_keyboard: [[{ text: 'Открыть игру', web_app: { url: origin } }]] } });
+        reply_markup: { inline_keyboard: [[{ text: 'Сейчас в игре', callback_data: 'a:list:online:0' }, { text: 'Топ-10', callback_data: 'a:list:top:0' }, { text: 'Новые', callback_data: 'a:list:last:0' }], [{ text: 'Открыть игру', web_app: { url: origin } }]] } });
     }
   } else if (text.startsWith('/digest')) {
     if (!ADMINS.includes(from)) return json({ ok: true });

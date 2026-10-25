@@ -2484,8 +2484,32 @@ function track(force){
   if(!S || !tg || !tg.initData) return;
   const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined}});
   trackStart = false;
-  try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).catch(()=>{}); }catch(e){}
+  try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
+
+/* ---------- команды из админки ---------- */
+function onTrack(r){
+  if(!r || !r.ok || !S) return;
+  showBanned(!!r.banned);
+  const ops = Array.isArray(r.ops) ? r.ops : []; if(!ops.length) return;
+  let wipe = false;
+  for(const o of ops){
+    const a = Math.round(Number(o.amount)||0);
+    if(o.op==='give'){ S.money += a; toast('Администрация начислила '+fmt(a)+' ₽'); sfx('coin'); }
+    else if(o.op==='take'){ S.money -= a; toast('Администрация списала '+fmt(a)+' ₽'); sfx('bad'); }
+    else if(o.op==='set'){ S.money = a; toast('Администрация установила баланс '+fmt(a)+' ₽'); }
+    else if(o.op==='ent'){ refreshEntitlements(); toast('Покупки обновлены'); }
+    else if(o.op==='msg'){ queueModal({kind:'adminmsg', text:String(o.text||'')}); }
+    else if(o.op==='wipe') wipe = true;
+  }
+  save(); saveCloud(); structDirty = true; renderHud();
+  apiPost('/api/ack', {ids:ops.map(o=>o.id)}).then(()=>{ if(wipe){ hardReset(); toast('Аккаунт удалён администрацией'); } }).catch(()=>{});
+}
+function showBanned(on){ let b = $('#banned');
+  if(!on){ if(b) b.remove(); return; }
+  if(b) return;
+  b = el(`<div class="veil" id="banned" style="z-index:98"><div class="modal"><div class="eyebrow">Brew Crew</div><h2>Доступ закрыт</h2><p>Администрация ограничила доступ к игре для этого аккаунта. Если это ошибка, напиши боту.</p></div></div>`);
+  document.body.appendChild(b); }
 
 /* ---------- офлайн ---------- */
 function catchUp(){
@@ -3059,6 +3083,7 @@ function showModal(){
     m.items.forEach(([h,t])=>box.appendChild(el(`<div class="newsitem"><b>${esc(h)}</b><p>${esc(t)}</p></div>`)));
     const row = el(`<div class="row"></div>`); row.append(btn('Поделиться', ()=>share('Районные вести: '+m.items.map(x=>x[1]).slice(0,2).join(' ')), 'ghost'), btn('Читать дальше', closeModal)); box.appendChild(row);
   }
+  else if(m.kind==='adminmsg'){ box.append(el(`<div class="eyebrow">Сообщение от команды игры</div>`), el(`<p>${esc(m.text)}</p>`), btn('Понятно', closeModal)); }
   else if(m.kind==='intro'){
     box.classList.add('kraftbox');
     box.append(el(`<div class="eyebrow">День первый</div>`), el(`<h2>Двери открыты</h2>`), el(`<p>Команды пока нет, так что ты сам стоишь на кассе и сам варишь кофе. Медленно, но бесплатно.</p>`),
@@ -3440,7 +3465,7 @@ window.addEventListener('unhandledrejection', e => { const r = e.reason; if(r &&
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());
 loadConfig();
-if(S){ streakCheck(); refreshEntitlements(); loadFriends(); }
+if(S){ streakCheck(); refreshEntitlements(); loadFriends(); setTimeout(()=>track(), 1500); }
 loadCloud(cloud=>{ if(cloud && cloud.v===3 && (!S || (cloud.savedAt||0) > (S.savedAt||0) + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
 document.addEventListener('pointerdown', unlockAudio, {once:true});
 requestAnimationFrame(frame);

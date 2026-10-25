@@ -1,5 +1,6 @@
 // POST /api/track — игра раз в минуту сообщает, что игрок онлайн, и его краткие показатели.
 import { json, mskDay, verifyInitData, dispatchReminders } from '../_lib.js';
+import { opsFor } from '../_admin.js';
 
 const num = (v, max = 1e15) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(n, max)) : 0; };
 const str = (v, len = 40) => (typeof v === 'string' ? v.slice(0, len) : null);
@@ -28,5 +29,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id)
   ]);
   if (waitUntil) waitUntil(dispatchReminders(env)); else await dispatchReminders(env);
-  return json({ ok: true });
+  const me = await env.DB.prepare('SELECT banned FROM players WHERE tg_id = ?1').bind(user.id).first();
+  let ops = [];
+  try { ops = await opsFor(env, user.id); } catch {}
+  return json({ ok: true, banned: Boolean(me && me.banned), ops });
 }
