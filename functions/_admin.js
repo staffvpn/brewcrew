@@ -2,6 +2,7 @@
 // Состояние игры хранится на устройстве игрока, поэтому изменения ставятся в очередь (admin_ops)
 // и применяются игрой при следующем выходе на связь (раз в минуту, пока игра открыта).
 import { ADMINS, tgApi } from './_lib.js';
+import { post as channelPost } from './_channel.js';
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -95,11 +96,41 @@ function listText(title, rows) {
 const send = (env, chat, r) => tgApi(env, 'sendMessage', { chat_id: chat, parse_mode: 'HTML', text: r.text, reply_markup: r.kb && r.kb.length ? { inline_keyboard: r.kb } : undefined, disable_web_page_preview: true });
 
 // Текстовые команды админа. Возвращает true, если команда обработана.
-export async function adminCommand(env, chat, from, text) {
+let ORIGIN = 'https://brewcrew.pages.dev';
+export async function adminCommand(env, chat, from, text, origin) {
+  if (origin) ORIGIN = origin;
+  const text0 = text;
   const [cmd, ...rest] = text.split(/\s+/);
   const c = cmd.toLowerCase().replace(/@\w+$/, '');
-  if (!['/u', '/user', '/find', '/give', '/take', '/set', '/msg', '/rename', '/ban', '/unban', '/top', '/last', '/online', '/ops'].includes(c)) return false;
+  if (!['/u', '/user', '/find', '/give', '/take', '/set', '/msg', '/rename', '/posts', '/editpost', '/delpost', '/post', '/ban', '/unban', '/top', '/last', '/online', '/ops'].includes(c)) return false;
   if (!ADMINS.includes(from)) { await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Эта команда только для администраторов.' }); return true; }
+  if (c === '/posts') {
+    const r = (await env.DB.prepare('SELECT key, at, msg_id, caption FROM posts WHERE key != \'record\' ORDER BY at DESC LIMIT 12').all()).results || [];
+    await send(env, chat, { text: '<b>Посты бота в канале</b>\n\n' + (r.length ? r.map(p => `<code>${esc(p.key)}</code> · ${new Date(p.at).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}${p.msg_id ? '' : ' · (старый, номер не сохранён)'}\n${esc(String(p.caption || '').replace(/<[^>]+>/g, '').slice(0, 80))}`).join('\n\n') : 'Пусто.') + '\n\nПоправить подпись: <code>/editpost ключ новый текст</code>\nУдалить: <code>/delpost ключ</code>\nНовый пост: <code>/post обновления|события|баннер текст</code>' });
+    return true;
+  }
+  if (c === '/editpost' || c === '/delpost') {
+    if (!env.CHANNEL_ID) { await send(env, chat, { text: 'Канал не подключён: нет CHANNEL_ID.' }); return true; }
+    const key = rest[0]; const p = key ? await env.DB.prepare('SELECT key, msg_id FROM posts WHERE key = ?1').bind(key).first() : null;
+    if (!p || !p.msg_id) { await send(env, chat, { text: 'Такого поста нет или бот не знает его номер. Список: /posts' }); return true; }
+    if (c === '/delpost') { const r = await tgApi(env, 'deleteMessage', { chat_id: env.CHANNEL_ID, message_id: p.msg_id }); await env.DB.prepare('UPDATE posts SET msg_id = NULL, caption = NULL WHERE key = ?1').bind(key).run(); await send(env, chat, { text: r.ok ? 'Пост удалён из канала.' : 'Не получилось: ' + esc(r.description || '') }); return true; }
+    const text = text0.slice(text0.indexOf(key) + key.length).trim();
+    if (!text) { await send(env, chat, { text: 'Формат: <code>/editpost ключ новый текст</code>. Переносы строк сохраняются.' }); return true; }
+    const r = await tgApi(env, 'editMessageCaption', { chat_id: env.CHANNEL_ID, message_id: p.msg_id, caption: text, parse_mode: 'HTML' });
+    if (r.ok) await env.DB.prepare('UPDATE posts SET caption = ?2 WHERE key = ?1').bind(key, text).run();
+    await send(env, chat, { text: r.ok ? 'Пост исправлен.' : 'Не получилось: ' + esc(r.description || '') }); return true;
+  }
+  if (c === '/post') {
+    if (!env.CHANNEL_ID) { await send(env, chat, { text: 'Канал не подключён: нет CHANNEL_ID.' }); return true; }
+    const covers = { 'обновления': 'updates.jpg', 'события': 'events.jpg', 'баннер': 'banner.jpg' };
+    let img = 'banner.jpg', body = text0.replace(/^\/post(@\w+)?\s*/i, '');
+    const first = body.split(/\s+/)[0]; if (covers[first]) { img = covers[first]; body = body.slice(first.length).trim(); }
+    if (!body) { await send(env, chat, { text: 'Формат: <code>/post обновления|события|баннер текст поста</code>' }); return true; }
+    const ok = await channelPost(env, ORIGIN, img, body);
+    const key = 'manual_' + Date.now();
+    await env.DB.prepare('INSERT INTO posts (key, at, ok, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5)').bind(key, Date.now(), ok ? 1 : 0, null, body).run();
+    await send(env, chat, { text: ok ? 'Опубликовано. Ключ: <code>' + key + '</code>' : 'Не получилось опубликовать.' }); return true;
+  }
   if (c === '/top') { const r = (await env.DB.prepare('SELECT * FROM players ORDER BY earned DESC LIMIT 10').all()).results || []; await send(env, chat, listText('Топ-10 по заработку', r)); return true; }
   if (c === '/last') { const r = (await env.DB.prepare('SELECT * FROM players ORDER BY created_at DESC LIMIT 10').all()).results || []; await send(env, chat, listText('Последние 10 новых игроков', r)); return true; }
   if (c === '/online') { const r = (await env.DB.prepare('SELECT * FROM players WHERE last_seen >= ?1 ORDER BY last_seen DESC LIMIT 20').bind(Date.now() - 3 * 60000).all()).results || []; await send(env, chat, listText('Сейчас в игре', r)); return true; }

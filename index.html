@@ -475,6 +475,9 @@ body{background:var(--bg) radial-gradient(120% 60% at 50% 0%, #2c1e15 0%, #1d141
 .svc{display:flex;flex-direction:column;gap:6px}
 .svc .opt{font-size:13px}
 @media (prefers-reduced-motion: reduce){.modal.rzbox{animation:none}}
+.card.staff.legend{background:linear-gradient(160deg,#fff6dc 0%,#f6e3b0 55%,#efd391 100%);box-shadow:0 0 0 2px #d9a93e inset,0 6px 18px rgba(201,150,40,.25)}
+.card.staff.legend .lanyard{background:#c9962c}
+.card.staff.legend .spr{filter:drop-shadow(0 0 6px rgba(240,190,80,.7))}
 </style>
 </head>
 <body>
@@ -1756,6 +1759,7 @@ function simulateOffline(realMs){
 /* ================= v6: запара, кухня, отзывы, доставка, карта лояльности, турнир ================= */
 
 /* ---------- запара ---------- */
+const NIGHT_WHY = ['Закрылся бар напротив, все к вам', 'Таксисты пересменку устроили', 'Ночная смена с завода', 'Кончился концерт в клубе', 'Последняя электричка опоздала, люди застряли', 'Студенты сдают курсовую к 9 утра', 'Скорая на перерыве, всей бригадой', 'Рейс задержали, автобус из аэропорта у дверей', 'Сосед сверху празднует и прислал гостей', 'Охрана ТЦ сменилась'];
 const RUSH_WHY = ['Закончились пары в универе', 'Приехал автобус с туристами', 'Закончился футбол', 'В офисе напротив обед', 'Отменили электричку', 'Распродажа в ТЦ через дорогу', 'Выпустили зал из кинотеатра', 'Пошёл ливень, все бегут под крышу', 'Закончился митап айтишников', 'В соседнем ЗАГСе отгуляли свадьбу'];
 function rushMul(){ return S.rush && S.rush.until > absNow() ? S.rush.mul : 1; }
 function isPeak(){ return hourCurve(S.gm/60) >= 2; }
@@ -1766,8 +1770,9 @@ function rushTick(){
     else if(lost > Math.max(2, served*0.25)){ repAdd(-0.04); HOOK.toast('Запару не вытянули: ушли '+lost+' гостей'); HOOK.sfx('bad'); }
     S.rush = null; HOOK.struct();
   }
-  if(!S.rush && S.isOpen && S.closedUntil <= absNow() && hourCurve(S.gm/60) >= 0.8 && chance(0.35)){
-    S.rush = {until:absNow()+RI(10,20), mul:R(2.5,3.5), why:pick(RUSH_WHY), angry0:S.c.angry, g0:S.c.guests, burst:true};
+  if(!S.rush && S.isOpen && S.closedUntil <= absNow() && chance(0.35)){
+    const hh = S.gm/60, night = hh >= 23 || hh < 6;
+    S.rush = {until:absNow()+RI(10,20), mul:night ? R(2.2,3) : R(2.5,3.5), why:pick(night ? NIGHT_WHY : RUSH_WHY), angry0:S.c.angry, g0:S.c.guests, burst:true};
     HOOK.toast('Запара! '+S.rush.why); HOOK.sfx('alert'); HOOK.struct();
   }
 }
@@ -3435,7 +3440,9 @@ function drawStaff(s, p, id){
   const bob = prep ? Math.abs(Math.sin(p.t*8))*1.2 : b;
   if(p.walker) shadow(p.x, p.y, 9);
   const asleep = s.distract && s.distract.kind==='sleep';
+  const nowS = performance.now()/1000; legendSkin(s, p, nowS, true);
   drawSprite(s.spr, p.x, p.y - bob, 46, p.flip, asleep ? 0.12 : ro);
+  legendSkin(s, p, nowS, false);
   const hy = p.y - 50;
   if(S.incidents.some(i=>i.sid===s.id)){ ctx.fillStyle = '#e0574a'; ctx.beginPath(); ctx.arc(p.x, hy-6, 6, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = '800 9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('!', p.x, hy-2.5); ctx.textAlign = 'left'; }
   else if(s.distract){ bubble(p.x, hy, s.distract.kind); if(s.distract.kind==='phone'){ const g = ctx.createRadialGradient(p.x, p.y-34, 1, p.x, p.y-34, 12); g.addColorStop(0,'rgba(120,190,255,.45)'); g.addColorStop(1,'rgba(120,190,255,0)'); ctx.fillStyle = g; ctx.fillRect(p.x-12, p.y-46, 24, 24); } }
@@ -3984,10 +3991,10 @@ function renderSettings(p){
   p.appendChild(misc);
 }
 const INTERIORS = {
-  int_loft:{n:'Лофт', theme:{wall:'#8a5a44', wall2:'#6b4434', trim:'#2a2a2a', fa:'#7a7a78', fb:'#6e6e6c', counter:'#2e2e2e', ctop:'#4a4a48'}, brick:true},
+  int_loft:{n:'Лофт', theme:{wall:'#a77a66', wall2:'#8e7266', trim:'#5a4a40', fa:'#8f8a84', fb:'#8a857f', counter:'#5a4a40', ctop:'#7a6a5e'}, brick:true},
   int_scandi:{n:'Скандинавский', theme:{wall:'#eae4da', wall2:'#d8d0c2', trim:'#9a8a72', fa:'#d9c4a0', fb:'#ccb690', counter:'#f2ede4', ctop:'#c9b48e'}},
-  int_soviet:{n:'Столовая', theme:{wall:'#9fc1b0', wall2:'#e8e2d2', trim:'#5a6e64', fa:'#c94a3a', fb:'#e8e2d2', counter:'#b8b2a2', ctop:'#8a8474'}, tiles:true},
-  int_neon:{n:'Неон', theme:{wall:'#1e1a2e', wall2:'#151226', trim:'#ff4fa8', fa:'#26213a', fb:'#201c32', counter:'#120f20', ctop:'#ff4fa8'}, neon:true}
+  int_soviet:{n:'Столовая', theme:{wall:'#b7d3c6', wall2:'#e6ebe4', trim:'#7e9488', fa:'#c9a08e', fb:'#e6ddcc', counter:'#c4bcaa', ctop:'#9a9284'}, tiles:true},
+  int_neon:{n:'Неон', theme:{wall:'#433a5c', wall2:'#3a3350', trim:'#c98aa8', fa:'#3a3350', fb:'#37304c', counter:'#2e2840', ctop:'#b88aa6'}, neon:true}
 };
 function renamesLeft(){ return Math.max(0, ((S.ent && S.ent.renames) || 0) - (S.renamesUsed || 0)); }
 function hasInterior(k){ return !!(S.ent && S.ent.interiors && S.ent.interiors.includes(k)); }
@@ -4093,9 +4100,9 @@ function renderTeam(p, id){
   if(!crew.length) p.appendChild(el(`<div class="empty">Команды пока нет. Ниже кандидаты: начни с бариста и кассира.</div>`));
   crew.forEach(s=>{
     const [cls, txt] = staffStatus(s);
-    const stamp = s.legendId ? '<span class="stamp gold">ЛЕГЕНДА</span>' : s.today==='absent' ? '<span class="stamp red">ПРОГУЛ</span>' : s.notice ? '<span class="stamp red">УХОДИТ</span>' : '';
-    const card = el(`<button class="card staff badge-card"><div class="lanyard"></div>${stamp}<div class="spr" style="${sprStyle(staffSpr(s),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-      <div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${s.role}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl}</span>${s.legendId?'<span class="tag gold">Легенда</span>':''}${s.quirk!=='none'?`<span class="tag">${QUIRKS[s.quirk].n}</span>`:''}${s.contract==='grey'?'<span class="tag warn">В серую</span>':''}<span class="tag ${cls}">${txt}</span></div>
+    const stamp = (s.legendId || s.prize) ? '<span class="stamp gold">ЛЕГЕНДА</span>' : s.today==='absent' ? '<span class="stamp red">ПРОГУЛ</span>' : s.notice ? '<span class="stamp red">УХОДИТ</span>' : '';
+    const card = el(`<button class="card staff badge-card${(s.legendId || s.prize) ? ' legend' : ''}"><div class="lanyard"></div>${stamp}<div class="spr" style="${sprStyle(staffSpr(s),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+      <div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${s.role}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl}</span>${(s.legendId || s.prize)?'<span class="tag gold">Легенда</span>':''}${s.quirk!=='none'?`<span class="tag">${QUIRKS[s.quirk].n}</span>`:''}${s.contract==='grey'?'<span class="tag warn">В серую</span>':''}<span class="tag ${cls}">${txt}</span></div>
       <div class="mood">Состояние ${bar(staffState(s), moodCol(staffState(s)))}<span class="st ${staffState(s)<45?'bad':''}">${stateLabel(staffState(s))}</span></div>${s.wish?`<div class="wishline">${esc(WISHES[s.wish.k].t)} · ${Math.max(0,s.wish.by-S.day)} дн.</div>`:''}
       <div class="d">${s.today==='sub'?'Подмена на сегодня':s.sched==='every'?'Без выходных':s.sched==='2/2'?'2 через 2':'5/2, выходные: '+s.off.map(d=>WEEKDAYS[d]).join(', ')} · ${fmt(s.today==='sub'?s.subPay:shiftPay(s))} ₽ за смену · смен ${s.shifts}</div></div></button>`);
     card.onclick = () => { if(s.today!=='sub') queueModal({kind:'staff', sid:s.id}, true); };
@@ -5029,10 +5036,10 @@ function drawTable2(x, y, L, i){
   if(L >= 15 && i % 3 === 0){ // диванчик-кабинка
     rect(x-24, y-22, 48, 8, '#7a3b3b'); rect(x-24, y-14, 48, 6, '#8c4545'); }
   rect(x-1.5, y-8, 3, 10, '#4a3020');
-  ctx.fillStyle = CUR_INT==='int_loft' ? '#4a3424' : CUR_INT==='int_scandi' ? '#f2ede4' : CUR_INT==='int_soviet' ? '#e8e2d2' : CUR_INT==='int_neon' ? '#141018' : (L>=5 ? '#ece4d4' : '#9a6e48'); ctx.beginPath(); ctx.ellipse(x, y-10, L>=10?17:15, 5.5, 0, 0, 7); ctx.fill();
-  if(CUR_INT==='int_soviet'){ ctx.fillStyle = 'rgba(200,50,43,.55)'; for(let k=-2;k<=2;k++) ctx.fillRect(x+k*6-2, y-13, 3, 6); }
-  if(CUR_INT==='int_neon'){ ctx.strokeStyle = 'rgba(255,79,168,.9)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(x, y-10, 15, 5.5, 0, 0, 7); ctx.stroke(); }
-  if(CUR_INT==='int_loft'){ rect(x-12, y-6, 2, 7, '#222'); rect(x+10, y-6, 2, 7, '#222'); }
+  ctx.fillStyle = CUR_INT==='int_loft' ? '#6e5444' : CUR_INT==='int_scandi' ? '#f2ede4' : CUR_INT==='int_soviet' ? '#ece6d8' : CUR_INT==='int_neon' ? '#4e4466' : (L>=5 ? '#ece4d4' : '#9a6e48'); ctx.beginPath(); ctx.ellipse(x, y-10, L>=10?17:15, 5.5, 0, 0, 7); ctx.fill();
+  if(CUR_INT==='int_soviet'){ ctx.fillStyle = 'rgba(200,110,100,.25)'; for(let k=-2;k<=2;k++) ctx.fillRect(x+k*6-2, y-13, 3, 6); }
+  if(CUR_INT==='int_neon'){ ctx.strokeStyle = 'rgba(232,154,192,.45)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(x, y-10, 15, 5.5, 0, 0, 7); ctx.stroke(); }
+  if(CUR_INT==='int_loft'){ rect(x-12, y-6, 2, 7, '#5a4a40'); rect(x+10, y-6, 2, 7, '#5a4a40'); }
   if(L>=5){ ctx.fillStyle = 'rgba(200,50,43,.55)'; ctx.fillRect(x-4, y-14, 8, 8); }
   ctx.fillStyle = 'rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(x, y-9, 15, 5, 0, 0, Math.PI); ctx.fill();
   if(L>=8){ rect(x+5, y-16, 2, 5, '#f3e8d3'); ctx.fillStyle = '#ffd36b'; ctx.fillRect(x+5.5, y-18, 1, 2); }
@@ -5143,8 +5150,9 @@ const WAVE_WHY = ['Наплыв!', 'Электричка пришла', 'Пер�
 function waveTick(id, r, dt){
   r.waveT = (r.waveT==null ? R(60, 120) : r.waveT) - dt;
   if(r.waveT > 0) return; r.waveT = R(100, 180);
-  if(!S.isOpen || S.closedUntil > absNow() || hourCurve(S.gm/60) < 0.5) return;
-  const n = RI(4, 7) + Math.floor(S.level/4);
+  if(!S.isOpen || S.closedUntil > absNow()) return;
+  const hh = S.gm/60, night = hh >= 23 || hh < 6;
+  const n = RI(night ? 3 : 4, night ? 5 : 7) + Math.floor(S.level/(night ? 6 : 4));
   for(let i=0;i<n;i++) setTimeout(()=>spawnGuest(id), i*400);
   bubble2(DOOR[0]-30, DOOR[1]-56, pick(WAVE_WHY), 2200);
 }
@@ -5164,66 +5172,61 @@ let CUR_INT = null;
 function glow(x, y, r, col, a){ const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col.replace('A', a)); g.addColorStop(1, col.replace('A', 0)); ctx.fillStyle = g; ctx.fillRect(x-r, y-r, r*2, r*2); }
 function interiorWall(k, now){
   if(k==='int_loft'){
-    // кирпичная кладка на всю стену
-    for(let y=0;y<64;y+=6){ const off = (y/6)%2 ? 7 : 0; for(let x=-14;x<W;x+=14){ rect(x+off, y, 13, 5, ((x+y)/7)%3 ? '#8a5040' : '#7a4434'); rect(x+off, y+5, 14, 1, '#5a3a2e'); } }
-    for(let y=66;y<98;y+=6){ const off = (y/6)%2 ? 7 : 0; for(let x=-14;x<W;x+=14){ rect(x+off, y, 13, 5, '#6a3c30'); } }
-    // трубы под потолком
-    rect(0, 2, W, 4, '#4a4a4a'); rect(0, 3, W, 1, '#6a6a6a'); for(let x=30;x<W;x+=80){ rect(x, 0, 5, 8, '#3a3a3a'); }
-    rect(244, 6, 4, 60, '#4a4a4a');
-    // металлический стеллаж с банками
-    rect(108, 70, 2, 26, '#2a2a2a'); rect(132, 70, 2, 26, '#2a2a2a'); rect(108, 76, 26, 2, '#2a2a2a'); rect(108, 86, 26, 2, '#2a2a2a');
-    for(let i=0;i<4;i++) rect(110+i*6, 70, 4, 6, '#c9a477');
+    // мягкая кирпичная кладка: близкие тона, тонкие швы
+    for(let y=0;y<64;y+=8){ const off = (y/8)%2 ? 9 : 0; for(let x=-18;x<W;x+=18){ rect(x+off, y, 17, 7, ((x+y)/9)%3 ? '#a77a66' : '#a07260'); rect(x+off, y+7, 18, 1, 'rgba(90,60,46,.25)'); } }
+    rect(0, 64, W, 34, '#8e7266'); for(let x=0;x<W;x+=40) rect(x, 64, 1, 34, 'rgba(0,0,0,.05)');
+    rect(0, 3, W, 3, '#7a7672'); rect(0, 3, W, 1, '#8e8a86');
+    rect(106, 80, 32, 3, '#6a5040'); for(let i=0;i<4;i++) rect(109+i*7, 73, 5, 7, '#d9c09c');
   }
   else if(k==='int_scandi'){
-    // светлые панели и полка с керамикой
-    for(let x=0;x<W;x+=24) rect(x, 66, 1, 32, 'rgba(0,0,0,.06)');
-    rect(0, 40, W, 2, 'rgba(0,0,0,.05)');
-    rect(118, 50, 60, 3, '#c9b48e'); [[122,'#e8e2d4'],[134,'#a8c8b8'],[146,'#f0c8a8'],[158,'#d8d8e8'],[168,'#e8e2d4']].forEach(([x,c])=>{ rect(x, 42, 8, 8, c); rect(x+1, 42, 6, 1, 'rgba(0,0,0,.1)'); });
-    // постеры в рамках
-    rect(190, 14, 22, 28, '#fff'); rect(192, 16, 18, 24, '#a8c8b8'); ctx.fillStyle = '#e8a548'; ctx.beginPath(); ctx.arc(201, 26, 5, 0, 7); ctx.fill();
-    rect(218, 20, 18, 22, '#fff'); rect(220, 22, 14, 18, '#f0c8a8'); rect(224, 28, 6, 8, '#6a8a7a');
+    for(let x=0;x<W;x+=24) rect(x, 66, 1, 32, 'rgba(0,0,0,.04)');
+    rect(118, 50, 60, 3, '#c9b48e'); [[122,'#ece6da'],[134,'#b8d0c4'],[146,'#ecd2bc'],[158,'#dcdce6'],[168,'#ece6da']].forEach(([x,c])=>{ rect(x, 42, 8, 8, c); });
+    rect(190, 14, 22, 28, '#fbf8f2'); rect(192, 16, 18, 24, '#b8d0c4'); ctx.fillStyle = '#e6b878'; ctx.beginPath(); ctx.arc(201, 26, 5, 0, 7); ctx.fill();
+    rect(218, 20, 18, 22, '#fbf8f2'); rect(220, 22, 14, 18, '#ecd2bc'); rect(224, 28, 6, 8, '#8aa898');
   }
   else if(k==='int_soviet'){
-    // кафель до середины стены
-    for(let y=66;y<98;y+=8) for(let x=0;x<W;x+=8){ rect(x, y, 7, 7, '#eef2ee'); }
-    for(let y=34;y<64;y+=8) for(let x=0;x<W;x+=8){ rect(x, y, 7, 7, '#9fc9b8'); }
-    // плакаты
-    rect(186, 8, 30, 40, '#e8e2d2'); rect(188, 10, 26, 6, '#c8322b'); ctx.fillStyle = '#2a1d15'; ctx.font = '800 4px "Golos Text",sans-serif'; ctx.fillText('ПЕЙ', 192, 24); ctx.fillText('КОФЕ', 192, 30); ctx.fillText('ТРУДИСЬ', 189, 36); rect(196, 38, 10, 8, '#8a5a3a');
-    rect(220, 12, 24, 30, '#f3e0a0'); ctx.fillStyle = '#2a1d15'; ctx.fillText('СЫТ —', 223, 22); ctx.fillText('ДОВОЛЕН', 222, 28); ctx.fillStyle = '#c8322b'; ctx.fillRect(226, 32, 12, 6);
-    // радио «Маяк»
-    rect(110, 74, 22, 14, '#6a4a30'); rect(112, 76, 10, 10, '#d8c8a8'); rect(124, 78, 6, 2, '#2a2a2a'); rect(124, 82, 6, 2, '#2a2a2a');
+    // плитка пастельная, швы еле видны
+    rect(0, 34, W, 30, '#b7d3c6'); for(let y=34;y<64;y+=10) rect(0, y, W, 1, 'rgba(255,255,255,.35)'); for(let x=0;x<W;x+=10) rect(x, 34, 1, 30, 'rgba(255,255,255,.35)');
+    rect(0, 64, W, 34, '#e6ebe4'); for(let y=64;y<98;y+=10) rect(0, y, W, 1, 'rgba(0,0,0,.05)'); for(let x=0;x<W;x+=10) rect(x, 64, 1, 34, 'rgba(0,0,0,.05)');
+    rect(186, 8, 30, 40, '#ede6d6'); rect(188, 10, 26, 6, '#c86a5e'); ctx.fillStyle = '#4a3a30'; ctx.font = '800 4px "Golos Text",sans-serif'; ctx.fillText('ПЕЙ', 192, 24); ctx.fillText('КОФЕ', 192, 30); ctx.fillText('ТРУДИСЬ', 189, 36);
+    rect(220, 12, 24, 30, '#f1e4bc'); ctx.fillStyle = '#4a3a30'; ctx.fillText('СЫТ —', 223, 22); ctx.fillText('ДОВОЛЕН', 222, 28);
+    rect(110, 74, 22, 14, '#7a5e48'); rect(112, 76, 10, 10, '#dccfb4'); rect(124, 78, 6, 2, '#4a4a4a'); rect(124, 82, 6, 2, '#4a4a4a');
   }
   else if(k==='int_neon'){
-    // тёмная стена с сеткой
-    ctx.strokeStyle = 'rgba(120,90,200,.15)'; ctx.lineWidth = 1; for(let x=0;x<W;x+=16){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,98); ctx.stroke(); }
-    const fl = 0.75 + 0.25*Math.sin(now*7)*Math.sin(now*3.1);
-    ctx.save(); ctx.shadowBlur = 10;
-    ctx.shadowColor = '#ff4fa8'; ctx.strokeStyle = `rgba(255,120,200,${fl})`; ctx.lineWidth = 1.6; ctx.strokeRect(4, 4, W-8, 60);
-    ctx.shadowColor = '#5fd8ff'; ctx.fillStyle = `rgba(200,245,255,${0.85+0.15*Math.sin(now*2)})`; ctx.font = '800 10px "Unbounded","Golos Text",sans-serif'; ctx.fillText('24/7', 186, 40);
-    ctx.shadowColor = '#ff4fa8'; ctx.fillStyle = `rgba(255,200,230,${fl})`; ctx.font = '800 7px "Unbounded","Golos Text",sans-serif'; ctx.fillText('NO SLEEP', 220, 54);
-    ctx.shadowColor = '#ffd36b'; ctx.strokeStyle = 'rgba(255,220,120,.9)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(130, 30); ctx.bezierCurveTo(124, 22, 114, 30, 130, 42); ctx.bezierCurveTo(146, 30, 136, 22, 130, 30); ctx.stroke();
+    // вечерний зал: ровный мягкий неон без мигания
+    ctx.save(); ctx.shadowBlur = 5;
+    ctx.shadowColor = '#e89ac0'; ctx.strokeStyle = 'rgba(232,154,192,.55)'; ctx.lineWidth = 1.2; ctx.strokeRect(6, 6, W-12, 56);
+    ctx.shadowColor = '#8fd0dc'; ctx.fillStyle = 'rgba(200,236,240,.8)'; ctx.font = '800 10px "Unbounded","Golos Text",sans-serif'; ctx.fillText('24/7', 186, 40);
+    ctx.shadowColor = '#e89ac0'; ctx.fillStyle = 'rgba(240,200,220,.75)'; ctx.font = '800 7px "Unbounded","Golos Text",sans-serif'; ctx.fillText('NO SLEEP', 220, 54);
+    ctx.shadowColor = '#f0d08a'; ctx.strokeStyle = 'rgba(240,208,138,.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(130, 30); ctx.bezierCurveTo(124, 22, 114, 30, 130, 42); ctx.bezierCurveTo(146, 30, 136, 22, 130, 30); ctx.stroke();
     ctx.restore();
   }
 }
 function interiorFloor(k, th, now){
-  if(k==='int_loft'){ rect(0, 100, W, H-100, '#6e6e6c'); for(let i=0;i<40;i++){ const x = (i*73)%W, y = 110 + (i*131)%(H-110); rect(x, y, 18 + (i%4)*6, 1, 'rgba(0,0,0,.12)'); } for(let y=100;y<H;y+=48) rect(0, y, W, 1, 'rgba(0,0,0,.18)'); for(let x=0;x<W;x+=60) rect(x, 100, 1, H-100, 'rgba(0,0,0,.12)'); }
-  else if(k==='int_scandi'){ for(let y=100;y<H;y+=8){ const off = ((y-100)/8)%2 ? 20 : 0; for(let x=-40;x<W;x+=40){ rect(x+off, y, 39, 7, ((x+y)/8)%3 ? '#dcc8a4' : '#d2bc94'); } } ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(0, 100, W, H-100); }
-  else if(k==='int_soviet'){ for(let y=100;y<H;y+=12) for(let x=0;x<W;x+=12) rect(x, y, 12, 12, ((x+y)/12)%2 ? '#b8443a' : '#e8e2d2'); }
-  else if(k==='int_neon'){ rect(0, 100, W, H-100, '#120f1e'); ctx.strokeStyle = 'rgba(255,79,168,.18)'; ctx.lineWidth = 1; for(let x=-H;x<W;x+=24){ ctx.beginPath(); ctx.moveTo(x, H); ctx.lineTo(x+H*0.6, 100); ctx.stroke(); } for(let y=100;y<H;y+=24){ ctx.strokeStyle = 'rgba(95,216,255,.12)'; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); } }
+  if(k==='int_loft'){ rect(0, 100, W, H-100, '#8f8a84'); for(let y=100;y<H;y+=48) rect(0, y, W, 1, 'rgba(0,0,0,.06)'); for(let x=0;x<W;x+=60) rect(x, 100, 1, H-100, 'rgba(0,0,0,.05)'); }
+  else if(k==='int_scandi'){ for(let y=100;y<H;y+=10){ const off = ((y-100)/10)%2 ? 20 : 0; for(let x=-40;x<W;x+=40){ rect(x+off, y, 39, 9, ((x+y)/10)%3 ? '#e2d2b2' : '#dccaa8'); } } }
+  else if(k==='int_soviet'){ for(let y=100;y<H;y+=24) for(let x=0;x<W;x+=24) rect(x, y, 24, 24, ((x+y)/24)%2 ? '#c9a08e' : '#e6ddcc'); }
+  else if(k==='int_neon'){ rect(0, 100, W, H-100, '#3a3350'); for(let y=100;y<H;y+=32) rect(0, y, W, 1, 'rgba(255,255,255,.04)'); }
 }
 function interiorFront(k, now){
-  if(k==='int_loft'){ // лампочки Эдисона на проводах
-    for(let i=0;i<6;i++){ const x = 40 + i*56, len = 18 + (i%3)*8; ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, 4); ctx.lineTo(x, len); ctx.stroke(); ctx.fillStyle = '#ffcf6b'; ctx.beginPath(); ctx.arc(x, len+3, 3, 0, 7); ctx.fill(); glow(x, len+3, 26, 'rgba(255,200,110,A)', 0.22); } }
-  else if(k==='int_scandi'){ // белые плафоны, монстеры
-    for(let i=0;i<4;i++){ const x = 60 + i*80; ctx.strokeStyle = '#c9b48e'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 14); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, 18, 7, Math.PI, 0); ctx.fill(); glow(x, 22, 30, 'rgba(255,250,230,A)', 0.18); }
-    [[300, H-40],[40, 160]].forEach(([x,y])=>{ rect(x-6, y-10, 12, 10, '#e8e2d4'); ctx.fillStyle = '#3e7a4a'; for(let j=0;j<6;j++){ ctx.beginPath(); ctx.ellipse(x + (j-2.5)*5, y-18-(j%2)*6, 5, 9, (j-2.5)*0.35, 0, 7); ctx.fill(); } }); }
-  else if(k==='int_soviet'){ // вентилятор под потолком и шторки на окне
-    const a = now*6; ctx.fillStyle = '#5a5a5a'; for(let j=0;j<3;j++){ const ang = a + j*2.09; ctx.save(); ctx.translate(180, 6); ctx.rotate(ang); ctx.fillRect(0, -1.5, 22, 3); ctx.restore(); } ctx.fillStyle = '#3a3a3a'; ctx.beginPath(); ctx.arc(180, 6, 3, 0, 7); ctx.fill();
-    for(let x=258;x<338;x+=6){ rect(x, 12, 5, 16, x%12 ? '#e8b4b4' : '#f0d0d0'); } }
-  else if(k==='int_neon'){ // подсветка стойки, блики
-    const fl = 0.7 + 0.3*Math.sin(now*5);
-    ctx.save(); ctx.shadowBlur = 12; ctx.shadowColor = '#5fd8ff'; rect(10, COUNTER_Y+24, 240, 2, `rgba(95,216,255,${fl})`); ctx.shadowColor = '#ff4fa8'; rect(10, COUNTER_Y, 240, 2, `rgba(255,79,168,${fl})`); ctx.restore();
-    for(let i=0;i<5;i++){ const x = (now*30 + i*80) % W, y = 140 + (i*67)%(H-180); glow(x, y, 22, i%2 ? 'rgba(255,79,168,A)' : 'rgba(95,216,255,A)', 0.12); } }
+  if(k==='int_loft'){ for(let i=0;i<5;i++){ const x = 50 + i*64, len = 16 + (i%3)*6; ctx.strokeStyle = 'rgba(40,30,25,.6)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, 4); ctx.lineTo(x, len); ctx.stroke(); ctx.fillStyle = '#f4d8a0'; ctx.beginPath(); ctx.arc(x, len+3, 2.6, 0, 7); ctx.fill(); glow(x, len+3, 22, 'rgba(255,215,150,A)', 0.1); } }
+  else if(k==='int_scandi'){
+    for(let i=0;i<4;i++){ const x = 60 + i*80; ctx.strokeStyle = '#c9b48e'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 14); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, 18, 7, Math.PI, 0); ctx.fill(); glow(x, 22, 26, 'rgba(255,250,230,A)', 0.1); }
+    [[300, H-40],[40, 160]].forEach(([x,y])=>{ rect(x-6, y-10, 12, 10, '#ece6da'); ctx.fillStyle = '#5a8a62'; for(let j=0;j<6;j++){ ctx.beginPath(); ctx.ellipse(x + (j-2.5)*5, y-18-(j%2)*6, 5, 9, (j-2.5)*0.35, 0, 7); ctx.fill(); } }); }
+  else if(k==='int_soviet'){ const a = now*1.5; ctx.fillStyle = '#8a8a86'; for(let j=0;j<3;j++){ const ang = a + j*2.09; ctx.save(); ctx.translate(180, 6); ctx.rotate(ang); ctx.fillRect(0, -1.5, 20, 3); ctx.restore(); } ctx.fillStyle = '#6a6a66'; ctx.beginPath(); ctx.arc(180, 6, 3, 0, 7); ctx.fill();
+    for(let x=258;x<338;x+=8){ rect(x, 12, 7, 16, '#efd6d0'); } }
+  else if(k==='int_neon'){ rect(10, COUNTER_Y, 240, 1.5, 'rgba(232,154,192,.45)'); rect(10, COUNTER_Y+24, 240, 1.5, 'rgba(143,208,220,.4)'); }
+}
+
+/* ---------- скин легенды: золотой ореол, корона, искры ---------- */
+function legendSkin(s, p, now, before){
+  if(!(s.legendId || s.prize)) return;
+  const sd = (s.legendId || 0)*1.7 + String(s.name||'').length*0.37;
+  if(before){ glow(p.x, p.y-22, 30, 'rgba(255,214,120,A)', 0.22 + 0.06*Math.sin(now*2 + sd)); ctx.fillStyle = 'rgba(232,180,70,.35)'; ctx.beginPath(); ctx.ellipse(p.x, p.y+1, 13, 4, 0, 0, 7); ctx.fill(); return; }
+  const cy = p.y - 56;
+  ctx.fillStyle = '#e8b648'; ctx.beginPath(); ctx.moveTo(p.x-6, cy+5); ctx.lineTo(p.x-6, cy); ctx.lineTo(p.x-3, cy+2.5); ctx.lineTo(p.x, cy-2); ctx.lineTo(p.x+3, cy+2.5); ctx.lineTo(p.x+6, cy); ctx.lineTo(p.x+6, cy+5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#fff3c8'; ctx.fillRect(p.x-0.6, cy+1.5, 1.2, 1.2);
+  for(let i=0;i<3;i++){ const a = now*1.2 + i*2.1 + sd, r = 14; const x = p.x + Math.cos(a)*r, y = p.y - 26 + Math.sin(a*1.3)*16, al = 0.5 + 0.5*Math.sin(now*3 + i); ctx.fillStyle = `rgba(255,228,150,${al})`; ctx.fillRect(x-0.75, y-2, 1.5, 4); ctx.fillRect(x-2, y-0.75, 4, 1.5); }
 }
 
 </script>

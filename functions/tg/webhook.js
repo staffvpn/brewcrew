@@ -92,7 +92,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const text = msg.text.trim();
   const origin = new URL(request.url).origin;
 
-  if (text.startsWith('/') && env.DB && await adminCommand(env, chat, from, text)) return json({ ok: true });
+  if (text.startsWith('/') && env.DB && await adminCommand(env, chat, from, text, origin)) return json({ ok: true });
   if (text.startsWith('/admin')) {
     if (!ADMINS.includes(from)) {
       await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Эта команда только для администраторов.' });
