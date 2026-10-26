@@ -7,7 +7,7 @@ const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 const CITY = { msk: 'Москва', spb: 'Петербург', kzn: 'Казань', sochi: 'Сочи', nsk: 'Новосибирск', kgd: 'Калининград' };
 const ago = ts => { if (!ts) return 'никогда'; const m = Math.round((Date.now() - ts) / 60000); if (m < 2) return 'только что'; if (m < 60) return m + ' мин назад'; const h = Math.round(m / 60); if (h < 48) return h + ' ч назад'; return Math.round(h / 24) + ' дн назад'; };
-const OPN = { give: 'Начислить', take: 'Списать', set: 'Установить баланс', wipe: 'Удалить аккаунт', ent: 'Обновить покупки', msg: 'Сообщение' };
+const OPN = { give: 'Начислить', take: 'Списать', set: 'Установить баланс', wipe: 'Удалить аккаунт', ent: 'Обновить покупки', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга' };
 
 export function parseAmount(s) {
   if (!s) return NaN;

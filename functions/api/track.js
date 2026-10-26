@@ -28,7 +28,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
         str(s.cafe), str(s.city, 20), Math.round(num(s.level, 1e6)), num(s.money), num(s.earned), Math.round(num(s.rooms, 100)),
         Math.round(num(s.franchises, 1e4)), Math.round(num(s.bankrupt, 1e4)), dt, s.start ? 1 : 0, referrer),
     env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id),
-    env.DB.prepare('UPDATE players SET best_day = MAX(COALESCE(best_day,0), ?2) WHERE tg_id = ?1').bind(user.id, Math.min(num(s.best), 5e9))
+    env.DB.prepare('UPDATE players SET best_day = MAX(COALESCE(best_day,0), ?2) WHERE tg_id = ?1').bind(user.id, Math.min(num(s.best), 5e9)),
+    env.DB.prepare('UPDATE players SET snap = ?2 WHERE tg_id = ?1').bind(user.id, s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null)
   ]);
   // недельный турнир: принимаем только текущую неделю
   if (s.tw === tourWeek(now) && Number.isFinite(Number(s.tp))) {
