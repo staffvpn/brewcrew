@@ -73,7 +73,7 @@ export async function userCard(env, id) {
     [{ text: '+100 000', callback_data: `a:give:${id_}:100000` }, { text: '+1 000 000', callback_data: `a:give:${id_}:1000000` }, { text: '+10 000 000', callback_data: `a:give:${id_}:10000000` }],
     [{ text: '−100 000', callback_data: `a:take:${id_}:100000` }, { text: '−1 000 000', callback_data: `a:take:${id_}:1000000` }, { text: 'Обнулить', callback_data: `a:set:${id_}:0` }],
     [{ text: 'Подписка +30 дней', callback_data: `a:sub:${id_}:30` }, { text: p.banned ? 'Разбанить' : 'Забанить', callback_data: `a:ban:${id_}:${p.banned ? 0 : 1}` }],
-    [{ text: 'Лофт', callback_data: `a:int:${id_}:int_loft` }, { text: 'Сканди', callback_data: `a:int:${id_}:int_scandi` }, { text: 'Столовая', callback_data: `a:int:${id_}:int_soviet` }, { text: 'Неон', callback_data: `a:int:${id_}:int_neon` }],
+    [{ text: 'Лофт', callback_data: `a:int:${id_}:int_loft` }, { text: 'Фика', callback_data: `a:int:${id_}:int_scandi` }, { text: 'Столовая', callback_data: `a:int:${id_}:int_soviet` }, { text: 'Не спим', callback_data: `a:int:${id_}:int_neon` }],
     [{ text: 'Легенда 20 ур. в команду', callback_data: `a:legend:${id_}:20` }],
     [{ text: 'Отменить ожидающие', callback_data: `a:cancel:${id_}:0` }, { text: 'Удалить аккаунт', callback_data: `a:del:${id_}:0` }],
     [{ text: 'Обновить', callback_data: `a:card:${id_}:0` }]
