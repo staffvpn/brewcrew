@@ -1,6 +1,7 @@
 // POST /api/track — игра раз в минуту сообщает, что игрок онлайн, и его краткие показатели.
 import { json, mskDay, verifyInitData, dispatchReminders } from '../_lib.js';
 import { opsFor } from '../_admin.js';
+import { channelTick, tourWeek } from '../_channel.js';
 
 const num = (v, max = 1e15) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(n, max)) : 0; };
 const str = (v, len = 40) => (typeof v === 'string' ? v.slice(0, len) : null);
@@ -26,9 +27,17 @@ export async function onRequestPost({ request, env, waitUntil }) {
       .bind(user.id, str(user.username), str(user.first_name), str(user.language_code, 8), now,
         str(s.cafe), str(s.city, 20), Math.round(num(s.level, 1e6)), num(s.money), num(s.earned), Math.round(num(s.rooms, 100)),
         Math.round(num(s.franchises, 1e4)), Math.round(num(s.bankrupt, 1e4)), dt, s.start ? 1 : 0, referrer),
-    env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id)
+    env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id),
+    env.DB.prepare('UPDATE players SET best_day = MAX(COALESCE(best_day,0), ?2) WHERE tg_id = ?1').bind(user.id, Math.min(num(s.best), 5e9))
   ]);
-  if (waitUntil) waitUntil(dispatchReminders(env)); else await dispatchReminders(env);
+  // недельный турнир: принимаем только текущую неделю
+  if (s.tw === tourWeek(now) && Number.isFinite(Number(s.tp))) {
+    const tp = Math.max(-1e10, Math.min(Number(s.tp), 1e11));
+    await env.DB.prepare(`INSERT INTO tour (week, tg_id, profit, cafe, city, first_name, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+      ON CONFLICT(week, tg_id) DO UPDATE SET profit = ?3, cafe = ?4, city = ?5, first_name = ?6, updated_at = ?7`).bind(s.tw, user.id, tp, str(s.cafe), str(s.city, 20), str(user.first_name), now).run();
+  }
+  const origin = new URL(request.url).origin;
+  if (waitUntil) { waitUntil(dispatchReminders(env)); waitUntil(channelTick(env, origin)); } else await dispatchReminders(env);
   const me = await env.DB.prepare('SELECT banned FROM players WHERE tg_id = ?1').bind(user.id).first();
   let ops = [];
   try { ops = await opsFor(env, user.id); } catch {}

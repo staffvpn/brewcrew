@@ -1,6 +1,7 @@
 // POST /tg/webhook — сюда Telegram присылает сообщения боту. Команды: /start, /admin (только для админов).
 import { ADMINS, json, mskDay, tgApi, SHOP, dispatchReminders } from '../_lib.js';
 import { adminCommand, adminCallback } from '../_admin.js';
+import { channelTick } from '../_channel.js';
 
 const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/ |,/g, ' ');
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -53,7 +54,7 @@ async function adminReport(env) {
 }
 
 export async function onRequestPost({ request, env, waitUntil }) {
-  if (waitUntil) waitUntil(dispatchReminders(env));
+  if (waitUntil) { waitUntil(dispatchReminders(env)); waitUntil(channelTick(env, new URL(request.url).origin)); }
   if (env.WEBHOOK_SECRET && request.headers.get('X-Telegram-Bot-Api-Secret-Token') !== env.WEBHOOK_SECRET) {
     return json({ ok: false }, 403);
   }
