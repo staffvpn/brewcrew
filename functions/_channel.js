@@ -2,15 +2,15 @@
 // Вызывается фоном из /api/track и вебхука. Ничего не делает, пока не задан CHANNEL_ID.
 import { tgApi, getBot, mskDay } from './_lib.js';
 
-export const VERSION = '3';
+export const VERSION = '4';
 export const CHANGELOG = [
-  'Запара: толпа в зале, люди стоят в проходах, очередь на улице',
-  'Инвентаризация: кто таскает со склада и куда уходит молоко',
-  'Сотрудники хотят разного, похвала приедается',
-  'Корпоративные заказы на время, реклама, планёрка дня',
-  'Три новые сюжетные линии, у каждого своя очередь',
-  'Ещё 30 событий и просьбы постоянных гостей',
-  'Уникальные названия кофеен'
+  'Запара приходит чаще, мелкие наплывы каждые несколько минут',
+  'Казусы в запару: 15 секунд на решение, правильного ответа нет',
+  'Места растут: столики, барная стойка, диваны, веранда',
+  'Уровень кофейни открывает улучшения, меню и людей',
+  'Вызов служб и новые ЧП: потопы, газ, мыши, замки',
+  'Интерьеры дают бонусы к выручке',
+  'Приз турнира — легендарный сотрудник'
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -69,13 +69,13 @@ export async function channelTick(env, origin) {
     if (!(await posted(env, wkey))) {
       const top = (await env.DB.prepare('SELECT * FROM tour WHERE week = ?1 AND profit > 0 ORDER BY profit DESC LIMIT 5').bind(prev).all()).results || [];
       if (!top.length) { await mark(env, wkey, true, 'empty'); return; }
-      const prizes = [1000000, 500000, 250000];
+      const prizes = [20, 14, 10];
       for (let i = 0; i < Math.min(3, top.length); i++) {
-        await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, ?3, ?4, ?5, 0)').bind(top[i].tg_id, 'give', prizes[i], null, Date.now()).run();
-        await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, NULL, ?3, ?4, 0)').bind(top[i].tg_id, 'msg', `Ты занял ${i + 1} место в турнире района за неделю. Приз ${fmt(prizes[i])} ₽ уже в кассе.`, Date.now()).run();
+        await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, ?3, ?4, ?5, 0)').bind(top[i].tg_id, 'staff', prizes[i], `Приз за ${i + 1} место в турнире района.`, Date.now()).run();
+        await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, NULL, ?3, ?4, 0)').bind(top[i].tg_id, 'msg', `Ты занял ${i + 1} место в турнире района за неделю. Приз — легендарный сотрудник ${prizes[i]} уровня, он уже вышел на смену.`, Date.now()).run();
       }
       const total = await env.DB.prepare('SELECT COUNT(*) n FROM tour WHERE week = ?1').bind(prev).first();
-      const ok = await post(env, origin, 'events.jpg', ['<b>Итоги турнира района</b>', '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${CITY[t.city] || ''}, ${esc(t.first_name || 'аноним')} — ${fmt(t.profit)} ₽ прибыли${i < 3 ? ' · приз ' + fmt(prizes[i]) + ' ₽' : ''}`), '', `Участвовало кофеен: ${total ? total.n : top.length}. Новая неделя уже идёт.`].join('\n'));
+      const ok = await post(env, origin, 'events.jpg', ['<b>Итоги турнира района</b>', '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${CITY[t.city] || ''}, ${esc(t.first_name || 'аноним')} — ${fmt(t.profit)} ₽ прибыли${i < 3 ? ' · приз: легенда ' + prizes[i] + ' уровня' : ''}`), '', `Участвовало кофеен: ${total ? total.n : top.length}. Новая неделя уже идёт.`].join('\n'));
       await mark(env, wkey, ok); return;
     }
     // рекорд дня: если кто-то сделал выручку на 10% больше прежнего рекорда

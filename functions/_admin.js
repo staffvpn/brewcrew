@@ -7,7 +7,7 @@ const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 const CITY = { msk: 'Москва', spb: 'Петербург', kzn: 'Казань', sochi: 'Сочи', nsk: 'Новосибирск', kgd: 'Калининград' };
 const ago = ts => { if (!ts) return 'никогда'; const m = Math.round((Date.now() - ts) / 60000); if (m < 2) return 'только что'; if (m < 60) return m + ' мин назад'; const h = Math.round(m / 60); if (h < 48) return h + ' ч назад'; return Math.round(h / 24) + ' дн назад'; };
-const OPN = { give: 'Начислить', take: 'Списать', set: 'Установить баланс', wipe: 'Удалить аккаунт', ent: 'Обновить покупки', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименовать' };
+const OPN = { give: 'Начислить', take: 'Списать', set: 'Установить баланс', wipe: 'Удалить аккаунт', ent: 'Обновить покупки', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименовать', staff: 'Легенда в команду' };
 
 export function parseAmount(s) {
   if (!s) return NaN;
@@ -72,6 +72,8 @@ export async function userCard(env, id) {
     [{ text: '+100 000', callback_data: `a:give:${id_}:100000` }, { text: '+1 000 000', callback_data: `a:give:${id_}:1000000` }, { text: '+10 000 000', callback_data: `a:give:${id_}:10000000` }],
     [{ text: '−100 000', callback_data: `a:take:${id_}:100000` }, { text: '−1 000 000', callback_data: `a:take:${id_}:1000000` }, { text: 'Обнулить', callback_data: `a:set:${id_}:0` }],
     [{ text: 'Подписка +30 дней', callback_data: `a:sub:${id_}:30` }, { text: p.banned ? 'Разбанить' : 'Забанить', callback_data: `a:ban:${id_}:${p.banned ? 0 : 1}` }],
+    [{ text: 'Лофт', callback_data: `a:int:${id_}:int_loft` }, { text: 'Сканди', callback_data: `a:int:${id_}:int_scandi` }, { text: 'Столовая', callback_data: `a:int:${id_}:int_soviet` }, { text: 'Неон', callback_data: `a:int:${id_}:int_neon` }],
+    [{ text: 'Легенда 20 ур. в команду', callback_data: `a:legend:${id_}:20` }],
     [{ text: 'Отменить ожидающие', callback_data: `a:cancel:${id_}:0` }, { text: 'Удалить аккаунт', callback_data: `a:del:${id_}:0` }],
     [{ text: 'Обновить', callback_data: `a:card:${id_}:0` }]
   ];
@@ -166,6 +168,13 @@ export async function adminCallback(env, cq) {
     await addOp(env, id, 'ent', null, null, from);
     await answer('Подписка продлена на ' + val + ' дней'); await edit(await userCard(env, id)); return;
   }
+  if (act === 'int') {
+    if (!/^int_(loft|scandi|soviet|neon)$/.test(valS)) { await answer('Нет такого'); return; }
+    await env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at) VALUES (?1, ?2, ?3, 0, ?4, NULL)').bind('admin_' + valS + '_' + id, id, valS, Date.now()).run();
+    await addOp(env, id, 'ent', null, null, from);
+    await answer('Интерьер выдан. Включается в Настройках игры'); await edit(await userCard(env, id)); return;
+  }
+  if (act === 'legend') { await addOp(env, id, 'staff', val || 20, 'Подарок от администрации.', from); await answer('Легенда отправлена'); await edit(await userCard(env, id)); return; }
   if (act === 'ban') { await env.DB.prepare('UPDATE players SET banned = ?2 WHERE tg_id = ?1').bind(id, val ? 1 : 0).run(); await answer(val ? 'Забанен' : 'Разбанен'); await edit(await userCard(env, id)); return; }
   if (act === 'cancel') { const r = await env.DB.prepare('DELETE FROM admin_ops WHERE tg_id = ?1 AND applied_at IS NULL').bind(id).run(); await answer('Отменено: ' + (r.meta && r.meta.changes || 0)); await edit(await userCard(env, id)); return; }
   if (act === 'del') {
