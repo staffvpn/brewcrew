@@ -7,7 +7,7 @@ const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 const CITY = { msk: 'Москва', spb: 'Петербург', kzn: 'Казань', sochi: 'Сочи', nsk: 'Новосибирск', kgd: 'Калининград' };
 const ago = ts => { if (!ts) return 'никогда'; const m = Math.round((Date.now() - ts) / 60000); if (m < 2) return 'только что'; if (m < 60) return m + ' мин назад'; const h = Math.round(m / 60); if (h < 48) return h + ' ч назад'; return Math.round(h / 24) + ' дн назад'; };
-const OPN = { give: 'Начислить', take: 'Списать', set: 'Установить баланс', wipe: 'Удалить аккаунт', ent: 'Обновить покупки', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга' };
+const OPN = { give: 'Начислить', take: 'Списать', set: 'Установить баланс', wipe: 'Удалить аккаунт', ent: 'Обновить покупки', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименовать' };
 
 export function parseAmount(s) {
   if (!s) return NaN;
@@ -64,7 +64,8 @@ export async function userCard(env, id) {
     ...(hist.results && hist.results.length ? ['', '<b>Последние действия админов</b>', ...hist.results.map(o => `${new Date(o.created_at).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} ${OPN[o.op] || o.op}${o.amount != null && o.op !== 'msg' ? ' ' + fmt(o.amount) : ''}${o.applied_at ? '' : ' (ждёт)'}`)] : []),
     '',
     'Своя сумма: <code>/give ' + p.tg_id + ' 250к</code>, <code>/take ' + p.tg_id + ' 1млн</code>, <code>/set ' + p.tg_id + ' 0</code>',
-    'Написать игроку: <code>/msg ' + p.tg_id + ' текст</code>'
+    'Написать игроку: <code>/msg ' + p.tg_id + ' текст</code>',
+    'Переименовать: <code>/rename ' + p.tg_id + ' Новое название</code>'
   ].filter(x => x !== '');
   const id_ = p.tg_id;
   const kb = [
@@ -95,7 +96,7 @@ const send = (env, chat, r) => tgApi(env, 'sendMessage', { chat_id: chat, parse_
 export async function adminCommand(env, chat, from, text) {
   const [cmd, ...rest] = text.split(/\s+/);
   const c = cmd.toLowerCase().replace(/@\w+$/, '');
-  if (!['/u', '/user', '/find', '/give', '/take', '/set', '/msg', '/ban', '/unban', '/top', '/last', '/online', '/ops'].includes(c)) return false;
+  if (!['/u', '/user', '/find', '/give', '/take', '/set', '/msg', '/rename', '/ban', '/unban', '/top', '/last', '/online', '/ops'].includes(c)) return false;
   if (!ADMINS.includes(from)) { await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Эта команда только для администраторов.' }); return true; }
   if (c === '/top') { const r = (await env.DB.prepare('SELECT * FROM players ORDER BY earned DESC LIMIT 10').all()).results || []; await send(env, chat, listText('Топ-10 по заработку', r)); return true; }
   if (c === '/last') { const r = (await env.DB.prepare('SELECT * FROM players ORDER BY created_at DESC LIMIT 10').all()).results || []; await send(env, chat, listText('Последние 10 новых игроков', r)); return true; }
@@ -115,6 +116,13 @@ export async function adminCommand(env, chat, from, text) {
   const target = await findPlayers(env, rest[0]);
   if (target.length !== 1) { await send(env, chat, { text: target.length ? 'Нашлось несколько игроков, укажи ID.' : 'Игрок не найден. Формат: <code>' + c + ' ID сумма</code>' }); return true; }
   const id = target[0].tg_id;
+  if (c === '/rename') {
+    const nn = rest.slice(1).join(' ').trim().slice(0, 28);
+    if (nn.length < 2) { await send(env, chat, { text: 'Формат: <code>/rename ID Новое название</code>' }); return true; }
+    await addOp(env, id, 'rename', null, nn, from);
+    await env.DB.prepare('UPDATE players SET cafe = ?2 WHERE tg_id = ?1').bind(id, nn).run();
+    await send(env, chat, await userCard(env, id)); return true;
+  }
   if (c === '/msg') {
     const msg = rest.slice(1).join(' ').trim();
     if (!msg) { await send(env, chat, { text: 'Формат: <code>/msg ID текст</code>' }); return true; }

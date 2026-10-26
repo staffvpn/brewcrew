@@ -11,5 +11,6 @@ export async function onRequestPost({ request, env }) {
   const subUntil = rows.filter(r => r.item === 'sub_owner').reduce((a, r) => Math.max(a, r.expires_at || 0), 0);
   const interiors = [...new Set(rows.filter(r => r.item.startsWith('int_')).map(r => r.item))];
   const tips = rows.filter(r => r.item.startsWith('tip_')).reduce((a, r) => a + r.stars, 0);
-  return json({ ok: true, sub: subUntil > now ? subUntil : 0, interiors, tips });
+  const renames = rows.filter(r => r.item === 'rename').length;
+  return json({ ok: true, sub: subUntil > now ? subUntil : 0, interiors, tips, renames });
 }

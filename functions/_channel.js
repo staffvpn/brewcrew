@@ -2,15 +2,15 @@
 // Вызывается фоном из /api/track и вебхука. Ничего не делает, пока не задан CHANNEL_ID.
 import { tgApi, getBot, mskDay } from './_lib.js';
 
-export const VERSION = '7.0';
+export const VERSION = '3';
 export const CHANGELOG = [
-  'Запара теперь настоящая: толпа заходит разом, зал забит до двери',
-  'Злой гость уходит — его лицо на весь экран и отзыв на картах',
-  'Собеседования: три вопроса, и видно, кто врёт про опыт',
-  'Гости и бариста говорят, персонажи событий заходят в зал',
-  'Итог дня кассовым чеком, газета «пока тебя не было»',
-  'Поставщики, банка для чаевых, визиты к друзьям с тараканами',
-  'Каждый уровень кофейни что-то открывает, улучшения видно в зале'
+  'Запара: толпа в зале, люди стоят в проходах, очередь на улице',
+  'Инвентаризация: кто таскает со склада и куда уходит молоко',
+  'Сотрудники хотят разного, похвала приедается',
+  'Корпоративные заказы на время, реклама, планёрка дня',
+  'Три новые сюжетные линии, у каждого своя очередь',
+  'Ещё 30 событий и просьбы постоянных гостей',
+  'Уникальные названия кофеен'
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -75,17 +75,17 @@ export async function channelTick(env, origin) {
         await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, NULL, ?3, ?4, 0)').bind(top[i].tg_id, 'msg', `Ты занял ${i + 1} место в турнире района за неделю. Приз ${fmt(prizes[i])} ₽ уже в кассе.`, Date.now()).run();
       }
       const total = await env.DB.prepare('SELECT COUNT(*) n FROM tour WHERE week = ?1').bind(prev).first();
-      const ok = await post(env, origin, 'events.jpg', ['<b>Итоги турнира района</b>', '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${CITY[t.city] || ''} — ${fmt(t.profit)} ₽ прибыли${i < 3 ? ' · приз ' + fmt(prizes[i]) + ' ₽' : ''}`), '', `Участвовало кофеен: ${total ? total.n : top.length}. Новая неделя уже идёт.`].join('\n'));
+      const ok = await post(env, origin, 'events.jpg', ['<b>Итоги турнира района</b>', '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${CITY[t.city] || ''}, ${esc(t.first_name || 'аноним')} — ${fmt(t.profit)} ₽ прибыли${i < 3 ? ' · приз ' + fmt(prizes[i]) + ' ₽' : ''}`), '', `Участвовало кофеен: ${total ? total.n : top.length}. Новая неделя уже идёт.`].join('\n'));
       await mark(env, wkey, ok); return;
     }
     // рекорд дня: если кто-то сделал выручку на 10% больше прежнего рекорда
-    const best = await env.DB.prepare('SELECT tg_id, cafe, city, best_day FROM players ORDER BY best_day DESC LIMIT 1').first();
+    const best = await env.DB.prepare('SELECT tg_id, cafe, city, first_name, best_day FROM players ORDER BY best_day DESC LIMIT 1').first();
     if (best && best.best_day >= 200000) {
       const rec = await posted(env, 'record');
       const prevRec = rec ? Number(rec.info) || 0 : 0;
       const dkey = 'rec_' + mskDay();
       if (best.best_day > prevRec * 1.1 && !(await posted(env, dkey))) {
-        const ok = await post(env, origin, 'events.jpg', ['<b>Новый рекорд района</b>', '', `Кофейня «${esc(best.cafe || '?')}» (${CITY[best.city] || ''}) сделала ${fmt(best.best_day)} ₽ выручки за один день.`, '', 'Кто следующий?'].join('\n'));
+        const ok = await post(env, origin, 'events.jpg', ['<b>Новый рекорд района</b>', '', `Кофейня «${esc(best.cafe || '?')}» (${CITY[best.city] || ''}, владелец ${esc(best.first_name || 'аноним')}) сделала ${fmt(best.best_day)} ₽ выручки за один день.`, '', 'Кто следующий?'].join('\n'));
         await mark(env, dkey, ok); await mark(env, 'record', ok, String(best.best_day)); return;
       }
     }
