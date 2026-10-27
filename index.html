@@ -523,6 +523,7 @@ body{background:var(--bg) radial-gradient(120% 60% at 50% 0%, #2c1e15 0%, #1d141
 @keyframes bootsteam{0%{transform:translateY(0);opacity:.7}100%{transform:translateY(-14px);opacity:0}}
 @keyframes bootbar{0%{left:-30%}100%{left:100%}}
 .friend{margin-bottom:6px}.friend .btn{grid-row:1/5 !important}.friend span i{font-style:normal;font-weight:700;color:#7a4a1c}
+.refstat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}.refstat div{background:rgba(255,255,255,.4);padding:6px;text-align:center;display:flex;flex-direction:column}.refstat b{font-size:16px;color:#3a2412}.refstat span{font-size:11px;color:#5a4430}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -6002,10 +6003,12 @@ let CFG = {bot:null, app:null, channel:null};
 function loadConfig(){ fetch('/api/config').then(r=>r.json()).then(c=>{ if(c && c.ok) CFG = c; structDirty = true; }).catch(()=>{}); }
 function loadFriends(claim){ if(!tg || !tg.initData) return Promise.resolve(null); return apiPost('/api/friends', claim?{claim:true}:{}).then(r=>{ if(r && r.ok){ FR.loaded = Date.now(); FR.friends = r.friends||[]; FR.inviter = r.inviter; FR.unclaimed = r.unclaimed||0; FR.id = r.id; if(r.granted){ const sum = r.granted*150000; income(sum); toast('Награда за друзей: +'+fmt(sum)+' ₽'); sfx('level'); save(); } structDirty = true; } return r; }).catch(()=>null); }
 function myId(){ return (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) || FR.id; }
-function inviteLink(){ const id = myId(); if(!CFG.bot || !id) return 'https://brewcrew.pages.dev'; return CFG.app ? `https://t.me/${CFG.bot}/${CFG.app}?startapp=ref_${id}` : `https://t.me/${CFG.bot}?start=ref_${id}`; }
-function invite(){ const url = inviteLink(), txt = 'Открыл кофейню «'+S.name+'» в Brew Crew. Заходи, по моей ссылке +100 000 ₽ на старте, а твоя кофейня появится в моём районе.';
+function inviteLink(){ const id = myId(); if(!CFG.bot || !id) return ''; return `https://t.me/${CFG.bot}?start=ref_${id}`; }
+function withLink(fn){ if(inviteLink()) return fn(inviteLink()); fetch('/api/config').then(r=>r.json()).then(c=>{ if(c && c.ok) CFG = c; const u = inviteLink(); if(u) fn(u); else toast('Не получилось сделать ссылку. Открой игру из Telegram'); }).catch(()=>toast('Нет связи, попробуй ещё раз')); }
+function invite(){ withLink(url=>{ const txt = 'Открыл кофейню «'+S.name+'» в Brew Crew. Заходи по моей ссылке: +100 000 ₽ на старте.';
   if(tg && tg.openTelegramLink){ tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(txt)); return; }
-  try{ navigator.clipboard.writeText(txt+' '+url).then(()=>toast('Ссылка скопирована')); }catch(e){} }
+  try{ navigator.clipboard.writeText(txt+' '+url).then(()=>toast('Ссылка скопирована')); }catch(e){} }); }
+function copyInvite(){ withLink(url=>{ try{ navigator.clipboard.writeText(url).then(()=>toast('Ссылка скопирована: '+url)).catch(()=>toast(url)); }catch(e){ toast(url); } }); }
 function agoShort(ts){ if(!ts) return 'не заходил'; const m = Math.round((Date.now()-ts)/60000); if(m < 5) return 'в игре'; if(m < 60) return 'был '+m+' мин назад'; const h = Math.round(m/60); if(h < 24) return 'был '+h+' ч назад'; return 'был '+Math.round(h/24)+' дн. назад'; }
 function friendRow(f, label){
   const L = f.level||1, city = f.city==='spb'?'Петербург':f.city==='msk'?'Москва':(f.city||'');
@@ -6017,8 +6020,9 @@ function friendRow(f, label){
 }
 function renderDistrict(p){
   if(tg && tg.initData && Date.now() - FR.loaded > 120000){ FR.loaded = Date.now(); loadFriends(); }
-  const paid = FR.friends.filter(f=>f.ref_paid).length;
-  const fc = el(`<div class="card note kraft"><div class="t">Друзья по району</div><div class="d">Позови друга: он начнёт с +100 000 ₽, а когда дойдёт до 3 уровня, тебе придёт +150 000 ₽. Деньги начисляются сами.</div>${FR.friends.length?`<div class="d">Пригласил: <b>${FR.friends.length}</b> · наград получено: <b>${paid}</b> (${fmt(paid*150000)} ₽)</div>`:''}<div class="friends"></div><div class="row wrap"><button class="btn">Позвать друга</button></div></div>`);
+  const paid = FR.friends.filter(f=>f.ref_paid).length, wait = FR.friends.length - paid;
+  const fc = el(`<div class="card note kraft"><div class="t">Друзья по району</div><div class="d">Позови друга: он начнёт с +100 000 ₽, а когда дойдёт до 3 уровня, тебе придёт +150 000 ₽. Деньги начисляются сами.</div><div class="refstat"><div><b class="num">${FR.friends.length}</b><span>пригласил</span></div><div><b class="num">${fmt(paid*150000)} ₽</b><span>бонусов получено</span></div><div><b class="num">${wait}</b><span>ждут 3 уровня</span></div></div><div class="friends"></div><div class="row wrap"><button class="btn">Позвать друга</button><button class="btn ghost cpl">Скопировать ссылку</button></div></div>`);
+  fc.querySelector('.cpl').onclick = copyInvite;
   const fl = fc.querySelector('.friends');
   if(FR.inviter) fl.appendChild(friendRow(FR.inviter, 'пригласил тебя'));
   FR.friends.forEach(f=>fl.appendChild(friendRow(f)));
@@ -6086,7 +6090,7 @@ function shareStory(){
   if(!tg || !tg.initData){ share('день '+S.day+', рейтинг '+S.rep.toFixed(1)); return; }
   toast('Готовлю карточку...');
   apiPost('/api/card', {png:makeCard()}).then(r=>{ if(!r || !r.ok){ toast('Не получилось сделать карточку'); return; }
-    if(tg.shareToStory && tg.isVersionAtLeast && tg.isVersionAtLeast('7.8')){ const prm = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.is_premium; const o = {text:'Моя кофейня «'+S.name+'» в Brew Crew'}; if(prm) o.widget_link = {url:inviteLink(), name:'Играть'}; try{ tg.shareToStory(r.url, o); }catch(e){ toast('Сторис недоступны в этой версии Telegram'); } }
+    if(tg.shareToStory && tg.isVersionAtLeast && tg.isVersionAtLeast('7.8')){ const prm = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.is_premium; const o = {text:'Моя кофейня «'+S.name+'» в Brew Crew'}; if(prm && inviteLink()) o.widget_link = {url:inviteLink(), name:'Играть'}; try{ tg.shareToStory(r.url, o); }catch(e){ toast('Сторис недоступны в этой версии Telegram'); } }
     else toast('Сторис недоступны в этой версии Telegram'); }).catch(()=>toast('Нет связи с сервером'));
 }
 function sendCard(){

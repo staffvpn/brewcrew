@@ -57,7 +57,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   } else if (text.startsWith('/paysupport')) {
     await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Проблема с покупкой? Напиши, что купил и когда, мы разберёмся и при необходимости вернём звёзды.' });
   } else if (text.startsWith('/start') || text.startsWith('/play')) {
-    try { const rid = parseRef(text.split(' ')[1]); if (rid && env.DB && msg.from) await bindReferrer(env, msg.from, rid); } catch {}
+    try { const rid = parseRef(text.split(' ')[1]); if (rid && env.DB && msg.from) await bindReferrer(env, msg.from, rid, 'bot'); } catch {}
     await tgApi(env, 'sendMessage', { chat_id: chat,
       text: 'Brew Crew — кофейня, где все на грани. Нанимай команду, прокачивай зал, разбирайся с проверками, прогулами и гусями. 18+',
       reply_markup: { inline_keyboard: [[{ text: 'Открыть кофейню', web_app: { url: origin + (text.split(' ')[1] ? '?tgWebAppStartParam=' + encodeURIComponent(text.split(' ')[1]) : '') } }]] } });

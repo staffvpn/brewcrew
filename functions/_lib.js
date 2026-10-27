@@ -86,19 +86,30 @@ export async function getBot(env) {
 export const REF_START = 100000, REF_REWARD = 150000, REF_WINDOW = 3 * 86400000;
 const escH = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 export function parseRef(v) { const m = typeof v === 'string' ? v.match(/^ref_(\d{3,15})$/) : null; return m ? Number(m[1]) : null; }
-export async function bindReferrer(env, user, refId) {
-  if (!refId || !user || refId === user.id) return false;
+async function refLog(env, uid, ref, src, res) { try { await env.DB.prepare('INSERT INTO ref_log (tg_id, ref, src, res, at) VALUES (?1, ?2, ?3, ?4, ?5)').bind(uid, ref, src || null, res, Date.now()).run(); } catch {} }
+// Привязка: друг без пригласившего, новый (до 3 суток) или ещё невысокого уровня (до 5). force — ручная привязка из админки.
+export async function bindReferrer(env, user, refId, src, force) {
+  if (!refId || !user || !user.id) return false;
+  if (refId === user.id) { await refLog(env, user.id, refId, src, 'self'); return false; }
   const inv = await env.DB.prepare('SELECT tg_id, first_name, referrer FROM players WHERE tg_id = ?1').bind(refId).first();
-  if (!inv || inv.referrer === user.id) return false;
+  if (!inv) { await refLog(env, user.id, refId, src, 'no_inviter'); return false; }
+  if (inv.referrer === user.id) { await refLog(env, user.id, refId, src, 'circular'); return false; }
   const now = Date.now();
   await env.DB.prepare('INSERT OR IGNORE INTO players (tg_id, username, first_name, lang, created_at, last_seen, sessions) VALUES (?1, ?2, ?3, ?4, ?5, 0, 0)')
     .bind(user.id, user.username || null, user.first_name || null, user.language_code || null, now).run();
-  const r = await env.DB.prepare('UPDATE players SET referrer = ?2 WHERE tg_id = ?1 AND referrer IS NULL AND created_at > ?3')
-    .bind(user.id, refId, now - REF_WINDOW).run();
-  if (!(r.meta && r.meta.changes)) return false;
+  const r = force
+    ? await env.DB.prepare('UPDATE players SET referrer = ?2 WHERE tg_id = ?1 AND (referrer IS NULL OR referrer != ?2)').bind(user.id, refId).run()
+    : await env.DB.prepare('UPDATE players SET referrer = ?2 WHERE tg_id = ?1 AND referrer IS NULL AND (created_at > ?3 OR COALESCE(level, 1) <= 5)').bind(user.id, refId, now - REF_WINDOW).run();
+  if (!(r.meta && r.meta.changes)) {
+    const me = await env.DB.prepare('SELECT referrer, level FROM players WHERE tg_id = ?1').bind(user.id).first();
+    if (!(me && me.referrer === refId)) await refLog(env, user.id, refId, src, me && me.referrer ? 'has_other' : 'too_old');
+    return false;
+  }
+  await refLog(env, user.id, refId, src, 'ok');
   await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at) VALUES (?1, 'refgift', ?2, ?3, ?4)")
     .bind(user.id, REF_START, 'Бонус за вход по приглашению: +100 000 ₽', now).run();
   try { await tgApi(env, 'sendMessage', { chat_id: refId, parse_mode: 'HTML', text: `По твоей ссылке пришёл <b>${escH(user.first_name || 'друг')}</b>. Когда он дойдёт до 3 уровня, тебе придёт 150 000 ₽.` }); } catch {}
+  try { await payReferrer(env, user.id); } catch {}
   return true;
 }
 // Награда пригласившему, когда друг дошёл до 3 уровня. Выдаётся один раз за каждого друга.

@@ -1,7 +1,7 @@
 // Админка в боте: одна панель-сообщение с кнопками, которое редактируется на месте.
 // Состояние игры хранится на устройстве игрока, поэтому изменения ставятся в очередь (admin_ops)
 // и применяются игрой при следующем выходе на связь.
-import { ADMINS, tgApi, mskDay, SHOP } from './_lib.js';
+import { ADMINS, tgApi, mskDay, SHOP, bindReferrer } from './_lib.js';
 import { post as channelPost, tourWeek } from './_channel.js';
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -120,7 +120,7 @@ async function vCard(env, id, note) {
     [B('Стили и подписка', 'p:ust:' + id), B('Легенда в команду', 'p:uleg:' + id)],
     [B('Переименовать', 'p:uren:' + id), B('Выдать уровень', 'p:ulvl:' + id)],
     [B('История', 'p:uh:' + id), B(`Друзья (${fr.n || 0})`, 'p:ufr:' + id)],
-    ...(p.referrer ? [[B('Кто пригласил', 'p:u:' + p.referrer)]] : []),
+    [...(p.referrer ? [B('Кто пригласил', 'p:u:' + p.referrer)] : []), B(p.referrer ? 'Сменить пригласившего' : 'Привязать к пригласившему', 'p:uref:' + id)],
     [B(p.banned ? 'Разбанить' : 'Забанить', 'p:uban:' + id), B('Удалить аккаунт', 'p:udel:' + id)],
     ...(pd.length ? [[B('Отменить ожидающие (' + pd.length + ')', 'p:ucan:' + id)]] : []),
     [B('‹ Все игроки', 'p:pl:last:0'), B('Обновить', 'p:u:' + id), ...HOME]
@@ -142,6 +142,10 @@ async function vRefs(env) {
   if (!rows.length) lines.push('Пока никто никого не привёл.');
   rows.forEach((r, i) => lines.push(`${i + 1}. ${esc(r.first_name || '?')} («${esc(r.cafe || '?')}») — ${r.n}, до 3 ур.: ${r.act}, наград ${r.paid}`));
   if (last.length) { lines.push('', '<b>Последние пришедшие по ссылке</b>'); last.forEach(f => lines.push(`${esc(f.first_name || '?')} · ур. ${f.level} · ${when(f.created_at)} · от <code>${f.referrer}</code>`)); }
+  let log = []; try { log = (await env.DB.prepare('SELECT l.tg_id, l.ref, l.src, l.res, l.at, p.first_name FROM ref_log l LEFT JOIN players p ON p.tg_id = l.tg_id ORDER BY l.id DESC LIMIT 10').all()).results || []; } catch {}
+  const RES = { ok: 'засчитан', self: 'своя ссылка', no_inviter: 'пригласивший не найден', circular: 'пригласивший сам пришёл от него', has_other: 'уже от другого', too_old: 'старый игрок' };
+  const SRC = { bot: 'бот', app: 'игра', admin: 'админ' };
+  if (log.length) { lines.push('', '<b>Журнал переходов по ссылкам</b>'); log.forEach(l => lines.push(`${when(l.at)} · ${esc(l.first_name || l.tg_id)} → <code>${l.ref}</code> · ${SRC[l.src] || l.src || ''} · ${RES[l.res] || l.res}`)); }
   const kb = []; for (let i = 0; i < rows.length && i < 10; i += 2) kb.push(rows.slice(i, i + 2).map(r => B((r.first_name || '?').slice(0, 18) + ' · ' + r.n, 'p:ufr:' + r.id)));
   kb.push([B('Обновить', 'p:refs'), ...HOME]);
   return { text: lines.join('\n'), kb };
@@ -233,6 +237,7 @@ export async function adminInput(env, chat, from, msgId, text) {
   if (m === 'find') { const r = await findPlayers(env, text); if (r.length === 1) { await done(await vCard(env, r[0].tg_id)); return true; } { await done({ text: r.length ? `<b>Нашлось: ${r.length}</b>\n\nВыбери игрока.` : 'Никого не нашлось. Попробуй ID, @ник, имя или название кофейни.', kb: [...r.map(p => [playerBtn(p)]), [B('Искать ещё', 'p:find'), ...HOME]] }); return true; } }
   if (m === 'amt') { const a = parseAmount(text); if (!Number.isFinite(a) || a < 0 || a > 1e12) { await show({ text: 'Не понял сумму. Примеры: 50000, 250к, 1.5млн', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; } await addOp(env, data.id, data.op, a, null, from); { await done(await vCard(env, data.id, `${OPN[data.op]}: ${fmt(a)} ₽. Применится при входе игрока`)); return true; } }
   if (m === 'msg') { await addOp(env, data.id, 'msg', null, text.slice(0, 500), from); const r = await tgApi(env, 'sendMessage', { chat_id: data.id, text: 'Сообщение от команды Brew Crew:\n\n' + text.slice(0, 3500) }); { await done(await vCard(env, data.id, r && r.ok ? 'Сообщение ушло в бота и покажется в игре' : 'В бота не дошло, но покажется в игре')); return true; } }
+  if (m === 'ref') { const rid = Number(String(text).replace(/\D/g, '')); const p = await env.DB.prepare('SELECT tg_id, first_name, username FROM players WHERE tg_id = ?1').bind(data.id).first(); const ok = rid && p ? await bindReferrer(env, { id: p.tg_id, first_name: p.first_name, username: p.username }, rid, 'admin', true) : false; await done(await vCard(env, data.id, ok ? 'Привязан к ' + rid + '. Бонусы начислены' : 'Не получилось: проверь ID пригласившего')); return true; }
   if (m === 'lvl') { const n = parseInt(text, 10); if (!(n >= 1 && n <= 60)) { await show({ text: 'Нужно число от 1 до 60.', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; } await addOp(env, data.id, 'level', n, null, from); await env.DB.prepare('UPDATE players SET level = ?2 WHERE tg_id = ?1').bind(data.id, n).run(); { await done(await vCard(env, data.id, 'Уровень ' + n + ' поставится при входе игрока')); return true; } }
   if (m === 'ren') { const nn = text.trim().slice(0, 28); if (nn.length < 2) { await show({ text: 'Слишком коротко. Пришли новое название ещё раз.', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; } await addOp(env, data.id, 'rename', null, nn, from); await env.DB.prepare('UPDATE players SET cafe = ?2 WHERE tg_id = ?1').bind(data.id, nn).run(); { await done(await vCard(env, data.id, 'Название поменяется в игре при входе')); return true; } }
   if (m === 'all') {
@@ -276,6 +281,7 @@ export async function adminCallback(env, cq) {
     case 'uh': await edit(await vHistory(env, id)); return answer('');
     case 'ufr': await edit(await vFriends(env, id)); return answer('');
     case 'refs': await edit(await vRefs(env)); return answer('');
+    case 'uref': return wait('ref', { id }, ask('Привязать к пригласившему', 'Пришли ID игрока, который пригласил. Другу придёт 100 000 ₽, пригласившему 150 000 ₽, когда друг дойдёт до 3 уровня (если уже дошёл — сразу).', 'p:u:' + id));
     case 'ulvl': return wait('lvl', { id }, ask('Выдать уровень', 'Пришли номер уровня от 1 до 60. Уровень поставится при входе игрока.', 'p:u:' + id));
     case 'ust': await edit(await vStyles(env, id)); return answer('');
     case 'gi': { const k = parts[3]; if (!STYLES.some(s => s[0] === k)) return answer('Нет такого стиля'); await env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at) VALUES (?1, ?2, ?3, 0, ?4, NULL)').bind('admin_' + k + '_' + id, id, k, Date.now()).run(); await addOp(env, id, 'ent', null, null, from); await edit(await vStyles(env, id)); return answer('Стиль выдан'); }

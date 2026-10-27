@@ -30,7 +30,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare('UPDATE players SET snap = ?2 WHERE tg_id = ?1').bind(user.id, s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null)
   ]);
   // рефералы: привязка нового игрока и награда пригласившему за 3 уровень
-  try { if (refId) await bindReferrer(env, user, refId); await payReferrer(env, user.id); } catch {}
+  try { if (refId) await bindReferrer(env, user, refId, 'app'); await payReferrer(env, user.id); } catch {}
   // недельный турнир: принимаем только текущую неделю
   // «Кофейня недели района» — пост в канал, раз в неделю на игрока
   if (s.star && env.CHANNEL_ID) {
