@@ -102,7 +102,7 @@ export async function adminCommand(env, chat, from, text, origin) {
   const text0 = text;
   const [cmd, ...rest] = text.split(/\s+/);
   const c = cmd.toLowerCase().replace(/@\w+$/, '');
-  if (!['/u', '/user', '/find', '/give', '/take', '/set', '/msg', '/rename', '/posts', '/editpost', '/delpost', '/post', '/ban', '/unban', '/top', '/last', '/online', '/ops'].includes(c)) return false;
+  if (!['/u', '/user', '/find', '/give', '/take', '/set', '/msg', '/rename', '/posts', '/editpost', '/delpost', '/post', '/all', '/ban', '/unban', '/top', '/last', '/online', '/ops'].includes(c)) return false;
   if (!ADMINS.includes(from)) { await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Эта команда только для администраторов.' }); return true; }
   if (c === '/posts') {
     const r = (await env.DB.prepare('SELECT key, at, msg_id, caption FROM posts WHERE key != \'record\' ORDER BY at DESC LIMIT 12').all()).results || [];
@@ -162,6 +162,24 @@ export async function adminCommand(env, chat, from, text, origin) {
     await addOp(env, id, 'msg', null, msg.slice(0, 500), from);
     const r = await tgApi(env, 'sendMessage', { chat_id: id, text: 'Сообщение от команды Brew Crew:\n\n' + msg.slice(0, 3500) });
     await send(env, chat, { text: (r.ok ? 'Отправлено в бота и покажется в игре.' : 'В бота не дошло (игрок не писал боту), но покажется в игре.') });
+    return true;
+  }
+  if (c === '/all') {
+    const msg = text0.replace(/^\/all(@\w+)?\s*/i, '').trim();
+    if (!msg) { await send(env, chat, { text: 'Формат: <code>/all текст</code>\nКто в игре — увидит в игре. Остальным придёт сообщение от бота и покажется в игре при входе.' }); return true; }
+    const now = Date.now();
+    await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) SELECT tg_id, 'msg', NULL, ?1, ?2, ?3 FROM players WHERE COALESCE(banned,0) = 0").bind(msg.slice(0, 500), now, from.id).run();
+    const off = (await env.DB.prepare('SELECT tg_id FROM players WHERE COALESCE(banned,0) = 0 AND (last_seen IS NULL OR last_seen < ?1) ORDER BY last_seen DESC LIMIT 600').bind(now - 3 * 60000).all()).results || [];
+    const onl = await env.DB.prepare('SELECT COUNT(*) n FROM players WHERE COALESCE(banned,0) = 0 AND last_seen >= ?1').bind(now - 3 * 60000).first();
+    let ok = 0, bad = 0; const t0 = Date.now();
+    for (const p of off) {
+      if (Date.now() - t0 > 22000) break;
+      const r = await tgApi(env, 'sendMessage', { chat_id: p.tg_id, text: 'Сообщение от команды Brew Crew:\n\n' + msg.slice(0, 3500) });
+      if (r && r.ok) ok++; else bad++;
+      await new Promise(res => setTimeout(res, 40));
+    }
+    const left = off.length - ok - bad;
+    await send(env, chat, { text: `<b>Рассылка готова</b>\nВ игре сейчас: ${onl ? onl.n : 0}, увидят сразу.\nВ бота дошло: ${ok}. Не дошло: ${bad} (не писали боту или заблокировали).${left > 0 ? `\nНе успел отправить в бота: ${left}, они увидят в игре при входе.` : ''}` });
     return true;
   }
   if (c === '/ban' || c === '/unban') {

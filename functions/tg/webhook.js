@@ -48,7 +48,11 @@ async function adminReport(env) {
     '<code>/u</code> ID, @username, имя или кофейня — карточка игрока',
     '<code>/give ID сумма</code> · <code>/take ID сумма</code> · <code>/set ID сумма</code>',
     '<code>/msg ID текст</code> · <code>/ban ID</code> · <code>/unban ID</code>',
-    '<code>/online</code> · <code>/top</code> · <code>/last</code> · <code>/ops</code> — журнал действий'
+    '<code>/online</code> · <code>/top</code> · <code>/last</code> · <code>/ops</code> — журнал действий',
+    '',
+    '<b>Рассылка и канал</b>',
+    '<code>/all текст</code> — всем: в игре и в бота',
+    '<code>/posts</code> · <code>/post</code> · <code>/editpost</code> · <code>/delpost</code> — посты канала'
   ];
   return lines.join('\n');
 }
