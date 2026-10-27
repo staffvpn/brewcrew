@@ -566,6 +566,7 @@ const STOCK = {
   matcha:{n:'Матча', unit:'г', pack:100, packN:'100 г', price:600, cap:400, show:q=>Math.round(q)+' г'},
   sandwiches:{n:'Сэндвичи', unit:'шт', pack:10, packN:'10 шт', price:1500, cap:30, perish:2, show:q=>Math.round(q)+' шт'},
   pastry:{n:'Круассаны', unit:'шт', pack:12, packN:'12 шт', price:1100, cap:36, perish:1, show:q=>Math.round(q)+' шт'},
+  hoz:{n:'Хозтовары', unit:'наб', pack:10, packN:'10 наборов: тряпки, губки, перчатки, химия, таблетки для посудомойки', price:1800, cap:40, show:q=>(Math.round(q*10)/10).toString().replace('.',',')+' наб.'},
   food:{n:'Продукты для кухни', unit:'порц', pack:10, packN:'10 порций', price:1600, cap:30, perish:2, show:q=>Math.round(q)+' порц.'}
 };
 
@@ -618,7 +619,8 @@ const UPG = [
   {id:'showcase', n:'Витрина', base:20000, eff:L=>'Десерт берут: '+Math.round(dessertP(L)*100)+'%'},
   {id:'decor', n:'Интерьер', base:14000, eff:L=>'Гостей +'+Math.round(4*L)+'%, редкие гости с 6 ур.'},
   {id:'sign', n:'Вывеска', base:22000, eff:L=>'Гостей +'+Math.round(7*L)+'%'},
-  {id:'clean', n:'Уборка', base:8000, eff:L=>'Бардак уходит ×'+f2(1+0.5*L)+(L>=8?', робот-пылесос и посудомойка':L>=3?', посудомойка моет сама':', с 3 уровня — посудомойка')},
+  {id:'clean', n:'Уборка', base:8000, eff:L=>'Бардак уходит ×'+f2(1+0.5*L)+(L>=8?', робот-пылесос, табличка «мокрый пол»':L>=2?', табличка «мокрый пол»':', с 2 ур. — табличка «мокрый пол»')},
+  {id:'sink', n:'Мойка', base:9000, eff:L=>sinkLine(L)},
   {id:'storage', n:'Склад и холодильник', base:10000, eff:L=>'Вместимость +'+Math.round(25*L)+'%, молоко живёт дольше'},
   {id:'safety', n:'Безопасность', base:6000, eff:L=>L<1?'Нет огнетушителя':L<3?'Огнетушитель':L<6?'Сигнализация':'Охрана и камеры'},
   {id:'pets', n:'Питомцы', base:40000, eff:L=>'Гостей +'+(2*L)+'%, '+petsLine(L)}
@@ -708,7 +710,7 @@ function newState(name, city, carry){
     meters:{soul:10, pathos:10, chaos:5}, path:null,
     day:1, gm:9*60, hours:{open:0, close:24}, isOpen:false,
     rooms:[newRoom('main')], active:'main', staff:[], cands:[],
-    stock:{beans:5000, cups:600, syrup:1000, tea:100, matcha:0, milk:[{q:24000, exp:4}], desserts:[], food:[], sandwiches:[], pastry:[]},
+    stock:{beans:5000, cups:600, syrup:1000, tea:100, matcha:0, hoz:12, milk:[{q:24000, exp:4}], desserts:[], food:[], sandwiches:[], pastry:[]},
     orders:[], autoOrder:false, serviceContract:false, accountant:false,
     fin:{today:blankFin(), hist:[], taxAcc:0, taxDueDay:MONTH_DAYS, noCheck:0},
     debt:{daysNeg:0, stage:0, loan:0, loanDue:0}, closedUntil:0,
@@ -833,6 +835,7 @@ function autoOrder(){
     if(k==='desserts' && !isUnlocked('dessert')) continue;
     if(k==='sandwiches' && !isUnlocked('sandwich')) continue;
     if(k==='pastry' && !isUnlocked('croissant')) continue;
+    if(k==='hoz' && !S.hozAuto) continue;
     if(S.orders.some(o=>o.k===k)) continue;
     const cap = stockCap(k);
     if(bookQty(k) < cap*th){ const packs = Math.floor((cap*0.9 - bookQty(k)) / STOCK[k].pack); if(packs>0) orderStock(k, packs, 'normal'); }
@@ -2170,7 +2173,13 @@ function makePrizeStaff(lvl){
 // уровень грязи зала 0..1 считает сцена (мусор, посуда, грязные столы) и кладёт сюда
 function dirtLevel(id){ return clamp(((S.dirtL||{})[id]||0), 0, 1); }
 function dishCount(id){ return Math.round(((S.dishes||{})[id])||0); }
-function dishSlow(id){ const d = dishCount(id); return d >= 24 ? 0.55 : d >= 14 ? 0.75 : 1; }
+function sinkL(id){ const r = room(id||'main'); return r && r.upg ? (r.upg.sink||0) : 0; }
+function dishSlow(id){ const d = dishCount(id), ex = sinkL(id) >= 8 ? 10 : 0; return d >= 24+ex ? 0.55 : d >= 14+ex ? 0.75 : 1; }
+function sinkLine(L){ const p = []; p.push(L>=2 ? 'две раковины' : 'одна раковина'); if(L>=5) p.push(L>=12 ? 'профессиональная посудомойка' : 'посудомойка моет сама'); if(L>=8) p.push('сушилка: гора больше не тормозит бар'); if(L>=16) p.push('химия по графику: хозтоваров вдвое меньше'); return p.join(', ')+(L<2?'. С 2 ур. — вторая раковина, с 5 — посудомойка':L<5?'. С 5 ур. — посудомойка':''); }
+function washMul(id){ const L = sinkL(id); return (L >= 2 ? 1.6 : 1) * (1 + 0.05*L); }
+function hozUse(id, v){ const L = sinkL(id); const need = v * (L >= 16 ? 0.5 : 1); if(stockQty('hoz') < need) return false; takeStock({hoz:need}); return true; }
+function hozEmpty(){ return stockQty('hoz') < 0.1 && !(S.waterOnly && S.waterOnly > absNow()); }
+const HOZ_AUTO_COST = 250000;
 function dirtPatience(id){ return 1 - 0.45*dirtLevel(id); }
 function dirtWalk(id){ return 1 - 0.35*Math.max(0, dirtLevel(id) - 0.3); }
 const DIRT_LABEL = v => v < 0.15 ? 'чисто' : v < 0.35 ? 'терпимо' : v < 0.6 ? 'срач' : v < 0.8 ? 'свинарник' : 'вызывайте СЭС';
@@ -2222,7 +2231,10 @@ const FAULTS = {
   dishes:{t:'Не мыл посуду, пока гора росла', w:'phone'},
   mess:{t:'Не убрал рабочее место', w:'mess'},
   eat:{t:'Жрал витрину', w:'eat', hard:true},
-  rude:{t:'Нахамил гостю', w:'rude', hard:true}
+  rude:{t:'Нахамил гостю', w:'rude', hard:true},
+  broke:{t:'Разбила посуду', w:'broke'},
+  refuse:{t:'«Это не моя смена» — отказалась мыть пол', w:'refuse', hard:true},
+  argue:{t:'Устроила скандал с бариста из-за питчера', w:'argue'}
 };
 function addFault(s, k){ if(!s || s.isYou || !FAULTS[k]) return; s.fault = {k, at:absNow(), day:S.day}; s.faults = (s.faults||0) + 1; HOOK.struct(); }
 function freshFault(s){ return s && s.fault && absNow() - s.fault.at < 240 ? s.fault : null; }
@@ -3305,6 +3317,13 @@ def('toaster', {cat:'break', t:'Пожарная сигнализация', x:'�
  {t:'Выдернуть сигнализацию из стены', fx:()=>chance(0.5) ? {fx:{chaos:2}, out:'Тишина. Повезло: пожарные не приехали'} : {fx:{chaos:3, m:-40000, rep:-2}, out:'Пожарные всё равно приехали. Штраф за отключённую сигнализацию — 40 тысяч'}},
  {t:'Сказать, что это учебная тревога', fx:S=>{ if(HOOK.evacuate) HOOK.evacuate(0.5); return {fx:{rep:-1, pathos:1}, out:'Половина поверила и вышла. Вторая половина снимает видео'}; }}]});
 
+// бунт мойщицы без хозтоваров
+def('hoz_riot', {cat:'staff', t:'Мойщица бунтует', x:'{s} швырнула последнюю губку в раковину: «Чем мыть? Пальцем? Ни тряпок, ни перчаток, ни химии. Я не буду». Гора посуды растёт, бариста льют кофе в пластик.', o:[
+ {t:'Сбегать в «Магнит» за втридорога', fx:S=>{ spend(Math.round(STOCK.hoz.price*0.6), 'supply', 'Хозтовары в рознице'); S.stock.hoz = (stockQty('hoz')||0) + 3; return {fx:{mood:5}, out:'Три набора по цене пяти. Мойщица фыркнула, но надела перчатки'}; }},
+ {t:'Мыть просто водой', fx:S=>{ S.waterOnly = absNow() + 180; return {fx:{chaos:3, mood:-10}, out:'Три часа моем водой. Чашки жирные, мойщица ненавидит всех, гости замечают'}; }},
+ {t:'Пообещать заказать завтра', fx:{mood:-15}, out:'«Завтра» она уже слышала. Стоит руки в боки и смотрит в телефон.'}],
+ pre:inc=>{ const s = S.staff.find(x=>x.role==='Мойщица' && x.today==='work' && !x.isYou); if(!s) return false; inc.sid = s.id; }});
+
 /* ================= Brew Crew v3 — сцена и интерфейс ================= */
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -3364,7 +3383,7 @@ const QUEUE_X = 226, QUEUE_Y = 258;
 const PICK = [[112,258],[92,260],[132,260],[76,258],[150,258]];
 const DOOR = [322, 470];
 const SPR_H = 56, SPR_KID = 42, STAFF_H = 58;
-const MACH_X = [40, 74], PASS_X = [102, 124];
+const MACH_X = [56, 86], PASS_X = [108, 128];
 let TABLE_SLOTS = [], TABLES = [];
 const STOOLS = [16, 36, 56, 172, 192];
 function queuePos(i){ if(i===0) return [QUEUE_X, QUEUE_Y]; const gap = clamp((DOOR[1] - 30 - 292) / 6, 22, 38); return [264 + (i%2)*8, 292 + (i-1)*gap]; }
@@ -3380,7 +3399,7 @@ function layoutSlots(){
   if(typeof layoutWall==='function') layoutWall();
 }
 layoutSlots();
-const SPOT = {'Бариста':[[56,FEET],[90,FEET],[140,FEET],[160,FEET]], 'Кассир':[[236,FEET],[176,FEET]], 'Повар':[[268,170],[288,170]]};
+const SPOT = {'Мойщица':[[22,FEET]], 'Бариста':[[64,FEET],[96,FEET],[140,FEET],[160,FEET]], 'Кассир':[[236,FEET],[176,FEET]], 'Повар':[[268,170],[288,170]]};
 
 /* ---------- стили зала: базовый и четыре интерьера ---------- */
 const SCENE_STYLES = {
@@ -3647,7 +3666,7 @@ function sceneUpgradeProps(st, u, items, now, r){
   if(u.clean>=5){ ctx.fillStyle = 'rgba(255,255,255,.06)'; for(let i=0;i<6;i++) ctx.fillRect(30 + i*40, 260 + (i%3)*60, 24, 2); }
   if(u.clean>=8){ const t = now*0.25; const rx = 30 + (Math.sin(t)*0.5+0.5)*190, ry = 250 + (Math.cos(t*1.3)*0.5+0.5)*Math.max(20, H-280); items.push({y:ry, f:()=>{ EL(rx, ry, 9, 4.5, '#2a2a2e'); rect(rx-1, ry-2, 2, 1.5, '#4ab07a'); }}); }
   if(u.clean>=12){ items.push({y:DOOR[1]-40, f:()=>{ rect(286, DOOR[1]-62, 4, 22, '#bbb'); RR(283, DOOR[1]-66, 10, 6, 2, '#e8f0f8'); }}); }
-  if(u.storage>=1){ const n = Math.min(8, u.storage); for(let i=0;i<n;i++){ const cx = 6 + (i%8)*36, cy = BACK_Y + 18 + (i>=8?0:0); RR(cx+2, cy, 14, 10, 1, i%3 ? '#b8915f' : '#c9a477'); rect(cx+2, cy, 14, 1.5, 'rgba(0,0,0,.2)'); if(u.storage>=8+i) RR(cx+17, cy+2, 10, 8, 1, '#a9845a'); } }
+  if(u.storage>=1){ const n = Math.min(8, u.storage); for(let i=0;i<n;i++){ const cx = ((u.sink||0) >= 5 ? 42 : 6) + (i%8)*36, cy = BACK_Y + 18 + (i>=8?0:0); RR(cx+2, cy, 14, 10, 1, i%3 ? '#b8915f' : '#c9a477'); rect(cx+2, cy, 14, 1.5, 'rgba(0,0,0,.2)'); if(u.storage>=8+i) RR(cx+17, cy+2, 10, 8, 1, '#a9845a'); } }
   if(u.safety>=1){ items.push({y:BAR_TOP+40, f:()=>{ RR(W-14, BAR_TOP+16, 6, 14, 2, '#c03a2a'); rect(W-13, BAR_TOP+13, 4, 3, '#333'); }}); }
   if(u.safety>=3){ EL(W-12, 6, 2.5, 2.5, Math.sin(now*3)>0 ? '#e0574a' : '#7a2a2a'); }
   if(u.safety>=6){ rect(4, 4, 10, 6, '#2a2a2e'); rect(12, 5, 4, 4, '#3a3a3e'); ctx.fillStyle = Math.sin(now*4)>0.5 ? '#e0574a' : '#4a1a1a'; ctx.fillRect(6, 6, 2, 2); }
@@ -3692,11 +3711,11 @@ function drawRoom(id){
   // персонал за баром
   const items = [], behind = [];
   for(const s of workingStaff(id)){ staffSpr(s); const p = r.staff[s.id]; if(!p || p.x > W+4) continue;
-    const o = {y:p.y, f:()=>drawStaff(s,p,id)}; if(!p.walker && p.y <= FEET+1) behind.push(o); else items.push(o); }
+    const o = {y:p.y, f:()=>{ drawStaff(s,p,id); if(p.job && s.role==='Мойщица') drawMop(p, now); }}; if(!p.walker && p.y <= FEET+2) behind.push(o); else items.push(o); }
   behind.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
+  if(!def.outdoor) sceneSink(st, id, r, now);
   if(id==='main') sceneKitchenFront(st, now); else sceneKitchenFront(st, now);
   sceneBar(st, u, now, r);
-  drawDishPile(id);
   sceneLamps(st, u, now);
   // зал
   const n = tableCount(u.tables);
@@ -3707,14 +3726,14 @@ function drawRoom(id){
       items.push({y:s[1]-6, f:()=>sceneChair(st, cx, s[1], soft)});
       if(!shown[ti]){ shown[ti] = true; items.push({y:t.y+10.5, f:()=>sceneTable(st, t.x, t.y+10, u.tables, ti)}); }
     } else if(s[2]==='stool'){ items.push({y:s[1]+0.5, f:()=>sceneStool(st, s[0], s[1])}); } }
-  drawWallBar(st, id, items); drawDirt(id, r, items, now);
+  drawWallBar(st, id, items); drawDirt(id, r, items, now); drawWet(id, r, items, now);
   sceneUpgradeProps(st, u, items, now, r);
   for(const c of (r.crowd||[])) items.push({y:c.y, f:()=>{ const [b] = walkPose(c); shadow(c.x, c.y, 8); drawSprite(c.spr, c.x, c.y - b, c.h, c.flip, 0, c.state==='leave'?0.85:1); if(c.wait > 50 && c.state!=='leave') rect(c.x-1, c.y-c.h-6, 3, 4, '#e0574a'); }});
   for(const m of (r.mess||[])) items.push({y:m.y, f:()=>drawMess(m, now)});
   for(const g of r.guests){
     if(g.hidden) continue;
     const gs_ = g.state==='sit' ? slotOf(id, g.seat) : null; const gy = gs_ ? (gs_[2]==='stool' || gs_[2]==='wall' ? g.y - 1 : g.y) : g.y;
-    items.push({y: gy, f:()=>{ const [b,ro] = walkPose(g); if(g.state!=='sit') shadow(g.x, g.y, 10); drawSprite(g.spr, g.x, g.y - b, g.h, g.flip, ro);
+    items.push({y: gy, f:()=>{ const [b,ro] = walkPose(g); if(g.state!=='sit') shadow(g.x, g.y, 10); drawSprite(g.spr, g.x, g.y - b, g.h, g.flip, g.slipT > 0 ? (g.flip ? -1.25 : 1.25) : ro);
       if(g.state==='queue' && r.queue[0]===g && g.prog>0) progress(g.x, g.y-g.h-6, g.prog, '#7fc76a');
       if(g.state==='wait') bubble(g.x, g.y-g.h-4, 'cup');
       if(g.state==='sit') sceneProp(g, now); }});
@@ -3838,13 +3857,14 @@ function updateDirt(id, r){
 /* ---------- автоматика уборки по уровню улучшения ---------- */
 function cleanTick(id, r, dt){
   const u = room(id).upg; S.dishes = S.dishes || {};
-  if(u.clean >= 3 && (S.dishes[id]||0) > 0){ r.dwT = (r.dwT||0) + dt; const per = Math.max(1.2, 6 - u.clean*0.25); if(r.dwT >= per){ r.dwT = 0; S.dishes[id] = Math.max(0, S.dishes[id]-1); } }
+  if((u.sink||0) >= 5 && (S.dishes[id]||0) > 0 && !hozEmpty()){ r.dwT = (r.dwT||0) + dt; const per = Math.max(0.9, (u.sink >= 12 ? 3 : 5) - u.sink*0.12); if(r.dwT >= per){ r.dwT = 0; S.dishes[id] = Math.max(0, S.dishes[id]-1); hozUse(id, 0.02); } }
   if(u.clean >= 8 && (r.mess||[]).length){ r.rbT = (r.rbT||0) + dt; if(r.rbT > Math.max(8, 26 - u.clean)){ r.rbT = 0; r.mess.shift(); } }
   if(S.cleanUntil && S.cleanUntil > absNow()){ r.mess = []; for(const k in (r.dirty||{})) cleanDirty(id, k); S.dishes[id] = 0; }
 }
 
 /* ---------- поведение ходячих сотрудников ---------- */
 function staffWalk(id, r, s, p, dt){
+  if(s.role==='Мойщица') return washerWalk(id, r, s, p, dt);
   if(!p.walker){ const tg2 = s.role==='Бариста' ? baristaTarget(id, s, p) : s.role==='Кассир' ? p.home : p.home; if(s.role==='Кассир') p.flip = true; moveTo(p, tg2[0], tg2[1], 70, dt); return; }
   const legend3 = s.legendId===1 ? 3 : 1;
   const speed = 34 * (s.role==='Мойщица' ? 1.2 : 1) * Math.min(1.6, staffSpeed(s));
@@ -3935,6 +3955,110 @@ function drawDishPile(id){
   DISHPILE = {x:x0+20, y:base-8};
 }
 let DISHPILE = null;
+
+
+/* ================= v14: мойка слева за баром, мойщица живёт там ================= */
+const SINK_SPOT = [22, FEET];
+const EXIT_X = 256;
+function routeTo(p, tx, ty, sp, dt){
+  const HY = BAR_BOT + 14, inBack = p.y < HY - 1, tBack = ty < HY - 1;
+  if(inBack && !tBack){ if(p.y < FEET + 1 && Math.abs(p.x - EXIT_X) > 1.5){ moveTo(p, EXIT_X, FEET, sp, dt); return false; } moveTo(p, EXIT_X, HY, sp, dt); return false; }
+  if(!inBack && tBack){ if(Math.hypot(p.x - EXIT_X, p.y - HY) > 1.5){ moveTo(p, EXIT_X, HY, sp, dt); return false; } moveTo(p, EXIT_X, FEET, sp, dt); return false; }
+  if(inBack && tBack && p.y > FEET + 1){ moveTo(p, EXIT_X, FEET, sp, dt); return false; }
+  return moveTo(p, tx, ty, sp, dt);
+}
+const WASH_LINES = ['Опять гора','Кто кладёт питчер с молоком в раковину?!','Я вам не посудомойка. А, ну да','Горячей воды нет, мою холодной','Перчатки дырявые','Ещё одна чашка — и я ухожу'];
+const RIOT_LINES = ['Чем мыть? Пальцем?','Нет тряпок — нет мойки','Закажите хозы, потом поговорим','Я голыми руками это трогать не буду','Ни губки, ни химии. Бунт'];
+const REFUSE_LINES = ['Это не моя смена','Пол сам себя помоет','Я на мойке, а не на полу','Мне за пол не доплачивают'];
+const ARGUE_PAIRS = [['Кто опять кинул питчер с молоком?!','А куда мне его, в карман?'],['Чашки мне в раковину не кидай!','Так я ж аккуратно!'],['Ещё раз нальёшь мне в раковину кофе — пеняй на себя','Да ты ж сама там окурки тушишь'],['Твоя гора посуды, ты и мой!','Чего это моя?!']];
+function washerWalk(id, r, s, p, dt){
+  S.dishes = S.dishes || {};
+  const now = performance.now()/1000, sp = 42 * Math.min(1.6, staffSpeed(s)), legend = s.legendId===1 ? 3 : 1;
+  p.washing = false; p.riot = false;
+  // бунт без хозтоваров
+  if(hozEmpty() && !p.out){ p.riot = true; if(routeTo(p, SINK_SPOT[0], SINK_SPOT[1], sp, dt)){ p.flip = false; p.walk = false; }
+    if(!r.riotT || now - r.riotT > 9){ r.riotT = now; bubble2(0, 0, pick(RIOT_LINES), 2600, p); }
+    if(S.isOpen && !S.incidents.some(i=>i.id==='hoz_riot') && S.hozRiotDay !== S.day){ S.hozRiotDay = S.day; pushIncident('hoz_riot', {sid:s.id}); }
+    return; }
+  if(s.distract){ if(p.out){ p.out = false; p.goal = null; p.job = null; } if(routeTo(p, SINK_SPOT[0], SINK_SPOT[1], sp, dt)){ p.walk = false; p.flip = false; } return; }
+  // работа в зале
+  if(p.job){ p.job.t -= dt * staffSpeed(s) * legend; p.walk = false; p.mopT = now;
+    if(p.job.t <= 0){ const j = p.job; p.job = null;
+      if(j.kind==='mess'){ const i = r.mess.indexOf(j.m); if(i>=0){ r.mess.splice(i,1); meter('chaos', -0.5); hozUse(id, 0.06); r.wet = r.wet || []; r.wet.push({x:j.m.x, y:j.m.y, until:now + 25}); } }
+      if(j.kind==='table'){ cleanDirty(id, j.key); hozUse(id, 0.04); } }
+    return; }
+  if(p.out){
+    if(p.goal){ if(routeTo(p, p.goal.x, p.goal.y, sp, dt)){ const g = p.goal; p.goal = null;
+        if(g.kind==='mess' && r.mess.includes(g.m)) p.job = {kind:'mess', m:g.m, t:2.4};
+        else if(g.kind==='table' && (r.dirty||{})[g.key]) p.job = {kind:'table', key:g.key, t:1.6}; }
+      return; }
+    const ms = (r.mess||[]).slice().sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];
+    const waiter = workingStaff(id).some(x=>x.role==='Официант');
+    const dk = !waiter ? Object.keys(r.dirty||{})[0] : null;
+    if(dishCount(id) < 16 && ms){ p.goal = {kind:'mess', m:ms, x:ms.x+12, y:ms.y+4}; return; }
+    if(dishCount(id) < 16 && dk){ const spt = dirtySpot(id, dk); if(spt){ p.goal = {kind:'table', key:dk, x:spt[0], y:spt[1]}; return; } }
+    p.out = false;
+  }
+  // у раковины
+  if(!routeTo(p, SINK_SPOT[0], SINK_SPOT[1], sp, dt)) return;
+  p.walk = false; p.flip = true;
+  const messN = (r.mess||[]).length, dirtyN = Object.keys(r.dirty||{}).length, waiter = workingStaff(id).some(x=>x.role==='Официант');
+  if(S.isOpen && (messN >= 2 || (!waiter && dirtyN >= 2)) && dishCount(id) < 10 && !(p.refuseUntil > now)){
+    if(chance(0.15) && s.legendId!==1){ p.refuseUntil = now + 40; addFault(s, 'refuse'); bubble2(0, 0, pick(REFUSE_LINES), 2600, p); }
+    else { p.out = true; bubble2(0, 0, pick(['Пойду пол помою, раз никто','Ну кто тут насвинячил?','Разойдись, мою']), 2200, p); return; }
+  }
+  if(dishCount(id) > 0){ p.washing = true; p.washT = (p.washT||0) + dt * staffSpeed(s) * legend * washMul(id);
+    if(p.washT >= 1.8){ p.washT = 0;
+      if(!hozEmpty() && !(S.waterOnly > absNow())) hozUse(id, 0.03);
+      const brk = 0.008 * (s.mood < 40 ? 2 : 1) * (s.legendId===1 ? 0.2 : 1);
+      if(chance(brk)){ S.dishes[id] = Math.max(0, S.dishes[id] - 1); spend(150, 'other', 'Битая посуда'); addFault(s, 'broke'); bubble2(0, 0, pick(['ДЗЫНЬ!','Ой. Это была любимая чашка Гоши','Она сама выскользнула']), 2200, p); sfx('bad'); }
+      else S.dishes[id] = Math.max(0, S.dishes[id] - (sinkL(id) >= 2 ? 2 : 1) * (S.waterOnly > absNow() ? 0.5 : 1)); } }
+  // ругается с бариста
+  r.argT = (r.argT==null ? R(150, 300) : r.argT) - dt;
+  if(r.argT <= 0){ r.argT = R(180, 360); const b = workingStaff(id).find(x=>x.role==='Бариста' && !x.isYou && r.staff[x.id]); if(b && s.legendId!==1){ const pr = pick(ARGUE_PAIRS); bubble2(0, 0, pr[0], 3000, p); setTimeout(()=>bubble2(0, 0, pr[1], 2800, r.staff[b.id]), 1300); for(const x of [s, b]){ x.boostUntil = Date.now() + 45000; x.boostMul = 0.7; } addFault(s, 'argue'); } }
+  if(p.washing && (!r.washLine || now - r.washLine > R(40, 80))){ r.washLine = now; if(chance(0.5)) bubble2(0, 0, pick(WASH_LINES), 2400, p); }
+}
+/* мокрый пол: гости поскальзываются */
+function slipTick(id, r, g, dt){
+  if(g.slipT > 0){ g.slipT -= dt; g.walk = false; return true; }
+  if(!r.wet || !r.wet.length || !(g.state==='toQueue' || g.state==='toSeat' || g.state==='leave' || g.state==='toPick') || g.slipped) return false;
+  const now = performance.now()/1000; r.wet = r.wet.filter(w=>w.until > now);
+  const w = r.wet.find(w=>Math.hypot(w.x-g.x, (w.y-g.y)*1.4) < 12); if(!w) return false;
+  g.slipped = true; const sign = room(id).upg.clean >= 2;
+  if(!chance(sign ? 0.15 : 0.5)) return false;
+  g.slipT = 1.4; S.c.slips = (S.c.slips||0) + 1;
+  bubble2(0, 0, pick(sign ? ['Табличка же стояла. Бля','Я видел табличку. Не помогло'] : ['БЛЯ!','Кто пол намыл?!','Мой кофе! Мой копчик!','Я на вас в суд подам']), 2600, g);
+  r.mess = r.mess || []; if(r.mess.length < 6) r.mess.push({kind:'spill', x:g.x, y:g.y+2, t:0});
+  if(!sign){ repAdd(-0.01); meter('chaos', 1); }
+  return true;
+}
+/* отрисовка мойки */
+function sceneSink(st, id, r, now){
+  const L = sinkL(id), y0 = 170;
+  const w = r.staff && Object.values(r.staff).find(p=>p.washing);
+  // посудомойка в нижнем шкафу задней стойки
+  if(L >= 5){ rect(0, BACK_Y+5, 34, 30, '#b9c0c6'); rect(1, BACK_Y+6, 32, 3, '#d7dde2'); rect(3, BACK_Y+12, 28, 18, '#9aa3aa'); rect(26, BACK_Y+8, 4, 2, ((S.dishes||{})[id]||0) > 0 && Math.sin(now*4) > 0 ? '#7fd36a' : '#3a5a3a'); if(L >= 12) txt('PRO', 6, BACK_Y+9, '800 4px "Golos Text",sans-serif', '#4a5258'); }
+  // бутылки химии на задней стойке: видно, что хозы кончаются
+  const hq = stockQty('hoz'); if(hq > 0.1){ RR(2, BACK_Y-14, 4, 10, 1, '#e8c83a'); rect(2.5, BACK_Y-16, 3, 2, '#4a7ad8'); if(hq > 4){ RR(7, BACK_Y-12, 4, 8, 1, '#4a9ad8'); rect(7.5, BACK_Y-14, 3, 2, '#e8e8e8'); } }
+  // сушилка
+  if(L >= 8){ rect(33, 150, 1.5, 20, '#8a9298'); rect(45, 150, 1.5, 20, '#8a9298'); for(let i=0;i<3;i++) rect(33, 154+i*6, 13.5, 1, '#8a9298'); for(let i=0;i<4;i++) RR(34+i*3, 155, 2.4, 5, 0.6, '#f3e8d3'); }
+  // кран
+  rect(4, 154, 2.5, 16, '#9aa3aa'); rect(4, 154, 9, 2.5, '#9aa3aa'); rect(11, 154, 2.5, 4, '#9aa3aa');
+  if(w){ ctx.fillStyle = 'rgba(160,210,240,.75)'; ctx.fillRect(11.5, 158, 1.6, 12); for(let i=0;i<4;i++) EL(10 + i*5 + Math.sin(now*6+i)*1.5, y0+1 - ((now*10+i*3)%4), 1.6, 1.6, 'rgba(255,255,255,.85)'); }
+  // стол мойки
+  rect(0, y0, 48, 12, '#aeb6bc'); rect(0, y0, 48, 3, '#d7dde2');
+  RR(3, y0+3, 18, 5, 1, '#6f787f'); if(L >= 2) RR(25, y0+3, 18, 5, 1, '#6f787f');
+  // грязная гора на мойке
+  const d = dishCount(id); const n = Math.min(10, d);
+  for(let i=0;i<n;i++){ const col = i%5, row = Math.floor(i/5); RR(2 + col*8 + row*3, y0 - 7 - row*6, 6, 7, 1, '#e3d9c4'); rect(2 + col*8 + row*3, y0 - 7 - row*6, 6, 1.5, '#7a4a2a'); }
+  if(d > 10){ for(let i=0;i<Math.min(8, d-10);i++){ RR(46 + (i%4)*7, BAR_TOP - 7 - Math.floor(i/4)*6, 6, 7, 1, '#e3d9c4'); rect(46 + (i%4)*7, BAR_TOP - 7 - Math.floor(i/4)*6, 6, 1.5, '#7a4a2a'); } if(d > 18) txt('+'+(d-18), 76, BAR_TOP-10, '800 6px "Golos Text",sans-serif', '#e0574a'); }
+  DISHPILE = d ? {x:22, y:y0 - 4} : null;
+}
+function drawWet(id, r, items, now){
+  const sign = room(id).upg.clean >= 2;
+  for(const w of (r.wet||[])){ if(w.until < now) continue; items.push({y:w.y - 1, f:()=>{ EL(w.x, w.y, 14, 4.5, 'rgba(170,215,240,.35)'); EL(w.x-4, w.y-1, 4, 1.2, 'rgba(255,255,255,.5)'); if(sign){ ctx.fillStyle = '#f2c230'; ctx.beginPath(); ctx.moveTo(w.x+14, w.y-16); ctx.lineTo(w.x+9, w.y); ctx.lineTo(w.x+19, w.y); ctx.closePath(); ctx.fill(); txt('!', w.x+14, w.y-3, '800 7px sans-serif', '#1d1410', 'center'); } }}); }
+}
+function drawMop(p, now){ const a = Math.sin(now*8)*0.4; ctx.save(); ctx.translate(p.x+8, p.y-30); ctx.rotate(0.5 + a); rect(-1, 0, 2, 30, '#c9a24a'); rect(-5, 28, 10, 4, '#e8e2d4'); ctx.restore(); RR(p.x-20, p.y-10, 11, 10, 2, '#3a6ac0'); }
 
 layoutWall();
 const RT = {};
@@ -4046,6 +4170,7 @@ function simRoom(id, dt){
   const waiters = workingStaff(id).filter(s=>s.role==='Официант' && !s.distract);
   for(const g of r.guests){
     g.t += dt;
+    if(slipTick(id, r, g, dt)) continue;
     if(g.state==='toQueue' || g.state==='queue'){ const idx = r.queue.indexOf(g); const qp = queuePos(idx); if(moveTo(g, qp[0], qp[1], 46, dt)) g.state = 'queue'; }
     else if(g.state==='toPick'){ const p = PICK[Math.min(g.pi, PICK.length-1)]; if(moveTo(g, p[0], p[1], 46, dt)) g.state = 'wait'; }
     else if(g.state==='toSeat'){ const t = slotOf(id, g.seat); const sx = t[0], sy = t[2]==='stool' ? t[1]-3 : t[1]; if(moveTo(g, sx, sy, 46, dt)){ g.state = 'sit'; g.flip = t[2]==='table' ? t[4]===1 : t[2]==='wall' ? true : false; if(t[2]==='out') g.hidden = true; g.sawDirt = Math.max(g.sawDirt||0, dirtLevel(id)); g.sit = R(16,30) * (waiters.length ? 0.75 : 1) * (g.burst ? 2.2 : 1); g.act = g.kidG ? 'drink' : pick(['drink','drink','laptop','phone','sleep','read','phone']); } }
@@ -4064,7 +4189,7 @@ function simRoom(id, dt){
     if(s.distract && s.distract.kind==='chat' && !s.distract.g && !p.walker){ const gs = pickGuestSprite(); s.distract.g = {spr:gs.spr, h:SPR_H, x:DOOR[0], y:QUEUE_Y-2, t:0, walk:true, flip:false, chat:s.id, tx: clamp(p.x+6, 20, 200)}; r.guests.push(Object.assign(s.distract.g, {state:'chat'})); }
     if(s.distract && s.distract.kind==='chat' && s.distract.g && chance(dt/3) && id===S.active) sfx('babble', RI(3,6), R(150,320), 0.012);
     const gone = (s.distract && s.distract.kind==='smoke') || s.breakUntil > now;
-    if(gone){ moveTo(p, DOOR[0]+20, p.walker?DOOR[1]:FEET, 55, dt); continue; }
+    if(gone){ moveTo(p, DOOR[0]+20, (p.walker || p.y > FEET+2) ? DOOR[1] : FEET, 55, dt); continue; }
     staffWalk(id, r, s, p, dt);
   }
   for(const p of r.pets){ p.t += dt; if(moveTo(p, p.tx, p.ty, 18, dt)){ p.idle -= dt; if(p.idle<=0){ p.idle = R(3,9); p.tx = R(20,240); p.ty = R(250,H-8); } } }
@@ -4969,6 +5094,7 @@ function renderStock(p, id){
   rs.querySelector('.btn').onclick = () => { S.restock = S.restock===false; save(); renderSheet(); };
   rs.querySelectorAll('.chipbtn').forEach(b=>b.onclick=()=>{ S.restockAt = +b.dataset.v; save(); renderSheet(); });
   p.appendChild(rs);
+  { const ha = el(`<div class="card"><div class="row wrap"><span class="t">Хозтовары</span><span class="sp"></span>${S.hozAuto?'<span class="tag g">Автозаказ включён</span>':''}</div><div class="d">Тряпки, губки, перчатки, химия, таблетки для посудомойки. Кончатся — мойщица бунтует и посуда стоит. ${S.hozAuto?'Заказываются сами вместе с остальным.':'Автозаказа нет, пока не купишь договор с поставщиком.'}</div>${S.hozAuto?'':'<div class="row">'+btnHtml('Договор на автозаказ: '+fmt(HOZ_AUTO_COST)+' ₽', HOZ_AUTO_COST, S.level < 5)+'</div>'+(S.level<5?'<div class="d">Откроется на 5 уровне</div>':'')}</div>`); const hb = ha.querySelector('button'); if(hb) hb.onclick = () => { if(S.level < 5 || S.money < HOZ_AUTO_COST) return; spend(HOZ_AUTO_COST, 'invest', 'Договор на автозаказ хозтоваров'); S.hozAuto = true; toast('Хозы теперь возят сами. Мойщица сменила гнев на подозрительность'); sfx('buy'); save(); renderPanel(); }; p.appendChild(ha); }
   const svc = el(`<div class="card"><div class="t">Службы</div><div class="svc"></div></div>`);
   SERVICES.forEach(sv=>{ const b = el(`<button class="opt"><b>${sv.n}</b> · ${fmt(sv.cost)} ₽<br><span class="d">${esc(sv.d)}${sv.id==='pest' && S.flags.pestUntil > S.day ? ' Действует ещё '+(S.flags.pestUntil-S.day)+' дн.':''}</span></button>`); b.onclick = () => { const r = callService(sv.id); toast(r); if(r && !r.startsWith('Не')) sfx('buy'); save(); renderSheet(); }; svc.querySelector('.svc').appendChild(b); });
   p.appendChild(svc);
@@ -5476,6 +5602,8 @@ function migrate(){
   S.promo = {day:null, rec:[]};
   S.staff.concat(S.cands||[]).forEach(x=>{ if(x.role==='Уборщик') x.role = 'Мойщица'; });
   S.dishes = S.dishes || {}; S.dirtL = S.dirtL || {};
+  if(S.stock.hoz === undefined || S.stock.hoz === null) S.stock.hoz = 12;
+  for(const rm of S.rooms) if(rm.upg.sink === undefined) rm.upg.sink = 0;
   for(const f of [S.fin.today].concat(S.fin.hist)) if(f){ if(f.invest==null) f.invest = 0; if(!f.why) f.why = {}; }
   if(S.onb && !S.onb.promo) S.onb.promo = 1;
   if(!S.staff.some(x=>x.isYou)) S.staff.push(makeYou());

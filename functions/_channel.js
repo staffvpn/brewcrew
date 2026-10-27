@@ -44,7 +44,7 @@ export async function post(env, origin, img, html) {
   const url = bot ? `https://t.me/${bot.username}${env.APP_SHORT ? '/' + env.APP_SHORT : ''}?${env.APP_SHORT ? 'startapp' : 'start'}=channel` : origin;
   const r = await tgApi(env, 'sendPhoto', { chat_id: env.CHANNEL_ID, photo: `${origin}/img/${img}`, caption: html, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Открыть кофейню', url }]] } });
   LASTPOST = r && r.ok ? { id: r.result.message_id, caption: html } : null;
-  return r && r.ok;
+  return r && r.ok ? { id: r.result.message_id } : false;
 }
 
 export async function channelTick(env, origin) {
