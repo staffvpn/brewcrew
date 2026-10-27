@@ -522,6 +522,7 @@ body{background:var(--bg) radial-gradient(120% 60% at 50% 0%, #2c1e15 0%, #1d141
 @keyframes bootfill{0%{height:0}100%{height:100%}}
 @keyframes bootsteam{0%{transform:translateY(0);opacity:.7}100%{transform:translateY(-14px);opacity:0}}
 @keyframes bootbar{0%{left:-30%}100%{left:100%}}
+.friend{margin-bottom:6px}.friend .btn{grid-row:1/5 !important}.friend span i{font-style:normal;font-weight:700;color:#7a4a1c}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -2482,6 +2483,14 @@ function absurdDef(inc){
 }
 function roleLine(s){ const rush = S.rush && S.rush.until > absNow(); if(rush && chance(0.6)) return pickLine(RUSH_LINES14, 'rush'); if(dirtLevel(s.room) > 0.5 && chance(0.35)) return pickLine(DIRT_LINES14, 'dirt'); return pickLine(ROLE_LINES14[s.role] || ROLE_LINES14['Бариста'], 'r_'+s.role); }
 
+/* v15: больше смешных реплик персонала, реже гости */
+ROLE_LINES14['Бариста'].push('Гость попросил «как в Старбаксе». Написал его имя с ошибкой','Капучино на альтернативном. Альтернатива — уволиться','Я не бариста, я кофейный сомелье с зарплатой бариста','Спросили, почему так дорого. Потому что я красиво стою','Латте-арт сегодня в стиле абстракционизм. Вопросы к художнику','«Можно погорячее?» Можно. Держите лаву','Пятый ванильный раф подряд. Я теперь пахну как освежитель в такси','Без кофеина, без лактозы, без сахара. Деньги, надеюсь, настоящие','Мне сказали «улыбайся». Я улыбаюсь. Внутри','Ещё раз спросят пароль от вайфая — поставлю «спроситеукассира»','Обжарка средняя, настроение тёмное','Сегодня пролил всего два литра молока. Расту','Эспрессо вытек за 25 секунд. Единственное, что сегодня по плану','Гость сказал, что дома варит лучше. Так варите дома, Валера');
+ROLE_LINES14['Кассир'].push('Наличные? В 2026-м? Вы из музея?','Приложите карту. Не телефон к уху, карту к терминалу','Кешбэк — это когда вы к нам возвращаетесь','Сдачи нет. Есть жвачка и сочувствие','Он платил по рублю. Сорок минут. Я поседел','Терминал написал «отказ». Он тоже устал','Бонусы списать? У вас их три. Три рубля','Чек длиннее, чем мой отпуск','Чек «для отчётности» за один латте. Бухгалтерия, я вас вижу','Ваш номер сто сорок семь. Нет, вы второй. Это просто номер','Меня спросили, где тут касса. Я стою за кассой');
+ROLE_LINES14['Повар'].push('Бургер не развалился. Он деконструирован','Шеф сказал «соль по вкусу». У меня вкус — пересолить','Сырник круглый, но с характером','Это не подгорело, это карамелизация','Кто опять убрал эклеры в морозилку?','Гость хочет «как у мамы». Мама так не делала, но пусть','Стоп-лист длиннее меню','Я не ору, это вытяжка громкая','Сэндвич с собой упакован лучше, чем мой обед');
+ROLE_LINES14['Мойщица'].push('Чашку с помадой мою третий раз. Помада держится лучше вас всех','Посудомойка думает. Я тоже. Обе медленно','Кто ест суп из кофейной чашки?!','Мне платят за посуду. За нервы кто платит?','Швабра — единственный коллега, который не ноет','Опять стаканчик с крышкой в раковине. Покажитесь','Галь, они опять сироп в мою раковину вылили','Я эту ложку уже мыла. Сегодня. Четыре раза','Помыла пол. Значит, сейчас кто-то разольёт раф');
+ROLE_LINES14['Официант'].push('Гость спросил, что посоветую. Посоветовал уйти до запары','Седьмой стол: «повторите». Что повторить — не помнят','Несу три тарелки. Мечтаю о третьей руке','Просят «тот самый столик у окна». Он не у окна','Гость уронил вилку и смотрит на меня, как на судьбу','Чаевые оставили пуговицей. Красивой, но всё же','Заказ на восьмерых, и все «я подумаю»');
+DUMB_LINES.push('А что вкусного? А из невкусного что?','Подождите, я маме напишу, что она будет','Капучино… или латте… или раф… А чай есть? Тогда кофе','Можно я ещё подумаю? Я ещё подумаю','А меню сегодняшнее?','Так, мне… ой, вы карты принимаете? Ну тогда мне…','А что чаще всего берут? А реже?','Дайте секундочку. Ещё одну. И ещё');
+
 /* ================= Brew Crew — бесконечный сюжет ================= */
 const CHARS = {
   palych:{n:'Валерий Палыч', d:'«Серьёзный человек». Кожаная куртка, двое за спиной, всегда платит за американо.', spr:'guest:0'},
@@ -4283,6 +4292,7 @@ function pickPet(){
   const pool = PETS.filter(i=>RARITY['p'+i]===want); return pick(pool.length ? pool : PETS.filter(i=>RARITY['p'+i]===0));
 }
 function markSeen(k, i){ if(!S.seen[k].includes(i)){ S.seen[k].push(i); const rar = RARITY[k+i]; if(rar>=1) toast((k==='g'?'Новый гость в книге: ':'Новый питомец в книге: ')+RNAME[rar].toLowerCase()); structDirty = true; } }
+const DUMB_T = 24;
 const KIND_F = {slow:2.4/1.23, fast:0.5/1.23, norm:1/1.23};
 let GID = 0;
 function spawnGuest(id, reg, company){
@@ -4296,7 +4306,7 @@ function spawnGuest(id, reg, company){
     patience: (55 + room(id).upg.decor*2.5) * dirtPatience(id) * pathPatience() * focusMul('patience') * (S.path==='soul'?1.15:1) * (workingStaff(id).some(s=>s.quirk==='talker')?1.2:1) * (workingStaff(id).some(s=>s.quirk==='bore')?0.85:1)});
   if(!reg && chance(0.12)){ const p = pickPet(); g.pet = {spr:p, h:petH(p), x:g.x+14, y:g.y+4, flip:false, t:0}; markSeen('p', p); }
   if(!reg && id==='main' && S.day >= 3 && S.shopperDay !== S.day && chance(0.01)){ g.secret = true; S.shopperDay = S.day; }
-  g.gid = ++GID; if(!reg && !g.secret){ const kr = Math.random(); g.kind = g.h===SPR_KID ? 'norm' : kr < 0.22 ? 'slow' : kr < 0.37 ? 'fast' : 'norm'; if(g.kind==='slow' && chance(0.45)){ g.dumb = true; g.q = pickLine(DUMB_LINES, 'dumb'); } } else g.kind = 'norm';
+  g.gid = ++GID; if(!reg && !g.secret){ const kr = Math.random(); g.kind = g.h===SPR_KID ? 'norm' : kr < 0.22 ? 'slow' : kr < 0.37 ? 'fast' : 'norm'; if(g.kind==='slow' && chance(0.12)){ g.dumb = true; g.q = pickLine(DUMB_LINES, 'dumb'); } } else g.kind = 'norm';
   if(!reg && !company && S.level >= 4 && chance(0.06) && r.queue.length < 4){ const n = RI(2,3); for(let i=0;i<n;i++) setTimeout(()=>spawnGuest(id, null, true), 300 + i*350); }
   g.orders = 0;
   r.guests.push(g); r.queue.push(g);
@@ -4334,10 +4344,10 @@ function simRoom(id, dt){
   r.queue.forEach((g,i)=>{ g.qx = QUEUE_X + i*24; });
   const head = r.queue[0];
   if(head && head.state==='queue' && Math.hypot(head.x-QUEUE_X, head.y-QUEUE_Y) < 2 && st.orderT < Infinity){
-    head.prog += dt / (st.orderT * KIND_F[head.kind||'norm'] * (head.dumb ? 2 : 1));
+    head.prog += dt / (head.dumb ? DUMB_T : st.orderT * KIND_F[head.kind||'norm']);
     if(head.dumb && !head.asked && id===S.active){ head.asked = true; bubble2(0, 0, head.q, 4200, head); }
-    if(head.kind==='fast' && !head.said && id===S.active){ head.said = true; bubble2(0, 0, pickLine(FAST_LINES, 'fast'), 2400, head); }
-    if(head.h===SPR_KID && !head.said && id===S.active && chance(0.5)){ head.said = true; bubble2(0, 0, pickLine(KID_LINES, 'kid'), 2600, head); }
+    if(head.kind==='fast' && !head.said && id===S.active && chance(0.35)){ head.said = true; bubble2(0, 0, pickLine(FAST_LINES, 'fast'), 2400, head); }
+    if(head.h===SPR_KID && !head.said && id===S.active && chance(0.3)){ head.said = true; bubble2(0, 0, pickLine(KID_LINES, 'kid'), 2600, head); }
     if(head.prog >= 1) completeOrder(id, head, false);
   }
   for(const g of r.queue){ if(g.state==='queue' || g.state==='toQueue'){ g.wait += dt; g.waitMax = Math.max(g.waitMax||0, g.wait); if(g.wait > g.patience) { guestLeaves(id, g, 'wait'); } } }
@@ -4699,7 +4709,6 @@ cv.addEventListener('pointerdown', e => {
   for(const s of workingStaff(id)){ const p = r.staff[s.id]; if(!p || p.x>W+4) continue; const m = META[staffSpr(s)]; const w = m[3]*STAFF_H/m[4]; if(x>p.x-w/2-4 && x<p.x+w/2+4 && y>p.y-62 && y<p.y+4){ if(!best || p.y > best.p.y) best = {s,p}; } }
   if(best){ sfx('tap'); if(best.s.isYou){ toast('Это ты. Тапай по гостю у кассы, по кофемашине и по гостям на выдаче — так работа идёт быстрее'); return; } queueModal({kind:'staff', sid:best.s.id}, true); return; }
   for(const g of r.guests){ if(g.hidden) continue; if(x>g.x-14 && x<g.x+14 && y>g.y-g.h && y<g.y+4){
-    if(g.dumb && r.queue[0]===g){ sfx('tap'); queueModal({kind:'dumb', gid:g.gid}, true); return; }
     if(r.queue[0]===g && g.state==='queue' && Math.hypot(g.x-QUEUE_X,g.y-QUEUE_Y)<3){ completeOrder(id, g, true); return; }
     if(g.state==='wait' || g.state==='toPick'){ const j = r.jobs.find(j=>j.g===g); if(j){ j.p += 0.22; tapFx(g.x, g.y-g.h-8); sfx('tap'); if(j.p>=1) finishJob(id, j); return; } }
     if(g.reg){ const def = REGULARS.find(d=>d.id===g.reg); const rg = S.regs.find(q=>q.id===g.reg); toast(def.n+': '+def.d+' Лояльность '+Math.round(rg.loyal)); return; }
@@ -4820,7 +4829,8 @@ function onTrack(r){
   let wipe = false;
   for(const o of ops){
     const a = Math.round(Number(o.amount)||0);
-    if(o.op==='give'){ S.money += a; toast('Администрация начислила '+fmt(a)+' ₽'); sfx('coin'); }
+    if(o.op==='refgift'){ S.money += a; toast(String(o.text||('Бонус за друзей: +'+fmt(a)+' ₽'))); sfx('level'); FR.loaded = 0; }
+    else if(o.op==='give'){ S.money += a; toast('Администрация начислила '+fmt(a)+' ₽'); sfx('coin'); }
     else if(o.op==='take'){ S.money -= a; toast('Администрация списала '+fmt(a)+' ₽'); sfx('bad'); }
     else if(o.op==='set'){ S.money = a; toast('Администрация установила баланс '+fmt(a)+' ₽'); }
     else if(o.op==='ent'){ refreshEntitlements(); toast('Покупки обновлены'); }
@@ -4916,7 +4926,7 @@ function renderBuild(name, cityId, ref){
   draw();
   w.querySelector('#back').onclick = () => renderStart();
   w.querySelector('#open').onclick = () => { unlockAudio();
-    S = newState(name, cityId); if(ref){ S.money += 100000; S.ref = ref; }
+    S = newState(name, cityId); if(ref){ S.ref = ref; }
     applyBuild(choice); initState();
     for(const k of ['beans','cups','syrup','tea','milk','desserts']){ if(k==='desserts' && !isUnlocked('dessert')) continue; const want = stockCap(k)*0.6 - stockQty(k); if(want>0){ if(STOCK[k].perish) S.stock[k].push({q:Math.round(want), exp:S.day+STOCK[k].perish}); else S.stock[k] += Math.round(want); } } S.interior = {}; S.promo = {day:null, rec:[]}; S.onb = {};
     S.streak = {last:new Date(Date.now()+3*3600000).toISOString().slice(0,10), n:1};
@@ -4973,7 +4983,6 @@ function attention(){
   if(S.story && S.story.dl) out.push(['story', S.story.dl.label+': осталось '+Math.max(0,S.story.dl.by-S.day)+' дн.', true]);
   const tl = (S.tasks||[]).filter(t=>!t.done && !t.failed).length; if(tl) out.push(['tasks', 'Задания дня: осталось '+tl, false]);
   if(S.rivals.some(r=>r.status==='sale')) out.push(['district', 'Конкурент продаёт помещение', false]);
-  if(FR.unclaimed>0) out.push(['district', 'Друзья принесли награду', true]);
   { const wn = S.staff.filter(x=>x.wish).length; if(wn) out.push(['team', 'Сотрудники чего-то хотят: '+wn, false]); }
   if(daysSinceInventory() >= 7) out.push(['stock', 'Инвентаризацию не делали '+daysSinceInventory()+' дн.', daysSinceInventory()>=10]);
   if(S.tips && S.tips.jar >= tipJarCap()*0.8) out.push(['money', 'Банка чаевых почти полная', false]);
@@ -5997,32 +6006,47 @@ function inviteLink(){ const id = myId(); if(!CFG.bot || !id) return 'https://br
 function invite(){ const url = inviteLink(), txt = 'Открыл кофейню «'+S.name+'» в Brew Crew. Заходи, по моей ссылке +100 000 ₽ на старте, а твоя кофейня появится в моём районе.';
   if(tg && tg.openTelegramLink){ tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(txt)); return; }
   try{ navigator.clipboard.writeText(txt+' '+url).then(()=>toast('Ссылка скопирована')); }catch(e){} }
+function agoShort(ts){ if(!ts) return 'не заходил'; const m = Math.round((Date.now()-ts)/60000); if(m < 5) return 'в игре'; if(m < 60) return 'был '+m+' мин назад'; const h = Math.round(m/60); if(h < 24) return 'был '+h+' ч назад'; return 'был '+Math.round(h/24)+' дн. назад'; }
+function friendRow(f, label){
+  const L = f.level||1, city = f.city==='spb'?'Петербург':f.city==='msk'?'Москва':(f.city||'');
+  const since = f.created_at ? new Date(f.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) : '';
+  const st = label || (f.ref_paid ? 'награда получена' : L>=3 ? 'награда в пути' : 'до награды ур. 3, осталось '+(3-L));
+  const d = el(`<div class="friend"><b>«${esc(f.cafe||'ещё не открыл кофейню')}»</b><span>${esc(f.first_name||'')} · ур. ${L}${city?' · '+esc(city):''}</span><span>Заработал ${fmt(f.earned||0)} ₽ · залов ${f.rooms||1} · ${agoShort(f.last_seen)}${since?' · в игре с '+since:''}</span><span><i>${esc(st)}</i></span>${f.cafe?'<button class="btn ghost">Зайти в гости</button>':''}</div>`);
+  const b = d.querySelector('button'); if(b) b.onclick = () => queueModal({kind:'visit', f}, true);
+  return d;
+}
 function renderDistrict(p){
   if(tg && tg.initData && Date.now() - FR.loaded > 120000){ FR.loaded = Date.now(); loadFriends(); }
-  const fc = el(`<div class="card note kraft"><div class="t">Друзья по району</div><div class="d">Позови друга: он начнёт с +100 000 ₽, а его кофейня откроется в твоём районе. Когда друг дойдёт до 3 уровня, тебе +150 000 ₽.</div><div class="friends"></div><div class="row wrap"><button class="btn">Позвать друга</button></div></div>`);
+  const paid = FR.friends.filter(f=>f.ref_paid).length;
+  const fc = el(`<div class="card note kraft"><div class="t">Друзья по району</div><div class="d">Позови друга: он начнёт с +100 000 ₽, а когда дойдёт до 3 уровня, тебе придёт +150 000 ₽. Деньги начисляются сами.</div>${FR.friends.length?`<div class="d">Пригласил: <b>${FR.friends.length}</b> · наград получено: <b>${paid}</b> (${fmt(paid*150000)} ₽)</div>`:''}<div class="friends"></div><div class="row wrap"><button class="btn">Позвать друга</button></div></div>`);
   const fl = fc.querySelector('.friends');
-  if(FR.inviter){ const d = el(`<div class="friend"><b>«${esc(FR.inviter.cafe||'Без названия')}»</b><span>${esc(FR.inviter.first_name||'')} · пригласил тебя · ур. ${FR.inviter.level||1}</span><button class="btn ghost">Зайти в гости</button></div>`); d.querySelector('button').onclick = () => queueModal({kind:'visit', f:FR.inviter}, true); fl.appendChild(d); }
-  FR.friends.forEach(f=>{ const d = el(`<div class="friend"><b>«${esc(f.cafe||'Без названия')}»</b><span>${esc(f.first_name||'')} · ур. ${f.level||1}${(f.level||1)>=3?' · награда засчитана':' · до награды ур. 3'}</span><button class="btn ghost">Зайти в гости</button></div>`); d.querySelector('button').onclick = () => queueModal({kind:'visit', f}, true); fl.appendChild(d); });
+  if(FR.inviter) fl.appendChild(friendRow(FR.inviter, 'пригласил тебя'));
+  FR.friends.forEach(f=>fl.appendChild(friendRow(f)));
   if(!FR.inviter && !FR.friends.length) fl.appendChild(el(`<div class="d">${tg&&tg.initData?'Пока никого. Соседний зал пустует.':'Друзья появятся, когда игра открыта в Telegram.'}</div>`));
-  const row = fc.querySelector('.row.wrap'); fc.querySelector('.btn').onclick = invite;
-  if(FR.unclaimed>0){ const b = el(`<button class="btn red">Забрать ${fmt(FR.unclaimed*150000)} ₽</button>`); b.onclick = () => { b.disabled = true; loadFriends(true).then(()=>renderSheet()); }; row.appendChild(b); }
+  fc.querySelector('.btn').onclick = invite;
   p.appendChild(fc);
   renderTour(p);
   p.appendChild(el(`<div class="h chalk">Конкуренты</div>`));
   sub = 'district'; renderMore(p);
 }
 /* --- турнир района --- */
-const TOUR = {at:0, top:[], me:null, prev:null};
-function loadTour(){ if(!tg || !tg.initData) return; apiPost('/api/tour').then(r=>{ if(r && r.ok){ TOUR.at = Date.now(); TOUR.top = r.top||[]; TOUR.me = r.me; TOUR.prev = r.prev; structDirty = true; } }).catch(()=>{}); }
+const TOUR_MS = 5*3600000;
+const TOUR = (()=>{ try{ const t = JSON.parse(localStorage.getItem('bc_tour')||'null'); if(t && t.week) return Object.assign({tried:0}, t); }catch(e){} return {at:0, top:[], profits:[], total:0, week:null, tried:0}; })();
+function loadTour(force){ if(!force && TOUR.week===tourWeek() && Date.now() - TOUR.at < TOUR_MS) return; if(Date.now() - TOUR.tried < 60000) return; TOUR.tried = Date.now();
+  fetch('/api/tour').then(r=>r.json()).then(r=>{ if(r && r.ok){ Object.assign(TOUR, {at:r.at||Date.now(), top:r.top||[], profits:r.profits||[], total:r.total||0, week:r.week}); try{ localStorage.setItem('bc_tour', JSON.stringify({at:TOUR.at, top:TOUR.top, profits:TOUR.profits, total:TOUR.total, week:TOUR.week})); }catch(e){} structDirty = true; } }).catch(()=>{}); }
 function renderTour(p){
-  if(Date.now() - TOUR.at > 90000){ TOUR.at = Date.now(); loadTour(); }
+  loadTour();
+  const cur = TOUR.week===tourWeek();
   const my = ((S.tour && S.tour.week===tourWeek()) ? S.tour.profit : 0) + profitOf(S.fin.today);
+  const rank = cur && TOUR.profits.length ? TOUR.profits.filter(x=>x > my).length + 1 : 0;
   const end = new Date(Date.parse(tourWeek()+'T00:00:00+03:00') + 7*86400000);
   const left = Math.max(0, Math.round((end - Date.now())/3600000));
-  const c = el(`<div class="card chalkboard"><div class="t chalk">Турнир района</div><div class="d">Кто заработает больше чистой прибыли за неделю (по понедельник 00:00 МСК). Призы: 1 000 000, 500 000 и 250 000 ₽, победители попадают в канал. До конца: ${left>48?Math.round(left/24)+' дн.':left+' ч'}.</div><div class="tour"></div><div class="d">Твоя прибыль за неделю: <b class="num">${fmt(my)} ₽</b>${TOUR.me&&TOUR.me.rank?' · место '+TOUR.me.rank:''}</div></div>`);
+  const upd = cur && TOUR.at ? Math.max(0, Math.round((Date.now()-TOUR.at)/3600000)) : null;
+  const c = el(`<div class="card chalkboard"><div class="t chalk">Турнир района · топ-10</div><div class="d">Кто заработает больше чистой прибыли за неделю (по понедельник 00:00 МСК). Призы: 1 000 000, 500 000 и 250 000 ₽, победители попадают в канал. До конца: ${left>48?Math.round(left/24)+' дн.':left+' ч'}.</div><div class="tour"></div><div class="d">Твоя прибыль за неделю: <b class="num">${fmt(my)} ₽</b>${rank?' · примерно '+rank+' место из '+Math.max(TOUR.total, rank):''}</div>${upd!=null?`<div class="d" style="opacity:.6;font-size:11px">Таблица обновляется раз в 5 часов. Обновлена ${upd<1?'меньше часа':upd+' ч'} назад.</div>`:''}</div>`);
   const t = c.querySelector('.tour');
-  if(TOUR.top.length) TOUR.top.forEach((x,i)=>t.appendChild(el(`<div class="trow ${x.me?'me':''}"><b>${i+1}</b><span>«${esc(x.cafe||'?')}» · ${esc(x.city==='spb'?'Петербург':x.city==='msk'?'Москва':(x.city||''))}</span><i class="num">${fmt(x.profit)} ₽</i></div>`)));
-  else t.appendChild(el(`<div class="d">${tg&&tg.initData?'Таблица обновляется раз в минуту.':'Турнир работает, когда игра открыта в Telegram.'}</div>`));
+  const top = cur ? TOUR.top : [];
+  if(top.length) top.forEach((x,i)=>t.appendChild(el(`<div class="trow ${x.cafe===S.name?'me':''}"><b>${i+1}</b><span>«${esc(x.cafe||'?')}» · ${esc(x.city==='spb'?'Петербург':x.city==='msk'?'Москва':(x.city||''))}</span><i class="num">${fmt(x.profit)} ₽</i></div>`)));
+  else t.appendChild(el(`<div class="d">${cur && TOUR.at ? 'На этой неделе ещё никто не заработал. Будь первым.' : 'Загружаем таблицу…'}</div>`));
   p.appendChild(c);
 }
 /* --- сюжет и характер --- */
@@ -6193,10 +6217,10 @@ let staffBT = 40;
 function bubblesTick(dt){
   const r = RT[S.active]; if(!r) return;
   bubbleT -= dt; staffBT -= dt;
-  if(bubbleT <= 0){ bubbleT = R(35, 80); const g = r.queue[0]; if(g && g.state==='queue') bubble2(0, 0, dirtLevel(S.active) > 0.5 && chance(0.5) ? pickLine(DIRT_LINES14, 'dirt') : pickLine(GUEST_LINES14, 'g'), 3200, g); }
-  if(r.pets.length && chance(dt/200)){ const g = r.queue[r.queue.length-1]; if(g) bubble2(0, 0, pickLine(CAT_LINES, 'cat'), 2400, g); }
+  if(bubbleT <= 0){ bubbleT = R(100, 200); const g = r.queue[0]; if(g && g.state==='queue') bubble2(0, 0, dirtLevel(S.active) > 0.5 && chance(0.5) ? pickLine(DIRT_LINES14, 'dirt') : pickLine(GUEST_LINES14, 'g'), 3200, g); }
+  if(r.pets.length && chance(dt/500)){ const g = r.queue[r.queue.length-1]; if(g) bubble2(0, 0, pickLine(CAT_LINES, 'cat'), 2400, g); }
   const rushOn = S.rush && S.rush.until > absNow(); if(rushOn && staffBT > 8) staffBT = Math.min(staffBT, R(4,8));
-  if(staffBT <= 0){ staffBT = rushOn ? R(5, 9) : R(45, 100); const ws = workingStaff(S.active).filter(s=>!s.isYou); const s = pick(ws); if(s && r.staff[s.id]) bubble2(0, 0, staffState(s) < 45 && chance(0.5) ? pickLine(TIRED_LINES14, 'tired') : roleLine(s), 2800, r.staff[s.id]); }
+  if(staffBT <= 0){ staffBT = rushOn ? R(5, 9) : R(28, 60); const ws = workingStaff(S.active).filter(s=>!s.isYou); const s = pick(ws); if(s && r.staff[s.id]) bubble2(0, 0, staffState(s) < 45 && chance(0.5) ? pickLine(TIRED_LINES14, 'tired') : roleLine(s), 2800, r.staff[s.id]); }
 }
 function drawBubbles(){
   const now = performance.now();

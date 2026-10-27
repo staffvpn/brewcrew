@@ -15,3 +15,19 @@ export async function onRequestPost({ request, env }) {
   if (mine) { const above = await env.DB.prepare(`SELECT COUNT(*) n FROM tour WHERE week = ?1 AND profit > ?2 ${noAdm}`).bind(week, mine.profit).first(); me = { profit: mine.profit, rank: (above ? above.n : 0) + 1 }; }
   return json({ ok: true, week, top, me });
 }
+
+// GET /api/tour — снимок топ-10 недели, общий для всех, обновляется раз в 5 часов.
+const SNAP_MS = 5 * 3600000;
+export async function onRequestGet({ env }) {
+  if (!env.DB) return json({ ok: false }, 503);
+  const week = tourWeek(), key = 'top_' + week, now = Date.now();
+  try {
+    const c = await env.DB.prepare('SELECT val, at FROM cache WHERE key = ?1').bind(key).first();
+    if (c && now - c.at < SNAP_MS) return json(Object.assign({ ok: true, week, at: c.at, next: c.at + SNAP_MS }, JSON.parse(c.val)));
+  } catch {}
+  const noAdm = 'AND tg_id NOT IN (' + ADMINS.join(',') + ')';
+  const rows = (await env.DB.prepare(`SELECT cafe, city, profit FROM tour WHERE week = ?1 ${noAdm} ORDER BY profit DESC LIMIT 300`).bind(week).all()).results || [];
+  const snap = { top: rows.slice(0, 10).map(r => ({ cafe: r.cafe, city: r.city, profit: Math.round(r.profit) })), profits: rows.map(r => Math.round(r.profit)), total: rows.length };
+  try { await env.DB.prepare('INSERT INTO cache (key, val, at) VALUES (?1, ?2, ?3) ON CONFLICT(key) DO UPDATE SET val = ?2, at = ?3').bind(key, JSON.stringify(snap), now).run(); } catch {}
+  return json(Object.assign({ ok: true, week, at: now, next: now + SNAP_MS }, snap));
+}

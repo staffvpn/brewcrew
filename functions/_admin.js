@@ -10,7 +10,7 @@ const CITY = { msk: 'Москва', spb: 'Петербург', kzn: 'Казан�
 const ago = ts => { if (!ts) return 'никогда'; const m = Math.round((Date.now() - ts) / 60000); if (m < 2) return 'только что'; if (m < 60) return m + ' мин назад'; const h = Math.round(m / 60); if (h < 48) return h + ' ч назад'; return Math.round(h / 24) + ' дн назад'; };
 const short = ts => { if (!ts) return '—'; const m = Math.round((Date.now() - ts) / 60000); if (m < 3) return 'в игре'; if (m < 60) return m + ' мин'; const h = Math.round(m / 60); if (h < 48) return h + ' ч'; return Math.round(h / 24) + ' дн'; };
 const when = ts => new Date(ts).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-const OPN = { level: 'Уровень', cash: 'Покупка денег', give: 'Начислено', take: 'Списано', set: 'Баланс', wipe: 'Удаление', ent: 'Покупки обновлены', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименование', staff: 'Легенда в команду' };
+const OPN = { refgift: 'Реферальный бонус', level: 'Уровень', cash: 'Покупка денег', give: 'Начислено', take: 'Списано', set: 'Баланс', wipe: 'Удаление', ent: 'Покупки обновлены', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименование', staff: 'Легенда в команду' };
 const STYLES = [['int_soviet', 'Столовая №1'], ['int_loft', 'Заводской лофт'], ['int_scandi', 'Фика'], ['int_neon', 'Не спим']];
 const COVERS = [['updates.jpg', 'Обновления'], ['events.jpg', 'События'], ['banner.jpg', 'Баннер'], ['hall.jpg', 'Новый зал']];
 const PAGE = 10;
@@ -53,14 +53,16 @@ const ask = (title, hint, back) => ({ text: `<b>${title}</b>\n\n${hint}\n\n<i>Ж
 async function vHome(env) {
   const now = Date.now(), today = Date.parse(mskDay(now) + 'T00:00:00+03:00');
   const q = (sql, ...b) => env.DB.prepare(sql).bind(...b).first();
-  const [total, online, newT, actT, pay, top] = await Promise.all([
+  const [total, online, newT, actT, pay, top, refs] = await Promise.all([
     q('SELECT COUNT(*) n FROM players'), q('SELECT COUNT(*) n FROM players WHERE last_seen >= ?1', now - ONLINE_MS),
     q('SELECT COUNT(*) n FROM players WHERE created_at >= ?1', today), q('SELECT COUNT(*) n FROM players WHERE last_seen >= ?1', today),
     q('SELECT COALESCE(SUM(CASE WHEN created_at >= ?1 THEN stars ELSE 0 END),0) t, COALESCE(SUM(CASE WHEN created_at >= ?2 THEN stars ELSE 0 END),0) w, COALESCE(SUM(stars),0) a FROM purchases WHERE refunded = 0 AND stars > 0', today, now - 7 * 86400000),
-    env.DB.prepare('SELECT cafe, first_name, level, earned FROM players ORDER BY earned DESC LIMIT 5').all()
+    env.DB.prepare('SELECT cafe, first_name, level, earned FROM players ORDER BY earned DESC LIMIT 5').all(),
+    q('SELECT COUNT(*) n, COALESCE(SUM(CASE WHEN created_at >= ?1 THEN 1 ELSE 0 END),0) t, COALESCE(SUM(ref_paid),0) paid FROM players WHERE referrer IS NOT NULL', today)
   ]);
   const lines = ['<b>Brew Crew · админка</b>', '',
     `Сейчас в игре: <b>${online.n}</b>`, `Заходили сегодня: <b>${actT.n}</b> · новых: <b>${newT.n}</b>`, `Всего игроков: <b>${total.n}</b>`, '',
+    `По приглашениям: <b>${refs.n}</b> (сегодня ${refs.t}) · наград выдано ${refs.paid}`, '',
     `Звёзды: сегодня <b>${pay.t}</b> · за неделю <b>${pay.w}</b> · всего <b>${pay.a}</b>`, '',
     '<b>Топ-5 кофеен</b>', ...((top.results || []).map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}» — ${esc(t.first_name || '')}, ур. ${t.level}, ${fmt(t.earned)} ₽`))];
   return { text: lines.join('\n'), kb: [
@@ -68,6 +70,7 @@ async function vHome(env) {
     [B('Сейчас в игре', 'p:pl:on:0'), B('Новые', 'p:pl:new:0')],
     [B('Рассылка всем', 'p:all'), B('Канал', 'p:ch')],
     [B('Турнир', 'p:tour'), B('Покупки', 'p:buy')],
+    [B('Рефералы', 'p:refs')],
     [B('Журнал', 'p:log'), B('Обновить', 'p:home')]
   ] };
 }
@@ -91,22 +94,24 @@ async function vCard(env, id, note) {
   const [pend, pay, fr, sub, ints] = await Promise.all([
     env.DB.prepare('SELECT op, amount FROM admin_ops WHERE tg_id = ?1 AND applied_at IS NULL ORDER BY id').bind(id).all(),
     env.DB.prepare('SELECT COALESCE(SUM(stars),0) s, COUNT(*) n FROM purchases WHERE tg_id = ?1 AND refunded = 0 AND stars > 0').bind(id).first(),
-    env.DB.prepare('SELECT COUNT(*) n FROM players WHERE referrer = ?1').bind(id).first(),
+    env.DB.prepare('SELECT COUNT(*) n, COALESCE(SUM(ref_paid),0) paid, COALESCE(SUM(CASE WHEN level >= 3 THEN 1 ELSE 0 END),0) act FROM players WHERE referrer = ?1').bind(id).first(),
     env.DB.prepare("SELECT MAX(expires_at) e FROM purchases WHERE tg_id = ?1 AND item = 'sub_owner' AND refunded = 0").bind(id).first(),
     env.DB.prepare("SELECT item FROM purchases WHERE tg_id = ?1 AND item LIKE 'int_%' AND refunded = 0").bind(id).all()
   ]);
   const pd = pend.results || []; let expected = p.money;
-  for (const o of pd) { if (o.op === 'give') expected += o.amount; if (o.op === 'take') expected -= o.amount; if (o.op === 'set') expected = o.amount; }
+  for (const o of pd) { if (o.op === 'give' || o.op === 'refgift') expected += o.amount; if (o.op === 'take') expected -= o.amount; if (o.op === 'set') expected = o.amount; }
   const owned = (ints.results || []).map(r => r.item); const styles = STYLES.filter(s => owned.includes(s[0])).map(s => s[1]);
   const lines = [
     note ? `<i>${esc(note)}</i>\n` : '',
     `<b>${esc(p.first_name || 'Без имени')}</b>${p.username ? ' @' + esc(p.username) : ''}${p.banned ? ' · <b>ЗАБАНЕН</b>' : ''}`,
     `ID <code>${p.tg_id}</code>`, '',
     '<b>Кофейня</b>', `«${esc(p.cafe || '?')}», ${CITY[p.city] || p.city || '?'} · уровень ${p.level} · залов ${p.rooms}`,
-    `Баланс <b>${fmt(p.money)} ₽</b>${pd.some(o => ['give', 'take', 'set'].includes(o.op)) ? ` → станет ${fmt(expected)} ₽` : ''}`,
+    `Баланс <b>${fmt(p.money)} ₽</b>${pd.some(o => ['give', 'refgift', 'take', 'set'].includes(o.op)) ? ` → станет ${fmt(expected)} ₽` : ''}`,
     `Заработано всего ${fmt(p.earned)} ₽ · франшиз ${p.franchises} · банкротств ${p.bankrupt}`, '',
     '<b>Активность</b>', `Был в игре: ${ago(p.last_seen)} · заходов ${p.sessions} · ${Math.round(p.play_seconds / 60)} мин всего`,
-    `С нами с ${new Date(p.created_at).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' })} · друзей привёл ${fr.n || 0}`, '',
+    `С нами с ${new Date(p.created_at).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' })}`, '',
+    '<b>Друзья</b>', `${p.referrer ? 'Пришёл по ссылке игрока <code>' + p.referrer + '</code>' + (p.ref_paid ? ' · награда пригласившему выдана' : '') : 'Пришёл сам'}`,
+    `Привёл друзей: ${fr.n || 0} · дошли до 3 ур.: ${fr.act || 0} · наград выдано: ${fr.paid || 0} (${fmt((fr.paid || 0) * 150000)} ₽)`, '',
     '<b>Покупки</b>', `${pay.s} звёзд (${pay.n})${sub && sub.e > Date.now() ? ' · «Владелец» до ' + new Date(sub.e).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' }) : ''}${styles.length ? ' · стили: ' + styles.join(', ') : ''}`,
     pd.length ? `\nЖдут применения: ${pd.length}. Применятся при входе игрока.` : ''
   ].filter(x => x !== '');
@@ -114,11 +119,32 @@ async function vCard(env, id, note) {
     [B('Деньги', 'p:um:' + id), B('Написать', 'p:umsg:' + id)],
     [B('Стили и подписка', 'p:ust:' + id), B('Легенда в команду', 'p:uleg:' + id)],
     [B('Переименовать', 'p:uren:' + id), B('Выдать уровень', 'p:ulvl:' + id)],
-    [B('История', 'p:uh:' + id)],
+    [B('История', 'p:uh:' + id), B(`Друзья (${fr.n || 0})`, 'p:ufr:' + id)],
+    ...(p.referrer ? [[B('Кто пригласил', 'p:u:' + p.referrer)]] : []),
     [B(p.banned ? 'Разбанить' : 'Забанить', 'p:uban:' + id), B('Удалить аккаунт', 'p:udel:' + id)],
     ...(pd.length ? [[B('Отменить ожидающие (' + pd.length + ')', 'p:ucan:' + id)]] : []),
     [B('‹ Все игроки', 'p:pl:last:0'), B('Обновить', 'p:u:' + id), ...HOME]
   ] };
+}
+async function vFriends(env, id) {
+  const rows = (await env.DB.prepare('SELECT tg_id, first_name, username, cafe, city, level, earned, last_seen, created_at, sessions, ref_paid FROM players WHERE referrer = ?1 ORDER BY created_at DESC LIMIT 30').bind(id).all()).results || [];
+  const lines = [`<b>Друзья игрока</b> <code>${id}</code>`, ''];
+  if (!rows.length) lines.push('Никого не привёл.');
+  rows.forEach((f, i) => lines.push(`${i + 1}. <b>${esc(f.first_name || '?')}</b>${f.username ? ' @' + esc(f.username) : ''} · «${esc(f.cafe || 'не открыл')}» · ур. ${f.level} · ${fmt(f.earned)} ₽ · заходов ${f.sessions} · ${short(f.last_seen)}${f.ref_paid ? ' · награда выдана' : ''}`));
+  const kb = []; for (let i = 0; i < rows.length && i < 20; i += 2) kb.push(rows.slice(i, i + 2).map(f => B((f.first_name || '?').slice(0, 18) + ' · ' + f.level, 'p:u:' + f.tg_id)));
+  kb.push([B('‹ Карточка', 'p:u:' + id), ...HOME]);
+  return { text: lines.join('\n'), kb };
+}
+async function vRefs(env) {
+  const rows = (await env.DB.prepare('SELECT r.referrer id, COUNT(*) n, COALESCE(SUM(CASE WHEN r.level >= 3 THEN 1 ELSE 0 END),0) act, COALESCE(SUM(r.ref_paid),0) paid, p.first_name, p.cafe FROM players r LEFT JOIN players p ON p.tg_id = r.referrer WHERE r.referrer IS NOT NULL GROUP BY r.referrer ORDER BY n DESC LIMIT 20').all()).results || [];
+  const last = (await env.DB.prepare('SELECT tg_id, first_name, cafe, level, created_at, referrer FROM players WHERE referrer IS NOT NULL ORDER BY created_at DESC LIMIT 10').all()).results || [];
+  const lines = ['<b>Рефералы</b>', '', '<b>Кто больше привёл</b>'];
+  if (!rows.length) lines.push('Пока никто никого не привёл.');
+  rows.forEach((r, i) => lines.push(`${i + 1}. ${esc(r.first_name || '?')} («${esc(r.cafe || '?')}») — ${r.n}, до 3 ур.: ${r.act}, наград ${r.paid}`));
+  if (last.length) { lines.push('', '<b>Последние пришедшие по ссылке</b>'); last.forEach(f => lines.push(`${esc(f.first_name || '?')} · ур. ${f.level} · ${when(f.created_at)} · от <code>${f.referrer}</code>`)); }
+  const kb = []; for (let i = 0; i < rows.length && i < 10; i += 2) kb.push(rows.slice(i, i + 2).map(r => B((r.first_name || '?').slice(0, 18) + ' · ' + r.n, 'p:ufr:' + r.id)));
+  kb.push([B('Обновить', 'p:refs'), ...HOME]);
+  return { text: lines.join('\n'), kb };
 }
 const vMoney = id => ({ text: '<b>Деньги игрока</b>\n\nКнопки сразу ставят операцию в очередь. «Своя сумма» — пришли число: 50000, 250к, 1.5млн.', kb: [
   [B('+100 тыс', `p:mg:${id}:100000`), B('+1 млн', `p:mg:${id}:1000000`), B('+10 млн', `p:mg:${id}:10000000`)],
@@ -248,6 +274,8 @@ export async function adminCallback(env, cq) {
     case 'umsg': return wait('msg', { id }, ask('Сообщение игроку', 'Пришли текст. Он придёт в бота и покажется в игре.', 'p:u:' + id));
     case 'uren': return wait('ren', { id }, ask('Переименовать кофейню', 'Пришли новое название, до 28 символов.', 'p:u:' + id));
     case 'uh': await edit(await vHistory(env, id)); return answer('');
+    case 'ufr': await edit(await vFriends(env, id)); return answer('');
+    case 'refs': await edit(await vRefs(env)); return answer('');
     case 'ulvl': return wait('lvl', { id }, ask('Выдать уровень', 'Пришли номер уровня от 1 до 60. Уровень поставится при входе игрока.', 'p:u:' + id));
     case 'ust': await edit(await vStyles(env, id)); return answer('');
     case 'gi': { const k = parts[3]; if (!STYLES.some(s => s[0] === k)) return answer('Нет такого стиля'); await env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at) VALUES (?1, ?2, ?3, 0, ?4, NULL)').bind('admin_' + k + '_' + id, id, k, Date.now()).run(); await addOp(env, id, 'ent', null, null, from); await edit(await vStyles(env, id)); return answer('Стиль выдан'); }

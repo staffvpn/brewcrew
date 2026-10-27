@@ -1,5 +1,5 @@
 // POST /api/track — игра раз в минуту сообщает, что игрок онлайн, и его краткие показатели.
-import { json, mskDay, verifyInitData, dispatchReminders, ADMINS } from '../_lib.js';
+import { json, mskDay, verifyInitData, dispatchReminders, ADMINS, parseRef, bindReferrer, payReferrer } from '../_lib.js';
 import { opsFor } from '../_admin.js';
 import { channelTick, tourWeek, post as channelPost } from '../_channel.js';
 
@@ -15,9 +15,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const s = body.stats || {};
   const now = Date.now();
   const dt = Math.round(num(s.dt, 120));
-  let referrer = null;
-  const sp = typeof s.ref === 'string' ? s.ref.match(/^ref_(\d{3,15})$/) : null;
-  if (sp && Number(sp[1]) !== user.id) referrer = Number(sp[1]);
+  const referrer = null, refId = parseRef(s.ref);
   await env.DB.batch([
     env.DB.prepare(`INSERT INTO players (tg_id, username, first_name, lang, created_at, last_seen, sessions, cafe, city, level, money, earned, rooms, franchises, bankrupt, play_seconds, referrer)
       VALUES (?1, ?2, ?3, ?4, ?5, ?5, 1, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?16)
@@ -31,6 +29,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare('UPDATE players SET best_day = MAX(COALESCE(best_day,0), ?2) WHERE tg_id = ?1').bind(user.id, Math.min(num(s.best), 5e9)),
     env.DB.prepare('UPDATE players SET snap = ?2 WHERE tg_id = ?1').bind(user.id, s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null)
   ]);
+  // рефералы: привязка нового игрока и награда пригласившему за 3 уровень
+  try { if (refId) await bindReferrer(env, user, refId); await payReferrer(env, user.id); } catch {}
   // недельный турнир: принимаем только текущую неделю
   // «Кофейня недели района» — пост в канал, раз в неделю на игрока
   if (s.star && env.CHANNEL_ID) {
