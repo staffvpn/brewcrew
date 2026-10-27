@@ -1,6 +1,6 @@
 // Канал игры: бот сам публикует запуск, обновления, праздничные события, рекорды и итоги недельного турнира.
 // Вызывается фоном из /api/track и вебхука. Ничего не делает, пока не задан CHANNEL_ID.
-import { tgApi, getBot, mskDay } from './_lib.js';
+import { tgApi, getBot, mskDay, ADMINS } from './_lib.js';
 
 export const VERSION = '6';
 export const VERSION_TITLE = 'общепит как он есть';
@@ -75,7 +75,7 @@ export async function channelTick(env, origin) {
     const prev = tourWeek(Date.now() - 7 * 86400000);
     const wkey = 'week_' + prev;
     if (!(await posted(env, wkey))) {
-      const top = (await env.DB.prepare('SELECT * FROM tour WHERE week = ?1 AND profit > 0 ORDER BY profit DESC LIMIT 5').bind(prev).all()).results || [];
+      const top = (await env.DB.prepare(`SELECT * FROM tour WHERE week = ?1 AND profit > 0 AND tg_id NOT IN (${ADMINS.join(',')}) ORDER BY profit DESC LIMIT 5`).bind(prev).all()).results || [];
       if (!top.length) { await mark(env, wkey, true, 'empty'); return; }
       const prizes = [20, 14, 10];
       for (let i = 0; i < Math.min(3, top.length); i++) {
@@ -87,7 +87,7 @@ export async function channelTick(env, origin) {
       await mark(env, wkey, ok); return;
     }
     // рекорд дня: если кто-то сделал выручку на 10% больше прежнего рекорда
-    const best = await env.DB.prepare('SELECT tg_id, cafe, city, first_name, best_day FROM players ORDER BY best_day DESC LIMIT 1').first();
+    const best = await env.DB.prepare(`SELECT tg_id, cafe, city, first_name, best_day FROM players WHERE tg_id NOT IN (${ADMINS.join(',')}) ORDER BY best_day DESC LIMIT 1`).first();
     if (best && best.best_day >= 200000) {
       const rec = await posted(env, 'record');
       const prevRec = rec ? Number(rec.info) || 0 : 0;

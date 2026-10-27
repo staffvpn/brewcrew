@@ -1,7 +1,7 @@
 // POST /api/track — игра раз в минуту сообщает, что игрок онлайн, и его краткие показатели.
-import { json, mskDay, verifyInitData, dispatchReminders } from '../_lib.js';
+import { json, mskDay, verifyInitData, dispatchReminders, ADMINS } from '../_lib.js';
 import { opsFor } from '../_admin.js';
-import { channelTick, tourWeek } from '../_channel.js';
+import { channelTick, tourWeek, post as channelPost } from '../_channel.js';
 
 const num = (v, max = 1e15) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(n, max)) : 0; };
 const str = (v, len = 40) => (typeof v === 'string' ? v.slice(0, len) : null);
@@ -32,7 +32,17 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare('UPDATE players SET snap = ?2 WHERE tg_id = ?1').bind(user.id, s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null)
   ]);
   // недельный турнир: принимаем только текущую неделю
-  if (s.tw === tourWeek(now) && Number.isFinite(Number(s.tp))) {
+  // «Кофейня недели района» — пост в канал, раз в неделю на игрока
+  if (s.star && env.CHANNEL_ID) {
+    const key = 'star_' + user.id + '_' + tourWeek(now);
+    const was = await env.DB.prepare('SELECT key FROM posts WHERE key = ?1').bind(key).first();
+    if (!was) {
+      const name = str(s.cafe) || 'Без названия';
+      const okp = await channelPost(env, new URL(request.url).origin, 'events.jpg', `<b>Кофейня недели района</b>\n\n«${name.replace(/[&<>]/g, '')}» отработала три золотые смены подряд: ни одного скандала, чистый зал, все задания сделаны.\n\nРайон говорит только о ней. Кто следующий?`);
+      await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5)').bind(key, now, okp ? 1 : 0, okp && okp.id ? okp.id : null, 'Кофейня недели: ' + name).run();
+    }
+  }
+  if (!ADMINS.includes(user.id) && s.tw === tourWeek(now) && Number.isFinite(Number(s.tp))) {
     const tp = Math.max(-1e10, Math.min(Number(s.tp), 1e11));
     await env.DB.prepare(`INSERT INTO tour (week, tg_id, profit, cafe, city, first_name, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
       ON CONFLICT(week, tg_id) DO UPDATE SET profit = ?3, cafe = ?4, city = ?5, first_name = ?6, updated_at = ?7`).bind(s.tw, user.id, tp, str(s.cafe), str(s.city, 20), str(user.first_name), now).run();

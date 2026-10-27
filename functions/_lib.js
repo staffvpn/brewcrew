@@ -52,18 +52,24 @@ export const SHOP = {
   int_soviet: { title: 'Интерьер «Столовая №1»', desc: 'Пастельный кафель, клетчатый пол и плакат «Пей кофе». Гостей +8%.', stars: 50 },
   int_neon: { title: 'Интерьер «Не спим»', desc: 'Вечерний сиреневый зал и мягкий неон. После 20:00 гостей +30%.', stars: 150 },
   rename: { title: 'Новое название кофейни', desc: 'Одна смена названия. Новое название должно быть свободным.', stars: 50 },
-  tip_50: { title: 'Угостить бариста кофе', desc: 'Чаевые разработчику. Спасибо!', stars: 50 },
-  tip_150: { title: 'Угостить всю смену', desc: 'Чаевые разработчику. Огромное спасибо!', stars: 150 },
-  tip_500: { title: 'Купить команде кофемашину', desc: 'Чаевые разработчику. Ты лучший.', stars: 500 }
+  cash_s: { title: 'Конверт от инвестора', desc: 'Игровые деньги: примерно дневная выручка кофейни, не меньше 300 000 ₽.', stars: 25, cash: 1 },
+  cash_m: { title: 'Мама дала в долг без процентов', desc: 'Игровые деньги: примерно три дня выручки, не меньше 1 000 000 ₽.', stars: 60, cash: 3 },
+  cash_l: { title: 'Чемодан из девяностых', desc: 'Игровые деньги: примерно восемь дней выручки, не меньше 3 000 000 ₽.', stars: 150, cash: 8 },
+  cash_xl: { title: 'Спонсор из Дубая', desc: 'Игровые деньги: примерно двадцать дней выручки, не меньше 8 000 000 ₽.', stars: 350, cash: 20 }
 };
 
 // Отправка накопившихся напоминаний (вызывается из трекинга и вебхука — «ленивый крон»)
 export async function dispatchReminders(env, limit = 15) {
   if (!env.DB || !env.BOT_TOKEN) return 0;
   const now = Date.now();
+  const h = (new Date(now + 3 * 3600000)).getUTCHours();
+  if (h < 10 || h >= 22) return 0; // ночью не пишем
   const due = (await env.DB.prepare('SELECT r.id, r.tg_id, r.text FROM reminders r JOIN players p ON p.tg_id = r.tg_id WHERE r.sent = 0 AND r.at <= ?1 AND p.write_ok = 1 ORDER BY r.at LIMIT ?2').bind(now, limit).all()).results || [];
   for (const r of due) {
-    await env.DB.prepare('UPDATE reminders SET sent = 1 WHERE id = ?1').bind(r.id).run();
+    // не больше одного уведомления в сутки на игрока
+    const last = await env.DB.prepare('SELECT MAX(sent_at) t FROM reminders WHERE tg_id = ?1 AND sent = 1').bind(r.tg_id).first();
+    if (last && last.t && now - last.t < 20 * 3600000) { await env.DB.prepare('UPDATE reminders SET sent = 2 WHERE id = ?1').bind(r.id).run(); continue; }
+    await env.DB.prepare('UPDATE reminders SET sent = 1, sent_at = ?2 WHERE id = ?1').bind(r.id, now).run();
     try { await tgApi(env, 'sendMessage', { chat_id: r.tg_id, text: r.text, reply_markup: { inline_keyboard: [[{ text: 'Открыть кофейню', web_app: { url: env.APP_URL || 'https://brewcrew.pages.dev' } }]] } }); } catch {}
   }
   return due.length;
