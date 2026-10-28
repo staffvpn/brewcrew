@@ -579,6 +579,9 @@ body{background:var(--bg) radial-gradient(120% 60% at 50% 0%, #2c1e15 0%, #1d141
 .s15info{margin:8px 0}
 .tag.r{border-color:var(--bad);color:var(--bad)}
 .fighter .bar{display:block;flex:none;width:100%;height:6px;margin:2px 0}
+.toast{top:calc(118px + env(safe-area-inset-top,0px));z-index:40;font-size:12.5px}
+.rep15 .h2{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;opacity:.7;margin:10px 0 4px}
+#quick{margin-top:8px}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -1200,7 +1203,7 @@ function closeDay(){
   // ссоры
   for(const r of S.rooms){ const ws = S.staff.filter(s=>s.room===r.id && s.today==='work' && !s.isYou); if(ws.length>=2 && chance(0.05 + (ws.some(s=>s.quirk==='lover')?0.05:0) - (ws.some(s=>s.legendId===1)?0.05:0))){ const [a,b] = pickTwo(ws); HOOK.event('conflict', {sid:a.id, sid2:b.id}); } }
   staffDayCheck(); pathDaily(); wishTick(); if(S.day % 3 === 0) envyTick(); shrinkDaily();
-  tourAdd(profitOf(f));
+  tourAdd(typeof opProfit==="function" ? opProfit(f) : profitOf(f));
   S.c._angryDay = S.c.angry;
   (S.reviews||[]).forEach(rv=>{ if(!rv.reply && rv.stars<=2 && S.day - rv.day === 1) repAdd(-0.02); });
   if(!HOOK.quiet && typeof zReport==='function' && (f.guests||0) > 0) HOOK.modal({kind:'z', z:zReport(f), day:S.day});
@@ -2633,7 +2636,7 @@ function cashTick(roomId, amount){
   const f = S.fin.today; if(!f.cash) f.cash = {fake:0, fakeN:0, caught:0, err:0, errN:0, over:0, theft:0, who:{}};
   if(!chance(0.2)) return; // наличные — каждый пятый
   const c = cashier(roomId); const who = c ? c.name : 'Касса';
-  if(chance(0.0035)){ // фальшивая пятитысячная
+  if(chance(0.002)){ // фальшивая пятитысячная
     if(detectorL() && chance(0.9)){ f.cash.caught++; HOOK.toast(pick(['Детектор запищал: пятитысячная нарисована на принтере. Гость «сам не знал»','Фальшивку поймали. Гость ушёл, бормоча про банкомат','Купюра с Банком приколов. Детектор не смеётся'])); return; }
     const loss = 5000 - Math.min(4000, amount); f.cash.fake += loss; f.cash.fakeN++; f.cash.who[who] = (f.cash.who[who]||0) - loss; return; }
   const tired = c && !c.isYou ? Math.max(0, (c.fatigue||0) - 40) * 0.0004 : 0.004;
@@ -2973,6 +2976,46 @@ const _modMulP = modMul;
 modMul = function(k){ let m = _modMulP(k); if(k==='traffic' && S && S.promoBoost && S.promoBoost.until > Date.now()) m *= S.promoBoost.mul; return m; };
 const _newState14 = newState;
 newState = function(name, city, carry){ const s = _newState14(name, city, carry); s.decor = {items:[]}; s.tension = {}; s.sublet = []; if(carry && carry.badges) s.badges = carry.badges; return s; };
+
+/* ---------- v15.1: рейтинг без замкнутого круга ---------- */
+let REP_OFF = false, REP_CAUSE = null;
+const REP_N = {angry:'Злые гости', slip:'Падения на мокром полу', reviews:'Отзывы', events:'События', rush:'Запары', rivals:'Конкуренты', decor:'Интерьер и траты', staff:'Команда', other:'Другое'};
+function repAdd(v){
+  if(!v || !S) return;
+  if(v < 0 && REP_OFF) return;                 // пока игрока нет, рейтинг не падает
+  if(v < 0 && S.rep < 2) v *= 0.5;             // дно: ниже 2,0 падает вдвое медленнее
+  if(v < 0 && S.rep < 1.5) v *= 0.6;
+  S.rep = clamp(S.rep + v, 1, 5);
+  const c = REP_CAUSE || INCOME_DEF_REP() || 'other';
+  const f = S.fin && S.fin.today; if(f){ f.repLog = f.repLog || {}; f.repLog[c] = (f.repLog[c]||0) + v; }
+}
+function INCOME_DEF_REP(){ return INCOME_DEF==='events' ? 'events' : INCOME_DEF==='tasks' ? 'rush' : null; }
+function withRep(cause, fn){ return function(){ const prev = REP_CAUSE; REP_CAUSE = cause; try{ return fn.apply(this, arguments); } finally { REP_CAUSE = prev; } }; }
+simulateOffline = (function(fn){ return function(){ const prev = REP_OFF; REP_OFF = true; try{ return fn.apply(this, arguments); } finally { REP_OFF = prev; } }; })(simulateOffline);
+rivalsDay = withRep('rivals', rivalsDay);
+spendAction = withRep('decor', spendAction);
+decorDaily = withRep('decor', decorDaily);
+// отзыв зависит от того, как обслужили сегодня, а не только от старого рейтинга
+function reviewTick(){
+  if(!S.isOpen || !chance(1/16)) return;
+  const f = S.fin.today, guests = Math.max(12, f.guests||0), angry = Math.max(0, S.c.angry - (S.c._angryDay||0));
+  const angryRate = angry / (guests + angry);
+  let q = 4.3 - angryRate*7 - dirtLevel('main')*1.6 - (S.rush && S.rush.until > absNow() ? 0.4 : 0) - (S.meters.chaos > 60 ? 0.4 : 0) + 0.04*(room('main').upg.decor||0) + 0.03*(room('main').upg.menu||0);
+  q = q*0.75 + S.rep*0.25;
+  const stars = clamp(Math.round(q + R(-0.9, 0.9)), 1, 5);
+  S.reviews = S.reviews || [];
+  S.reviews.unshift({id:S.uid++, day:S.day, stars, author:pick(REV_AUTH), text:pick(REV_TXT[stars]), reply:null});
+  S.reviews = S.reviews.slice(0, 25);
+  REP_CAUSE = 'reviews'; repAdd((stars - 3) * 0.02); REP_CAUSE = null;
+  if(stars <= 2) HOOK.toast('Новый отзыв на картах: '+stars+' из 5'); HOOK.struct();
+}
+const _closeDayR = closeDay;
+closeDay = function(){ const prev = REP_CAUSE; REP_CAUSE = 'reviews'; try{ return _closeDayR.apply(this, arguments); } finally { REP_CAUSE = prev; } };
+// подсказки в улучшениях
+(function(){ const reg = UPG.find(u=>u.id==='register'), saf = UPG.find(u=>u.id==='safety');
+  const r0 = reg.eff, s0 = saf.eff;
+  reg.eff = L => r0(L) + (L >= 4 ? ', детектор фальшивок' : ', с 4 ур. детектор фальшивок');
+  saf.eff = L => s0(L) + (L >= 6 ? ': ловят воров на кассе' : ', с 6 ур. камеры ловят воров'); })();
 
 /* ================= Brew Crew — бесконечный сюжет ================= */
 const CHARS = {
@@ -4123,7 +4166,7 @@ function layoutSlots(){
   if(typeof layoutWall==='function') layoutWall();
 }
 layoutSlots();
-const SPOT = {'Мойщица':[[44,150],[236,252]], 'Бариста':[[84,FEET],[112,FEET],[140,FEET],[160,FEET]], 'Кассир':[[236,FEET],[176,FEET]], 'Повар':[[268,170],[288,170]]};
+const SPOT = {'Мойщица':[[44,150],[236,252]], 'Бариста':[[84,FEET],[112,FEET],[140,FEET],[160,FEET]], 'Кассир':[[236,FEET],[176,FEET]], 'Повар':[[254,150],[274,150]]};
 
 /* ---------- стили зала: базовый и четыре интерьера ---------- */
 const SCENE_STYLES = {
@@ -4832,7 +4875,7 @@ function pickPet(){
   const roll = Math.random(); const want = allowLeg && roll < 0.05 ? 2 : allowRare && roll < 0.3 ? 1 : 0;
   const pool = PETS.filter(i=>RARITY['p'+i]===want); return pick(pool.length ? pool : PETS.filter(i=>RARITY['p'+i]===0));
 }
-function markSeen(k, i){ if(!S.seen[k].includes(i)){ S.seen[k].push(i); const rar = RARITY[k+i]; if(rar>=1) toast((k==='g'?'Новый гость в книге: ':'Новый питомец в книге: ')+RNAME[rar].toLowerCase()); structDirty = true; } }
+function markSeen(k, i){ if(!S.seen[k].includes(i)){ S.seen[k].push(i); const rar = RARITY[k+i]; S.bookNew = (S.bookNew||0) + 1; if(rar>=2) toast((k==='g'?'Легендарный гость в книге':'Легендарный питомец в книге')); structDirty = true; } }
 const DUMB_T = 24;
 const KIND_F = {slow:2.4/1.23, fast:0.5/1.23, norm:1/1.23};
 let GID = 0;
@@ -4895,15 +4938,19 @@ function simRoom(id, dt){
   // приготовление
   const baristas = workingStaff(id).filter(s=>s.role==='Бариста').sort((a,b)=>staffPrio(b)-staffPrio(a));
   for(const b of baristas){ const p = r.staff[b.id]; if(p) p.prog = 0; }
-  for(const j of r.jobs){ if(j.by && !baristas.some(b=>b.id===j.by && !b.distract)) j.by = null; }
-  for(const b of baristas){ if(b.distract) continue; if(!r.jobs.some(j=>j.by===b.id)){ const j = r.jobs.find(j=>!j.by); if(j){ j.by = b.id; if(!j.snd){ j.snd = 1; if(id===S.active) prepSound(j.milk); } } } }
+  const cooks = workingStaff(id).filter(s=>s.role==='Повар' && !s.distract && !(s.breakUntil > Date.now()));
+  const hasCook = cooks.length > 0 && id==='main';
+  for(const j of r.jobs){ if(j.by && !baristas.some(b=>b.id===j.by && !b.distract) && !cooks.some(c=>c.id===j.by)) j.by = null; }
+  for(const b of baristas){ if(b.distract) continue; if(!r.jobs.some(j=>j.by===b.id)){ const j = r.jobs.find(j=>!j.by && !j.ready && !(j.food && hasCook)); if(j){ j.by = b.id; if(!j.snd){ j.snd = 1; if(id===S.active) prepSound(j.milk); } } } }
+  if(hasCook) for(const c of cooks){ if(!r.jobs.some(j=>j.by===c.id)){ const j = r.jobs.find(j=>!j.by && j.food && !j.ready); if(j){ j.by = c.id; j.cook = true; } } }
   for(const j of r.jobs.slice()){
     let sp;
-    if(j.by){ const b = S.staff.find(s=>s.id===j.by); sp = staffSpeed(b); if(r.staff[j.by]) r.staff[j.by].prog = j.p; }
+    if(j.ready){ j.hand = (j.hand||0) + dt; if(j.hand >= (workingStaff(id).some(s=>s.role==='Официант'||s.role==='Бариста') ? 1.2 : 2.5)) finishJob(id, j); continue; }
+    if(j.by){ const b = S.staff.find(s=>s.id===j.by); sp = staffSpeed(b) * (j.cook ? 1 + 0.2*((S.kitchen||{}).tier||0) : 1); if(r.staff[j.by]) r.staff[j.by].prog = j.p; }
     else if(!baristas.length && r.jobs.indexOf(j)===0) sp = 0.25; else continue;
     if(rm.broken.machine && j.coffee) sp = 0;
-    j.p += dt * sp * (1+0.15*rm.upg.machine) / 5;
-    if(j.p >= 1) finishJob(id, j);
+    j.p += dt * sp * (j.cook ? 1 : (1+0.15*rm.upg.machine)) / 5;
+    if(j.p >= 1){ if(j.cook){ j.ready = true; if(r.staff[j.by]) r.staff[j.by].prog = 0; j.by = null; j.hand = 0; } else finishJob(id, j); }
   }
   const waiters = workingStaff(id).filter(s=>s.role==='Официант' && !s.distract);
   for(const g of r.guests){
@@ -4924,10 +4971,10 @@ function simRoom(id, dt){
     const p = r.staff[s.id]; if(!p) continue; p.t += dt;
     if(s.distract && s.distract.until < now) s.distract = null;
     if(s.breakUntil && s.breakUntil < now){ s.breakUntil = 0; s.away = false; }
-    if(s.distract && s.distract.kind==='chat' && !s.distract.g && !p.walker){ const gs = pickGuestSprite(); s.distract.g = {spr:gs.spr, h:SPR_H, x:DOOR[0], y:QUEUE_Y-2, t:0, walk:true, flip:false, chat:s.id, tx: clamp(p.x+6, 20, 200)}; r.guests.push(Object.assign(s.distract.g, {state:'chat'})); }
+    if(s.distract && s.distract.kind==='chat' && !s.distract.g && !p.walker && s.role!=='Повар'){ const gs = pickGuestSprite(); s.distract.g = {spr:gs.spr, h:SPR_H, x:DOOR[0], y:QUEUE_Y-2, t:0, walk:true, flip:false, chat:s.id, tx: clamp(p.x+6, 20, 200)}; r.guests.push(Object.assign(s.distract.g, {state:'chat'})); }
     if(s.distract && s.distract.kind==='chat' && s.distract.g && chance(dt/3) && id===S.active) sfx('babble', RI(3,6), R(150,320), 0.012);
     const gone = (s.distract && s.distract.kind==='smoke') || s.breakUntil > now;
-    if(gone){ moveTo(p, DOOR[0]+20, (p.walker || p.y > FEET+2) ? DOOR[1] : FEET, 55, dt); continue; }
+    if(gone){ if(s.role==='Повар'){ moveTo(p, W+14, p.home ? p.home[1] : 150, 55, dt); continue; } moveTo(p, DOOR[0]+20, (p.walker || p.y > FEET+2) ? DOOR[1] : FEET, 55, dt); continue; }
     staffWalk(id, r, s, p, dt);
   }
   for(const p of r.pets){ p.t += dt; if(moveTo(p, p.tx, p.ty, 18, dt)){ p.idle -= dt; if(p.idle<=0){ p.idle = R(3,9); p.tx = R(20,240); p.ty = R(250,H-8); } } }
@@ -5561,7 +5608,7 @@ function renderSheet(){
     head.querySelector('.sheettitle').textContent = roomDef(S.active).n;
     nav.querySelectorAll('button').forEach(b=>{ const k = b.dataset.t, x = bd[k]; b.setAttribute('aria-pressed', String(hallTab===k)); const i = b.querySelector('.tb'); i.className = 'tb'+(x?(x.u?' u':' n'):''); i.textContent = x && x.u ? x.n : ''; });
     if(fresh){ const act = nav.querySelector('[aria-pressed="true"]'); if(act) nav.scrollLeft = Math.max(0, act.offsetLeft - nav.clientWidth/2 + act.offsetWidth/2); }
-    const at = head.querySelector('#attn'); const other = att.filter(a=>a[0]!==hallTab).slice(0,3);
+    const at = head.querySelector('#attn'); const other = att.filter(a=>a[0]!==hallTab).sort((a,b)=>(b[2]?1:0)-(a[2]?1:0)).slice(0,1);
     const sig = other.map(a=>a.join('|')).join('#');
     if(at.dataset.s !== sig){ at.dataset.s = sig; at.innerHTML = other.length ? other.map(([t,x,u],k)=>`<button class="att ${u?'u':''}" data-k="${k}"><b>${TAB_N[t]}</b><span>${esc(x)}</span></button>`).join('') : '';
       at.querySelectorAll('.att').forEach(b=>b.onclick=()=>{ if(other[+b.dataset.k][0]==='up'){ openSheet('up'); return; } hallTab = other[+b.dataset.k][0]; sfx('tap'); renderSheet(); sh.querySelector('#panel').scrollTop = 0; nav.querySelector(`[data-t="${hallTab}"]`).scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'}); }); }
@@ -6581,7 +6628,7 @@ function loadTour(force){ if(!force && TOUR.week===tourWeek() && Date.now() - TO
 function renderTour(p){
   loadTour();
   const cur = TOUR.week===tourWeek();
-  const my = ((S.tour && S.tour.week===tourWeek()) ? S.tour.profit : 0) + profitOf(S.fin.today);
+  const my = ((S.tour && S.tour.week===tourWeek()) ? S.tour.profit : 0) + opProfit(S.fin.today);
   const rank = cur && TOUR.profits.length ? TOUR.profits.filter(x=>x > my).length + 1 : 0;
   const end = new Date(Date.parse(tourWeek()+'T00:00:00+03:00') + 7*86400000);
   const left = Math.max(0, Math.round((end - Date.now())/3600000));
@@ -7463,7 +7510,7 @@ attention = function(){
 function track(force){
   if(!S || !tg || !tg.initData) return;
   const z = szState();
-  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + profitOf(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(z.sp), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(z.sp), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
@@ -7508,6 +7555,60 @@ migrate = function(){
   const f = S.fin.today; if(!f.L) f.L = {in:{}, out:{}, inW:{}, outW:{}}; if(f.open == null) f.open = S.money - sumObj(f.L.in) + sumObj(f.L.out); f.byRoom = f.byRoom || {}; f.cash = f.cash || {fake:0, fakeN:0, caught:0, err:0, errN:0, over:0, theft:0, who:{}};
   szState(); mergeInteriors();
 };
+
+/* ================= v15.1: кухня, вкладки, быстрый старт, тише уведомления ================= */
+guestLeaves = withRep('angry', guestLeaves);
+slipTick = withRep('slip', slipTick);
+simRoom = withRep('angry', simRoom);
+// вкладки: «Интерьер» уходит в «Улучшения», «Район» — в «Гости»
+for(const k of ['decor','district']){ const i = HALL_TABS.findIndex(t=>t[0]===k); if(i >= 0) HALL_TABS.splice(i, 1); }
+TAB_N.district = 'Гости'; TAB_N.decor = 'Улучшения';
+const _attention15 = attention;
+attention = function(){ const out = _attention15().map(a=>a[0]==='district' ? ['guests', a[1], a[2]] : a[0]==='decor' ? ['up', a[1], a[2]] : a);
+  if(S.bookNew) out.push(['guests', 'Новых в книге гостей: '+S.bookNew, false]); return out; };
+const _renderGuests14 = renderGuests;
+renderGuests = function(p){ repCard(p); _renderGuests14(p); S.bookNew = 0; p.appendChild(el(`<div class="h chalk">Район</div>`)); renderDistrict(p); };
+const _renderUpgrades14 = renderUpgrades;
+renderUpgrades = function(p, id){ _renderUpgrades14(p, id); if(id==='main'){ p.appendChild(el(`<div class="h chalk" id="decorH">Интерьер и траты</div>`)); renderDecor(p); } };
+if(hallTab==='decor' || hallTab==='district') hallTab = 'team';
+// рейтинг: что тянет вниз и что поднимает
+function repCard(p){
+  const t = S.fin.today, y = S.fin.hist[0] || {};
+  const rows = L => Object.keys(L||{}).filter(k=>Math.abs(L[k]) >= 0.005).sort((a,b)=>L[a]-L[b]).map(k=>`<div class="zl"><span>${esc(REP_N[k]||k)}</span><i></i><b class="num" style="color:${L[k]<0?'var(--bad)':'var(--good)'}">${L[k]>0?'+':'−'}${Math.abs(L[k]).toFixed(2).replace('.',',')}</b></div>`).join('');
+  const today = rows(t.repLog), yday = rows(y.repLog);
+  p.appendChild(el(`<div class="card chalkboard rep15"><div class="t chalk">Рейтинг ${S.rep.toFixed(2).replace('.',',')}</div>
+    <div class="d">Опускают: гости, ушедшие злыми из очереди, грязь, мокрый пол без таблички, плохие отзывы без ответа, проваленные запары. Поднимают: быстрая очередь, чистота, ответы на отзывы, выдержанные запары, хорошие решения в событиях, интерьер и меню.</div>
+    <div class="d">Ниже 2,0 рейтинг падает вдвое медленнее. Пока тебя нет в игре, он не падает.</div>
+    ${today?`<div class="h2">Сегодня</div>${today}`:''}${yday?`<div class="h2">Вчера</div>${yday}`:''}${!today && !yday?'<div class="d">Сегодня рейтинг пока не менялся.</div>':''}</div>`));
+}
+// быстрый старт для новичков
+const _renderStart14 = renderStart;
+renderStart = function(){ _renderStart14(); const go = $('#go'); if(!go || $('#quick')) return; const q = el(`<button class="btn big ghost" id="quick">Быстрый старт: всё «нормальное»</button>`); q.onclick = () => { go.click(); setTimeout(()=>{ const o = $('#open'); if(o && !o.disabled) o.click(); }, 30); }; go.after(q); };
+// достижения — коротким уведомлением, без окна посреди запары
+HOOK.modal = (function(fn){ return m => { if(m && m.kind==='ach'){ toast('Достижение: '+m.n+(m.reward?' · +'+(m.reward*3)+'% к доходу навсегда':'')); return; } return fn(m); }; })(HOOK.modal);
+// блюда: повар готовит, отдаёт на раздачу
+function markFood(id, g){ const r = rt(id); const j = r.jobs.filter(j=>j.g===g).pop(); if(!j) return; const m = MENU.find(x=>x.n===g.item); j.food = !!(m && (m.kitchen || m.food)); }
+const _completeOrder14 = completeOrder;
+completeOrder = function(id, g, tapped){ _completeOrder14(id, g, tapped); if(g.state==='toPick') markFood(id, g); };
+const _spawnCourier14 = spawnCourier;
+spawnCourier = function(id){ const r = rt(id); const n = r.guests.length; _spawnCourier14(id); const g = r.guests[r.guests.length-1]; if(r.guests.length > n && g && g.courier) markFood(id, g); };
+function drawKitchenFx(id, r){
+  if(id !== 'main') return; const k = S.kitchen || {tier:0}; if(!k.tier || k.build) return;
+  const now = performance.now()/1000; const x = BAR_X1 + 4, y = 156;
+  const cooks = workingStaff(id).filter(s=>s.role==='Повар');
+  const here = cooks.filter(s=>{ const p = r.staff[s.id]; return p && p.x < W && !s.distract && !(s.breakUntil > Date.now()); });
+  for(const s of here){ const p = r.staff[s.id]; const busy = r.jobs.some(j=>j.by===s.id);
+    if(busy){ const sh = Math.sin(now*14)*1.6; ctx.fillStyle = '#2a2a2e'; ctx.beginPath(); ctx.ellipse(p.x - 12 + sh, p.y - 30, 6, 2, 0, 0, 7); ctx.fill(); rect(p.x - 6 + sh, p.y - 31, 6, 1.4, '#2a2a2e');
+      if(k.tier >= 2 && Math.sin(now*5 + p.x) > 0.3){ ctx.fillStyle = 'rgba(255,140,40,.85)'; ctx.beginPath(); ctx.moveTo(p.x-17+sh, p.y-28); ctx.lineTo(p.x-12+sh, p.y-40 - Math.sin(now*9)*3); ctx.lineTo(p.x-7+sh, p.y-28); ctx.fill(); }
+      for(let i=0;i<2;i++){ const t = (now*0.9 + i*0.5) % 1; ctx.fillStyle = `rgba(255,255,255,${0.5*(1-t)})`; ctx.beginPath(); ctx.arc(p.x - 12 + i*4, p.y - 36 - t*14, 2 + t*2, 0, 7); ctx.fill(); } } }
+  const ready = r.jobs.filter(j=>j.ready).length;
+  for(let i=0;i<Math.min(3, ready);i++){ EL(x + 10 + i*12, y - 2, 5, 1.8, '#f3e8d3'); EL(x + 10 + i*12, y - 3.5, 3.4, 1.6, ['#c9935a','#e9c46a','#b8463a'][i]); }
+  if(ready && S.rush && S.rush.until > absNow() && here[0] && (!r.hotT || now - r.hotT > 7)){ r.hotT = now; bubble2(0, 0, pick(['Горячее на раздачу!','Забирайте, остывает!','Сырники стынут, кто берёт?!']), 2400, r.staff[here[0].id]); }
+  if(here[0] && stockQty('food') < 1 && MENU.some(m=>m.food && isUnlocked(m.id)) && (!r.noFoodT || now - r.noFoodT > 40)){ r.noFoodT = now; bubble2(0, 0, pick(['Холодильник пустой. Из чего готовить, из воздуха?','Продуктов нет. Я развожу руками','Закажите продукты, или я начну жарить меню']), 2800, r.staff[here[0].id]); }
+  if(!here.length){ RR(x + 2, y - 15, 44, 11, 2, '#2a2a2e'); txt(cooks.length ? 'ПОВАР НА ПЕРЕКУРЕ' : 'ПОВАРА НЕТ', x + 24, y - 7.5, '800 4.6px "Golos Text",sans-serif', '#ffd36b', 'center'); }
+}
+const _draw15 = draw;
+draw = function(){ _draw15(); try{ ctx.setTransform(scale,0,0,scale,-OX*scale,0); drawKitchenFx(S.active, rt(S.active)); }catch(e){} };
 
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());
