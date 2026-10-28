@@ -33,7 +33,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')
       .bind(p.telegram_payment_charge_id, msg.from.id, item, p.total_amount, Date.now(), exp).run();
     if (SHOP[item] && SHOP[item].cash) await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, ?3, ?4, ?5, 0)').bind(msg.from.id, 'cash', SHOP[item].cash, SHOP[item].title, Date.now()).run();
-    const thanks = SHOP[item] && SHOP[item].cash ? 'Готово! Деньги уже летят в кассу кофейни.' : 'Готово! Покупка уже в игре.';
+    const thanks = SHOP[item] && SHOP[item].cash ? 'Готово! Деньги уже летят в кассу кофейни.' : (item === 'pass' || item === 'pass15') ? 'Пропуск сезона активирован. Открой игру: всё пройденное заберётся сразу.' : 'Готово! Покупка уже в игре.';
     await tgApi(env, 'sendMessage', { chat_id: msg.chat.id, text: thanks });
     return json({ ok: true });
   }

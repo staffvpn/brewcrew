@@ -1,5 +1,6 @@
 // POST /api/track — игра раз в минуту сообщает, что игрок онлайн, и его краткие показатели.
-import { json, mskDay, verifyInitData, dispatchReminders, ADMINS, parseRef, bindReferrer, payReferrer } from '../_lib.js';
+import { json, mskDay, verifyInitData, dispatchReminders, ADMINS, parseRef, bindReferrer, payReferrer, sezId } from '../_lib.js';
+import { promoWatch } from '../_promo.js';
 import { opsFor } from '../_admin.js';
 import { channelTick, tourWeek, post as channelPost } from '../_channel.js';
 
@@ -47,7 +48,19 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await env.DB.prepare(`INSERT INTO tour (week, tg_id, profit, cafe, city, first_name, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
       ON CONFLICT(week, tg_id) DO UPDATE SET profit = ?3, cafe = ?4, city = ?5, first_name = ?6, updated_at = ?7`).bind(s.tw, user.id, tp, str(s.cafe), str(s.city, 20), str(user.first_name), now).run();
   }
+  // сезон: очки за месяц
+  if (!ADMINS.includes(user.id) && s.sz === sezId(now) && Number.isFinite(Number(s.sp))) {
+    await env.DB.prepare(`INSERT INTO season (season, tg_id, sp, cafe, city, first_name, badge, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+      ON CONFLICT(season, tg_id) DO UPDATE SET sp = ?3, cafe = ?4, city = ?5, first_name = ?6, badge = ?7, updated_at = ?8`).bind(s.sz, user.id, Math.max(0, Math.min(1e7, Math.round(Number(s.sp)))), str(s.cafe), str(s.city, 20), str(user.first_name), s.bd ? 1 : 0, now).run();
+  }
+  // трофей: первый владелец золотой кофемашины попадает в канал
+  if (s.trophy && env.CHANNEL_ID) {
+    const was = await env.DB.prepare("SELECT key FROM posts WHERE key = 'trophy_first'").first();
+    if (!was) { const name = (str(s.cafe) || 'Без названия').replace(/[&<>]/g, ''); const okp = await channelPost(env, new URL(request.url).origin, 'events.jpg', `<b>Первая золотая кофемашина района</b>\n\nКофейня «${name}» купила трофей за 50 миллионов. Кофе от этого не стал вкуснее, но фотографируют его теперь чаще, чем бариста.`);
+      await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5)').bind('trophy_first', now, okp ? 1 : 0, okp && okp.id ? okp.id : null, 'Золотая кофемашина: ' + name).run(); }
+  }
   const origin = new URL(request.url).origin;
+  if (waitUntil) waitUntil(promoWatch(env, user.id).catch(() => {})); else { try { await promoWatch(env, user.id); } catch {} }
   if (waitUntil) { waitUntil(dispatchReminders(env)); waitUntil(channelTick(env, origin)); } else await dispatchReminders(env);
   const me = await env.DB.prepare('SELECT banned FROM players WHERE tg_id = ?1').bind(user.id).first();
   let ops = [];

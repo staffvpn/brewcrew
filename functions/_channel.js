@@ -1,22 +1,22 @@
 // Канал игры: бот сам публикует запуск, обновления, праздничные события, рекорды и итоги недельного турнира.
 // Вызывается фоном из /api/track и вебхука. Ничего не делает, пока не задан CHANNEL_ID.
-import { tgApi, getBot, mskDay, ADMINS } from './_lib.js';
+import { tgApi, getBot, mskDay, ADMINS, sezId, SEZ_NAMES } from './_lib.js';
 
-export const VERSION = '7';
-export const VERSION_TITLE = 'теперь по-взрослому';
+export const VERSION = '8';
+export const VERSION_TITLE = 'мы видим, как вас зацепило';
 export const VERSION_IMG = 'updates.jpg';
-export const VERSION_TAIL = 'Главная цель — «Кофейня недели района». Посмотрим, кто первый.';
+export const VERSION_TAIL = 'Первый сезон «Осенняя хандра» уже идёт. Промокоды будут здесь — только для подписчиков.';
 export const CHANGELOG = [
-  'Гостей больше с каждым уровнем: команда работает на пределе, улучшения снова нужны',
-  'Гости бывают разные: тормоз у кассы, «Американо и побежал» и компании по четыре человека',
-  'Тупой вопрос у кассы? Ответь, потерпи или выгони — но выгнанный может написать отзыв',
-  'Главы с целями и наградами: от «Не закрыться» до франшизы',
-  'Золотая смена: ни одного скандала, чистый зал, все задания. Три подряд — «Кофейня недели района» и пост здесь',
-  'Мойка переехала наверх, вторая мойщица открывается с 12 уровня и моет зал',
-  'Ответы на отзывы видны всем, а рекламщикам, которые слили бюджет, можно позвонить и наорать',
-  'Уровни набираются дольше, налог списывается каждый день, легенды стали редкостью',
-  'Новые паки игровых денег за звёзды',
-  'Сотни новых реплик: общепит, мемы и «шесть-семь» от школьников'
+  'Сезоны: свой рейтинг, 30 ступеней наград и пропуск сезона с котом-бариста, легендой и золотой кофемашиной',
+  'Промокоды из канала: работают, пока ты подписан',
+  'Стаканы кончаются, если всё на мойке. Бариста орёт, мойщица огрызается',
+  'Конфликты в команде и разборка на ковре: мир, драка или «а ты где был?»',
+  'Касса считает фальшивки, ошибки со сдачей и кражи',
+  'Кассовый отчёт сходится до рубля, у каждого прихода своя причина',
+  'Интерьер: фикус Геннадий, пианино, аквариум, золотой унитаз и наборы',
+  'Корпоратив, билборд, своя обжарка, выкуп помещения и трофей за 50 млн',
+  'Убыточный зал можно закрыть, сдать или переделать',
+  'Хорошие решения иногда аукаются. Ещё больше реплик и сценок'
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -60,7 +60,8 @@ export async function channelTick(env, origin) {
     }
     const vkey = 'ver_' + VERSION;
     if (!(await posted(env, vkey))) {
-      const ok = await post(env, origin, VERSION_IMG || 'updates.jpg', [`<b>Обновление ${VERSION}${VERSION_TITLE ? ': ' + VERSION_TITLE : ''}</b>`, '', ...CHANGELOG.map(x => '— ' + esc(x)), ...(VERSION_TAIL ? ['', VERSION_TAIL] : [])].join('\n'));
+      let intro = []; try { const st = await env.DB.prepare(`SELECT COUNT(*) n, COALESCE(SUM(earned),0) e FROM players WHERE sessions > 0 AND tg_id NOT IN (${ADMINS.join(',')})`).first(); const pl = (n, a, b, c) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? b : c; }; if (st && st.n) intro = [`В районе уже ${st.n} ${pl(st.n, 'кофейня', 'кофейни', 'кофеен')}, вместе они заработали ${fmt(st.e)} ₽. Вы играете больше, чем мы думали, поэтому вот большое обновление:`, '']; } catch {}
+      const ok = await post(env, origin, VERSION_IMG || 'updates.jpg', [`<b>Обновление ${VERSION}${VERSION_TITLE ? ': ' + VERSION_TITLE : ''}</b>`, '', ...intro, ...CHANGELOG.map(x => '— ' + esc(x)), ...(VERSION_TAIL ? ['', VERSION_TAIL] : [])].join('\n'));
       await mark(env, vkey, ok); return;
     }
     const h = holiday();
@@ -86,6 +87,19 @@ export async function channelTick(env, origin) {
       const ok = await post(env, origin, 'events.jpg', ['<b>Итоги турнира района</b>', '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${CITY[t.city] || ''}, ${esc(t.first_name || 'аноним')} — ${fmt(t.profit)} ₽ прибыли${i < 3 ? ' · приз: легенда ' + prizes[i] + ' уровня' : ''}`), '', `Участвовало кофеен: ${total ? total.n : top.length}. Новая неделя уже идёт.`].join('\n'));
       await mark(env, wkey, ok); return;
     }
+    // итоги сезона: в начале нового месяца
+    const curS = sezId(); const prevS = sezId(Date.parse(curS + '-01T00:00:00+03:00') - 3600000);
+    if (prevS !== curS) { const skey = 'season_' + prevS;
+      if (!(await posted(env, skey))) {
+        const top = (await env.DB.prepare(`SELECT * FROM season WHERE season = ?1 AND sp > 0 AND tg_id NOT IN (${ADMINS.join(',')}) ORDER BY sp DESC LIMIT 5`).bind(prevS).all()).results || [];
+        if (!top.length) { await mark(env, skey, true, 'empty'); return; }
+        const nm = SEZ_NAMES[prevS] || prevS;
+        for (let i = 0; i < Math.min(3, top.length); i++) {
+          await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, 'badge', NULL, ?2, ?3, 0)").bind(top[i].tg_id, `Кофейня сезона «${nm}»: ${i + 1} место`, Date.now()).run();
+          await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, 'staff', ?2, ?3, ?4, 0)").bind(top[i].tg_id, [25, 20, 16][i], `Приз за ${i + 1} место в сезоне «${nm}».`, Date.now()).run();
+        }
+        const ok = await post(env, origin, 'events.jpg', [`<b>Итоги сезона «${esc(nm)}»</b>`, '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${esc(t.first_name || 'аноним')} — ${fmt(t.sp)} очков${i < 3 ? ' · значок «Кофейня сезона» и легенда ' + [25, 20, 16][i] + ' ур.' : ''}`), '', 'Новый сезон уже начался. Очки обнулились, значки остаются навсегда.'].join('\n'));
+        await mark(env, skey, ok); return; } }
     // рекорд дня: если кто-то сделал выручку на 10% больше прежнего рекорда
     const best = await env.DB.prepare(`SELECT tg_id, cafe, city, first_name, best_day FROM players WHERE tg_id NOT IN (${ADMINS.join(',')}) ORDER BY best_day DESC LIMIT 1`).first();
     if (best && best.best_day >= 200000) {

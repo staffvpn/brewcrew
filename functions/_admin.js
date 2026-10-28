@@ -3,6 +3,7 @@
 // и применяются игрой при следующем выходе на связь.
 import { ADMINS, tgApi, mskDay, SHOP, bindReferrer } from './_lib.js';
 import { post as channelPost, tourWeek } from './_channel.js';
+import { promoCallback, promoInput, promoPostText } from './_promo.js';
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -14,6 +15,7 @@ const OPN = { refgift: 'Реферальный бонус', level: 'Уровен
 const STYLES = [['int_soviet', 'Столовая №1'], ['int_loft', 'Заводской лофт'], ['int_scandi', 'Фика'], ['int_neon', 'Не спим']];
 const COVERS = [['updates.jpg', 'Обновления'], ['events.jpg', 'События'], ['banner.jpg', 'Баннер'], ['hall.jpg', 'Новый зал']];
 const PAGE = 10;
+const MONEY_LEGS = ['Зачисление от инвестора', 'Отправили шейхи', 'Возврат НДС', 'Наследство двоюродной тёти', 'Компенсация от поставщика'];
 const ONLINE_MS = 3 * 60000;
 const B = (text, data) => ({ text, callback_data: data });
 const HOME = [B('Главное', 'p:home')];
@@ -70,7 +72,7 @@ async function vHome(env) {
     [B('Сейчас в игре', 'p:pl:on:0'), B('Новые', 'p:pl:new:0')],
     [B('Рассылка всем', 'p:all'), B('Канал', 'p:ch')],
     [B('Турнир', 'p:tour'), B('Покупки', 'p:buy')],
-    [B('Рефералы', 'p:refs')],
+    [B('Рефералы', 'p:refs'), B('Промокоды', 'p:prl')],
     [B('Журнал', 'p:log'), B('Обновить', 'p:home')]
   ] };
 }
@@ -160,6 +162,7 @@ async function vStyles(env, id) {
   return { text: '<b>Стили и подписка</b>\n\nВыданное появится у игрока при входе. Стиль включается в Настройках игры.', kb: [
     ...STYLES.map(([k, n]) => [B(owned.includes(k) ? n + ' · уже есть' : 'Выдать «' + n + '»', owned.includes(k) ? 'p:ust:' + id : `p:gi:${id}:${k}`)]),
     [B('Подписка «Владелец» +30 дней', `p:gs:${id}`)],
+    [B('Пропуск текущего сезона', `p:gp:${id}`)],
     [B('‹ Карточка', 'p:u:' + id), ...HOME]] };
 }
 async function vHistory(env, id) {
@@ -235,6 +238,13 @@ export async function adminInput(env, chat, from, msgId, text) {
   const done = async v => { await clearState(env, from); await show(v); };
   const m = st.mode;
   if (m === 'find') { const r = await findPlayers(env, text); if (r.length === 1) { await done(await vCard(env, r[0].tg_id)); return true; } { await done({ text: r.length ? `<b>Нашлось: ${r.length}</b>\n\nВыбери игрока.` : 'Никого не нашлось. Попробуй ID, @ник, имя или название кофейни.', kb: [...r.map(p => [playerBtn(p)]), [B('Искать ещё', 'p:find'), ...HOME]] }); return true; } }
+  if (m === 'prcode' || m === 'pramt' || m === 'prleg') return await promoInput(env, m, text, from, show, done);
+  if (m === 'leg') { const dr = await env.DB.prepare('SELECT val FROM cache WHERE key = ?1').bind('legdraft_' + from).first(); const d = dr ? JSON.parse(dr.val) : null; if (!d) { await done(await vHome(env)); return true; } const leg = String(text).slice(0, 80); await addOp(env, d.id, 'give', d.amount, leg, from); await done(await vCard(env, d.id, `Начислено: ${fmt(d.amount)} ₽ · ${leg}`)); return true; }
+  if (m === 'amt' && data.op === 'give') { const a = parseAmount(text); if (!Number.isFinite(a) || a <= 0 || a > 1e12) { await show({ text: 'Не понял сумму. Примеры: 50000, 250к, 1.5млн', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; }
+    await env.DB.prepare('INSERT INTO cache (key, val, at) VALUES (?1, ?2, ?3) ON CONFLICT(key) DO UPDATE SET val = ?2, at = ?3').bind('legdraft_' + from, JSON.stringify({ id: data.id, amount: a }), Date.now()).run();
+    await done({ text: `<b>${fmt(a)} ₽</b>
+
+Как это появится в отчёте игрока? Игроки отыгрывают роль, поэтому у денег должна быть причина.`, kb: [...MONEY_LEGS.map((l, i) => [B(l, 'p:lg:' + i)]), [B('Случайная', 'p:lg:r'), B('Своя', 'p:lgc')], [B('Отмена', 'p:u:' + data.id)]] }); return true; }
   if (m === 'amt') { const a = parseAmount(text); if (!Number.isFinite(a) || a < 0 || a > 1e12) { await show({ text: 'Не понял сумму. Примеры: 50000, 250к, 1.5млн', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; } await addOp(env, data.id, data.op, a, null, from); { await done(await vCard(env, data.id, `${OPN[data.op]}: ${fmt(a)} ₽. Применится при входе игрока`)); return true; } }
   if (m === 'msg') { await addOp(env, data.id, 'msg', null, text.slice(0, 500), from); const r = await tgApi(env, 'sendMessage', { chat_id: data.id, text: 'Сообщение от команды Brew Crew:\n\n' + text.slice(0, 3500) }); { await done(await vCard(env, data.id, r && r.ok ? 'Сообщение ушло в бота и покажется в игре' : 'В бота не дошло, но покажется в игре')); return true; } }
   if (m === 'ref') { const rid = Number(String(text).replace(/\D/g, '')); const p = await env.DB.prepare('SELECT tg_id, first_name, username FROM players WHERE tg_id = ?1').bind(data.id).first(); const ok = rid && p ? await bindReferrer(env, { id: p.tg_id, first_name: p.first_name, username: p.username }, rid, 'admin', true) : false; await done(await vCard(env, data.id, ok ? 'Привязан к ' + rid + '. Бонусы начислены' : 'Не получилось: проверь ID пригласившего')); return true; }
@@ -266,6 +276,12 @@ export async function adminCallback(env, cq) {
   const id = Number(parts[2]);
   // любое нажатие сбрасывает ожидание ввода, кроме подтверждений
   if (!['allgo', 'pngo'].includes(act)) await setState(env, from, null, null, chat, mid);
+  if (act && act.startsWith('pr')) {
+    if (act === 'prp') { const pr = await env.DB.prepare('SELECT * FROM promos WHERE code = ?1').bind(parts[2]).first(); if (!pr) return answer('Нет такого'); const ok = await channelPost(env, ORIGIN, 'events.jpg', promoPostText(pr)); return answer(ok ? 'Опубликовано в канале' : 'Не получилось опубликовать', !ok); }
+    const r = await promoCallback(env, act, parts, from, edit, wait, ask, answer); if (r !== null) return r;
+  }
+  if (act === 'lg') { const dr = await env.DB.prepare('SELECT val FROM cache WHERE key = ?1').bind('legdraft_' + from).first(); const d = dr ? JSON.parse(dr.val) : null; if (!d) { await edit(await vHome(env)); return answer('Черновик потерян'); } const leg = parts[2] === 'r' ? null : MONEY_LEGS[Number(parts[2])] || null; await addOp(env, d.id, 'give', d.amount, leg, from); await edit(await vCard(env, d.id, `Начислено: ${fmt(d.amount)} ₽ · ${leg || 'случайная легенда'}`)); return answer('Готово'); }
+  if (act === 'lgc') return wait('leg', null, ask('Своя легенда', 'Пришли, как это будет выглядеть в отчёте игрока. Например: «Отправили шейхи».', 'p:home'));
   switch (act) {
     case 'home': await edit(await vHome(env)); return answer('');
     case 'pl': await edit(await vPlayers(env, parts[2], Number(parts[3]))); return answer('');
@@ -285,6 +301,7 @@ export async function adminCallback(env, cq) {
     case 'ulvl': return wait('lvl', { id }, ask('Выдать уровень', 'Пришли номер уровня от 1 до 60. Уровень поставится при входе игрока.', 'p:u:' + id));
     case 'ust': await edit(await vStyles(env, id)); return answer('');
     case 'gi': { const k = parts[3]; if (!STYLES.some(s => s[0] === k)) return answer('Нет такого стиля'); await env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at) VALUES (?1, ?2, ?3, 0, ?4, NULL)').bind('admin_' + k + '_' + id, id, k, Date.now()).run(); await addOp(env, id, 'ent', null, null, from); await edit(await vStyles(env, id)); return answer('Стиль выдан'); }
+    case 'gp': { const has = await env.DB.prepare("SELECT 1 FROM purchases WHERE tg_id = ?1 AND item IN ('pass','pass15') AND created_at >= ?2 AND refunded = 0").bind(id, Date.now() - 31 * 86400000).first(); if (!has) { await env.DB.prepare('INSERT INTO purchases (charge_id, tg_id, item, stars, created_at) VALUES (?1, ?2, ?3, 0, ?4)').bind('admin_' + Date.now() + '_' + id, id, 'pass', Date.now()).run(); await addOp(env, id, 'ent', null, null, from); } await edit(await vCard(env, id, has ? 'Пропуск уже есть' : 'Пропуск сезона выдан. Появится при входе')); return answer('Готово'); }
     case 'gs': { const cur = await env.DB.prepare("SELECT MAX(expires_at) e FROM purchases WHERE tg_id = ?1 AND item = 'sub_owner' AND refunded = 0").bind(id).first(); const base = Math.max(Date.now(), (cur && cur.e) || 0); await env.DB.prepare('INSERT INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at) VALUES (?1, ?2, ?3, 0, ?4, ?5)').bind('admin_' + Date.now() + '_' + id, id, 'sub_owner', Date.now(), base + 30 * 86400000).run(); await addOp(env, id, 'ent', null, null, from); await edit(await vCard(env, id, 'Подписка продлена на 30 дней')); return answer('Готово'); }
     case 'uleg': await edit(confirm('Отправить легенду 20 уровня в команду', 'p:uleg2:' + id, 'p:u:' + id)); return answer('');
     case 'uleg2': await addOp(env, id, 'staff', 20, 'Подарок от администрации.', from); await edit(await vCard(env, id, 'Легенда выйдет на смену при входе игрока')); return answer('Готово');
