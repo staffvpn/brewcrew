@@ -26,8 +26,8 @@ export async function onRequestGet({ env }) {
     if (c && now - c.at < SNAP_MS) return json(Object.assign({ ok: true, week, at: c.at, next: c.at + SNAP_MS }, JSON.parse(c.val)));
   } catch {}
   const noAdm = 'AND tg_id NOT IN (' + ADMINS.join(',') + ')';
-  const rows = (await env.DB.prepare(`SELECT cafe, city, profit FROM tour WHERE week = ?1 ${noAdm} ORDER BY profit DESC LIMIT 300`).bind(week).all()).results || [];
-  const snap = { top: rows.slice(0, 10).map(r => ({ cafe: r.cafe, city: r.city, profit: Math.round(r.profit) })), profits: rows.map(r => Math.round(r.profit)), total: rows.length };
+  const rows = (await env.DB.prepare(`SELECT t.cafe, t.city, t.profit, p.badge_name FROM tour t LEFT JOIN players p ON p.tg_id = t.tg_id WHERE t.week = ?1 AND t.tg_id NOT IN (${ADMINS.join(',')}) ORDER BY t.profit DESC LIMIT 300`).bind(week).all()).results || [];
+  const snap = { top: rows.slice(0, 10).map(r => ({ cafe: r.cafe, city: r.city, profit: Math.round(r.profit), badge: r.badge_name || null })), profits: rows.map(r => Math.round(r.profit)), total: rows.length };
   try { await env.DB.prepare('INSERT INTO cache (key, val, at) VALUES (?1, ?2, ?3) ON CONFLICT(key) DO UPDATE SET val = ?2, at = ?3').bind(key, JSON.stringify(snap), now).run(); } catch {}
   return json(Object.assign({ ok: true, week, at: now, next: now + SNAP_MS }, snap));
 }

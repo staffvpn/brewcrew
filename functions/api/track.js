@@ -48,6 +48,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await env.DB.prepare(`INSERT INTO tour (week, tg_id, profit, cafe, city, first_name, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
       ON CONFLICT(week, tg_id) DO UPDATE SET profit = ?3, cafe = ?4, city = ?5, first_name = ?6, updated_at = ?7`).bind(s.tw, user.id, tp, str(s.cafe), str(s.city, 20), str(user.first_name), now).run();
   }
+  // значок рядом с названием
+  await env.DB.prepare('UPDATE players SET badge_name = ?2 WHERE tg_id = ?1').bind(user.id, typeof s.bdn === 'string' ? s.bdn.slice(0, 40) : null).run();
   // сезон: очки за месяц
   if (!ADMINS.includes(user.id) && s.sz === sezId(now) && Number.isFinite(Number(s.sp))) {
     await env.DB.prepare(`INSERT INTO season (season, tg_id, sp, cafe, city, first_name, badge, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)

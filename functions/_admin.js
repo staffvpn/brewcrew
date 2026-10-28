@@ -1,7 +1,7 @@
 // Админка в боте: одна панель-сообщение с кнопками, которое редактируется на месте.
 // Состояние игры хранится на устройстве игрока, поэтому изменения ставятся в очередь (admin_ops)
 // и применяются игрой при следующем выходе на связь.
-import { ADMINS, tgApi, mskDay, SHOP, bindReferrer } from './_lib.js';
+import { ADMINS, tgApi, mskDay, SHOP, bindReferrer, sezId, SEZ_NAMES } from './_lib.js';
 import { post as channelPost, tourWeek } from './_channel.js';
 import { promoCallback, promoInput, promoPostText } from './_promo.js';
 
@@ -73,6 +73,7 @@ async function vHome(env) {
     [B('Рассылка всем', 'p:all'), B('Канал', 'p:ch')],
     [B('Турнир', 'p:tour'), B('Покупки', 'p:buy')],
     [B('Рефералы', 'p:refs'), B('Промокоды', 'p:prl')],
+    [B('Сезон и пропуск', 'p:sz')],
     [B('Журнал', 'p:log'), B('Обновить', 'p:home')]
   ] };
 }
@@ -135,6 +136,28 @@ async function vFriends(env, id) {
   rows.forEach((f, i) => lines.push(`${i + 1}. <b>${esc(f.first_name || '?')}</b>${f.username ? ' @' + esc(f.username) : ''} · «${esc(f.cafe || 'не открыл')}» · ур. ${f.level} · ${fmt(f.earned)} ₽ · заходов ${f.sessions} · ${short(f.last_seen)}${f.ref_paid ? ' · награда выдана' : ''}`));
   const kb = []; for (let i = 0; i < rows.length && i < 20; i += 2) kb.push(rows.slice(i, i + 2).map(f => B((f.first_name || '?').slice(0, 18) + ' · ' + f.level, 'p:u:' + f.tg_id)));
   kb.push([B('‹ Карточка', 'p:u:' + id), ...HOME]);
+  return { text: lines.join('\n'), kb };
+}
+async function vSeason(env) {
+  const sz = sezId(), now = Date.now();
+  const rows = (await env.DB.prepare(`SELECT s.tg_id, s.sp, s.cafe, s.first_name, p.badge_name, (SELECT COUNT(*) FROM purchases u WHERE u.tg_id = s.tg_id AND u.item IN ('pass','pass15') AND u.refunded = 0 AND u.created_at >= ?2) pass FROM season s LEFT JOIN players p ON p.tg_id = s.tg_id WHERE s.season = ?1 ORDER BY s.sp DESC LIMIT 20`).bind(sz, Date.parse(sz + '-01T00:00:00+03:00') - 40 * 86400000).all()).results || [];
+  const passN = rows.filter(r => r.pass).length;
+  const all = await env.DB.prepare("SELECT COUNT(*) n, COALESCE(SUM(stars),0) st FROM purchases WHERE item IN ('pass','pass15') AND refunded = 0 AND created_at >= ?1").bind(Date.parse(sz + '-01T00:00:00+03:00') - 40 * 86400000).first();
+  const lines = [`<b>Сезон «${esc(SEZ_NAMES[sz] || sz)}»</b>`, '', `Пропусков куплено: ${all.n} · звёзд: ${all.st}`, `В топ-20 с пропуском: ${passN}`, '', '<b>Топ по очкам сезона</b>'];
+  if (!rows.length) lines.push('Пока пусто.');
+  rows.forEach((r, i) => lines.push(`${i + 1}. «${esc(r.cafe || '?')}» — ${esc(r.first_name || '')} · ${fmt(r.sp)} оч. · ступень ${Math.min(30, Math.floor(r.sp / 140))}${r.pass ? ' · <b>пропуск</b>' : ''}${r.badge_name ? ' · ' + esc(r.badge_name) : ''}`));
+  const kb = []; for (let i = 0; i < Math.min(rows.length, 10); i += 2) kb.push(rows.slice(i, i + 2).map(r => B((r.first_name || '?').slice(0, 16) + ' · ' + r.sp, 'p:u:' + r.tg_id)));
+  kb.push([B('Только с пропуском', 'p:szp'), B('Обновить', 'p:sz')], HOME);
+  return { text: lines.join('\n'), kb };
+}
+async function vSeasonPass(env) {
+  const sz = sezId();
+  const rows = (await env.DB.prepare(`SELECT p.tg_id, p.first_name, p.cafe, COALESCE(s.sp, 0) sp, GROUP_CONCAT(u.item) items FROM purchases u JOIN players p ON p.tg_id = u.tg_id LEFT JOIN season s ON s.tg_id = u.tg_id AND s.season = ?1 WHERE u.item IN ('pass','pass15') AND u.refunded = 0 AND u.created_at >= ?2 GROUP BY p.tg_id ORDER BY sp DESC LIMIT 30`).bind(sz, Date.parse(sz + '-01T00:00:00+03:00') - 40 * 86400000).all()).results || [];
+  const lines = ['<b>Владельцы пропуска сезона</b>', ''];
+  if (!rows.length) lines.push('Пока никто не купил.');
+  rows.forEach((r, i) => lines.push(`${i + 1}. «${esc(r.cafe || '?')}» — ${esc(r.first_name || '')} · ${fmt(r.sp)} оч. · ступень ${Math.min(30, Math.floor(r.sp / 140))}${String(r.items).includes('pass15') ? ' · +15' : ''}`));
+  const kb = []; for (let i = 0; i < Math.min(rows.length, 10); i += 2) kb.push(rows.slice(i, i + 2).map(r => B((r.first_name || '?').slice(0, 16) + ' · ' + r.sp, 'p:u:' + r.tg_id)));
+  kb.push([B('‹ Сезон', 'p:sz')], HOME);
   return { text: lines.join('\n'), kb };
 }
 async function vRefs(env) {
@@ -297,6 +320,8 @@ export async function adminCallback(env, cq) {
     case 'uh': await edit(await vHistory(env, id)); return answer('');
     case 'ufr': await edit(await vFriends(env, id)); return answer('');
     case 'refs': await edit(await vRefs(env)); return answer('');
+    case 'sz': await edit(await vSeason(env)); return answer('');
+    case 'szp': await edit(await vSeasonPass(env)); return answer('');
     case 'uref': return wait('ref', { id }, ask('Привязать к пригласившему', 'Пришли ID игрока, который пригласил. Другу придёт 100 000 ₽, пригласившему 150 000 ₽, когда друг дойдёт до 3 уровня (если уже дошёл — сразу).', 'p:u:' + id));
     case 'ulvl': return wait('lvl', { id }, ask('Выдать уровень', 'Пришли номер уровня от 1 до 60. Уровень поставится при входе игрока.', 'p:u:' + id));
     case 'ust': await edit(await vStyles(env, id)); return answer('');
