@@ -597,6 +597,22 @@ input,textarea,select{font-size:16px!important}
 .badge15.gold b{color:#e9c46a}.badge15.silver b{color:#cfd6dc}.badge15.bronze b{color:#d29a6a}
 .hbdg{display:block;width:max-content;max-width:100%!important;margin:2px 0 1px;font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;background:#c9a24a;color:#1d1410;padding:1px 5px;vertical-align:2px;max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bdg{max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+.clean15{border-color:#3a6ac0}
+.vip-card{display:flex;gap:12px;align-items:flex-start}
+.vip-card img{width:88px;height:auto;image-rendering:auto;flex:none;filter:drop-shadow(2px 3px 0 rgba(0,0,0,.25))}
+.vip-card img.unmet{filter:grayscale(1) brightness(.6)}
+.vip-card h2{margin:2px 0 6px}
+.vip-card p{margin:0 0 6px;font-size:13px;line-height:1.4}
+.vip-ev{font-weight:700}
+.vip-ch{display:flex;flex-direction:column;gap:2px;padding:8px 10px;margin:8px 0;background:rgba(0,0,0,.06);box-shadow:inset 3px 0 0 #b8463a;font-size:13px}
+.vip-ch span{opacity:.8}
+.vip-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.vip-tile{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;background:var(--panel,#2a211a);color:inherit;border:none;box-shadow:inset 0 0 0 2px rgba(236,235,228,.2);font:inherit;cursor:pointer;min-width:0}
+.vip-tile img{height:84px;width:auto;filter:grayscale(1) brightness(.55)}
+.vip-tile.met img{filter:none}
+.vip-tile b{font-size:13px}
+.vip-tile span{font-size:10.5px;opacity:.7}
+.vip-tile i{font-style:normal;font-size:10px;opacity:.85;text-align:center}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -2715,7 +2731,7 @@ TWISTS15.forEach((t,i)=>def('tw15_'+i, {cat:'result', t:t.t, x:t.x, auto:t.fx}))
 const _resolve14 = resolveIncident;
 resolveIncident = function(inc, i, auto){
   const res = _resolve14(inc, i, auto); const d = evDef(inc) || {};
-  if(!auto) szAdd(8, 'event');
+  if(!auto) szAdd(5, 'event');
   if(!auto && d.cat !== 'result' && d.cat !== 'story' && res && res.chips && res.chips.length && res.chips.every(c=>c[1]!==false) && res.chips.some(c=>c[1]===true) && chance(0.18)){
     S.pending.push({at:absNow()+RI(40, 160), ev:'tw15_'+RI(0, TWISTS15.length-1)}); }
   return res;
@@ -2835,8 +2851,8 @@ const SEZ_INFO = {
 };
 function sezInfo(id){ id = id || sezId(); if(SEZ_INFO[id]) return Object.assign({id}, SEZ_INFO[id]); const m = +id.slice(5,7); const winter = m===12 || m<=2;
   return {id, n:'Сезон «'+SEZ_MONTHS[m-1][0].toUpperCase()+SEZ_MONTHS[m-1].slice(1)+' смена»', d:'Новый месяц — новый сезон: свой рейтинг, свои награды.', drink:'Сезонный раф', item:'garland', style: winter ? 'int_winter' : 'int_autumn', leg:{name:'Сезонная легенда', sex:'m', bio:'Пришёл по объявлению «нужен бариста с душой». Душа на месте, остальное тоже.'}}; }
-const SZ_TIER = 140, SZ_TIERS = 30;
-function szState(){ const id = sezId(); if(!S.sz || S.sz.id !== id){ if(S.sz) szArchive(S.sz); S.sz = {id, sp:0, acc:0, claimed:{f:[], p:[]}, login:null, profit:0}; HOOK.struct(); } return S.sz; }
+const SZ_TIER = 160, SZ_TIERS = 50;
+function szState(){ const id = sezId(); if(!S.sz || S.sz.id !== id){ if(S.sz) szArchive(S.sz); S.sz = {id, sp:0, acc:0, claimed:{f:[], p:[]}, login:null, profit:0, v50:true}; HOOK.struct(); } return S.sz; }
 function szArchive(z){ S.szHist = (S.szHist||[]).concat([{id:z.id, sp:z.sp, tier:szTier(z)}]).slice(-12); }
 function szTier(z){ z = z || S.sz; return z ? Math.min(SZ_TIERS, Math.floor(z.sp / SZ_TIER)) : 0; }
 function szAdd(v, why){ if(!S) return; const z = szState(); const t0 = szTier(z); z.sp += v; const t1 = szTier(z); if(t1 > t0){ HOOK.toast('Сезон: ступень '+t1+'. Забери награду во вкладке «Сезон»'); HOOK.sfx('level'); HOOK.struct(); } }
@@ -2914,7 +2930,7 @@ const _sellOne14 = sellOne;
 sellOne = function(roomId, opt){
   SALE_NEXT = true; let res;
   try{ res = _sellOne14(roomId, opt); } finally { SALE_NEXT = false; }
-  if(res && !res.fail){ const f = S.fin.today; f.byRoom = f.byRoom || {}; f.byRoom[roomId] = (f.byRoom[roomId]||0) + res.amount; if(!(opt && opt.delivery)) cashTick(roomId, res.amount); const z = szState(); z.acc = (z.acc||0) + 1; if(z.acc >= 25){ z.acc -= 25; szAdd(1, 'guests'); } }
+  if(res && !res.fail){ const f = S.fin.today; f.byRoom = f.byRoom || {}; f.byRoom[roomId] = (f.byRoom[roomId]||0) + res.amount; if(!(opt && opt.delivery)) cashTick(roomId, res.amount); const z = szState(); z.acc = (z.acc||0) + 1; if(z.acc >= 40){ z.acc -= 40; szAdd(1, 'guests'); } }
   return res;
 };
 
@@ -2929,13 +2945,13 @@ closeDay = function(){
   successPrice(f);
   tensionDecay();
   const z = szState(); z.profit = (z.profit||0) + opProfit(f);
-  if((f.guests||0) > 20 && (S.c.angry - (S.c._angryDay||0)) <= 0) szAdd(20, 'clean');
-  if(S.tasks && S.tasks.every(t=>t.done)) szAdd(30, 'tasks');
+  if((f.guests||0) > 20 && (S.c.angry - (S.c._angryDay||0)) <= 0) szAdd(15, 'clean');
+  if(S.tasks && S.tasks.every(t=>t.done)) szAdd(20, 'tasks');
   INCOME_DEF = 'tasks'; try{ _closeDay14(); } finally { INCOME_DEF = null; }
   if(S.fin.today.open == null) S.fin.today.open = S.money;
 };
 const _midnight14 = midnight;
-midnight = function(){ _midnight14(); const z = szState(); const today = new Date(Date.now()+3*3600000).toISOString().slice(0,10); if(z.login !== today){ z.login = today; szAdd(40, 'login'); } };
+midnight = function(){ _midnight14(); const z = szState(); const today = new Date(Date.now()+3*3600000).toISOString().slice(0,10); if(z.login !== today){ z.login = today; szAdd(25, 'login'); } };
 const _hourly14 = hourly;
 hourly = function(){ _hourly14(); pianoHour(); };
 
@@ -3104,6 +3120,208 @@ function badgeTick(){
   if(passOwned() && S.szBadge === info.id) badgeAdd('owner_'+info.id, 'Владелец сезона «'+info.n+'»', 'Значок пропуска сезона');
 }
 setInterval(()=>{ try{ badgeTick(); }catch(e){} }, 4000);
+
+/* ================= v15.3: пропуск на 50 ступеней, ссоры по-новому, уборка на час, особые гости ================= */
+
+/* ---------- награды сезона: 50 ступеней ---------- */
+function szReward(track, n){
+  const info = sezInfo(), b = dayBase();
+  const st = info.style==='int_winter' ? 'Снежный' : 'Листопад';
+  if(track==='p'){
+    const big = {
+      1:{k:'style', t:'Сезонный стиль зала «'+st+'»', d:'Анимированный стиль, гостей +5%'},
+      5:{k:'pet', t:'Кот-бариста', d:'Сидит на стойке, бар на 3% быстрее'},
+      10:{k:'legend', t:'Легенда сезона: '+info.leg.name, d:info.leg.bio+' Чек +8%, пока на смене'},
+      15:{k:'drink', t:'Напиток сезона: '+info.drink, d:'Высокая наценка, только у владельцев пропуска'},
+      20:{k:'goldm', t:'Золотая кофемашина', d:'Напитки на 3% быстрее'},
+      25:{k:'neon', t:'Неоновая вывеска с названием кофейни', d:'Гостей +5%'},
+      30:{k:'badge', t:'Значок «Владелец сезона»', d:'Рядом с названием кофейни'},
+      35:{k:'courier', t:'Личный курьер', d:'Доставка быстрее, рейтинг доставки не падает'},
+      40:{k:'money', v:Math.round(b*5/1000)*1000, t:'Перевод от инвестора', d:'Пять дней прибыли'},
+      45:{k:'staff', v:25, t:'Легенда 25 уровня', d:'В команду, когда применишь'},
+      50:{k:'money', v:Math.round(b*10/1000)*1000, t:'Сейф инвестора и золотая рамка', d:'Главный приз пропуска', gold:true}
+    };
+    return big[n] || {k:'money', v:Math.round(b*0.35/1000)*1000, t:'Перевод от инвестора'};
+  }
+  const big = {
+    5:{k:'mod', boost:1.15, t:'Сарафанное радио', d:'Гостей +15% на сутки'},
+    10:{k:'staff', v:12, t:'Легенда 12 уровня', d:'В команду, когда применишь'},
+    15:{k:'supply', t:'Ящик хозтоваров и молока', d:'Запас на неделю: хозы и молоко на склад'},
+    20:{k:'money', v:Math.round(b*1.5/1000)*1000, t:'Премия района', d:'Полтора дня прибыли'},
+    25:{k:'mod', boost:1.1, modk:'check', t:'Удачная смена', d:'Средний чек +10% на сутки'},
+    30:{k:'item', t:'Памятный предмет: '+decorDef(info.item).n, d:'Остаётся в зале навсегда'},
+    35:{k:'staff', v:16, t:'Легенда 16 уровня', d:'В команду, когда применишь'},
+    40:{k:'mod', boost:1.2, t:'Сезонная ярмарка', d:'Гостей +20% на сутки'},
+    45:{k:'money', v:Math.round(b*2/1000)*1000, t:'Грант на развитие', d:'Два дня прибыли'},
+    50:{k:'veteran', t:'Значок «Ветеран сезона» и табличка над баром', d:'«Мы пережили этот сезон»'}
+  };
+  if(big[n]) return big[n];
+  return n % 2 ? {k:'money', v:Math.round(b*0.2/1000)*1000, t:'Премия сезона'} : {k:'xp', v:100 + n*8, t:'Опыт'};
+}
+const CONSUMABLE2 = ['money','xp','mod','staff','item','supply'];
+function szApplyUnlock(rw, info, silent){
+  if(rw.k==='style'){ S.szStyles = Array.from(new Set((S.szStyles||[]).concat([info.style]))); if(typeof mergeInteriors==='function') mergeInteriors(); }
+  else if(rw.k==='pet') S.szPet = true;
+  else if(rw.k==='legend'){ if(!S.staff.some(s=>s.szLeg===info.id)) szLegend(info); }
+  else if(rw.k==='drink') S.szDrink = info.id;
+  else if(rw.k==='goldm') S.goldMachine = true;
+  else if(rw.k==='neon') S.neonSign = info.id;
+  else if(rw.k==='courier') S.szCourier = info.id;
+  else if(rw.k==='badge'){ S.szBadge = info.id; badgeAdd('owner_'+info.id, 'Владелец сезона «'+info.n+'»', 'Значок пропуска сезона'); }
+  else if(rw.k==='veteran'){ badgeAdd('vet_'+info.id, 'Ветеран сезона «'+info.n+'»', 'Дошёл до 50 ступени'); addDecor('plaque'); }
+}
+function szClaim(track, n, silent){
+  const z = szState(); if(n > szTier(z)) return 'Ещё не открыто';
+  if(track==='p' && !passOwned()) return 'Нужен пропуск сезона';
+  if(z.claimed[track].includes(n)) return 'Уже забрано';
+  const rw = szReward(track, n); z.claimed[track].push(n); const info = sezInfo();
+  const src = 'Сезон «'+info.n+'», ступень '+n+(track==='p' ? ' (пропуск)' : '');
+  if(CONSUMABLE2.includes(rw.k)) invAdd({k:rw.k, v:rw.v, t:rw.t, d:rw.d||'', src, track, n, sz:info.id, item:rw.k==='item' ? info.item : null, boost:rw.boost||null, modk:rw.modk||null});
+  else szApplyUnlock(rw, info, silent);
+  if(rw.gold) badgeAdd('goldown_'+info.id, 'Золотой владелец «'+info.n+'»', '50 ступень пропуска');
+  if(!silent) HOOK.sfx('coin');
+  HOOK.struct(); return null;
+}
+const _invUse16 = invUse;
+invUse = function(uid){
+  const i = (S.inv||[]).findIndex(x=>x.uid===uid); if(i < 0) return 'Нет такого';
+  const it = S.inv[i];
+  if(it.k==='supply'){ S.stock.hoz = (stockQty('hoz')||0) + 20; if(!Array.isArray(S.stock.milk)) S.stock.milk = []; S.stock.milk.push({q:Math.round(stockCap('milk')*0.8), exp:S.day + STOCK.milk.perish + 2}); S.inv.splice(i, 1); HOOK.sfx('buy'); HOOK.struct(); return null; }
+  if(it.k==='mod' && it.modk){ addMod(it.modk, it.boost || 1.1, 24, it.t+': чек +'+Math.round(((it.boost||1.1)-1)*100)+'%'); S.inv.splice(i, 1); HOOK.sfx('level'); HOOK.struct(); return null; }
+  return _invUse16(uid);
+};
+DECOR.push({id:'plaque', n:'Табличка «Мы пережили этот сезон»', slot:'counter', price:0, season:true, d:'Бронзовая табличка ветерана сезона. Команда смотрит на неё с гордостью: настроение не падает ниже 30.', fx:{}});
+// значки за 15, 30 и 50 ступени
+function badgeTick(){
+  if(!S) return; const z = szState(), info = sezInfo(), t = szTier(z);
+  [[15,'Бронза'],[30,'Серебро'],[50,'Золото']].forEach(([n, m])=>{ if(t >= n) badgeAdd('sz'+n+'_'+info.id, m+' сезона «'+info.n+'»', 'Дошёл до '+n+' ступени'); });
+  (S.badges||[]).forEach(s=>{ if(typeof s === 'string') badgeAdd('top_'+s, s, 'Тройка лидеров сезона'); });
+  if(passOwned() && S.szBadge === info.id) badgeAdd('owner_'+info.id, 'Владелец сезона «'+info.n+'»', 'Значок пропуска сезона');
+}
+// бонусы новых наград
+const _modMul17 = modMul;
+modMul = function(k){ let m = _modMul17(k); if(k==='traffic' && S && S.neonSign === sezId()) m *= 1.05; return m; };
+deliveryRate = (function(fn){ return function(d){ if(S && S.szCourier === sezId() && d < 0) return; return fn(d); }; })(deliveryRate);
+// пересчёт тех, кто уже играл по старой шкале (30 ступеней по 140 очков)
+function szMigrate50(){
+  const z = S.sz; if(!z || z.v50) return; z.v50 = true;
+  const info = sezInfo(); const old = {f:(z.claimed.f||[]).length, p:(z.claimed.p||[]).length};
+  z.sp = Math.round(z.sp * 0.6); const tier = szTier(z);
+  for(const tr of ['f','p']){ const m = Math.min(tier, Math.round(old[tr] * 50 / 30)); z.claimed[tr] = Array.from({length:m}, (_, i)=>i+1);
+    if(tr==='p' && !passOwned()) continue;
+    for(let n=1; n<=m; n++){ const rw = szReward(tr, n); if(!CONSUMABLE2.includes(rw.k)) szApplyUnlock(rw, info, true); } }
+  (S.badgeList||[]).forEach(b=>{ if(/^sz(10|20)_/.test(b.id)) b.dead = true; }); S.badgeList = (S.badgeList||[]).filter(b=>!b.dead);
+  if(S.badgeOn && !(S.badgeList||[]).some(b=>b.id===S.badgeOn)) S.badgeOn = (S.badgeList[0]||{}).id || null;
+}
+
+/* ---------- ссоры: короткие, видимые, без скрытой шкалы ---------- */
+function fightOn(){ return S.fight && S.fight.until > absNow() ? S.fight : null; }
+function inFight(id){ const f = fightOn(); return !!(f && (f.a===id || f.b===id)); }
+function addTension(a, b, v, reason){
+  if(!a || !b || a===b || !S.isOpen || S.closedUntil > absNow()) return;
+  const sa = S.staff.find(x=>x.id===a), sb = S.staff.find(x=>x.id===b); if(!sa || !sb || sa.isYou || sb.isYou) return;
+  if(fightOn() || (S.fightCd||0) > absNow()) return;
+  if(!chance(Math.min(1, v/34))) return;
+  S.fight = {a, b, reason: reason || pick(BEEF_REASONS), until: absNow() + 60};
+  S.fightCd = absNow() + 180;
+  S.c.conflicts = (S.c.conflicts||0) + 1;
+  pushIncident('beef', {sid:a, sid2:b, reason:S.fight.reason});
+}
+function endFight(msg){ if(!S.fight) return; const f = S.fight; S.fight = null; S.incidents = S.incidents.filter(i=>!(i.id==='beef' && i.sid===f.a && i.sid2===f.b)); if(msg) HOOK.toast(msg); HOOK.struct(); }
+function fightTick(){ const f = S.fight; if(f && f.until <= absNow()){ endFight('Ссора затихла сама. Осадочек остался'); [f.a, f.b].forEach(id=>{ const s = S.staff.find(x=>x.id===id); if(s) s.mood = clamp(s.mood - 4, 0, 100); }); } }
+function tensionDecay(){ S.tension = {}; }
+S && (S.tension = {});
+// во время ссоры оба работают медленнее
+const _staffSpeed17 = staffSpeed;
+staffSpeed = function(s){ const f = _staffSpeed17(s); return inFight(s.id) ? f*0.85 : f; };
+// новое событие ссоры: три понятных варианта
+def('beef', {cat:'staff', t:'{s} и {s2} ругаются', x:'Повод: {reason}. Орут через весь бар, работают медленнее. Если не трогать, через игровой час остынут сами.', o:[
+ {t:'Разнять', fx:(S, inc)=>{ endFight(); [inc.sid, inc.sid2].forEach(id=>{ const s = S.staff.find(x=>x.id===id); if(s) s.mood = clamp(s.mood-3,0,100); }); return {fx:{}, out:pick(['Встал между ними: «Работаем». Разошлись по местам, бурча','Развёл по углам. Один моет, другой варит. Тихо','Сказал «потом обсудим». Обсуждать, конечно, никто не будет'])}; }},
+ {t:'Вызвать на ковёр', fx:(S, inc)=>{ HOOK.modal({kind:'carpet', a:inc.sid, b:inc.sid2, reason:inc.reason}); return {fx:{}, out:'Оба стоят у тебя в кабинете и смотрят в разные стены'}; }},
+ {t:'Пусть сами', fx:(S, inc)=>{ if(chance(0.6)){ endFight(); return {fx:{}, out:'Поорали и помирились за курилкой'}; } [inc.sid, inc.sid2].forEach(id=>{ const s = S.staff.find(x=>x.id===id); if(s) s.mood = clamp(s.mood-10,0,100); }); return {fx:{chaos:1}, out:'Поругались ещё громче, но через час остынут'}; }}],
+ pre:inc=>{ const a = S.staff.find(x=>x.id===inc.sid), b = S.staff.find(x=>x.id===inc.sid2); if(!a || !b) return false; }});
+
+/* ---------- закрыться на час: генеральная уборка ---------- */
+function isWorking(){ return S.isOpen && !(S.closedUntil > absNow()); }
+function closeForCleaning(){
+  if(!S.isOpen) return 'Кофейня и так закрыта';
+  if(S.closedUntil > absNow()) return 'Уже закрыто';
+  S.cleanDays = S.cleanDays || {}; if((S.cleanDays[S.day]||0) >= 2) return 'Сегодня уже дважды закрывались. Завтра';
+  S.cleanDays = {[S.day]:(S.cleanDays[S.day]||0) + 1};
+  S.closedUntil = absNow() + 60; S.cleanHour = {until:S.closedUntil, t:0};
+  if(S.rush) S.rush = null;
+  if(S.fight) endFight();
+  if(typeof RT !== 'undefined') for(const id in RT){ const r = RT[id]; r.queue.forEach(g=>{ g.state = 'leave'; g.hidden = false; }); r.queue = []; r.outside = 0; r.outsideWait = []; }
+  HOOK.struct(); return null;
+}
+function cleaningTick(dt){
+  const c = S.cleanHour; if(!c) return;
+  if(absNow() >= c.until){ for(const id in (typeof RT!=='undefined' ? RT : {})){ const r = RT[id]; r.mess = []; for(const k in (r.dirty||{})) cleanDirty(id, k); } S.dishes = {}; meter('chaos', -15);
+    S.staff.forEach(s=>{ if(s.isYou) return; s.fatigue = Math.max(0, s.fatigue - 15); s.mood = clamp(s.mood + 5, 0, 100); });
+    S.cleanHour = null; HOOK.toast('Генеральная уборка закончена: всё блестит. Открываемся'); HOOK.sfx('level'); HOOK.struct(); return; }
+  c.t += dt; if(c.t < 1.2) return; c.t = 0;
+  for(const id in (typeof RT!=='undefined' ? RT : {})){ const r = RT[id];
+    if((r.mess||[]).length) r.mess.shift();
+    const k = Object.keys(r.dirty||{})[0]; if(k) cleanDirty(id, k);
+    S.dishes = S.dishes || {}; if(S.dishes[id] > 0) S.dishes[id] = Math.max(0, S.dishes[id] - 3); }
+  meter('chaos', -0.4);
+}
+// пока закрыто — никаких событий: всё переносится на после открытия
+const _pushIncident17 = pushIncident;
+pushIncident = function(id, data){ if(S && S.closedUntil > absNow() && id !== 'beef'){ S.pending.push({at:S.closedUntil + RI(5, 30), ev:id, data:data||{}}); return; } return _pushIncident17(id, data); };
+HOOK.event = pushIncident;
+const _processPending17 = processPending;
+processPending = function(){ if(S.closedUntil > absNow()) return; return _processPending17(); };
+const _scheduleEvents17 = scheduleEvents;
+scheduleEvents = function(nowReal){ if(S.closedUntil > absNow()){ S.nextEv = Math.max(S.nextEv||0, nowReal + 60000); S.nextAbsurd = Math.max(S.nextAbsurd||0, nowReal + 120000); return; } return _scheduleEvents17(nowReal); };
+const _reviewTick17 = reviewTick;
+reviewTick = function(){ if(!isWorking()) return; return _reviewTick17(); };
+
+/* ---------- службы: дороже на высоких уровнях, раз в день, видно эффект ---------- */
+function svcCost(sv){ return Math.round(sv.cost * (1 + 0.6*(S.level-1)) * (1 + 0.5*(S.rooms.length-1)) / 100) * 100; }
+SERVICES.find(s=>s.id==='clean').d = 'Бригада с вёдрами: моют пол и столы, 2 игровых часа держат зал чистым. Посуду не моют — это работа мойщиц. Бардак −30.';
+SERVICES.find(s=>s.id==='master').d = 'Подтягивает всю технику на 30% и снижает риск поломок.';
+function eqLine(){ const r = room(S.active||'main'); const names = {machine:'кофемашина', terminal:'терминал', kkt:'касса', fridge:'холодильник'}; return Object.keys(r.eq).map(k=>names[k]+' '+Math.round(r.eq[k])+'%'+' → '+Math.round(Math.min(100, r.eq[k]+30))+'%').join(', '); }
+function breakRisk(){ const r = room(S.active||'main'); let p = 0; for(const k of ['machine','terminal','kkt']) if(r.eq[k] < 40) p += (40 - r.eq[k])/400; return Math.round(Math.min(0.9, p*24)*100); }
+function callService(id){
+  const s = SERVICES.find(x=>x.id===id); if(!s) return null;
+  S.svcDay = S.svcDay || {}; if(S.svcDay[id] === S.day) return 'Сегодня уже вызывали. Завтра';
+  const c = svcCost(s); if(S.money < c) return 'Не хватает денег';
+  spend(c, 'repairs', s.n);
+  S.svcDay[id] = S.day;
+  if(id==='clean'){ meter('chaos', -30); S.cleanUntil = absNow() + 120; for(const k in RT){ RT[k].mess = []; for(const t in (RT[k].dirty||{})) cleanDirty(k, t); } return 'Клининг: пол и столы чистые на 2 игровых часа. Посуда — на мойщицах'; }
+  if(id==='pest'){ S.flags.pestUntil = S.day + 14; return 'Дезинсекция: 14 дней без тараканов и крыс'; }
+  if(id==='master'){ const before = breakRisk(), line = eqLine(); for(const r of S.rooms) for(const k in r.eq) r.eq[k] = Math.min(100, r.eq[k] + 30); return 'Мастер на час: '+line+'. Риск поломки сегодня '+before+'% → '+breakRisk()+'%'; }
+  if(id==='security'){ S.flags.guardDay = S.day; return 'Охрана до закрытия дня: никаких драк и краж'; }
+  return s.n+': готово';
+}
+
+/* ---------- автозаказ: видит пустую полку ---------- */
+function autoOrder(){
+  const mgr = S.staff.some(s=>s.rank===3);
+  if(S.restock === false && !S.autoOrder && !mgr) return;
+  const th = S.restockAt || 0.35;
+  for(const k in STOCK){
+    if(k==='matcha' && !isUnlocked('matcha')) continue;
+    if(k==='food' && !MENU.some(m=>m.food && isUnlocked(m.id))) continue;
+    if(k==='desserts' && !isUnlocked('dessert')) continue;
+    if(k==='sandwiches' && !isUnlocked('sandwich')) continue;
+    if(k==='pastry' && !isUnlocked('croissant')) continue;
+    if(k==='hoz' && !S.hozAuto) continue;
+    if(S.orders.some(o=>o.k===k)) continue;
+    const cap = stockCap(k), real = stockQty(k);
+    const q = (STOCK[k].perish || real < cap*th*0.5) ? real : bookQty(k);
+    if(q < cap*th){ const packs = Math.floor((cap*0.9 - q) / STOCK[k].pack); if(packs>0) orderStock(k, Math.max(1, packs), 'normal'); }
+  }
+}
+const _spoil17 = spoilCheck;
+spoilCheck = function(){ _spoil17(); if(S.shrink) for(const k of ['milk','desserts','food','sandwiches','pastry']) if(S.shrink[k]) S.shrink[k] = 0; };
+
+/* ---------- особые гости ---------- */
+const VIPS = [
+  {id:'masha', n:'Маша', title:'Маша, крысы и кофе', role:'Блогер', bio:'Ведёт канал про своих домашних крыс, кофе и жизнь. Тепло, уютно, много фото. Всегда приходит с белой крысой на плече — и та всегда сбегает.', ev:'Сбежавшая крыса', url:'https://t.me/masha_i_krysy', img:'img/masha_card.png', spr:'img/masha.png', max:5}
+];
+function vipState(id){ S.vip = S.vip || {}; S.vip[id] = S.vip[id] || {n:0, next:Date.now() + RI(8, 40)*60000, met:false}; return S.vip[id]; }
 
 /* ================= Brew Crew — бесконечный сюжет ================= */
 const CHARS = {
@@ -6435,7 +6653,7 @@ function frame(t){
     if(Date.now() > (S.candsAt||0)){ refreshCands(); structDirty = true; }
     scheduleEvents(Date.now());
     ambT += dt; if(ambT > 0.5){ ambT = 0; ambientTick(); }
-    for(const inc of S.incidents.slice()) if(Date.now() - inc.at > 20*60000) expireIncident(inc);
+    if(S.closedUntil > absNow()) S.incidents.forEach(i=>{ i.at += dt*1000; }); else for(const inc of S.incidents.slice()) if(Date.now() - inc.at > 20*60000) expireIncident(inc);
     draw();
     hudT += dt; if(hudT > 2){ hudT = 0; renderHud(); refreshAfford(); onbCheck(); const cd = $('#candcd'); if(cd){ const l = Math.max(0,(S.candsAt||0)-Date.now()); cd.textContent = 'новые через '+Math.floor(l/60000)+':'+String(Math.floor(l/1000)%60).padStart(2,'0'); } if(structDirty && sheet && !sheetBusy() && (sheetT = performance.now())) renderSheet(); }
     achT += dt; if(achT > 5){ achT = 0; achCheck(); if(typeof chapterCheck==='function') chapterCheck(); }
@@ -7332,9 +7550,9 @@ function renderSeason(p){
   const z = szState(), info = sezInfo(), tier = szTier(z), own = passOwned();
   const end = new Date(Date.parse(sezId().slice(0,7)+'-01T00:00:00+03:00')); end.setUTCMonth(end.getUTCMonth()+1); const left = Math.max(0, Math.ceil((end - Date.now())/86400000));
   const into = tier >= SZ_TIERS ? 100 : (z.sp % SZ_TIER) / SZ_TIER * 100;
-  p.appendChild(el(`<div class="card chalkboard sz-head"><div class="eyebrow">Сезон · осталось ${left} дн.</div><div class="t chalk">${esc(info.n)}</div><div class="d">${esc(info.d)}</div><div class="mood">Ступень <b class="num">${tier}</b> из ${SZ_TIERS} ${bar(into,'var(--caramel)')}<span class="num">${tier>=SZ_TIERS?'всё':Math.floor(z.sp%SZ_TIER)+'/'+SZ_TIER}</span></div><div class="d">Очки сезона: заход в игру за день +40, все задания дня +30, день без злых гостей +20, решённое событие +8, каждые 25 гостей +1, разборка на ковре +15.</div></div>`));
+  p.appendChild(el(`<div class="card chalkboard sz-head"><div class="eyebrow">Сезон · осталось ${left} дн.</div><div class="t chalk">${esc(info.n)}</div><div class="d">${esc(info.d)}</div><div class="mood">Ступень <b class="num">${tier}</b> из ${SZ_TIERS} ${bar(into,'var(--caramel)')}<span class="num">${tier>=SZ_TIERS?'всё':Math.floor(z.sp%SZ_TIER)+'/'+SZ_TIER}</span></div><div class="d">Очки сезона: заход в игру за день +25, все задания дня +20, день без злых гостей +15, решённое событие +5, каждые 40 гостей +1, разборка на ковре +10.</div></div>`));
   const pc = el(`<div class="card sz-pass ${own?'own':''}"><div class="row"><span class="t">Пропуск сезона</span><span class="sp"></span>${own?'<span class="tag g">Активен</span>':''}</div><div class="d">${own?'Платные награды открыты, каждый день капают дивиденды инвестора.':'Открывает платную ветку: всё, что уже пройдено, забирается сразу.'}</div>
-    <div class="sz-best">${[1,5,10,15,20,30].map(n=>{ const rw = szReward('p', n); return `<div><b>${n}</b><span>${esc(rw.t)}</span></div>`; }).join('')}</div><div class="row wrap"></div></div>`);
+    <div class="sz-best">${[1,5,10,20,30,50].map(n=>{ const rw = szReward('p', n); return `<div><b>${n}</b><span>${esc(rw.t)}</span></div>`; }).join('')}</div><div class="row wrap"></div></div>`);
   if(!own){ const row = pc.querySelector('.row.wrap'); const can = !!(tg && tg.initData && tg.openInvoice);
     const b1 = el(`<button class="btn" ${can?'':'disabled'}>Пропуск · 200 ★</button>`); b1.onclick = () => buyStars('pass');
     const b2 = el(`<button class="btn red" ${can?'':'disabled'}>Пропуск +15 ступеней · 500 ★</button>`); b2.onclick = () => buyStars('pass15');
@@ -7497,18 +7715,17 @@ MODAL15.carpet = (box, m, btn) => {
     const hi = Math.max(st.A, st.B), lo = Math.min(st.A, st.B), angry = st.A >= st.B ? a : b, calm = angry === a ? b : a;
     if(st.R < 25 || (st.A > 60 && st.B > 60 && st.R < 45 && chance(0.6))){ res = 'united'; [a,b].forEach(s=>s.mood = clamp(s.mood-20,0,100)); meter('chaos', 3); tSetPair(a, b, 20); chips.push(['Оба против тебя', false]); }
     else if(st.A < 35 && st.B < 35){ res = 'peace'; [a,b].forEach(s=>s.mood = clamp(s.mood+15,0,100)); tSetPair(a, b, 0); meter('soul', 2); chips.push(['Мир', true], ['Настроение обоих +15', true]); }
-    else if(hi - lo > 40 && hi >= 70){ if(angry.legendId || angry.prize){ res = 'meh'; angry.mood = clamp(angry.mood-30,0,100); chips.push([angry.name+' обиделся', false]); tSetPair(a, b, 40); }
-      else { res = 'quit'; removeStaff(angry.id); S.c.quits = (S.c.quits||0) + 1; calm.mood = clamp(calm.mood+10,0,100); chips.push([angry.name+' уволился', false]); if(typeof syncScene==='function') syncScene('main'); } }
+    else if(hi - lo > 40 && hi >= 70){ res = 'hurt'; angry.mood = clamp(angry.mood-30,0,100); calm.mood = clamp(calm.mood+8,0,100); chips.push([angry.name+' обиделся: настроение −30', false]); tSetPair(a, b, 0); }
     else if(st.A >= 70 && st.B >= 70){ res = 'fight'; [a,b].forEach(s=>{ s.vacation = S.day + 1; s.mood = clamp(s.mood-15,0,100); }); repAdd(-0.05); meter('chaos', 4); tSetPair(a, b, 30); chips.push(['Оба отстранены на день', false], ['Рейтинг −0,05', false]); }
     else { res = 'meh'; tSetPair(a, b, tension(a.id, b.id) * 0.4); chips.push(['Напряжение ниже', true]); }
-    szAdd(15, 'carpet');
-    const text = res==='quit' ? angry.name+' '+pick(CARPET_END.quit) : pick(CARPET_END[res]);
-    st.out = {res, text, chips, title:{peace:'Мир',quit:'Минус сотрудник',united:'Против тебя',fight:'Драка',meh:'Ничья'}[res]}; st.done = true; save();
+    szAdd(10, 'carpet');
+    const text = res==='hurt' ? angry.name+' '+pick(['ушёл в подсобку и хлопнул дверью. Вернётся, но обиду запомнит','демонстративно надел наушники и молчит до конца смены','сказал «понятно» таким тоном, что всем стало понятно']) : pick(CARPET_END[res]);
+    st.out = {res, text, chips, title:{peace:'Мир',hurt:'Обида',united:'Против тебя',fight:'Драка',meh:'Ничья'}[res]}; st.done = true; save();
     finish();
   };
   draw();
 };
-function tSetPair(a, b, v){ S.tension = S.tension || {}; const k = tKey(a.id, b.id); S.tension[k] = clamp(v, 0, 120); if(!S.tension[k]) delete S.tension[k]; }
+function tSetPair(a, b, v){ if(typeof endFight==='function' && S.fight && [S.fight.a, S.fight.b].includes(a.id) && [S.fight.a, S.fight.b].includes(b.id)) endFight(); }
 function carpetMove(st, k, who){
   const me = who, ot = who==='A' ? 'B' : 'A';
   if(k==='side'){ st[me] -= 28; st[ot] += 18; st.R += 2; }
@@ -7750,6 +7967,135 @@ function toast(msg){
   const lay = () => { let y = 118; Array.from(document.querySelectorAll('.toast')).forEach(x=>{ x.style.top = `calc(${y}px + env(safe-area-inset-top,0px))`; y += x.offsetHeight + 6; }); };
   lay(); setTimeout(()=>{ t.remove(); lay(); }, 2600);
 }
+
+/* ================= v15.3: интерфейс — уборка, ссоры, бариста у машины, службы, Маша, особые гости ================= */
+// событие ссоры (объявлено здесь, чтобы перекрыть старое)
+def('beef', {cat:'staff', t:'{s} и {s2} ругаются', x:'Повод: {reason}. Орут через весь бар и работают медленнее. Если не трогать, через игровой час остынут сами.', o:[
+ {t:'Разнять', fx:(S, inc)=>{ endFight(); [inc.sid, inc.sid2].forEach(id=>{ const s = S.staff.find(x=>x.id===id); if(s) s.mood = clamp(s.mood-3,0,100); }); return {fx:{}, out:pick(['Встал между ними: «Работаем». Разошлись по местам, бурча','Развёл по углам. Один моет, другой варит. Тихо','Сказал «потом обсудим». Обсуждать, конечно, никто не будет'])}; }},
+ {t:'Вызвать на ковёр', fx:(S, inc)=>{ HOOK.modal({kind:'carpet', a:inc.sid, b:inc.sid2, reason:inc.reason}); return {fx:{}, out:'Оба стоят у тебя в кабинете и смотрят в разные стены'}; }},
+ {t:'Пусть сами', fx:(S, inc)=>{ if(chance(0.6)){ endFight(); return {fx:{}, out:'Поорали и помирились за курилкой'}; } [inc.sid, inc.sid2].forEach(id=>{ const s = S.staff.find(x=>x.id===id); if(s) s.mood = clamp(s.mood-10,0,100); }); return {fx:{chaos:1}, out:'Поругались ещё громче, но через час остынут'}; }}],
+ pre:inc=>{ const a = S.staff.find(x=>x.id===inc.sid), b = S.staff.find(x=>x.id===inc.sid2); if(!a || !b) return false; }});
+// молния только пока идёт ссора
+function drawTensionFx(id, r){
+  const f = fightOn(); if(!f) return; const pa = r.staff[f.a], pb = r.staff[f.b]; if(!pa || !pb) return; const now = performance.now()/1000; if(Math.sin(now*9) < -0.2) return;
+  const x1 = pa.x, y1 = pa.y - STAFF_H*0.7, x2 = pb.x, y2 = pb.y - STAFF_H*0.7;
+  ctx.strokeStyle = 'rgba(230,40,30,.9)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x1, y1);
+  for(let i=1;i<6;i++){ const t = i/6; ctx.lineTo(x1 + (x2-x1)*t + (i%2 ? 5 : -5)*Math.sin(now*20+i), y1 + (y2-y1)*t + (i%2 ? -4 : 4)); } ctx.lineTo(x2, y2); ctx.stroke();
+  angryFace(pa.x + 9, pa.y - STAFF_H - 4); angryFace(pb.x + 9, pb.y - STAFF_H - 4);
+}
+// закрытие на уборку: не темним сцену, показываем, что идёт уборка
+const _drawClosed14 = drawClosed;
+drawClosed = function(){ if(!S.cleanHour) return _drawClosed14(); const left = Math.max(0, Math.ceil(S.closedUntil - absNow()));
+  RR(W/2 - 92, 8, 184, 30, 4, 'rgba(40,90,140,.92)'); txt('ГЕНЕРАЛЬНАЯ УБОРКА', W/2, 21, '800 9px "Golos Text",sans-serif', '#fff', 'center'); txt('Двери закрыты · откроемся через '+left+' мин', W/2, 32, '600 7px "Golos Text",sans-serif', '#dfefff', 'center'); };
+// карточка в «Делах»
+const _renderTasks14 = renderTasks;
+renderTasks = function(p){
+  const dirt = Math.round(dirtLevel(S.active)*100), d = dishCount(S.active), m = (rt(S.active).mess||[]).length;
+  const closed = S.closedUntil > absNow();
+  const c = el(`<div class="card clean15"><div class="row"><span class="t">${closed ? (S.cleanHour ? 'Идёт генеральная уборка' : 'Кофейня закрыта') : 'Закрыться на час'}</span><span class="sp"></span>${closed?`<span class="tag">ещё ${Math.ceil(S.closedUntil-absNow())} мин</span>`:''}</div>
+    <div class="d">${closed ? 'Гостей нет, событий нет. Команда моет пол, столы и посуду. Когда откроемся — всё будет блестеть.' : 'Повесить «Закрыто на уборку» на игровой час: гости не заходят, никаких событий и запар. Команда разгребает весь бардак, моет посуду и немного отдыхает. Платишь только упущенной выручкой. Не больше двух раз за игровой день.'}</div>
+    ${closed ? '' : `<div class="d">Сейчас: бардак ${dirt}%, посуды в мойке ${d}, мусора на полу ${m}.</div><div class="row"><button class="btn">Закрыться на уборку</button></div>`}</div>`);
+  const b = c.querySelector('button'); if(b) b.onclick = () => { const err = closeForCleaning(); if(err) toast(err); else { toast('Табличка «Закрыто на уборку» висит. Все за швабры'); sfx('door'); save(); renderSheet(); renderHud(); } };
+  p.appendChild(c); _renderTasks14(p);
+};
+const _attention17 = attention;
+attention = function(){ const out = _attention17().filter(a=>!/назревает разборка/.test(a[1])); if(S.isOpen && !(S.closedUntil > absNow()) && dirtLevel(S.active) > 0.5) out.push(['tasks', 'Бардак: можно закрыться на час и всё разгрести', false]); return out; };
+// бариста ходит к кофемашине у мойки и возвращается на бар
+function baristaTarget(id, s, p){
+  const r = rt(id); const j = r.jobs.find(j=>j.by===s.id); const k = p.k || 0;
+  if(!j){ p.cup = false; p.atMach = false; return p.home; }
+  if(j.p < 0.75){ p.cup = false; const tx = 70 + (k%2)*26; p.atMach = Math.abs(p.x - tx) < 3 && Math.abs(p.y - 168) < 3; if(!p.atMach && j.p > 0.02) j.p = Math.max(0.02, j.p - 0.0004); return [tx, 168]; }
+  p.atMach = false; p.cup = true; return [PASS_X[k%2], FEET];
+}
+function drawBrewFx(id, r){
+  const now = performance.now()/1000;
+  for(const s of workingStaff(id)){ if(s.role !== 'Бариста') continue; const p = r.staff[s.id]; if(!p || !p.atMach) continue;
+    const x = p.x, y = BACK_Y - 6;
+    for(let i=0;i<3;i++){ const t = (now*1.1 + i*0.33) % 1; ctx.fillStyle = `rgba(255,255,255,${0.6*(1-t)})`; ctx.beginPath(); ctx.arc(x - 4 + i*4 + Math.sin(now*3+i)*1.5, y - t*18, 2 + t*2.5, 0, 7); ctx.fill(); }
+    EL(x + 6, BACK_Y - 18, 1.6, 1.6, Math.sin(now*8) > 0 ? '#7fd36a' : '#2f5a2f');
+    RR(x - 3, BACK_Y - 8, 6, 6, 1, '#f3e8d3'); rect(x - 0.6, BACK_Y - 14, 1.2, 6 * ((now*3)%1), '#6a3c22'); }
+}
+// службы: цена от уровня, раз в день, что изменится
+const _renderSheet17 = renderSheet;
+renderSheet = function(){ _renderSheet17(); if(sheet==='hall' && hallTab==='stock'){ const box = document.querySelector('#panel .svc'); if(!box) return; box.innerHTML = '';
+  S.svcDay = S.svcDay || {};
+  SERVICES.forEach(sv=>{ const used = S.svcDay[sv.id] === S.day; const extra = sv.id==='master' ? ' Сейчас: '+eqLine()+'. Риск поломки сегодня: '+breakRisk()+'%.' : sv.id==='pest' && S.flags.pestUntil > S.day ? ' Действует ещё '+(S.flags.pestUntil-S.day)+' дн.' : '';
+    const b = el(`<button class="opt" ${used?'disabled':''}><b>${sv.n}</b> · ${used ? 'сегодня уже вызывали' : fmt(svcCost(sv))+' ₽'}<br><span class="d">${esc(sv.d + extra)}</span></button>`);
+    b.onclick = () => { const res = callService(sv.id); toast(res); if(res && !/^Не |^Сегодня/.test(res)) sfx('buy'); save(); renderSheet(); }; box.appendChild(b); }); } };
+function cleanTick(id, r, dt){
+  const u = room(id).upg; S.dishes = S.dishes || {};
+  if((u.sink||0) >= 5 && (S.dishes[id]||0) > 0 && !hozEmpty()){ r.dwT = (r.dwT||0) + dt; const per = Math.max(0.9, (u.sink >= 12 ? 3 : 5) - u.sink*0.12); if(r.dwT >= per){ r.dwT = 0; S.dishes[id] = Math.max(0, S.dishes[id]-1); hozUse(id, 0.02); } }
+  if(u.clean >= 8 && (r.mess||[]).length){ r.rbT = (r.rbT||0) + dt; if(r.rbT > Math.max(8, 26 - u.clean)){ r.rbT = 0; r.mess.shift(); } }
+  if(S.cleanUntil && S.cleanUntil > absNow()){ r.mess = []; for(const k in (r.dirty||{})) cleanDirty(id, k); }
+}
+// неоновая вывеска и табличка ветерана
+function drawNeon(){ if(S.neonSign !== sezId() || S.active !== 'main') return; const now = performance.now()/1000; const t = String(S.name||'').slice(0, 16); const on = Math.sin(now*2.3) > -0.85;
+  ctx.save(); ctx.font = '800 9px "Golos Text",sans-serif'; ctx.textAlign = 'center'; ctx.shadowColor = '#ff6ec7'; ctx.shadowBlur = on ? 8 : 0; ctx.fillStyle = on ? '#ffb3e6' : '#7a4a6a'; ctx.fillText(t.toUpperCase(), 62, 18); ctx.restore(); }
+const _drawDecor17 = drawDecor;
+drawDecor = function(it, x, y, now){ if(it.id==='plaque'){ RR(x-11, y-9, 22, 9, 1, '#a87a3e'); rect(x-10, y-8, 20, 1, '#e0b878'); txt('ВЕТЕРАН', x, y-2.5, '800 3.6px "Golos Text",sans-serif', '#3a2410', 'center'); return; } return _drawDecor17(it, x, y, now); };
+
+/* ---------- Маша и сбежавшая крыса ---------- */
+const MASHA_IMG = new Image(); let mashaReady = false; MASHA_IMG.onload = () => { mashaReady = true; }; MASHA_IMG.src = 'img/masha.png';
+let VIPRUN = null; // {stage, x, y, tx, ty, rat:{x,y,tx,ty}, left}
+function vipTick(dt){
+  const r = rt('main');
+  if(!VIPRUN){
+    const v = vipState('masha'); if(v.n >= 5 || Date.now() < v.next) return;
+    if(S.active !== 'main' || sheet || modals.length || !isWorking() || document.hidden) return;
+    VIPRUN = {stage:'in', x:DOOR[0], y:DOOR[1], tx:190, ty:QUEUE_Y + 34, t:0, flip:true};
+    bubble2(0, 0, 'Привет! Мне раф на овсяном и… Фунтик, стой!', 3000, VIPRUN); return; }
+  const m = VIPRUN; m.t += dt;
+  if(m.stage==='in'){ m.walk = true; if(moveTo(m, m.tx, m.ty, 46, dt)){ m.walk = false; m.stage = 'escape'; m.rat = {x:m.x - 6, y:m.y - 40, tx:R(40, 240), ty:R(270, H-30), jump:0.5}; m.left = 12; sfx('alert'); toast('Крыса сбежала! Лови её — тапни по крысе'); bubble2(0, 0, 'ФУНТИК! Держите его!', 2600, m); } return; }
+  if(m.stage==='escape'){ m.left -= dt; const rat = m.rat; if(rat.jump > 0){ rat.jump -= dt; rat.y += dt*80; }
+    else if(moveTo(rat, rat.tx, rat.ty, 95, dt)){ rat.tx = R(30, 250); rat.ty = R(262, H-24); }
+    if(m.left <= 0) vipEnd(false); return; }
+  if(m.stage==='out'){ m.walk = true; m.flip = false; if(moveTo(m, DOOR[0] + 14, DOOR[1], 50, dt)){ VIPRUN = null; } }
+}
+function vipEnd(caught){
+  const m = VIPRUN; if(!m || m.stage !== 'escape') return; const v = vipState('masha'); v.n++; v.met = true; v.next = Date.now() + RI(48, 72)*3600000;
+  m.stage = 'out'; m.rat = null;
+  if(caught){ addMod('traffic', 1.2, 24, 'Маша рассказала о вас в сторис: гостей +20%'); REP_CAUSE = 'events'; repAdd(0.05); REP_CAUSE = null; sfx('level'); }
+  else { S.staff.filter(s=>s.role==='Бариста').forEach(s=>{ s.boostUntil = Date.now() + 120000; s.boostMul = 0.85; }); sfx('bad'); }
+  queueModal({kind:'vipres', vid:'masha', caught}, true); save();
+}
+function drawVip(){
+  const m = VIPRUN; if(!m || S.active !== 'main' || !mashaReady) return; const [b] = walkPose(m);
+  shadow(m.x, m.y, 9); const h = SPR_H*1.06, w = h * MASHA_IMG.width / MASHA_IMG.height;
+  ctx.save(); ctx.translate(m.x, m.y - b); if(m.flip) ctx.scale(-1, 1); ctx.drawImage(MASHA_IMG, -w/2, -h, w, h); ctx.restore();
+  if(m.rat){ const r = m.rat, now = performance.now()/1000; const dir = r.tx < r.x ? -1 : 1; ctx.save(); ctx.translate(r.x, r.y); ctx.scale(dir, 1);
+    ctx.strokeStyle = '#f0a0b0'; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(-6, 0); ctx.quadraticCurveTo(-12, -3 + Math.sin(now*14)*2, -16, 1); ctx.stroke();
+    EL(0, -2, 7, 4, '#fbf7f2'); EL(6, -3, 3.4, 2.8, '#fbf7f2'); EL(4.5, -5.6, 1.6, 1.6, '#f6c0cc'); EL(8.6, -3.2, 0.8, 0.8, '#d0406a'); ctx.restore();
+    const t = Math.max(0, Math.ceil(m.left)); RR(r.x - 9, r.y - 17, 18, 9, 2, 'rgba(200,50,43,.92)'); txt(String(t), r.x, r.y - 10.5, '800 6px "Golos Text",sans-serif', '#fff', 'center'); }
+}
+cv.addEventListener('pointerdown', e => { const m = VIPRUN; if(!m || m.stage !== 'escape' || !m.rat || S.active !== 'main' || sheet) return;
+  const b = cv.getBoundingClientRect(); const x = OX + (e.clientX-b.left)/b.width*VW, y = (e.clientY-b.top)/b.height*H;
+  if(Math.hypot(x - m.rat.x, (y - m.rat.y)*1.2) < 20){ e.stopImmediatePropagation(); tapFx(m.rat.x, m.rat.y - 6); sfx('tap'); vipEnd(true); } }, {capture:true});
+function openUrl(u){ if(tg && tg.openTelegramLink && /^https:\/\/t\.me\//.test(u)) tg.openTelegramLink(u); else window.open(u, '_blank'); }
+MODAL15.vipres = (box, m, btn) => { const v = VIPS.find(x=>x.id===m.vid);
+  box.append(el(`<div class="vip-card"><img src="${v.img}" alt="${esc(v.n)}"><div><div class="eyebrow">Особый гость · ${esc(v.role)}</div><h2>${m.caught ? 'Фунтик пойман!' : 'Фунтик сбежал'}</h2><p>${m.caught ? 'Маша выдохнула, обняла крысу и сняла про вас сторис: «Тут спасли моего Фунтика и сварили лучший раф». Гостей +20% на сутки.' : 'Крыса юркнула в мешок с зерном. Маша достала её сама, но бариста полчаса боится открывать мешки и работают медленнее. «Не переживайте, он всегда так. Заходите ко мне на канал — там его побеги каждую неделю».'}</p></div></div>`),
+    el(`<div class="vip-ch"><b>${esc(v.title)}</b><span>${esc(v.bio)}</span></div>`),
+    btn('Открыть канал Маши', ()=>openUrl(v.url)), btn('Закрыть', closeModal, 'ghost')); };
+MODAL15.vip = (box, m, btn) => { const v = VIPS.find(x=>x.id===m.vid); const st = vipState(v.id);
+  box.append(el(`<div class="vip-card"><img src="${v.img}" alt="${esc(v.n)}" class="${st.met?'':'unmet'}"><div><div class="eyebrow">Особый гость · ${esc(v.role)}</div><h2>${esc(v.n)}</h2><p>${esc(v.bio)}</p><p class="vip-ev">Событие: «${esc(v.ev)}»</p></div></div>`),
+    el(`<div class="vip-ch"><b>Канал</b><span>${esc(v.title)}</span></div>`), btn('Открыть канал', ()=>openUrl(v.url)), btn('Закрыть', closeModal, 'ghost')); };
+// книга гостей: только особые гости
+function markSeen(k, i){ if(!S.seen[k].includes(i)) S.seen[k].push(i); }
+for(const id of ['book50','bookall','pets20']){ const i = ACH.findIndex(a=>a[0]===id); if(i >= 0) ACH.splice(i, 1); }
+const _renderMore17 = renderMore;
+renderMore = function(p){ if(sub !== 'book') return _renderMore17(p);
+  p.appendChild(el(`<div class="h chalk">Особые гости</div>`));
+  p.appendChild(el(`<div class="empty" style="font-size:12px">Блогеры и люди, которые помогают игре. Приходят редко, у каждого своё событие. Нажми на карточку, чтобы узнать о человеке.</div>`));
+  const g = el(`<div class="vip-grid"></div>`);
+  VIPS.forEach(v=>{ const st = vipState(v.id); const c = el(`<button class="vip-tile ${st.met?'met':''}"><img src="${v.img}" alt="${esc(v.n)}"><b>${esc(v.n)}</b><span>${esc(v.role)}</span><i>${st.met ? '«'+esc(v.ev)+'»' : 'Ещё не заходила'}</i></button>`); c.onclick = () => queueModal({kind:'vip', vid:v.id}, true); g.appendChild(c); });
+  p.appendChild(g);
+};
+// тик и отрисовка поверх сцены
+const _draw17 = draw;
+draw = function(){ _draw17(); try{ const r = rt(S.active); const dt = 1/60; fightTick(); cleaningTick(dt); vipTick(dt);
+  ctx.setTransform(scale,0,0,scale,-OX*scale,0); drawBrewFx(S.active, r); drawNeon(); drawVip(); }catch(e){ console.error(e); } };
+// миграция
+const _migrate17 = migrate;
+migrate = function(){ _migrate17(); S.tension = {}; if(S.fight && !(S.fight.until > absNow())) S.fight = null; szMigrate50(); vipState('masha'); };
 
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());
