@@ -3,6 +3,7 @@ import { json, mskDay, verifyInitData, dispatchReminders, ADMINS, parseRef, bind
 import { promoWatch } from '../_promo.js';
 import { opsFor } from '../_admin.js';
 import { channelTick, tourWeek, post as channelPost } from '../_channel.js';
+import { goalTrack, goalInfo } from '../_goal.js';
 
 const num = (v, max = 1e15) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(n, max)) : 0; };
 const str = (v, len = 40) => (typeof v === 'string' ? v.slice(0, len) : null);
@@ -32,7 +33,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
   ]);
   // рефералы: привязка нового игрока и награда пригласившему за 3 уровень
   try { if (refId) await bindReferrer(env, user, refId, 'app'); await payReferrer(env, user.id); } catch {}
-  // недельный турнир: принимаем только текущую неделю
   // «Кофейня недели района» — пост в канал, раз в неделю на игрока
   if (s.star && env.CHANNEL_ID) {
     const key = 'star_' + user.id + '_' + tourWeek(now);
@@ -42,11 +42,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
       const okp = await channelPost(env, new URL(request.url).origin, 'events.jpg', `<b>Кофейня недели района</b>\n\n«${name.replace(/[&<>]/g, '')}» отработала три золотые смены подряд: ни одного скандала, чистый зал, все задания сделаны.\n\nРайон говорит только о ней. Кто следующий?`);
       await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5)').bind(key, now, okp ? 1 : 0, okp && okp.id ? okp.id : null, 'Кофейня недели: ' + name).run();
     }
-  }
-  if (!ADMINS.includes(user.id) && s.tw === tourWeek(now) && Number.isFinite(Number(s.tp))) {
-    const tp = Math.max(-1e10, Math.min(Number(s.tp), 1e11));
-    await env.DB.prepare(`INSERT INTO tour (week, tg_id, profit, cafe, city, first_name, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
-      ON CONFLICT(week, tg_id) DO UPDATE SET profit = ?3, cafe = ?4, city = ?5, first_name = ?6, updated_at = ?7`).bind(s.tw, user.id, tp, str(s.cafe), str(s.city, 20), str(user.first_name), now).run();
   }
   // значок рядом с названием
   await env.DB.prepare('UPDATE players SET badge_name = ?2 WHERE tg_id = ?1').bind(user.id, typeof s.bdn === 'string' ? s.bdn.slice(0, 40) : null).run();
@@ -61,11 +56,14 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (!was) { const name = (str(s.cafe) || 'Без названия').replace(/[&<>]/g, ''); const okp = await channelPost(env, new URL(request.url).origin, 'events.jpg', `<b>Первая золотая кофемашина района</b>\n\nКофейня «${name}» купила трофей за 50 миллионов. Кофе от этого не стал вкуснее, но фотографируют его теперь чаще, чем бариста.`);
       await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5)').bind('trophy_first', now, okp ? 1 : 0, okp && okp.id ? okp.id : null, 'Золотая кофемашина: ' + name).run(); }
   }
+  // общая цель: миллион стаканов
+  try { await goalTrack(env, user.id, s.gc, dt); } catch {}
+  let goal = null; try { goal = await goalInfo(env, false); } catch {}
   const origin = new URL(request.url).origin;
   if (waitUntil) waitUntil(promoWatch(env, user.id).catch(() => {})); else { try { await promoWatch(env, user.id); } catch {} }
   if (waitUntil) { waitUntil(dispatchReminders(env)); waitUntil(channelTick(env, origin)); } else await dispatchReminders(env);
   const me = await env.DB.prepare('SELECT banned FROM players WHERE tg_id = ?1').bind(user.id).first();
   let ops = [];
   try { ops = await opsFor(env, user.id); } catch {}
-  return json({ ok: true, banned: Boolean(me && me.banned), ops });
+  return json({ ok: true, banned: Boolean(me && me.banned), ops, goal });
 }

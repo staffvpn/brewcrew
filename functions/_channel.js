@@ -1,21 +1,26 @@
-// Канал игры: бот сам публикует запуск, обновления, праздничные события, рекорды и итоги недельного турнира.
+// Канал игры: бот сам публикует запуск, обновления, праздничные события и цель района.
 // Вызывается фоном из /api/track и вебхука. Ничего не делает, пока не задан CHANNEL_ID.
 import { tgApi, getBot, mskDay, ADMINS, sezId, SEZ_NAMES } from './_lib.js';
+import { GOAL, goalInfo } from './_goal.js';
 
-export const VERSION = '8.1';
-export const VERSION_TITLE = 'чиним и подкручиваем экономику';
-export const VERSION_IMG = 'updates.jpg';
-export const VERSION_TAIL = 'Спасибо, что пишете о багах. Продолжайте, мы читаем всё.';
+export const VERSION = '8.2';
+export const VERSION_TITLE = 'мы расширяемся';
+export const VERSION_IMG = 'expand.jpg';
+export const VERSION_TAIL = 'Пишите, что ещё бесит. Чиним быстро.';
+// коротко для окна в игре и сообщения в боте
+export const VERSION_SHORT = 'Открылась зона отдыха — второй зал с диванами. Запара теперь только с 7 до 15. Район вместе продаёт миллион стаканов до конца ноября.';
 export const CHANGELOG = [
-  'Повара теперь на кухне: готовят блюда и отдают их на раздачу, в бар больше не выходят',
-  'Рейтинг не падает, пока вас нет в игре',
-  'Ниже 2,0 рейтинг падает вдвое медленнее, а отзывы зависят от сегодняшнего сервиса',
-  'В «Гостях» видно, что поднимает и что опускает рейтинг',
-  'Прибыль в турнире считается так же, как в кассовом отчёте',
-  'Фальшивые купюры попадаются реже, детектор и камеры подписаны в улучшениях',
-  '«Район» переехал в «Гости», «Интерьер» — в «Улучшения»',
-  'Меньше всплывающих окон: достижения и книга гостей больше не мешают играть',
-  'Для новичков — быстрый старт'
+  'Второй зал теперь зона отдыха: без бара, только диваны и столики. Гости берут кофе в основном зале и идут сюда посидеть, официант приносит дозаказ. Работают там официанты и мойщицы, интерьер тот же, что в основном зале',
+  'Веранда, лаунж и выкупленные помещения закрыты на ремонт. Всё купленное сохранено и вернётся',
+  'Цель района: миллион стаканов кофе на всех до 30 ноября. Считается только кофе, проданный вживую. Бонусы всем на 250, 500 и 750 тысячах. Возьмём — Золотой миллионный стакан, три дня прибыли, +25% гостей на трое суток и значок «Миллионник». Тройка лучших — легенда 25 уровня. Без друзей не вытянуть',
+  'Запара только с 7 утра до 15 дня по игре, дальше спокойный день',
+  'Мойщица реже бросает раковину и выходит в зал только по делу',
+  'Пожелания сотрудников по их работе: мойщица больше не просится на курсы латте-арта',
+  'Конкуренты остались только героями событий: без выкупа и диверсий',
+  'Недельный турнир убран, осталась таблица сезона',
+  'Недостача на складе видна сразу, без скрытых списаний',
+  'Меньше значков в шапке',
+  '26 новых ситуаций. Шуба в жару, кружка-ведро, похороны кофемашины, оплата отзывом и прочая правда жизни'
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -71,21 +76,6 @@ export async function channelTick(env, origin) {
         await mark(env, hkey, ok); return;
       }
     }
-    // итоги недели и призы: в понедельник после полуночи по Москве
-    const prev = tourWeek(Date.now() - 7 * 86400000);
-    const wkey = 'week_' + prev;
-    if (!(await posted(env, wkey))) {
-      const top = (await env.DB.prepare(`SELECT * FROM tour WHERE week = ?1 AND profit > 0 AND tg_id NOT IN (${ADMINS.join(',')}) ORDER BY profit DESC LIMIT 5`).bind(prev).all()).results || [];
-      if (!top.length) { await mark(env, wkey, true, 'empty'); return; }
-      const prizes = [20, 14, 10];
-      for (let i = 0; i < Math.min(3, top.length); i++) {
-        await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, ?3, ?4, ?5, 0)').bind(top[i].tg_id, 'staff', prizes[i], `Приз за ${i + 1} место в турнире района.`, Date.now()).run();
-        await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, NULL, ?3, ?4, 0)').bind(top[i].tg_id, 'msg', `Ты занял ${i + 1} место в турнире района за неделю. Приз — легендарный сотрудник ${prizes[i]} уровня, он уже вышел на смену.`, Date.now()).run();
-      }
-      const total = await env.DB.prepare('SELECT COUNT(*) n FROM tour WHERE week = ?1').bind(prev).first();
-      const ok = await post(env, origin, 'events.jpg', ['<b>Итоги турнира района</b>', '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${CITY[t.city] || ''}, ${esc(t.first_name || 'аноним')} — ${fmt(t.profit)} ₽ прибыли${i < 3 ? ' · приз: легенда ' + prizes[i] + ' уровня' : ''}`), '', `Участвовало кофеен: ${total ? total.n : top.length}. Новая неделя уже идёт.`].join('\n'));
-      await mark(env, wkey, ok); return;
-    }
     // итоги сезона: в начале нового месяца
     const curS = sezId(); const prevS = sezId(Date.parse(curS + '-01T00:00:00+03:00') - 3600000);
     if (prevS !== curS) { const skey = 'season_' + prevS;
@@ -97,18 +87,56 @@ export async function channelTick(env, origin) {
           await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, 'badge', NULL, ?2, ?3, 0)").bind(top[i].tg_id, `Кофейня сезона «${nm}»: ${i + 1} место`, Date.now()).run();
           await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, 'staff', ?2, ?3, ?4, 0)").bind(top[i].tg_id, [25, 20, 16][i], `Приз за ${i + 1} место в сезоне «${nm}».`, Date.now()).run();
         }
-        const ok = await post(env, origin, 'events.jpg', [`<b>Итоги сезона «${esc(nm)}»</b>`, '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${esc(t.first_name || 'аноним')} — ${fmt(t.sp)} очков${i < 3 ? ' · значок «Кофейня сезона» и легенда ' + [25, 20, 16][i] + ' ур.' : ''}`), '', 'Новый сезон уже начался. Очки обнулились, значки остаются навсегда.'].join('\n'));
+        const ok = true; // итоги сезона без поста в канал: значки и легенды приходят в игру
         await mark(env, skey, ok); return; } }
-    // рекорд дня: если кто-то сделал выручку на 10% больше прежнего рекорда
-    const best = await env.DB.prepare(`SELECT tg_id, cafe, city, first_name, best_day FROM players WHERE tg_id NOT IN (${ADMINS.join(',')}) ORDER BY best_day DESC LIMIT 1`).first();
-    if (best && best.best_day >= 200000) {
-      const rec = await posted(env, 'record');
-      const prevRec = rec ? Number(rec.info) || 0 : 0;
-      const dkey = 'rec_' + mskDay();
-      if (best.best_day > prevRec * 1.1 && !(await posted(env, dkey))) {
-        const ok = await post(env, origin, 'events.jpg', ['<b>Новый рекорд района</b>', '', `Кофейня «${esc(best.cafe || '?')}» (${CITY[best.city] || ''}, владелец ${esc(best.first_name || 'аноним')}) сделала ${fmt(best.best_day)} ₽ выручки за один день.`, '', 'Кто следующий?'].join('\n'));
-        await mark(env, dkey, ok); await mark(env, 'record', ok, String(best.best_day)); return;
-      }
-    }
+    // рассылка игрокам о новой версии: коротко и со ссылкой на пост
+    if (await bcastVersion(env, origin)) return;
+    // цель района: посты на рубежах и итог
+    await goalTick(env, origin);
   } catch (e) { /* канал не должен ломать игру */ }
+}
+
+export function postUrl(env, msgId) { const base = String(env.CHANNEL_URL || '').replace(/\/+$/, ''); return base && msgId && /t\.me\/[A-Za-z0-9_]+$/.test(base) ? base + '/' + msgId : (base || null); }
+export async function versionInfo(env) {
+  let url = env.CHANNEL_URL || null;
+  try { const p = await env.DB.prepare('SELECT msg_id FROM posts WHERE key = ?1').bind('ver_' + VERSION).first(); if (p && p.msg_id) url = postUrl(env, p.msg_id); } catch {}
+  return { v: VERSION, title: VERSION_TITLE ? VERSION_TITLE[0].toUpperCase() + VERSION_TITLE.slice(1) : 'Обновление', text: VERSION_SHORT, url };
+}
+// раз в тик — до 25 сообщений в бот
+async function bcastVersion(env, origin) {
+  const key = 'bc_' + VERSION; const st = await posted(env, key);
+  if (st && st.info === 'done') return false;
+  const vp = await posted(env, 'ver_' + VERSION); if (!vp || !vp.ok) return false;
+  const after = st ? Number(st.info) || 0 : 0;
+  const rows = (await env.DB.prepare('SELECT tg_id FROM players WHERE tg_id > ?1 AND COALESCE(banned,0) = 0 ORDER BY tg_id LIMIT 25').bind(after).all()).results || [];
+  if (!rows.length) { await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info) VALUES (?1, ?2, 1, ?3)').bind(key, Date.now() - 3 * 60000, 'done').run(); return false; }
+  const vi = await versionInfo(env); const bot = await getBot(env);
+  const app = bot ? `https://t.me/${bot.username}${env.APP_SHORT ? '/' + env.APP_SHORT : ''}?${env.APP_SHORT ? 'startapp' : 'start'}=upd` : origin;
+  const kb = [[{ text: 'Открыть кофейню', url: app }]]; if (vi.url) kb.unshift([{ text: 'Подробнее в канале', url: vi.url }]);
+  for (const r of rows) { try { await tgApi(env, 'sendMessage', { chat_id: r.tg_id, text: `<b>Обновление ${VERSION}: ${esc(VERSION_TITLE)}</b>\n\n${esc(VERSION_SHORT)}`, parse_mode: 'HTML', reply_markup: { inline_keyboard: kb } }); } catch {} }
+  // время ставим в прошлое, чтобы рассылка не задерживала другие посты
+  await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info) VALUES (?1, ?2, 1, ?3)').bind(key, Date.now() - 3 * 60000, String(rows[rows.length - 1].tg_id)).run();
+  return false;
+}
+async function goalTick(env, origin) {
+  const g = await goalInfo(env, false);
+  for (const m of GOAL.ms) {
+    const k = 'goal_ms_' + m; if (g.total < m || (await posted(env, k))) continue;
+    const left = Math.max(0, Math.ceil((GOAL.until - Date.now()) / 86400000));
+    const bonus = { 250000: 'Всем — сутки гостей на 15% больше.', 500000: 'Всем — подарок поставщиков 150 000 ₽ в инвентарь.', 750000: 'Всем — двое суток гостей на 20% больше.' }[m];
+    const ok = await post(env, origin, 'events.jpg', [`<b>Район продал ${fmt(m)} стаканов</b>`, '', `До миллиона ${fmt(GOAL.target - g.total)}, осталось ${left} дн. ${bonus}`, '', 'Зовите друзей: каждый живой стакан считается.'].join('\n'));
+    await mark(env, k, ok); return;
+  }
+  const done = g.total >= GOAL.target, over = Date.now() >= GOAL.until;
+  if (!(done || over)) return;
+  const fk = 'goal_final_' + GOAL.id; if (await posted(env, fk)) return;
+  const top = (await env.DB.prepare(`SELECT tg_id, cafe, first_name, goal_cups FROM players WHERE goal_cups > 0 AND tg_id NOT IN (${ADMINS.join(',')}) ORDER BY goal_cups DESC LIMIT 3`).all()).results || [];
+  if (done) for (let i = 0; i < top.length; i++) {
+    await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, 'staff', 25, ?2, ?3, 0)").bind(top[i].tg_id, `Приз за ${i + 1} место по вкладу в миллион стаканов.`, Date.now()).run();
+  }
+  const lines = done
+    ? ['<b>Миллион стаканов. Район сделал это</b>', '', 'Все, кто продал от 2 000 стаканов, получают Золотой миллионный стакан, три дня прибыли и трое суток +25% гостей. Значок «Миллионник» — всем участникам.', '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${esc(t.first_name || 'аноним')} — ${fmt(t.goal_cups)} стаканов · легенда 25 уровня`)]
+    : ['<b>Миллион не взят</b>', '', `Район продал ${fmt(g.total)} стаканов. Не хватило ${fmt(GOAL.target - g.total)}.`, '', 'Треснувший стакан на стойке — памятник тому, как близко это было. В следующий раз зовите друзей раньше.'];
+  const ok = await post(env, origin, 'events.jpg', lines.join('\n'));
+  await mark(env, fk, ok);
 }
