@@ -2,6 +2,7 @@
 import { ADMINS, json, mskDay, tgApi, SHOP, dispatchReminders, parseRef, bindReferrer } from '../_lib.js';
 import { adminCommand, adminCallback, adminInput } from '../_admin.js';
 import { channelTick } from '../_channel.js';
+import { inlineAnswer } from '../_inline.js';
 
 const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/ |,/g, ' ');
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -20,6 +21,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await tgApi(env, 'answerPreCheckoutQuery', ok ? { pre_checkout_query_id: q.id, ok: true } : { pre_checkout_query_id: q.id, ok: false, error_message: 'Товар не найден, попробуй ещё раз из игры' });
     return json({ ok: true });
   }
+  if (upd.inline_query) { try { await inlineAnswer(env, upd.inline_query, new URL(request.url).origin); } catch {} return json({ ok: true }); }
   if (upd.callback_query) {
     if (/^[pa]:/.test(String(upd.callback_query.data || '')) && env.DB) await adminCallback(env, upd.callback_query);
     else await tgApi(env, 'answerCallbackQuery', { callback_query_id: upd.callback_query.id });
@@ -50,7 +52,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (text.startsWith('/admin')) {
     if (!env.DB) { await tgApi(env, 'sendMessage', { chat_id: chat, text: 'База не подключена.' }); return json({ ok: true }); }
     if (ADMINS.includes(from) && waitUntil && env.WEBHOOK_SECRET) waitUntil(Promise.all([
-      tgApi(env, 'setWebhook', { url: origin + '/tg/webhook', secret_token: env.WEBHOOK_SECRET, allowed_updates: ['message', 'pre_checkout_query', 'callback_query'] }),
+      tgApi(env, 'setWebhook', { url: origin + '/tg/webhook', secret_token: env.WEBHOOK_SECRET, allowed_updates: ['message', 'pre_checkout_query', 'callback_query', 'inline_query'] }),
       tgApi(env, 'setMyCommands', { scope: { type: 'chat', chat_id: chat }, commands: [{ command: 'admin', description: 'Админка' }, { command: 'start', description: 'Открыть кофейню' }] })
     ]));
     await adminCommand(env, chat, from, text, origin);

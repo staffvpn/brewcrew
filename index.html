@@ -5461,7 +5461,7 @@ function simRoom(id, dt){
     if(g.state==='toQueue' || g.state==='queue'){ const idx = r.queue.indexOf(g); const qp = queuePos(idx); if(moveTo(g, qp[0], qp[1], 46, dt)) g.state = 'queue'; }
     else if(g.state==='toPick'){ const p = PICK[Math.min(g.pi, PICK.length-1)]; if(moveTo(g, p[0], p[1], 46, dt)) g.state = 'wait'; }
     else if(g.state==='toSeat'){ const t = slotOf(id, g.seat); const sx = t[0], sy = t[2]==='stool' ? t[1]-3 : t[1]; if(moveTo(g, sx, sy, 46, dt)){ g.state = 'sit'; g.flip = t[2]==='table' ? t[4]===1 : t[2]==='wall' ? true : false; if(t[2]==='out') g.hidden = true; g.sawDirt = Math.max(g.sawDirt||0, dirtLevel(id)); g.sit = R(16,30) * (waiters.length ? 0.75 : 1) * (g.burst ? 2.2 : 1); g.act = g.kidG ? 'drink' : pick(['drink','drink','laptop','phone','sleep','read','phone']); } }
-    else if(g.state==='sit' && id==='hall2'){ g.sit -= dt; if(g.sit <= 0){ const wt = workingStaff('hall2').some(s=>s.role==='Официант'); if((g.orders||1) < 3 && S.isOpen && !(S.closedUntil > absNow()) && chance(wt ? 0.5 : 0.12)){ const res = sellOne('main'); if(!res.fail){ g.orders = (g.orders||1) + 1; g.sit = R(16, 30); if(S.active==='hall2'){ flyMoney(g.x, g.y - g.h - 4, res.amount); sfx('coin'); } continue; } } leaveMess(id, g); r.seats[g.seat] = null; g.state = 'leave'; g.hidden = false; } }
+    else if(g.state==='sit' && id==='hall2'){ g.sit -= dt; if(g.sit <= 0 && !h2SitEnd(id, r, g)){ leaveMess(id, g); r.seats[g.seat] = null; g.state = 'leave'; g.hidden = false; } }
     else if(g.state==='sit'){ g.sit -= dt; if(g.sit <= 0){ if(!g.kidG && (g.orders||1) < 3 && S.isOpen && r.queue.length < 5 && chance(0.45)){ g.state = 'toQueue'; g.reorder = true; g.hidden = false; g.wait = 0; g.prog = 0; r.queue.push(g); } else { leaveMess(id, g); r.seats[g.seat] = null; g.state = 'leave'; g.hidden = false; } } }
     else if(g.state==='toHall2'){ if(moveTo(g, W+14, 300, 46, dt)){ g.gone = true; if(g.twin){ g.twin.hidden = false; g.twin.state = 'toSeat'; g.twin.x = -12; g.twin.y = 300; } } }
     else if(g.state==='leave' && id==='hall2'){ if(moveTo(g, -16, 300, 50, dt)) g.gone = true; }
@@ -5518,7 +5518,7 @@ function finishJob(id, j){
   if(g.reorder && g.seat!=null && r.seats[g.seat]===g){ g.reorder = false; g.state = 'toSeat'; return; }
   if(g.kind==='fast'){ g.state = 'leave'; return; }
   const free = freeSeats(id);
-  if(id==='main' && room('hall2') && S.isOpen){ const f2 = freeSeats('hall2'); if(f2.length && ((!free.length && chance(0.8)) || chance(0.3))){ const r2 = rt('hall2'); const seat = pick(f2); const g2 = {spr:g.spr, h:g.h, kidG:g.kidG, x:-12, y:300, state:'wait2', hidden:true, seat, prog:0, flip:false, t:Math.random()*10, walk:true, wait:0, orders:g.orders||1, gid:++GID}; r2.seats[seat] = g2; r2.guests.push(g2); g.twin = g2; g.state = 'toHall2'; return; } }
+  if(id==='main' && room('hall2') && S.isOpen){ const f2 = freeSeats('hall2'); if(f2.length && ((!free.length && chance(0.8)) || chance(h2Pull()))){ const r2 = rt('hall2'); const seat = pick(f2); const g2 = {spr:g.spr, h:g.h, kidG:g.kidG, x:-12, y:300, state:'wait2', hidden:true, seat, prog:0, flip:false, t:Math.random()*10, walk:true, wait:0, orders:g.orders||1, gid:++GID}; r2.seats[seat] = g2; r2.guests.push(g2); g.twin = g2; g.state = 'toHall2'; return; } }
   if(free.length && chance(0.75)){ const vf = free.filter(i=>slotOf(id,i)[2]!=='out'); g.seat = vf.length && chance(0.85) ? pick(vf) : pick(free); r.seats[g.seat] = g; g.state = 'toSeat'; } else g.state = 'leave';
 }
 function flyMoney(lx, ly, amt){
@@ -7780,7 +7780,7 @@ function renderSeason(p){
   if((S.badges||[]).length) p.appendChild(el(`<div class="card"><div class="t">Твои значки</div><div class="d">${S.badges.map(esc).join(' · ')}</div></div>`));
 }
 function renderDecor(p){
-  p.appendChild(el(`<div class="card note kraft"><div class="t">Интерьер основного зала</div><div class="d">Предметы встают на свои места: три на полу и два на стойке. Каждый что-то даёт и иногда приносит приключения. Продать можно за 30% цены.</div><div class="d">Свободно: на полу ${decorFree('floor')}, на стойке ${decorFree('counter')}.</div></div>`));
+  p.appendChild(el(`<div class="card note kraft"><div class="t">Интерьер основного зала</div><div class="d">У каждого предмета своё место. Диван, пианино, фотозона, картина и винил встают в зону отдыха, если она есть. Каждый что-то даёт и иногда приносит приключения. Продать можно за 30% цены.</div><div class="d">Свободно: на полу ${decorFree('floor')}, на стойке ${decorFree('counter')}.</div></div>`));
   const owned = decorOwned();
   if(owned.length){ p.appendChild(el(`<div class="h chalk">Уже стоит</div>`));
     owned.forEach(it=>{ const d = decorDef(it.id); if(!d) return; const dry = it.id==='ficus' ? S.day - (it.water||it.day) : 0;
@@ -8303,13 +8303,14 @@ const H2_FLOOR = 122, H2_DOOR_Y = 300;
 let H2_SLOTS = [], H2_TABLES = [], H2_SOFAS = [];
 function layoutH2(){
   H2_SLOTS = []; H2_TABLES = []; H2_SOFAS = [];
-  [54, 150, 246].forEach((x, si)=>{ H2_SOFAS.push({x, y:172}); H2_SLOTS.push([x-14, 170, 'h2', -1, 0, si]); H2_SLOTS.push([x+14, 170, 'h2', -1, 1, si]); });
-  for(let y = 262, ri = 0; y <= H - 34; y += 80, ri++){ [84, 216].forEach(x0=>{ const x = x0 + (ri%2 ? 10 : -6); const ti = H2_TABLES.length; H2_TABLES.push({x, y}); H2_SLOTS.push([x-26, y, 'h2', ti, 0]); H2_SLOTS.push([x+26, y, 'h2', ti, 1]); }); }
+  const big = typeof S!=='undefined' && S && S.cine && S.cine.sofa;
+  [54, 150, 246].forEach((x, si)=>{ H2_SOFAS.push({x, y:172, big: big && si===1}); if(big && si===1){ H2_SLOTS.push([x-24, 170, 'h2', -1, 0, si]); H2_SLOTS.push([x, 170, 'h2', -1, 0, si]); H2_SLOTS.push([x+24, 170, 'h2', -1, 1, si]); } else { H2_SLOTS.push([x-14, 170, 'h2', -1, 0, si]); H2_SLOTS.push([x+14, 170, 'h2', -1, 1, si]); } });
+  for(let y = 262, ri = 0; y <= Math.max(262, H - 100); y += 80, ri++){ [84, 216].forEach(x0=>{ const x = x0 + (ri%2 ? 10 : -6); const ti = H2_TABLES.length; H2_TABLES.push({x, y}); H2_SLOTS.push([x-26, y, 'h2', ti, 0]); H2_SLOTS.push([x+26, y, 'h2', ti, 1]); }); }
 }
 const _layoutSlots18 = layoutSlots;
 layoutSlots = function(){ _layoutSlots18(); layoutH2(); };
 layoutH2();
-function h2Seats(){ return Math.min(H2_SLOTS.length, 24, 6 + 2*((room('hall2')||{upg:{tables:0}}).upg.tables||0)); }
+function h2Seats(){ const sb = H2_SOFAS.some(x=>x.big) ? 1 : 0; return Math.min(H2_SLOTS.length, 24 + sb, 6 + sb + 2*((room('hall2')||{upg:{tables:0}}).upg.tables||0)); }
 
 const _seatTotal18 = seatTotal;
 seatTotal = function(id){ return id==='hall2' ? h2Seats() : _seatTotal18(id); };
@@ -8410,7 +8411,7 @@ drawRoom = function(id){
   CUR_INT = interiorOf('main');
   ctx.setTransform(scale,0,0,scale,-OX*scale,0);
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-  h2Wall(st, u, now); h2Floor(st);
+  h2Wall(st, u, now); h2WallDecor(st, now); h2Floor(st);
   // ковёр под диванами
   if(st.rug){ RR(10, 182, W-20, 34, 6, st.rug); ctx.strokeStyle = st.rugB; ctx.lineWidth = 1.5; ctx.strokeRect(16, 186, W-32, 26); }
   // проход в основной зал слева
@@ -8420,7 +8421,7 @@ drawRoom = function(id){
   const n = h2Seats(), soft = u.tables >= 12;
   const shownS = {}, shownT = {};
   for(let i=0;i<n;i++){ const s = H2_SLOTS[i]; if(!s) continue;
-    if(s[3] < 0){ const si = s[5]; if(!shownS[si]){ shownS[si] = true; const sf = H2_SOFAS[si]; items.push({y:sf.y-6, f:()=>h2Sofa(st, sf.x, sf.y)}); items.push({y:sf.y+12, f:()=>h2CoffeeTable(st, sf.x, sf.y+28)}); } }
+    if(s[3] < 0){ const si = s[5]; if(!shownS[si]){ shownS[si] = true; const sf = H2_SOFAS[si]; items.push({y:sf.y-6, f:()=>sf.big ? h2BigSofa(st, sf.x, sf.y) : h2Sofa(st, sf.x, sf.y)}); items.push({y:sf.y+12, f:()=>h2CoffeeTable(st, sf.x, sf.y+28)}); } }
     else { const cx = s[0], cy = s[1]; items.push({y:cy-6, f:()=>sceneChair(st, cx, cy, soft)}); if(!shownT[s[3]]){ shownT[s[3]] = true; const t = H2_TABLES[s[3]]; items.push({y:t.y+10.5, f:()=>sceneTable(st, t.x, t.y+10, u.tables, s[3])}); } } }
   // растения по уровню интерьера
   if(u.decor >= 1) items.push({y:H2_FLOOR+60, f:()=>scenePlant(st, 286, H2_FLOOR+60, 0.9)});
@@ -8436,7 +8437,9 @@ drawRoom = function(id){
     const gy = sl && sl[3] < 0 ? g.y - 2 : g.y;
     items.push({y:gy, f:()=>{ const [b,ro] = walkPose(g); if(g.state!=='sit') shadow(g.x, g.y, 10); drawSprite(g.spr, g.x, g.y - b, g.h, g.flip, g.slipT > 0 ? (g.flip ? -1.25 : 1.25) : ro); if(g.state==='sit') sceneProp(g, now); }}); }
   for(const p of r.pets){ items.push({y:p.y, f:()=>{ const [b] = walkPose(p); shadow(p.x,p.y,7); drawSprite(p.spr, p.x, p.y-b*0.5, p.h*1.25, p.flip); }}); }
+  h2DecorItems(st, items, now);
   items.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
+  h2CineFx(st, now);
   // грязь: мухи
   const dl = dirtLevel(id);
   if(dl > 0.55){ const nf = Math.round((dl-0.5)*14); for(let i=0;i<nf;i++){ const t0 = now*2 + i*1.7; const x = 40 + (i*53)%220 + Math.sin(t0*1.7)*10, y = 200 + (i*71)%Math.max(60,H-230) + Math.cos(t0*2.3)*8; rect(x, y, 1.6, 1.6, '#1a1a1a'); } }
@@ -8544,6 +8547,251 @@ setInterval(()=>{ try{ loadGoal(); }catch(e){} }, 60000);
 const _migrate18 = migrate;
 migrate = function(){ _migrate18(); roomsCleanup(); S.interior = S.interior || {}; if(S.interior.main) S.interior.hall2 = S.interior.main; S.goalCups = S.goalCups || 0; S.goalMs = S.goalMs || []; if(room('hall2')) syncScene('hall2'); };
 { const i = SUBS.findIndex(s=>s[0]==='district'); if(i >= 0) SUBS.splice(i, 1); if(sub==='district') sub = 'rooms'; }
+
+/* ================= v17: декор на своих местах, ночное кино, части дня, десерты к столу, поделиться, решение канала ================= */
+
+/* ---------- части дня ---------- */
+function dayPart(){ const h = S.gm/60; if(h >= 22 || h < 6) return 'night'; if(h >= 18) return 'evening'; if(h >= 15) return 'day'; return 'morning'; }
+const PART_N = {morning:'утро · запара', day:'день', evening:'вечер · посиделки', night:'ночь'};
+function partLabel(){ const p = dayPart(); if(p==='morning') return S.gm/60 < 7 ? 'раннее утро' : PART_N.morning; if(p==='night') return cineReady() ? 'ночь · кино' : 'ночь'; return PART_N[p]; }
+const _renderHud19 = renderHud;
+renderHud = function(){ _renderHud19(); const c = $('#clk'); if(c && S) c.textContent = WEEKDAYS[weekday()]+', день '+S.day+' · '+clockStr()+' · '+partLabel(); };
+// вечером гости охотнее идут посидеть во второй зал и сидят дольше
+function h2Pull(){ return dayPart()==='evening' ? 0.6 : 0.3; }
+
+/* ---------- десерты к столу и выручка зоны отдыха ---------- */
+function h2Rev(v){ if(!v) return; const f = S.fin.today; f.byRoom = f.byRoom || {}; f.byRoom.main = (f.byRoom.main||0) - v; f.byRoom.hall2 = (f.byRoom.hall2||0) + v; }
+function tableDessert(){
+  const dm = MENU.find(x=>x.id==='dessert'); if(!dm || !isUnlocked('dessert') || !hasStock(dm.need)) return 0;
+  const amount = itemPrice(dm, 'main'); takeStock(dm.need);
+  income(amount, 'sales', 'Десерт к столу в зоне отдыха');
+  const f = S.fin.today; f.rev += amount; f.cogs += needCost(dm.need); f.items = f.items || {}; f.items.dessert = (f.items.dessert||0) + 1; S.c.byItem.dessert = (S.c.byItem.dessert||0) + 1; S.c.sold++;
+  f.byRoom = f.byRoom || {}; f.byRoom.hall2 = (f.byRoom.hall2||0) + amount; return amount;
+}
+function h2SitEnd(id, r, g){
+  if(g.cine){ g.sit = 1e9; return true; }
+  const wt = workingStaff('hall2').some(s=>s.role==='Официант' && !s.distract); const ev = dayPart()==='evening';
+  if((g.orders||1) < (ev ? 4 : 3) && S.isOpen && !(S.closedUntil > absNow()) && chance(wt ? 0.55 : 0.12)){
+    const res = sellOne('main'); if(res.fail) return false;
+    h2Rev(res.amount); let extra = 0; if(wt && chance(0.45)) extra = tableDessert();
+    g.orders = (g.orders||1) + 1; g.sit = R(16, 30) * (ev ? 1.4 : 1);
+    if(S.active==='hall2'){ flyMoney(g.x, g.y - g.h - 4, res.amount + extra); sfx('coin'); }
+    return true; }
+  return false;
+}
+
+/* ---------- декор: у каждой вещи своё место ---------- */
+decorFree = function(slot){ return 9; };
+const H2_DECOR = ['sofa','piano','photo','easel','vinyl'];
+function decorInH2(id){ return !!room('hall2') && H2_DECOR.includes(id); }
+let DEC_SEASON_ONLY = false;
+const _decorOwned19 = decorOwned;
+decorOwned = function(){ const all = _decorOwned19(); return DEC_SEASON_ONLY ? all.filter(x=>{ const d = decorDef(x.id); return d && d.season; }) : all; };
+const _props19 = sceneUpgradeProps;
+sceneUpgradeProps = function(st, u, items, now, r){
+  DEC_SEASON_ONLY = true; try{ _props19(st, u, items, now, r); } finally { DEC_SEASON_ONLY = false; }
+  if(S.active !== 'main') return;
+  for(const it of decorOwned()){ const d = decorDef(it.id); if(!d || d.season || decorInH2(it.id)) continue; const sp = mainSpot(it.id); if(!sp) continue;
+    items.push({y:sp.y + (sp.counter ? -60 : 0), f:()=>drawDecor19(it, sp.x, sp.y, now, st, sp)}); }
+};
+function mainSpot(id){
+  const fl = H - 4;
+  return ({ficus:{x:14, y:BAR_BOT+44}, aquarium:{x:228, y:BAR_TOP+3, counter:true}, vinyl:{x:150, y:BAR_TOP+3, counter:true}, claw:{x:108, y:fl}, toilet:{x:26, y:fl},
+    piano:{x:80, y:fl}, sofa:{x:196, y:fl}, photo:{x:288, y:BAR_BOT+50}, easel:{x:258, y:fl}})[id];
+}
+function h2DecorItems(st, items, now){
+  const fl = H - 6;
+  for(const it of decorOwned()){ const d = decorDef(it.id); if(!d || d.season || !decorInH2(it.id)) continue;
+    if(it.id==='easel' || it.id==='vinyl') continue; // на стене
+    const sp = {sofa:{x:150, y:fl}, piano:{x:46, y:fl}, photo:{x:262, y:fl}}[it.id]; if(!sp) continue;
+    items.push({y:sp.y, f:()=>drawDecor19(it, sp.x, sp.y, now, st, sp)}); }
+}
+function h2WallDecor(st, now){
+  if(hasDecor('easel') && room('hall2')){ RR(118, 6, 64, 46, 2, '#c9a24a'); rect(122, 10, 56, 38, '#2a3a4a'); EL(138, 30, 10, 12, '#e0574a'); rect(150, 18, 14, 22, '#e9c46a'); ctx.strokeStyle = '#9fb8a8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(124, 44); ctx.quadraticCurveTo(150, 20, 176, 42); ctx.stroke(); rect(144, 53, 12, 4, '#c9a24a'); txt('Неизв. худ.', 150, 61, '700 4.5px "Golos Text",sans-serif', 'rgba(255,240,220,.7)', 'center'); }
+  if(hasDecor('vinyl') && room('hall2')){ const x = 72, y = 112; RR(x-26, y-12, 52, 14, 2, '#5a3c26'); rect(x-26, y-12, 52, 2, '#7a5236'); EL(x-6, y-14, 9, 3, '#1a1a1a'); EL(x-6, y-14, 2, 0.8, '#c03a3a'); const a = now*5; rect(x-6 + Math.cos(a)*6, y-15, 1.4, 1, '#e8e2d4'); RR(x+8, y-30, 12, 18, 2, '#2a2a2e'); EL(x+14, y-24, 3.5, 3.5, '#4a4a4e'); EL(x+14, y-16, 2, 2, '#4a4a4e');
+    if(Math.sin(now*3) > 0) txt('♪', x+24, y-30 - (now*8 % 8), '700 7px sans-serif', 'rgba(255,240,220,.7)'); }
+  if(S.cine && S.cine.proj && room('hall2')) drawScreen(st, now);
+}
+function drawDecor19(it, x, y, now, st, sp){
+  const id = it.id;
+  if(id==='ficus'){ const k = 1.5 * (typeof ficusSize==='function' ? ficusSize() : 1), wilt = it.wilt; shadow(x, y, 10); RR(x-9, y-15, 18, 15, 3, '#a5552e'); rect(x-10, y-16, 20, 3, '#8a4524'); ctx.fillStyle = wilt ? '#8a7a3e' : '#4f8a46';
+    for(let j=0;j<9;j++){ ctx.beginPath(); ctx.ellipse(x + (j-4)*3.6*k, y-20-(j%3)*7*k - (wilt?-5:0), 3.6*k, 8*k, (j-4)*0.35 + (wilt?0.6:0), 0, 7); ctx.fill(); } return; }
+  if(id==='aquarium'){ RR(x-20, y-24, 40, 24, 3, 'rgba(120,190,230,.6)'); rect(x-20, y-25, 40, 3, '#2a2a2a'); rect(x-20, y-2, 40, 3, '#2a2a2a'); for(let j=0;j<4;j++){ const fx = x - 15 + ((now*7 + j*9) % 30), fy = y - 18 + j*4; EL(fx, fy, 2.6, 1.6, ['#ff9a3a','#ffd23a','#e0574a','#7ad2ff'][j]); } for(let j=0;j<3;j++) EL(x-12+j*10, y-6 - ((now*8+j*5)%14), 1, 1, 'rgba(255,255,255,.8)'); rect(x-14, y-8, 2, 6, '#3a8a4a'); rect(x+10, y-10, 2, 8, '#3a8a4a'); return; }
+  if(id==='vinyl'){ RR(x-14, y-6, 28, 6, 1, '#3a2a22'); EL(x-3, y-7, 8, 2.6, '#1a1a1a'); const a = now*4; rect(x-3 + Math.cos(a)*5, y-7.5, 1.4, 1, '#e0574a'); RR(x+9, y-18, 8, 16, 1, '#2a2a2e'); EL(x+13, y-12, 2.4, 2.4, '#5a5a5e'); return; }
+  if(id==='claw'){ shadow(x, y, 14); RR(x-14, y-62, 28, 62, 3, '#e46aa0'); RR(x-11, y-58, 22, 26, 2, 'rgba(200,230,255,.6)'); rect(x-1 + Math.sin(now)*6, y-58, 1.2, 9, '#888'); rect(x-3 + Math.sin(now)*6, y-49, 6, 2, '#888');
+    EL(x-5, y-36, 3.4, 2.6, '#ffd23a'); EL(x+4, y-37, 3.4, 2.6, '#7ad2ff'); EL(x, y-34, 3, 2.4, '#7fd36a'); rect(x-8, y-22, 16, 6, '#2a2a2e'); EL(x+6, y-12, 2, 2, Math.sin(now*4)>0 ? '#ffd23a' : '#8a6a3a'); for(let j=0;j<5;j++) EL(x-12+j*6, y-61, 1.4, 1.4, Math.sin(now*5+j)>0 ? '#fff3a0' : '#a04a70'); return; }
+  if(id==='toilet'){ glow2(x, y-16, 26, '255,214,90', 0.3 + 0.08*Math.sin(now*2)); shadow(x, y, 12); RR(x-9, y-36, 18, 14, 3, '#e8be46'); rect(x-7, y-34, 14, 2, '#fff0a0'); EL(x, y-17, 13, 5.5, '#f2cf5a'); EL(x, y-18, 9, 3.4, '#c99a2e'); RR(x-6, y-15, 12, 15, 3, '#d8a83a'); rect(x-3, y-33, 2, 10, 'rgba(255,255,230,.7)'); return; }
+  if(id==='piano'){ shadow(x, y, 22); RR(x-22, y-48, 44, 48, 3, '#1e1a1a'); rect(x-22, y-48, 44, 3, '#3a3232'); rect(x-20, y-28, 40, 7, '#f4efe6'); for(let j=0;j<9;j++) rect(x-18 + j*4.4, y-28, 1.6, 4, '#1e1a1a'); rect(x-12, y-44, 24, 12, '#f4efe6'); for(let j=0;j<4;j++) rect(x-10, y-42+j*3, 20, 0.6, '#5a5050'); rect(x-20, y-6, 3, 6, '#1e1a1a'); rect(x+17, y-6, 3, 6, '#1e1a1a'); RR(x+12, y-56, 3, 8, 1, '#f3e8d3'); EL(x+13.5, y-57, 1.2, 1.8, '#ffd36b'); return; }
+  if(id==='sofa'){ const c = '#7a2f45'; shadow(x, y-4, 40); RR(x-44, y-40, 88, 24, 8, c); rect(x-40, y-36, 80, 2, 'rgba(255,255,255,.14)'); RR(x-46, y-20, 92, 15, 5, '#8e3a52'); RR(x-50, y-32, 11, 28, 5, c); RR(x+39, y-32, 11, 28, 5, c); for(const k of [-20, 20]) RR(x+k-8, y-34, 16, 13, 4, '#d9b48a'); rect(x-42, y-5, 3, 5, '#3a2a22'); rect(x+39, y-5, 3, 5, '#3a2a22'); return; }
+  if(id==='photo'){ const g = 0.55 + 0.35*Math.sin(now*2); shadow(x, y, 18); RR(x-22, y-66, 44, 62, 3, '#2a2340'); glow2(x, y-38, 30, '255,120,190', 0.25*g + 0.1); ctx.strokeStyle = `rgba(255,130,200,${0.7+0.3*g})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y-38, 15, 0, 7); ctx.stroke(); txt('WOW', x, y-35, '800 7px "Golos Text",sans-serif', `rgba(143,208,220,${0.7+0.3*g})`, 'center'); rect(x-1, y-4, 2, 4, '#1e1a2c'); rect(x+20, y-56, 2, 56, '#8a8a86'); EL(x+21, y-58, 4, 4, '#f4efe6'); return; }
+  if(id==='easel'){ ctx.strokeStyle = '#7a5232'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x-12, y); ctx.lineTo(x, y-50); ctx.lineTo(x+12, y); ctx.moveTo(x, y-50); ctx.lineTo(x, y); ctx.stroke(); RR(x-16, y-48, 32, 26, 1, '#f4efe6'); EL(x-6, y-38, 7, 6, '#e0574a'); EL(x+6, y-33, 6, 5, '#3a6ac0'); rect(x-14, y-24, 28, 2, '#7a5232'); return; }
+  if(typeof drawDecor==='function') drawDecor(it, x, y, now);
+}
+function h2BigSofa(st, x, y){ const c = '#2e2b45'; shadow(x, y-6, 44); RR(x-48, y-48, 96, 28, 8, c); rect(x-44, y-44, 88, 2, 'rgba(255,255,255,.1)'); RR(x-50, y-24, 100, 16, 5, '#3a3658'); RR(x-54, y-36, 11, 30, 5, c); RR(x+43, y-36, 11, 30, 5, c); rect(x-12, y-24, 1.5, 14, 'rgba(0,0,0,.2)'); rect(x+12, y-24, 1.5, 14, 'rgba(0,0,0,.2)'); rect(x-46, y-8, 3, 6, '#1e1a2c'); rect(x+43, y-8, 3, 6, '#1e1a2c'); txt('КИНО', x, y-36, '800 5px "Golos Text",sans-serif', 'rgba(232,190,70,.6)', 'center'); }
+
+/* ---------- кино ---------- */
+const CINE_PROJ = 8000000, CINE_SOFA = 3000000, CINE_TICKET = 2500;
+const FILMS = ['Бариста 2: Возвращение питчера','Последний раф','Мойщица. Начало','Пенка','Санэпидемстанция','Сдача с пятитысячной','Бобы и ярость','Кассир, который знал слишком много','Гусь, который смог','Ночь в кофейне','Миндальное молоко: тёмная сторона','Форсаж: Доставка за 15 минут','Жмых','Чек без сдачи','Аренда. Фильм ужасов','Капучино без границ','Смена, которую не закрыли','Охотники за чаевыми','Тамада на корпоративе','Список закупок Шиндлера'.replace('Шиндлера','на пятницу')];
+function cineState(){ S.cine = S.cine || {proj:false, sofa:false, on:false, until:0, film:'', n:0, films:0}; return S.cine; }
+function cineReady(){ const c = S && S.cine; return !!(c && c.proj && c.sofa && room('hall2')); }
+function cineViewers(){ return Math.min(h2Seats(), 14); }
+function cineStart(){
+  const c = cineState(); c.on = true; c.until = absNow() + 90; c.film = pick(FILMS); c.films = (c.films||0) + 1;
+  const n = cineViewers();
+  if(HOOK.quiet){ const v = Math.round(n * 0.6) * CINE_TICKET; income(v, 'sales', 'Ночной киносеанс'); const f = S.fin.today; f.rev += v; f.byRoom = f.byRoom || {}; f.byRoom.hall2 = (f.byRoom.hall2||0) + v; f.guests += Math.round(n*0.6); c.on = false; return; }
+  const r = rt('hall2'); syncScene('hall2'); let k = 0;
+  // зрители садятся сначала на диваны, потом за столики
+  const free = r.seats.map((g,i)=>g?-1:i).filter(i=>i>=0 && i < h2Seats()).slice(0, n);
+  for(const i of free){ const p = pickGuestSprite(); const g = {spr:p.spr, h:p.kid?SPR_KID:SPR_H, x:-12 - k*10, y:H2_DOOR_Y, state:'toSeat', seat:i, prog:0, flip:false, t:Math.random()*10, walk:true, wait:0, orders:1, cine:true, gid:++GID};
+    r.seats[i] = g; r.guests.push(g); k++; }
+  const v = k * CINE_TICKET; if(v){ income(v, 'sales', 'Билеты в кино: «'+c.film+'»'); const f = S.fin.today; f.rev += v; f.guests += k; f.byRoom = f.byRoom || {}; f.byRoom.hall2 = (f.byRoom.hall2||0) + v; }
+  c.n = k; HOOK.toast('В зоне отдыха кино: «'+c.film+'». Билетов продано: '+k+' на '+fmt(v)+' ₽');
+}
+function cineEnd(){ const c = cineState(); c.on = false; const r = rt('hall2');
+  for(const g of r.guests){ if(!g.cine) continue; g.cine = false; if(g.seat!=null && r.seats[g.seat]===g){ if(chance(0.35)) leaveMess('hall2', g); r.seats[g.seat] = null; } g.state = 'leave'; g.hidden = false; } }
+const _advance19 = advanceGameMinutes;
+advanceGameMinutes = function(n){ for(let i=0;i<n;i++){ _advance19(1); try{ cineMinute(); }catch(e){} } };
+function cineMinute(){
+  if(!cineReady()) return; const c = cineState();
+  if(c.on && absNow() >= c.until) cineEnd();
+  const h = S.gm/60; if(!(h >= 22 || h < 6)) return;
+  if(!c.on && S.gm % 120 === 0 && !(S.closedUntil > absNow())) cineStart();
+}
+// официант разносит попкорн и кофе во время сеанса
+const _simRoom19 = simRoom;
+simRoom = function(id, dt){ _simRoom19(id, dt); if(id!=='hall2' || !S.cine || !S.cine.on) return; const r = rt(id);
+  const wt = workingStaff(id).some(s=>s.role==='Официант' && !s.distract); if(!wt) return;
+  r.popT = (r.popT==null ? R(20, 40) : r.popT) - dt; if(r.popT > 0) return; r.popT = R(25, 50);
+  const g = pick(r.guests.filter(x=>x.cine && x.state==='sit')); if(!g) return;
+  const res = sellOne('main'); if(res.fail) return; h2Rev(res.amount); let extra = chance(0.5) ? tableDessert() : 0;
+  if(S.active==='hall2'){ flyMoney(g.x, g.y - g.h - 4, res.amount + extra); sfx('coin'); } };
+function drawScreen(st, now){
+  const c = S.cine, on = c.on; const x0 = 96, w = 108;
+  rect(x0-4, 2, w+8, 5, '#2a2a2e'); rect(x0-6, 1, 4, 7, '#1a1a1a'); rect(x0+w+2, 1, 4, 7, '#1a1a1a');
+  if(!on){ // экран свёрнут днём
+    if(dayPart()==='night'){ rect(x0, 7, w, 60, '#efefe8'); rect(x0, 66, w, 3, '#2a2a2e'); txt('СКОРО СЕАНС', x0+w/2, 40, '800 7px "Golos Text",sans-serif', 'rgba(60,60,70,.5)', 'center'); }
+    return; }
+  rect(x0, 7, w, 60, '#0e0e14'); rect(x0, 66, w, 3, '#2a2a2e');
+  // меняющиеся кадры
+  const sc = Math.floor(now/2.2) % 6; ctx.save(); ctx.beginPath(); ctx.rect(x0+2, 9, w-4, 56); ctx.clip();
+  const pal = [['#3a6ac0','#e9c46a'],['#c0573f','#2a1d15'],['#5e8f55','#efe2cc'],['#8e4d74','#8fd0dc'],['#2d3456','#ffd36b'],['#a87a65','#f3e8d3']][sc];
+  rect(x0+2, 9, w-4, 56, pal[0]); for(let i=0;i<4;i++){ const px = x0 + 10 + ((i*29 + now*(6+i*3)) % (w-20)); EL(px, 44 - (i%2)*10, 6+i*2, 9+i, pal[1]); }
+  if(sc===3){ ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.font = '800 9px "Golos Text",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('...', x0+w/2, 36); ctx.textAlign = 'left'; }
+  ctx.restore();
+  txt('«'+c.film+'»', x0+w/2, 76, '700 6px "Golos Text",sans-serif', 'rgba(255,240,220,.85)', 'center');
+}
+function h2CineFx(st, now){
+  if(!S.cine || !S.cine.proj || !room('hall2')) return;
+  // проектор под потолком
+  const px = 150, py = 214; ctx.strokeStyle = '#2a2a2e'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px-8, py+24); ctx.lineTo(px, py+2); ctx.lineTo(px+8, py+24); ctx.moveTo(px, py+2); ctx.lineTo(px, py+24); ctx.stroke(); RR(px-10, py-6, 20, 9, 2, '#2a2a2e'); EL(px, py-12+10, 3, 3, S.cine.on ? '#fff6d8' : '#4a4a4e');
+  if(!S.cine.on) return;
+  ctx.fillStyle = 'rgba(10,8,24,.42)'; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createLinearGradient(px, py, px, 20); g.addColorStop(0, 'rgba(255,246,216,.28)'); g.addColorStop(1, 'rgba(255,246,216,.05)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(px-2, py-2); ctx.lineTo(96, 9); ctx.lineTo(204, 67); ctx.lineTo(px+2, py-2); ctx.closePath(); ctx.fill();
+  drawScreen(st, now); glow2(150, 40, 80, '200,210,255', 0.12 + 0.04*Math.sin(now*3));
+}
+// покупка в улучшениях зоны отдыха
+const _renderUpgrades19 = renderUpgrades;
+renderUpgrades = function(p, id){
+  if(id==='hall2'){ const c = cineState();
+    const card = el(`<div class="card note kraft"><div class="row"><span class="t">Ночное кино</span><span class="sp"></span>${cineReady()?'<span class="tag g">Работает</span>':''}</div>
+      <div class="d">С 22:00 до 6:00 каждые два игровых часа — сеанс. Гости покупают билет за ${fmt(CINE_TICKET)} ₽ и садятся на диваны, официант разносит кофе и десерты. Нужны проектор и кинодиван.${c.films ? ' Сеансов показано: '+c.films+'.' : ''}</div><div class="row wrap"></div></div>`);
+    const row = card.querySelector('.row.wrap');
+    const add = (lbl, cost, key, n) => { if(c[key]){ row.appendChild(el(`<span class="tag g">${n}: есть</span>`)); return; } const b = el(btnHtml(lbl+' · '+fmt(cost)+' ₽', cost, false)); b.onclick = () => { if(S.money < cost){ toast('Не хватает денег'); return; } spend(cost, 'invest', n); c[key] = true; if(key==='sofa'){ const r = rt('hall2'); r.dirty = {}; layoutH2(); syncScene('hall2'); } sfx('level'); toast(cineReady() ? 'Кино готово: первый сеанс в 22:00' : n+' куплен'); save(); renderSheet(); renderHud(); }; row.appendChild(b); };
+    add('Проектор', CINE_PROJ, 'proj', 'Проектор'); add('Кинодиван', CINE_SOFA, 'sofa', 'Кинодиван');
+    p.appendChild(card);
+    const f = S.fin.today, h = (S.fin.hist||[]).slice(0,7).map(x=>(x.byRoom||{}).hall2||0); const avg = h.length ? Math.round(h.reduce((a,b)=>a+b,0)/h.length) : 0;
+    p.appendChild(el(`<div class="card"><div class="t">Выручка зоны отдыха</div><div class="d">Сегодня: <b class="num">${fmt((f.byRoom||{}).hall2||0)} ₽</b>${h.length?' · в среднем за день: <b class="num">'+fmt(avg)+' ₽</b>':''}. Дозаказы, десерты к столу и кино. Без официанта гости почти ничего не заказывают.</div></div>`));
+  }
+  _renderUpgrades19(p, id);
+  if(id==='main' && room('hall2')){ const n = decorOwned().filter(x=>decorInH2(x.id)).length; if(n){ const h = p.querySelector('#decorH'); if(h) h.insertAdjacentElement('afterend', el(`<div class="empty" style="font-size:12px">Диван, пианино, фотозона, картина и винил стоят в зоне отдыха.</div>`)); } }
+};
+// меню: ночной сеанс
+const _renderMore19 = renderMore;
+renderMore = function(p){ if(sub==='menu'){ const c = cineState(); p.appendChild(el(`<div class="card"><div class="row"><span class="t">Ночной киносеанс</span><span class="sp"></span><span class="tag num">${fmt(CINE_TICKET)} ₽</span></div><div class="d">${cineReady() ? 'Только с 22:00 до 6:00, в зоне отдыха. '+(c.on ? 'Сейчас идёт «'+esc(c.film)+'».' : 'Следующий сеанс — в чётный час ночью.') : 'Нужны зона отдыха, проектор и кинодиван. Купить — в улучшениях зоны отдыха.'}</div></div>`)); } return _renderMore19(p); };
+
+/* ---------- ситуации в кино ---------- */
+const CINE_COND = S => !!(S.cine && S.cine.on);
+def('ci_flash', {cat:'normal', cond:CINE_COND, t:'Своё кино на флешке', x:'Зритель подошёл к проектору с флешкой: «Давайте лучше мою свадьбу посмотрим. Там три часа, но есть драка».', o:[
+ {t:'Поставить свадьбу', fx:{chaos:2, soul:2, m:3000}, out:'Драка случилась на 2:40. Зал аплодировал стоя. Жених на видео — тот же зритель. Невеста — уже нет.'},
+ {t:'Отказать', fx:{pathos:1}, out:'Он досмотрел «'+'Последний раф'+'» молча и с обидой. Флешку забыл. На ней не только свадьба.'},
+ {t:'Продать билеты на свадьбу отдельно', fx:{m:6000, chaos:1}, out:'Внезапно аншлаг. Люди хотят видеть чужие свадьбы больше, чем кино.'}]});
+def('ci_sound', {cat:'normal', cond:CINE_COND, t:'Пропал звук', x:'На самой важной сцене пропал звук. Зал смотрит немое кино и начинает озвучивать сам. Пока прилично.', o:[
+ {t:'Пусть озвучивают', fx:{soul:2, chaos:1}, out:'Мужик в углу озвучил главную героиню так, что смеялись даже официанты. Требуют повтор.'},
+ {t:'Вернуть деньги за билеты', fx:{m:-8000, rep:1}, out:'Деньги вернули, все остались досматривать. Бесплатно.'},
+ {t:'Отправить мойщицу чинить', fx:{mood:-8, roleTarget:'Мойщица'}, out:'Она пнула колонку. Звук вернулся. Теперь это её работа навсегда.'}]});
+def('ci_snore', {cat:'normal', cond:CINE_COND, t:'Храпит громче фильма', x:'Гость на кинодиване уснул на десятой минуте и храпит так, что перекрывает погоню.', o:[
+ {t:'Разбудить', fx:{rep:-1}, out:'Проснулся, сказал, что не спал, и через минуту снова храпел. Уже обиженно.'},
+ {t:'Сделать погромче', fx:{chaos:1}, out:'Теперь храп с эффектом объёмного звука.'},
+ {t:'Укрыть пледом', fx:{soul:2}, out:'Проспал до утра. Утром заказал завтрак и сказал, что лучший сеанс в его жизни.'}]});
+def('ci_couple', {cat:'normal', cond:CINE_COND, t:'Пришли не смотреть кино', x:'Парочка в последнем ряду явно пришла не ради фильма. Остальные зрители смотрят уже не на экран.', o:[
+ {t:'Включить свет', fx:{pathos:1, rep:-1}, out:'Свет включили. Парочка оказалась менеджерами из твоего же бизнес-центра. Неловко всем.'},
+ {t:'Отправить официанта с меню', fx:{m:1500}, out:'Официант встал рядом и молча ждал заказ. Заказали. Много. Лишь бы ушёл.'},
+ {t:'Не замечать', fx:{chaos:1}, out:'Фильм кончился, они нет. Мойщица просит премию за вредность.'}]});
+def('ci_argue', {cat:'normal', cond:CINE_COND, t:'Что ставим?', x:'Половина зала требует артхаус про одиночество, половина — боевик про бандитов. Ругаются уже с попкорном в руках.', o:[
+ {t:'Артхаус', fx:{pathos:2, rep:1}, out:'Три часа тишины, один кадр и дождь. Двое плакали, пятеро ушли, один написал отзыв на два листа.'},
+ {t:'Бандиты', fx:{chaos:2, m:2000}, out:'Зал цитировал реплики наизусть. Кто-то пытался повторить сцену с бутылкой. Не надо было.'},
+ {t:'Пусть решат армрестлингом', fx:{chaos:3, soul:1}, out:'Победила бабушка. Смотрели «Санэпидемстанцию». Все довольны, кроме тех, кто проиграл бабушке.'}]});
+def('ci_spoiler', {cat:'normal', cond:CINE_COND, t:'Спойлер на весь зал', x:'Гость на первой минуте громко сказал, чем всё кончится. Зал медленно поворачивается к нему.', o:[
+ {t:'Вывести', fx:{pathos:1}, out:'Уходя, он рассказал концовку ещё трёх фильмов. Охранник тоже их не смотрел. Теперь обижен.'},
+ {t:'Пересадить к мойщице', fx:{soul:1, chaos:1}, out:'Мойщица рассказала ему концовку его собственной жизни. Сидит тихо.'},
+ {t:'Поставить другой фильм', fx:{m:-1000, rep:1}, out:'Он и этот видел. Пришлось выводить.'}]});
+
+/* ---------- поделиться: история и чаты ---------- */
+const SHARE_LINES = () => {
+  const c = S.c || {};
+  const out = ['«'+S.name+'»: день '+S.day+', рейтинг '+S.rep.toFixed(1).replace('.',',')+'. Пока держимся.'];
+  if(c.geese) out.push('Гусь побеждал нас '+c.geese+' раз. Счёт не в нашу пользу.');
+  if(c.slips) out.push('Гости поскользнулись '+c.slips+' раз. Табличку купили. Не помогло.');
+  if(c.mistakes) out.push('Бариста перепутал заказ '+c.mistakes+' раз. Говорит, это авторский подход.');
+  if(c.angry) out.push(fmt(c.angry)+' гостей ушли злыми. Остальные ещё не поняли.');
+  if(S.cine && S.cine.films) out.push('Показали '+S.cine.films+' ночных сеансов. Один раз — чужую свадьбу.');
+  return out; };
+function shareStory(){ const line = pick(SHARE_LINES());
+  withLink(url=>{ const img = location.origin + '/img/story.jpg';
+    if(tg && tg.shareToStory){ try{ tg.shareToStory(img, {text: (line+' Играй: '+url).slice(0, 200), widget_link:{url, name:'Brew Crew'}}); return; }catch(e){} }
+    toast('Истории работают в приложении Telegram'); }); }
+function shareChat(){ if(tg && tg.switchInlineQuery){ try{ tg.switchInlineQuery('', ['users','groups','channels']); return; }catch(e){} } invite(); }
+function shareCard(){
+  const c = el(`<div class="card note kraft"><div class="t">Похвастаться</div><div class="d">Выложи день своей кофейни в историю или кинь мем из игры в любой чат. По твоей ссылке друг начнёт с +100 000 ₽, а ты получишь 150 000 ₽, когда он дойдёт до 3 уровня.</div><div class="row wrap"><button class="btn">В историю</button><button class="btn ghost">Мем в чат</button></div></div>`);
+  const bs = c.querySelectorAll('button'); bs[0].onclick = shareStory; bs[1].onclick = shareChat; return c; }
+const _renderTasks19 = renderTasks;
+renderTasks = function(p){ _renderTasks19(p); try{ const g = p.querySelector('.card.goal'); const sc = shareCard(); if(g) g.insertAdjacentElement('afterend', sc); else p.appendChild(sc); }catch(e){} };
+
+/* ---------- решение канала: что случится у всех ---------- */
+const WORLD = {
+  goose:{t:'Канал решил: гусь в каждой кофейне', x:'По итогам голосования в канале сегодня в каждую кофейню района зашёл гусь. В твою тоже. Он уже у витрины.', o:[
+    {t:'Сделать талисманом', fx:{goose:1, mod:['traffic',1.1,24,'Гусь-талисман: гостей +10%'], chaos:2}, out:'Гусь стоит у входа и шипит на конкурентов. Гости фотографируются.'},
+    {t:'Выгонять всей сменой', fx:{chaos:4, moodAll:-4}, out:'Сорок минут, вся смена, два разбитых стакана. Гусь победил и остался.'}]},
+  water:{t:'Канал решил: отключить горячую воду', x:'Подписчики канала проголосовали, и у всех кофеен района отключили горячую воду. Мойщица смотрит на тебя как на автора опроса.', o:[
+    {t:'Греть чайником', fx:{m:-5000, mood:-6, roleTarget:'Мойщица'}, out:'Мыли из чайника весь день. Мойщица выучила новые слова и придумала свои.'},
+    {t:'Одноразовая посуда на день', fx:{m:-12000, rep:1}, out:'Дорого, зато чисто. Эко-активист в очереди плакал.'}]},
+  blogger:{t:'Канал решил: блогер-миллионник', x:'Канал выбрал: сегодня по району идёт блогер с миллионом подписчиков. Он уже снимает твою вывеску. Без разрешения.', o:[
+    {t:'Угостить за счёт заведения', fx:{m:-3000, mod:['traffic',1.15,24,'Блогер-миллионник: гостей +15%'], rep:1}, out:'Выпил три рафа и назвал вас «местом силы». Люди уже едут.'},
+    {t:'Взять полную цену', fx:{pathos:2, rep:-1}, out:'Заплатил и снял ролик «Сколько стоит кофе для честного человека». Просмотров много. Вам не понравится.'}]},
+  heat:{t:'Канал решил: аномальная жара', x:'Канал решил, что сегодня жара. Все хотят холодное, а кофемашина хочет в отпуск.', o:[
+    {t:'Айс-латте по акции', fx:{m:-2000, mod:['traffic',1.1,24,'Айс-латте в жару: гостей +10%']}, out:'Лёд кончился к обеду. Бариста колол его из морозилки молотком.'},
+    {t:'Поставить вентилятор и не париться', fx:{chaos:1}, out:'Вентилятор сдул салфетки, меню и парик с одного постоянного гостя.'}]},
+  inspect:{t:'Канал решил: санэпид обходит всех', x:'Голосованием выбрано: сегодня проверка во всех кофейнях района. Инспектор уже надевает бахилы.', o:[
+    {t:'Отмыть всё до блеска', fx:{m:-6000, chaos:-5, rep:1}, out:'Инспектор провёл пальцем по полке, посмотрел на палец и расстроился. Придраться не к чему.'},
+    {t:'Положиться на удачу', gamble:true, fx:{gamble:[{rep:1, out:'Повезло: он торопился на обед и ничего не увидел.'},{m:-25000, rep:-2, out:'Не повезло: нашёл всё, включая то, о чём вы сами не знали.'}]}, out:''}]},
+  strike:{t:'Канал решил: курьеры бастуют', x:'Подписчики выбрали забастовку курьеров. Доставка стоит, а курьеры сидят у вас в зале и пьют кофе со скидкой «для своих».', o:[
+    {t:'Кормить бастующих', fx:{m:-3000, soul:2, rep:1}, out:'Курьеры назвали вас «штабом забастовки». Это хорошо для репутации и плохо для отчёта.'},
+    {t:'Выставить', fx:{pathos:2, chaos:1}, out:'Ушли с плакатами. Один плакат про вас.'}]},
+  pens:{t:'Канал решил: день пенсионера', x:'Канал выбрал: сегодня все кофейни дают пенсионерам кофе по 50 рублей. Бабушки района уже в очереди. С купонами 2011 года.', o:[
+    {t:'Держать слово', fx:{m:-8000, rep:2, soul:2}, out:'Бабушки пили кофе, хвалили, ругали цены в соседней аптеке и обещали вернуться. Вернутся.'},
+    {t:'Только до обеда', fx:{m:-3000, rep:1}, out:'В 12:01 одна бабушка пыталась доказать, что у неё ещё утро.'}]}
+};
+for(const k in WORLD){ const w = WORLD[k]; def('w_'+k, {cat:'world', t:w.t, x:w.x, o:w.o}); }
+let WORLD_EV = null;
+function worldCheck(){ if(!S || !WORLD_EV || !WORLD_EV.id || !WORLD[WORLD_EV.id]) return; const day = WORLD_EV.day; if(!day || S.worldDay === day) return; const today = new Date(Date.now() + 3*3600000).toISOString().slice(0,10); if(day !== today) return; S.worldDay = day; pushIncident('w_'+WORLD_EV.id, {}); save(); }
+const _onTrack19 = onTrack;
+onTrack = function(r){ try{ if(r && r.world){ WORLD_EV = r.world; worldCheck(); } }catch(e){} return _onTrack19(r); };
+setTimeout(()=>{ try{ if(CFG && CFG.world){ WORLD_EV = CFG.world; worldCheck(); } }catch(e){} }, 5000);
+
+/* ---------- миграция ---------- */
+const _migrate19 = migrate;
+migrate = function(){ _migrate19(); cineState(); if(S.cine.on && !(S.cine.until > absNow())) S.cine.on = false; layoutH2(); if(room('hall2')) syncScene('hall2'); };
 
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());

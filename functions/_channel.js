@@ -3,20 +3,19 @@
 import { tgApi, getBot, mskDay, ADMINS, sezId, SEZ_NAMES } from './_lib.js';
 import { GOAL, goalInfo } from './_goal.js';
 
-export const VERSION = '8.2';
-export const VERSION_TITLE = 'мы расширяемся';
+export const VERSION = '8.3';
+export const VERSION_TITLE = 'кино по ночам';
 export const VERSION_IMG = 'expand.jpg';
-export const VERSION_TAIL = 'Без друзей миллион не вытянуть. Зовите.';
-// коротко для окна в игре и сообщения в боте
-export const VERSION_SHORT = 'Открылась зона отдыха — второй зал с диванами. Запара теперь только с 7 до 15. Район вместе продаёт миллион стаканов до конца ноября.';
+export const VERSION_TAIL = 'Мем из своей кофейни теперь можно кинуть в любой чат: напиши имя бота через @ и выбери картинку.';
+export const VERSION_SHORT = 'Ночью в зоне отдыха кино: купи проектор и кинодиван. День делится на утро, день, вечер и ночь. Раз в неделю канал решает, что случится у всех.';
 export const CHANGELOG = [
-  'Второй зал стал зоной отдыха: диваны и столики без бара. Гости берут кофе в основном зале и идут сюда, официант носит дозаказ. Работают там официанты и мойщицы',
-  'Веранда, лаунж и выкупленные залы на ремонте, всё купленное сохранено',
-  'Цель района: миллион стаканов кофе на всех до 30 ноября. Бонусы всем на 250, 500 и 750 тысячах, за миллион — золотой стакан, три дня прибыли и +25% гостей',
-  'Запара только с 7 до 15, дальше спокойный день',
-  'Мойщица реже выходит в зал, пожелания сотрудников по их работе',
-  'Без недельного турнира и диверсий против конкурентов',
-  '26 новых жёстких ситуаций: шуба в жару, кружка-ведро, похороны кофемашины'
+  'Ночное кино в зоне отдыха: проектор и кинодиван, сеанс каждые два часа с 22 до 6, билет 2 500 ₽. Фильмы вроде «Бариста 2: Возвращение питчера»',
+  'День делится на части: утро с запарой, спокойный день, вечерние посиделки во втором зале, ночь с кино',
+  'Официант в зоне отдыха продаёт десерты к столу, видно, сколько зал приносит',
+  'Диван, пианино, фотозона, картина и винил стоят на своих местах в зоне отдыха, остальное — на своих в основном зале. Рисунки стали крупнее',
+  'Раз в неделю опрос в канале: что случится во всех кофейнях. Победитель происходит у каждого',
+  'Кнопки «В историю» и «Мем в чат» во вкладке «Дела»',
+  'Шесть новых ситуаций в кино'
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -86,6 +85,8 @@ export async function channelTick(env, origin) {
         }
         const ok = true; // итоги сезона без поста в канал: значки и легенды приходят в игру
         await mark(env, skey, ok); return; } }
+    // голосование в канале раз в неделю: что случится у всех
+    if (await pollTick(env, origin)) return;
     // рассылка игрокам о новой версии: коротко и со ссылкой на пост
     if (await bcastVersion(env, origin)) return;
     // цель района: посты на рубежах и итог
@@ -136,4 +137,34 @@ async function goalTick(env, origin) {
     : ['<b>Миллион не взят</b>', '', `Район продал ${fmt(g.total)} стаканов. Не хватило ${fmt(GOAL.target - g.total)}.`, '', 'Треснувший стакан на стойке — памятник тому, как близко это было. В следующий раз зовите друзей раньше.'];
   const ok = await post(env, origin, 'events.jpg', lines.join('\n'));
   await mark(env, fk, ok);
+}
+
+// решение канала: раз в неделю опрос, победитель случается у всех на следующий день
+export const WORLD_OPTS = { goose: 'Гусь в каждой кофейне', water: 'Отключат горячую воду', blogger: 'Блогер-миллионник идёт по району', heat: 'Аномальная жара', inspect: 'Санэпид обходит всех', strike: 'Курьеры бастуют', pens: 'День пенсионера: кофе по 50 рублей' };
+async function pollTick(env, origin) {
+  const wk = tourWeek(); const pk = 'poll_' + wk; const p = await posted(env, pk);
+  const d = new Date(Date.now() + 3 * 3600000); const dow = d.getUTCDay(), hr = d.getUTCHours();
+  if (!p) {
+    if (dow !== 6 || hr < 12) return false; // суббота, после полудня по Москве
+    const ids = Object.keys(WORLD_OPTS).sort(() => Math.random() - 0.5).slice(0, 4);
+    const r = await tgApi(env, 'sendPoll', { chat_id: env.CHANNEL_ID, question: 'Что завтра случится во всех кофейнях игры? Победитель произойдёт у каждого', options: ids.map(id => ({ text: WORLD_OPTS[id] })), is_anonymous: true });
+    await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5, ?6)').bind(pk, Date.now(), r && r.ok ? 1 : 0, JSON.stringify(ids), r && r.ok ? r.result.message_id : null, 'Опрос: что случится у всех').run();
+    return true;
+  }
+  if (!p.ok || !p.msg_id) return false;
+  const rk = 'world_' + wk; if (await posted(env, rk)) return false;
+  if (Date.now() - p.at < 20 * 3600000) return false;
+  const r = await tgApi(env, 'stopPoll', { chat_id: env.CHANNEL_ID, message_id: p.msg_id });
+  let ids = []; try { ids = JSON.parse(p.info) || []; } catch {}
+  let win = ids[0], best = -1;
+  if (r && r.ok && r.result && r.result.options) r.result.options.forEach((o, i) => { if (o.voter_count > best) { best = o.voter_count; win = ids[i]; } });
+  if (!win) { await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info) VALUES (?1, ?2, 1, ?3)').bind(rk, Date.now(), null).run(); return true; }
+  const day = mskDay();
+  const ok = await post(env, origin, 'events.jpg', [`<b>Канал решил: ${esc(WORLD_OPTS[win])}</b>`, '', 'Сегодня это случится в каждой кофейне игры. Заходи и разбирайся.'].join('\n'));
+  await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5, ?6)').bind(rk, Date.now(), ok ? 1 : 0, JSON.stringify({ id: win, day }), ok && ok.id ? ok.id : null, 'Решение канала').run();
+  return true;
+}
+export async function worldInfo(env) {
+  const r = await env.DB.prepare("SELECT info FROM posts WHERE key LIKE 'world_%' ORDER BY at DESC LIMIT 1").first();
+  if (!r || !r.info) return null; try { const w = JSON.parse(r.info); return w && w.day === mskDay() ? w : null; } catch { return null; }
 }

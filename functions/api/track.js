@@ -2,7 +2,7 @@
 import { json, mskDay, verifyInitData, dispatchReminders, ADMINS, parseRef, bindReferrer, payReferrer, sezId } from '../_lib.js';
 import { promoWatch } from '../_promo.js';
 import { opsFor } from '../_admin.js';
-import { channelTick, tourWeek, post as channelPost } from '../_channel.js';
+import { channelTick, tourWeek, post as channelPost, worldInfo } from '../_channel.js';
 import { goalTrack, goalInfo } from '../_goal.js';
 
 const num = (v, max = 1e15) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(n, max)) : 0; };
@@ -59,11 +59,12 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // общая цель: миллион стаканов
   try { await goalTrack(env, user.id, s.gc, dt); } catch {}
   let goal = null; try { goal = await goalInfo(env, false); } catch {}
+  let world = null; try { world = await worldInfo(env); } catch {}
   const origin = new URL(request.url).origin;
   if (waitUntil) waitUntil(promoWatch(env, user.id).catch(() => {})); else { try { await promoWatch(env, user.id); } catch {} }
   if (waitUntil) { waitUntil(dispatchReminders(env)); waitUntil(channelTick(env, origin)); } else await dispatchReminders(env);
   const me = await env.DB.prepare('SELECT banned FROM players WHERE tg_id = ?1').bind(user.id).first();
   let ops = [];
   try { ops = await opsFor(env, user.id); } catch {}
-  return json({ ok: true, banned: Boolean(me && me.banned), ops, goal });
+  return json({ ok: true, banned: Boolean(me && me.banned), ops, goal, world });
 }
