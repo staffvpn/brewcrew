@@ -4668,7 +4668,7 @@ function layoutSlots(){
   if(typeof layoutWall==='function') layoutWall();
 }
 layoutSlots();
-const SPOT = {'Мойщица':[[44,150],[236,252]], 'Бариста':[[84,FEET],[112,FEET],[140,FEET],[160,FEET]], 'Кассир':[[236,FEET],[176,FEET]], 'Повар':[[254,150],[274,150]]};
+const SPOT = {'Мойщица':[[44,150],[236,252]], 'Бариста':[[84,FEET],[112,FEET],[140,FEET],[160,FEET]], 'Кассир':[[236,FEET],[188,FEET],[212,FEET],[164,FEET]], 'Повар':[[254,150],[274,150]]};
 
 /* ---------- стили зала: базовый и четыре интерьера ---------- */
 const SCENE_STYLES = {
@@ -5152,15 +5152,15 @@ function staffWalk(id, r, s, p, dt){
     return; }
   // выбор цели
   if(s.role==='Мойщица'){
-    const ms = (r.mess||[]).slice().sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];
-    const dk = Object.keys(r.dirty||{})[0];
+    const ms = freeMess(r, p);
+    const dk = freeDirty(r, p);
     if(ms){ p.goal = {kind:'mess', m:ms, x:ms.x+10, y:ms.y+4}; return; }
     if(dk){ const sp = dirtySpot(id, dk); if(sp){ p.goal = {kind:'table', key:dk, x:sp[0], y:sp[1]}; return; } }
     if((S.dishes[id]||0) > 0){ p.goal = {kind:'dish', x:SINK[0], y:SINK[1]}; return; }
     if(moveTo(p, SINK[0]-20, SINK[1]+30, speed, dt)) p.walk = false; return;
   }
   if(s.role==='Официант'){
-    const dk = Object.keys(r.dirty||{})[0];
+    const dk = freeDirty(r, p);
     if(dk && chance(dt*0.8)){ const sp = dirtySpot(id, dk); if(sp){ p.goal = {kind:'table', key:dk, x:sp[0], y:sp[1]}; return; } }
     if(moveTo(p, p.tx, p.ty, speed, dt)){ p.idle = (p.idle||0) - dt;
       if(p.idle <= 0){ p.idle = R(1.5,4); const occ = r.seats.map((g,i)=>g?i:-1).filter(i=>i>=0 && slotOf(id,i)[2]!=='out'); const t = occ.length ? slotOf(id, pick(occ)) : null;
@@ -5267,8 +5267,8 @@ function washerWalk(id, r, s, p, dt){
         if(g.kind==='mess' && r.mess.includes(g.m)) p.job = {kind:'mess', m:g.m, t:2.4};
         else if(g.kind==='table' && (r.dirty||{})[g.key]) p.job = {kind:'table', key:g.key, t:1.6}; }
       return; }
-    const ms = (r.mess||[]).slice().sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];
-    const dk = (!waiter || hallOnly) ? Object.keys(r.dirty||{})[0] : null;
+    const ms = freeMess(r, p);
+    const dk = (!waiter || hallOnly) ? freeDirty(r, p) : null;
     if((hallOnly || dishCount(id) < 16) && ms){ p.goal = {kind:'mess', m:ms, x:ms.x+12, y:ms.y+4}; return; }
     if((hallOnly || dishCount(id) < 16) && dk){ const spt = dirtySpot(id, dk); if(spt){ p.goal = {kind:'table', key:dk, x:spt[0], y:spt[1]}; return; } }
     if(hallOnly){ if(routeTo(p, p.home[0], p.home[1], sp, dt)){ p.walk = false; } return; }
@@ -7780,7 +7780,7 @@ function renderSeason(p){
   if((S.badges||[]).length) p.appendChild(el(`<div class="card"><div class="t">Твои значки</div><div class="d">${S.badges.map(esc).join(' · ')}</div></div>`));
 }
 function renderDecor(p){
-  p.appendChild(el(`<div class="card note kraft"><div class="t">Интерьер основного зала</div><div class="d">У каждого предмета своё место. Диван, пианино, фотозона, картина и винил встают в зону отдыха, если она есть. Каждый что-то даёт и иногда приносит приключения. Продать можно за 30% цены.</div><div class="d">Свободно: на полу ${decorFree('floor')}, на стойке ${decorFree('counter')}.</div></div>`));
+  p.appendChild(el(`<div class="card note kraft"><div class="t">Интерьер</div><div class="d">У каждого предмета своё место. Диван, пианино, фотозона, картина и винил встают в зону отдыха, если она есть. Каждый что-то даёт и иногда приносит приключения. Продать можно за 30% цены.</div><div class="d">Свободно: на полу ${decorFree('floor')}, на стойке ${decorFree('counter')}.</div></div>`));
   const owned = decorOwned();
   if(owned.length){ p.appendChild(el(`<div class="h chalk">Уже стоит</div>`));
     owned.forEach(it=>{ const d = decorDef(it.id); if(!d) return; const dry = it.id==='ficus' ? S.day - (it.water||it.day) : 0;
@@ -8425,9 +8425,9 @@ drawRoom = function(id){
     else { const cx = s[0], cy = s[1]; items.push({y:cy-6, f:()=>sceneChair(st, cx, cy, soft)}); if(!shownT[s[3]]){ shownT[s[3]] = true; const t = H2_TABLES[s[3]]; items.push({y:t.y+10.5, f:()=>sceneTable(st, t.x, t.y+10, u.tables, s[3])}); } } }
   // растения по уровню интерьера
   if(u.decor >= 1) items.push({y:H2_FLOOR+60, f:()=>scenePlant(st, 286, H2_FLOOR+60, 0.9)});
-  if(u.decor >= 4) items.push({y:H-4, f:()=>scenePlant(st, 282, H-4, 1.1)});
+  if(u.decor >= 4) items.push({y:H-70, f:()=>scenePlant(st, 288, H-70, 1.0)});
   if(u.decor >= 8) items.push({y:H2_FLOOR+60, f:()=>scenePlant(st, 14, H2_FLOOR+60, 0.9)});
-  if(u.decor >= 12) items.push({y:H-4, f:()=>scenePlant(st, 150, H-4, 1.0)});
+  if(u.decor >= 12) items.push({y:H-70, f:()=>scenePlant(st, 12, H-70, 1.0)});
   if(u.safety >= 1) items.push({y:H2_FLOOR+30, f:()=>{ RR(W-14, H2_FLOOR+10, 6, 14, 2, '#c03a2a'); rect(W-13, H2_FLOOR+7, 4, 3, '#333'); }});
   drawH2Dirt(r, items); drawWet(id, r, items, now);
   for(const m of (r.mess||[])) items.push({y:m.y, f:()=>drawMess(m, now)});
@@ -8792,6 +8792,96 @@ setTimeout(()=>{ try{ if(CFG && CFG.world){ WORLD_EV = CFG.world; worldCheck(); 
 /* ---------- миграция ---------- */
 const _migrate19 = migrate;
 migrate = function(){ _migrate19(); cineState(); if(S.cine.on && !(S.cine.until > absNow())) S.cine.on = false; layoutH2(); if(room('hall2')) syncScene('hall2'); };
+
+/* ================= v18: куда поставить вещь, красота зоны отдыха, отзывы под задание, 4 кассира, уборка без толкотни ================= */
+
+/* ---------- где стоит вещь: игрок выбирает зал ---------- */
+function decorLoc(it){ if(!room('hall2')) return 'main'; return it.loc || (H2_DECOR.includes(it.id) ? 'h2' : 'main'); }
+function decorInH2(id){ const it = decorOwned().find(x=>x.id===id); return !!it && decorLoc(it)==='h2'; }
+function h2DecorItems(st, items, now){
+  const fl = H - 6, u = room('hall2').upg;
+  h2Visual(st, u, items, now);
+  for(const it of decorOwned()){ const d = decorDef(it.id); if(!d || d.season || decorLoc(it)!=='h2') continue;
+    if(['easel','vinyl','aquarium'].includes(it.id)) continue; // на стене и полке
+    const sp = {piano:{x:40, y:fl}, claw:{x:80, y:fl}, sofa:{x:150, y:fl}, toilet:{x:218, y:fl}, photo:{x:264, y:fl}, ficus:{x:16, y:224}}[it.id]; if(!sp) continue;
+    items.push({y:sp.y, f:()=>drawDecor19(it, sp.x, sp.y, now, st, sp)}); }
+}
+function h2WallDecor(st, now){
+  if(!room('hall2')) return;
+  const u = room('hall2').upg, L = u.decor||0;
+  // шторы
+  if(L >= 2) for(const wx of [14, 226]){ const c = st.light ? '#d8c19a' : st.neon ? '#8e4d74' : '#8a3a2e'; ctx.fillStyle = c; for(const side of [0, 1]){ const x = side ? wx + 60 : wx - 8; ctx.beginPath(); ctx.moveTo(x, 6); ctx.lineTo(x + 10, 6); ctx.quadraticCurveTo(x + (side ? 2 : 8), 40, x + (side ? 6 : 4) , 70); ctx.lineTo(x + (side ? -2 : 0), 70); ctx.closePath(); ctx.fill(); } rect(wx - 10, 4, 82, 3, '#3a2a22'); }
+  // неоновая вывеска
+  if(L >= 11){ ctx.save(); ctx.shadowBlur = 8; ctx.shadowColor = '#e89ac0'; txt('chill', 199, 30, '800 12px "Golos Text",sans-serif', `rgba(255,170,210,${0.8+0.2*Math.sin(now*3)})`, 'center'); ctx.restore(); }
+  // гирлянда под потолком
+  if(L >= 5){ ctx.strokeStyle = 'rgba(60,40,30,.7)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(0, 4); for(let x=0;x<=W;x+=50) ctx.quadraticCurveTo(x+25, 16, x+50, 4); ctx.stroke();
+    for(let x=8;x<W;x+=12){ const y = 4 + Math.sin(((x%50)/50)*Math.PI)*8; EL(x, y+2, 1.8, 1.8, Math.sin(now*2 + x) > -0.3 ? ['#ffe08a','#ff9a8a','#9ad8ff'][(x/12|0)%3] : '#6a5a40'); } }
+  // висячие растения
+  if(L >= 17) for(const x of [10, 290]){ rect(x, 0, 1, 18, '#3a2a22'); RR(x-6, 18, 12, 8, 3, '#b06a3a'); ctx.fillStyle = '#4f8a46'; for(let j=0;j<5;j++){ ctx.beginPath(); ctx.ellipse(x-6+j*3, 30+j%2*8, 2.4, 7, (j-2)*0.2, 0, 7); ctx.fill(); } }
+  // картина и полка
+  if(hasDecor('easel') && decorInH2('easel')){ RR(118, 6, 64, 46, 2, '#c9a24a'); rect(122, 10, 56, 38, '#2a3a4a'); EL(138, 30, 10, 12, '#e0574a'); rect(150, 18, 14, 22, '#e9c46a'); ctx.strokeStyle = '#9fb8a8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(124, 44); ctx.quadraticCurveTo(150, 20, 176, 42); ctx.stroke(); rect(144, 53, 12, 4, '#c9a24a'); }
+  if(decorInH2('vinyl')){ const x = 72, y = 112; RR(x-26, y-12, 52, 14, 2, '#5a3c26'); rect(x-26, y-12, 52, 2, '#7a5236'); EL(x-6, y-14, 9, 3, '#1a1a1a'); EL(x-6, y-14, 2, 0.8, '#c03a3a'); const a = now*5; rect(x-6 + Math.cos(a)*6, y-15, 1.4, 1, '#e8e2d4'); RR(x+8, y-30, 12, 18, 2, '#2a2a2e'); EL(x+14, y-24, 3.5, 3.5, '#4a4a4e'); EL(x+14, y-16, 2, 2, '#4a4a4e'); }
+  if(decorInH2('aquarium')){ const x = 228, y = 112; RR(x-26, y-12, 52, 14, 2, '#5a3c26'); rect(x-26, y-12, 52, 2, '#7a5236'); drawDecor19({id:'aquarium'}, x, y-12, now, st, {}); }
+  if(S.cine && S.cine.proj) drawScreen(st, now);
+}
+function h2Visual(st, u, items, now){
+  const L = u.decor||0;
+  // ковёр с узором
+  if(L >= 14) items.push({y:0, f:()=>{ RR(6, 178, W-12, 42, 8, st.rugB || '#b88c58'); RR(12, 182, W-24, 34, 6, st.rug || '#c9a06e'); ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 1; for(let x=24;x<W-20;x+=22){ ctx.beginPath(); ctx.moveTo(x, 199); ctx.lineTo(x+6, 192); ctx.lineTo(x+12, 199); ctx.lineTo(x+6, 206); ctx.closePath(); ctx.stroke(); } }});
+  // торшеры между диванами
+  if(L >= 8) for(const x of [102, 198]) items.push({y:170, f:()=>{ rect(x-0.8, 112, 1.6, 58, '#2a2a2e'); EL(x, 170, 6, 2, '#2a2a2e'); ctx.fillStyle = st.light ? '#efe6d6' : '#e8c88a'; ctx.beginPath(); ctx.moveTo(x-8, 120); ctx.lineTo(x+8, 120); ctx.lineTo(x+5, 108); ctx.lineTo(x-5, 108); ctx.closePath(); ctx.fill(); glow2(x, 118, 34, '255,214,150', 0.18); }});
+  // свечи на столиках
+  if(L >= 20) for(const t of H2_TABLES.slice(0, Math.ceil(h2Seats()/2))) items.push({y:t.y+11, f:()=>{ rect(t.x+9, t.y-12, 2, 5, '#f3e8d3'); EL(t.x+10, t.y-13.5, 1, 1.6, '#ffd36b'); glow2(t.x+10, t.y-13, 10, '255,210,120', 0.25); }});
+}
+const H2_LOOK = [[2,'шторы на окнах'],[5,'гирлянда под потолком'],[8,'торшеры у диванов'],[11,'неоновая вывеска'],[14,'ковёр с узором'],[17,'висячие растения'],[20,'свечи на столиках']];
+
+/* ---------- магазин интерьера: где стоит ---------- */
+const _renderDecor20 = renderDecor;
+renderDecor = function(p){
+  const n0 = p.children.length; _renderDecor20(p);
+  if(!room('hall2')) return;
+  const own = decorOwned().filter(x=>{ const d = decorDef(x.id); return d && !d.season; }); if(!own.length) return;
+  const c = el(`<div class="card"><div class="t">Где стоит</div><div class="d">Любую вещь можно поставить в основной зал или в зону отдыха. Бонусы работают где угодно.</div><div class="locs"></div></div>`);
+  const box = c.querySelector('.locs');
+  own.forEach(it=>{ const d = decorDef(it.id); const h2 = decorLoc(it)==='h2';
+    const row = el(`<div class="row wrap" style="margin-top:6px"><span class="t" style="font-size:13px">${esc(d.n)}</span><span class="sp"></span><button class="btn ${h2?'ghost':''}">Основной зал</button><button class="btn ${h2?'':'ghost'}">Зона отдыха</button></div>`);
+    const bs = row.querySelectorAll('button'); bs[0].onclick = () => { it.loc = 'main'; save(); renderSheet(); }; bs[1].onclick = () => { it.loc = 'h2'; save(); renderSheet(); };
+    box.appendChild(row); });
+  const ref = p.children[n0 + 1]; if(ref) p.insertBefore(c, ref); else p.appendChild(c);
+};
+// интерьер и траты видны и из зоны отдыха; там же — что даёт уровень интерьера
+const _renderUpgrades20 = renderUpgrades;
+renderUpgrades = function(p, id){
+  _renderUpgrades20(p, id);
+  if(id!=='hall2') return;
+  const L = room('hall2').upg.decor||0;
+  p.appendChild(el(`<div class="card"><div class="t">Как меняется зона отдыха</div><div class="d">${H2_LOOK.map(([n,t])=>(L>=n?'<b>':'')+'Интерьер '+n+': '+t+(L>=n?'</b>':'')).join('<br>')}</div></div>`));
+  p.appendChild(el(`<div class="h chalk" id="decorH">Интерьер и траты</div>`)); renderDecor(p);
+};
+
+/* ---------- выкуп помещения: кнопка не пропадает зря ---------- */
+function buyoutFix(){ S.spends = S.spends || {}; if(S.spends.buyout && !(S.owned||[]).includes('main')) delete S.spends.buyout; if((S.owned||[]).includes('main')) S.spends.buyout = 1; }
+
+/* ---------- задание на отзывы: отзывов хватает ---------- */
+function unanswered(){ return (S.reviews||[]).filter(r=>!r.reply).length; }
+function addReview(){ const f = S.fin.hist[0] || {}; const stars = clamp(Math.round(S.rep + R(-1, 1)), 1, 5); S.reviews = S.reviews || []; S.reviews.unshift({id:S.uid++, day:S.day, stars, author:pick(REV_AUTH), text:pick(REV_TXT[stars]), reply:null}); S.reviews = S.reviews.slice(0, 25); }
+function reviewsTaskFix(){ for(const t of (S.tasks||[])){ if(t.kind!=='reviews' || t.done || t.failed) continue; const need = t.goal - t.prog; let u = unanswered(), k = 0; while(u < need && k < 5){ addReview(); u++; k++; } } }
+const _newTasks20 = newTasks;
+newTasks = function(){ _newTasks20(); try{ reviewsTaskFix(); }catch(e){} };
+
+/* ---------- до четырёх кассиров ---------- */
+const _staffCap20 = staffCap;
+staffCap = function(role){ if(role==='Кассир') return Math.min(4, 1 + Math.floor(S.level/5)); return _staffCap20(role); };
+ROLES['Кассир'].max = 4;
+
+/* ---------- уборка: каждый берёт свой стол ---------- */
+function takenBy(r, p, test){ for(const sid in r.staff){ const q = r.staff[sid]; if(q === p) continue; if((q.goal && test(q.goal)) || (q.job && test(q.job))) return true; } return false; }
+function freeDirty(r, p){ for(const k of Object.keys(r.dirty||{})) if(!takenBy(r, p, g=>g.key===k)) return k; return undefined; }
+function freeMess(r, p){ return (r.mess||[]).filter(m=>!takenBy(r, p, g=>g.m===m)).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]; }
+
+/* ---------- миграция ---------- */
+const _migrate20 = migrate;
+migrate = function(){ _migrate20(); buyoutFix(); reviewsTaskFix(); };
 
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());

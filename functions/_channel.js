@@ -3,19 +3,19 @@
 import { tgApi, getBot, mskDay, ADMINS, sezId, SEZ_NAMES } from './_lib.js';
 import { GOAL, goalInfo } from './_goal.js';
 
-export const VERSION = '8.3';
-export const VERSION_TITLE = 'кино по ночам';
-export const VERSION_IMG = 'expand.jpg';
-export const VERSION_TAIL = 'Мем из своей кофейни теперь можно кинуть в любой чат: напиши имя бота через @ и выбери картинку.';
-export const VERSION_SHORT = 'Ночью в зоне отдыха кино: купи проектор и кинодиван. День делится на утро, день, вечер и ночь. Раз в неделю канал решает, что случится у всех.';
+export const VERSION = '8.4';
+export const VERSION_TITLE = 'обустраиваем зону отдыха';
+export const VERSION_IMG = 'hall.jpg';
+export const VERSION_TAIL = 'Пишите, что бесит. Чиним быстро.';
+export const VERSION_SHORT = 'Любую вещь можно поставить в основной зал или в зону отдыха, а сама зона хорошеет с уровнем интерьера. До 4 кассиров, отзывов хватает на задание, выкуп помещения снова доступен.';
 export const CHANGELOG = [
-  'Ночное кино в зоне отдыха: проектор и кинодиван, сеанс каждые два часа с 22 до 6, билет 2 500 ₽. Фильмы вроде «Бариста 2: Возвращение питчера»',
-  'День делится на части: утро с запарой, спокойный день, вечерние посиделки во втором зале, ночь с кино',
-  'Официант в зоне отдыха продаёт десерты к столу, видно, сколько зал приносит',
-  'Диван, пианино, фотозона, картина и винил стоят на своих местах в зоне отдыха, остальное — на своих в основном зале. Рисунки стали крупнее',
-  'Раз в неделю опрос в канале: что случится во всех кофейнях. Победитель происходит у каждого',
-  'Кнопки «В историю» и «Мем в чат» во вкладке «Дела»',
-  'Шесть новых ситуаций в кино'
+  'Сам выбираешь, где стоит вещь: в основном зале или в зоне отдыха',
+  'Зона отдыха хорошеет с уровнем интерьера: шторы, гирлянда, торшеры, неон, ковёр с узором, растения, свечи',
+  'Интерьер и траты доступны и из зоны отдыха',
+  'Кассиров можно нанять до четырёх: второй с 5 уровня, третий с 10, четвёртый с 15',
+  'Два официанта или две мойщицы больше не бегут к одному столу',
+  'Задание «ответить на отзывы»: отзывов всегда хватает',
+  'Выкуп помещения: кнопка вернулась у тех, у кого пропала'
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -34,7 +34,7 @@ function holiday(ts) {
   return null;
 }
 
-async function posted(env, key) { return await env.DB.prepare('SELECT key, at, info FROM posts WHERE key = ?1').bind(key).first(); }
+async function posted(env, key) { return await env.DB.prepare('SELECT key, at, ok, info, msg_id FROM posts WHERE key = ?1').bind(key).first(); }
 let LASTPOST = null;
 async function mark(env, key, ok, info) { const lp = key === 'record' ? null : LASTPOST; await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5, ?6)').bind(key, Date.now(), ok ? 1 : 0, info ?? null, lp ? lp.id : null, lp ? lp.caption : null).run(); if (key !== 'record') LASTPOST = null; }
 
