@@ -2132,7 +2132,7 @@ function fulfillWish(s){
   if(k==='raise'){ s.rateMul = (s.rateMul||1)*1.1; }
   if(k==='dayoff'){ s.vacation = S.day+1; s.fatigue = clamp(s.fatigue-40,0,100); }
   if(k==='training'){ spend(c,'other'); s.trainNext = true; }
-  if(k==='bonus'){ spend(c,'wages'); }
+  if(k==='bonus'){ spend(c,'wages','Премия: '+s.name); giveBonus(s, true); }
   s.mood = clamp(s.mood+28,0,100); s.pat = clamp((s.pat||100)+25,0,100); meter('soul', 1);
   s.wish = null; return s.name+' доволен. Это запомнится';
 }
@@ -6820,7 +6820,7 @@ function staffModal(box, m, btn){
   const pg = s.praiseDay===S.day ? ([12,6,3][s.praiseN]||0) : 12;
   act('Похвалить', cd?'Недавно уже хвалил':pg?'Настроение +'+pg:'Сегодня уже не действует', ()=>{ const g = praiseGain(s); s.mood = clamp(s.mood+g,0,100); s.pat = clamp(s.pat+g*0.6,0,100); s.praiseAt = Date.now(); if(g) meter('soul',0.3); S.c.praised++; }, 'ghost', cd || !pg);
   const bonus = Math.round(shiftPay(s)/100)*100;
-  act('Премия '+fmt(bonus)+' ₽','Настроение +20', ()=>{ if(S.money<bonus) return; spend(bonus,'wages'); s.mood = clamp(s.mood+20,0,100); }, 'ghost', S.money<bonus);
+  act('Премия '+fmt(bonus)+' ₽', bonusHint(s), ()=>{ if(S.money<bonus) return; spend(bonus,'wages','Премия: '+s.name); toast(giveBonus(s)); }, 'ghost', S.money<bonus);
   if(ti.can){ const b = el(`<button class="btn num" data-cost="${ti.cost}">Обучить: ${fmt(ti.cost)} ₽<small>Следующую смену на курсах, уровень +1</small></button>`); b.onclick = () => { if(S.money<ti.cost) return; spend(ti.cost,'other','Обучение: '+s.name); s.trainNext = true; toast(s.name+' пойдёт на курсы в следующую смену'); sfx('buy'); redraw(); }; acts.appendChild(b); }
   else acts.appendChild(el(`<button class="btn ghost" disabled>Обучение<small>${esc(ti.t)}</small></button>`));
   if(s.rank<3){ const b = el(`<button class="btn ${pi.can?'':'ghost'}" ${pi.can?'':'disabled'}>Повысить до «${RANKS[s.rank+1]}»<small>${esc(pi.cool?'Пересдача позже':pi.t)}</small></button>`); b.onclick = () => { const r = tryPromote(s); toast(r.t); sfx(r.ok?'level':'bad'); achCheck(); redraw(); }; acts.appendChild(b); }
@@ -8882,6 +8882,23 @@ function freeMess(r, p){ return (r.mess||[]).filter(m=>!takenBy(r, p, g=>g.m===m
 /* ---------- миграция ---------- */
 const _migrate20 = migrate;
 migrate = function(){ _migrate20(); buyoutFix(); reviewsTaskFix(); };
+
+/* ---------- премия: заметно и надолго ---------- */
+function bonusN(s){ return s.bonusDay === S.day ? (s.bonusN||0) : 0; }
+function bonusHint(s){ const n = bonusN(s); return n === 0 ? 'Настроение +40, бодрость, полдня держится' : n === 1 ? 'Вторая за день: вдвое слабее' : 'Сегодня уже хватит: +5'; }
+function giveBonus(s, wish){
+  const n = bonusN(s); s.bonusDay = S.day; s.bonusN = n + 1;
+  const k = n === 0 ? 1 : n === 1 ? 0.5 : 0.12;
+  s.mood = clamp(s.mood + 40*k, 0, 100); s.pat = clamp((s.pat==null?100:s.pat) + 30*k, 0, 100); s.fatigue = clamp(s.fatigue - 20*k, 0, 100);
+  if(k >= 0.5){ s.boostUntil = Date.now() + 8*60000*k; s.boostMul = 1.2; s.bonusFloor = {until:absNow() + 360*k, v:Math.min(85, s.mood)}; }
+  meter('soul', 0.5*k);
+  const peers = S.staff.filter(x=>!x.isYou && x!==s && x.room===s.room && x.today==='work');
+  if(n >= 1 && peers.length && chance(0.4)){ const p = pick(peers); p.mood = clamp(p.mood - 6, 0, 100); return s.name+(s.sex==='f'?' довольна. ':' доволен. ')+p.name+(p.sex==='f'?' видела':' видел')+' и тоже хочет'; }
+  return k >= 1 ? s.name+' сияет: работает быстрее, настроение держится полдня' : k >= 0.5 ? s.name+(s.sex==='f'?' рада':' рад')+', но уже не так' : s.name+(s.sex==='f'?' взяла деньги и пожала плечами':' взял деньги и пожал плечами');
+}
+// после премии настроение не падает ниже уровня до конца срока
+const _hourly20 = hourly;
+hourly = function(){ _hourly20(); for(const s of S.staff){ const f = s.bonusFloor; if(!f) continue; if(f.until <= absNow()){ s.bonusFloor = null; continue; } if(s.mood < f.v - 8) s.mood = f.v - 8; } };
 
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());
