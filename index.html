@@ -8900,6 +8900,22 @@ function giveBonus(s, wish){
 const _hourly20 = hourly;
 hourly = function(){ _hourly20(); for(const s of S.staff){ const f = s.bonusFloor; if(!f) continue; if(f.until <= absNow()){ s.bonusFloor = null; continue; } if(s.mood < f.v - 8) s.mood = f.v - 8; } };
 
+/* ---------- выдачи из админки: залы, кино, интерьер, опыт ---------- */
+function applyGrant(k){
+  if(k==='hall2'){ if(room('hall2')) return 'Зона отдыха уже есть'; S.rooms.push(newRoom('hall2')); layoutH2(); syncScene('hall2'); return 'Подарок: открыта зона отдыха. Свайп по сцене — переход'; }
+  if(k==='proj' || k==='sofa'){ const c = cineState(); c[k] = true; if(k==='sofa'){ layoutH2(); if(room('hall2')) syncScene('hall2'); } return k==='proj' ? 'Подарок: проектор для ночного кино' : 'Подарок: кинодиван'; }
+  if(k.startsWith('decor-')){ const id = k.slice(6); const d = decorDef(id); if(!d) return null; addDecor(id); return 'Подарок: '+d.n; }
+  return null;
+}
+const _onTrack20 = onTrack;
+onTrack = function(r){
+  try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const o of r.ops){
+    if(o.op==='grant'){ const t = applyGrant(String(o.text||'')); if(t){ toast(t); sfx('level'); } }
+    else if(o.op==='xp'){ const a = Math.max(0, Math.round(Number(o.amount)||0)); if(a){ addXp(a); toast('Подарок: опыт +'+fmt(a)); sfx('level'); } } }
+    if(r && r.ops && r.ops.some(o=>o.op==='grant' || o.op==='xp')){ save(); structDirty = true; renderHud(); } }catch(e){ console.error(e); }
+  return _onTrack20(r);
+};
+
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());
 loadConfig();
