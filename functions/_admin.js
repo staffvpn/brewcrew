@@ -190,7 +190,7 @@ async function vStyles(env, id) {
     [B('‹ Карточка', 'p:u:' + id), ...HOME]] };
 }
 const GRANTS = { hall2: 'Зона отдыха (второй зал)', proj: 'Проектор для кино', sofa: 'Кинодиван' };
-const DECOR_N = { ficus: 'Фикус «Геннадий»', aquarium: 'Аквариум', claw: 'Автомат с игрушками', vinyl: 'Винил и колонка', sofa: 'Диван', piano: 'Пианино', easel: 'Картина', photo: 'Фотозона с неоном', toilet: 'Золотой унитаз' };
+const DECOR_N = { ficus: 'Фикус «Геннадий»', aquarium: 'Аквариум', claw: 'Автомат с игрушками', vinyl: 'Музыкальный автомат', sofa: 'Диван', piano: 'Пианино', easel: 'Картина', photo: 'Фотозона с неоном', toilet: 'Золотой унитаз' };
 function vGive(id, note) {
   return { text: '<b>Выдать игроку</b>\n\nВсё применится при входе игрока в игру. Веранда, лаунж и выкупленные залы сейчас закрыты на ремонт, их выдать нельзя.' + (note ? '\n\n<b>' + note + '</b>' : ''), kb: [
     ...Object.entries(GRANTS).map(([k, n]) => [B(n, `p:gr:${id}:${k}`)]),
