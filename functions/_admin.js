@@ -11,7 +11,7 @@ const CITY = { msk: 'Москва', spb: 'Петербург', kzn: 'Казан�
 const ago = ts => { if (!ts) return 'никогда'; const m = Math.round((Date.now() - ts) / 60000); if (m < 2) return 'только что'; if (m < 60) return m + ' мин назад'; const h = Math.round(m / 60); if (h < 48) return h + ' ч назад'; return Math.round(h / 24) + ' дн назад'; };
 const short = ts => { if (!ts) return '—'; const m = Math.round((Date.now() - ts) / 60000); if (m < 3) return 'в игре'; if (m < 60) return m + ' мин'; const h = Math.round(m / 60); if (h < 48) return h + ' ч'; return Math.round(h / 24) + ' дн'; };
 const when = ts => new Date(ts).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-const OPN = { refgift: 'Реферальный бонус', level: 'Уровень', cash: 'Покупка денег', give: 'Начислено', take: 'Списано', set: 'Баланс', wipe: 'Удаление', ent: 'Покупки обновлены', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименование', staff: 'Легенда в команду', grant: 'Выдано', xp: 'Опыт' };
+const OPN = { refgift: 'Реферальный бонус', level: 'Уровень', cash: 'Покупка денег', give: 'Начислено', take: 'Списано', set: 'Баланс', wipe: 'Удаление', ent: 'Покупки обновлены', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименование', staff: 'Легенда в команду', grant: 'Выдано', xp: 'Опыт', sp: 'Очки сезона', badge: 'Значок' };
 const STYLES = [['int_soviet', 'Столовая №1'], ['int_loft', 'Заводской лофт'], ['int_scandi', 'Фика'], ['int_neon', 'Не спим']];
 const COVERS = [['updates.jpg', 'Обновления'], ['events.jpg', 'События'], ['banner.jpg', 'Баннер'], ['hall.jpg', 'Новый зал']];
 const PAGE = 10;
@@ -189,11 +189,13 @@ async function vStyles(env, id) {
     [B('Пропуск текущего сезона', `p:gp:${id}`)],
     [B('‹ Карточка', 'p:u:' + id), ...HOME]] };
 }
-const GRANTS = { hall2: 'Зона отдыха (второй зал)', proj: 'Проектор для кино', sofa: 'Кинодиван' };
+const GRANTS = { hall2: 'Зона отдыха', proj: 'Проектор', sofa: 'Кинодиван', h2upg5: 'Зона отдыха: улучшения +5', upg5: 'Основной зал: улучшения +5', stock: 'Полный склад', rep: 'Рейтинг +0,5', party: 'Команде настроение 100', kitchen: 'Кухня +1 ступень', buyout: 'Выкуп помещения', roaster: 'Своя обжарка', goldm: 'Золотая кофемашина' };
 const DECOR_N = { ficus: 'Фикус «Геннадий»', aquarium: 'Аквариум', claw: 'Автомат с игрушками', vinyl: 'Винил и колонка', sofa: 'Диван', piano: 'Пианино', easel: 'Картина', photo: 'Фотозона с неоном', toilet: 'Золотой унитаз' };
 function vGive(id, note) {
-  return { text: '<b>Выдать игроку</b>\n\nВсё применится при входе игрока в игру. Веранда, лаунж и выкупленные залы сейчас закрыты на ремонт, их выдать нельзя.' + (note ? '\n\n<b>' + note + '</b>' : ''), kb: [
-    ...Object.entries(GRANTS).map(([k, n]) => [B(n, `p:gr:${id}:${k}`)]),
+  return { text: '<b>Выдать игроку</b>\n\nВсё применится при входе игрока в игру. Веранда, лаунж и выкупленные залы сейчас закрыты на ремонт, их выдать нельзя. Деньги — в разделе «Деньги».' + (note ? '\n\n<b>' + note + '</b>' : ''), kb: [
+    ...Object.entries(GRANTS).reduce((rows, [k, n], i) => { if (i % 2 === 0) rows.push([]); rows[rows.length - 1].push(B(n, `p:gr:${id}:${k}`)); return rows; }, []),
+    [B('Очки сезона', 'p:usp:' + id), B('Значок', 'p:ubd:' + id)],
+    [B('Стили, подписка', 'p:ust:' + id), B('Деньги', 'p:um:' + id)],
     [B('Предмет интерьера', 'p:gd:' + id), B('Пропуск сезона', 'p:gp:' + id)],
     [B('Опыт', 'p:uxp:' + id), B('Уровень', 'p:ulvl:' + id)],
     [B('Легенда 10 ур.', `p:gl:${id}:10`), B('20 ур.', `p:gl:${id}:20`), B('30 ур.', `p:gl:${id}:30`)],
@@ -283,6 +285,8 @@ export async function adminInput(env, chat, from, msgId, text) {
   if (m === 'amt') { const a = parseAmount(text); if (!Number.isFinite(a) || a < 0 || a > 1e12) { await show({ text: 'Не понял сумму. Примеры: 50000, 250к, 1.5млн', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; } await addOp(env, data.id, data.op, a, null, from); { await done(await vCard(env, data.id, `${OPN[data.op]}: ${fmt(a)} ₽. Применится при входе игрока`)); return true; } }
   if (m === 'msg') { await addOp(env, data.id, 'msg', null, text.slice(0, 500), from); const r = await tgApi(env, 'sendMessage', { chat_id: data.id, text: 'Сообщение от команды Brew Crew:\n\n' + text.slice(0, 3500) }); { await done(await vCard(env, data.id, r && r.ok ? 'Сообщение ушло в бота и покажется в игре' : 'В бота не дошло, но покажется в игре')); return true; } }
   if (m === 'ref') { const rid = Number(String(text).replace(/\D/g, '')); const p = await env.DB.prepare('SELECT tg_id, first_name, username FROM players WHERE tg_id = ?1').bind(data.id).first(); const ok = rid && p ? await bindReferrer(env, { id: p.tg_id, first_name: p.first_name, username: p.username }, rid, 'admin', true) : false; await done(await vCard(env, data.id, ok ? 'Привязан к ' + rid + '. Бонусы начислены' : 'Не получилось: проверь ID пригласившего')); return true; }
+  if (m === 'sp') { const n = parseInt(String(text).replace(/\s/g, ''), 10); if (!(n >= 1 && n <= 100000)) { await show({ text: 'Нужно число от 1 до 100 000.', kb: [[B('Отмена', 'p:gv:' + data.id)]] }); return true; } await addOp(env, data.id, 'sp', n, null, from); await done(vGive(data.id, 'Очки сезона +' + n + ' придут при входе')); return true; }
+  if (m === 'bd') { const t = String(text).trim().slice(0, 40); if (t.length < 2) { await show({ text: 'Слишком коротко.', kb: [[B('Отмена', 'p:gv:' + data.id)]] }); return true; } await addOp(env, data.id, 'badge', null, t, from); await done(vGive(data.id, 'Значок «' + t + '» придёт при входе')); return true; }
   if (m === 'xp') { const n = parseInt(String(text).replace(/\s/g, ''), 10); if (!(n >= 1 && n <= 1000000)) { await show({ text: 'Нужно число от 1 до 1 000 000.', kb: [[B('Отмена', 'p:gv:' + data.id)]] }); return true; } await addOp(env, data.id, 'xp', n, null, from); await done(vGive(data.id, 'Опыт +' + n + ' придёт при входе')); return true; }
   if (m === 'lvl') { const n = parseInt(text, 10); if (!(n >= 1 && n <= 60)) { await show({ text: 'Нужно число от 1 до 60.', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; } await addOp(env, data.id, 'level', n, null, from); await env.DB.prepare('UPDATE players SET level = ?2 WHERE tg_id = ?1').bind(data.id, n).run(); { await done(await vCard(env, data.id, 'Уровень ' + n + ' поставится при входе игрока')); return true; } }
   if (m === 'ren') { const nn = text.trim().slice(0, 28); if (nn.length < 2) { await show({ text: 'Слишком коротко. Пришли новое название ещё раз.', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; } await addOp(env, data.id, 'rename', null, nn, from); await env.DB.prepare('UPDATE players SET cafe = ?2 WHERE tg_id = ?1').bind(data.id, nn).run(); { await done(await vCard(env, data.id, 'Название поменяется в игре при входе')); return true; } }
@@ -345,6 +349,8 @@ export async function adminCallback(env, cq) {
     case 'gd': await edit(vGiveDecor(id)); return answer('');
     case 'gr': { const k = parts[3]; const nm = GRANTS[k] || (k.startsWith('decor-') && DECOR_N[k.slice(6)]); if (!nm) return answer('Нет такого'); await addOp(env, id, 'grant', null, k, from); await edit(vGive(id, 'Выдано: ' + nm)); return answer('Готово'); }
     case 'gl': { const n = Math.max(5, Math.min(50, Number(parts[3]) || 20)); await addOp(env, id, 'staff', n, 'Подарок от администрации.', from); await edit(vGive(id, 'Легенда ' + n + ' уровня выйдет на смену')); return answer('Готово'); }
+    case 'usp': return wait('sp', { id }, ask('Очки сезона', 'Пришли количество очков. Одна ступень пропуска — 160 очков.', 'p:gv:' + id));
+    case 'ubd': return wait('bd', { id }, ask('Значок', 'Пришли название значка, до 40 символов. Например: «Друг разработчиков».', 'p:gv:' + id));
     case 'uxp': return wait('xp', { id }, ask('Выдать опыт', 'Пришли количество опыта, например 500.', 'p:gv:' + id));
     case 'uleg': await edit(confirm('Отправить легенду 20 уровня в команду', 'p:uleg2:' + id, 'p:u:' + id)); return answer('');
     case 'uleg2': await addOp(env, id, 'staff', 20, 'Подарок от администрации.', from); await edit(await vCard(env, id, 'Легенда выйдет на смену при входе игрока')); return answer('Готово');
