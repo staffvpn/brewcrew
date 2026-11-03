@@ -3,18 +3,20 @@
 import { tgApi, getBot, mskDay, ADMINS, sezId, SEZ_NAMES } from './_lib.js';
 import { GOAL, goalInfo } from './_goal.js';
 
-export const VERSION = '8.5';
-export const VERSION_TITLE = 'новая мебель';
+export const UNPOST = ['ver_8.5'];
+export const VERSION = '8.4';
+export const VERSION_TITLE = 'обустраиваем зону отдыха';
 export const VERSION_IMG = 'hall.jpg';
-export const VERSION_TAIL = 'Пишите, что ещё выглядит криво. Перерисуем.';
-export const VERSION_SHORT = 'Новые диваны и ковёр в зоне отдыха, пианино, музыкальный автомат вместо винила, торшеры и честный мусор на полу. Премии сотрудникам стали сильнее.';
+export const VERSION_TAIL = 'Пишите, что бесит. Чиним быстро.';
+export const VERSION_SHORT = 'Любую вещь можно поставить в основной зал или в зону отдыха, а сама зона хорошеет с уровнем интерьера. До 4 кассиров, отзывов хватает на задание, выкуп помещения снова доступен.';
 export const CHANGELOG = [
-  'Новые диваны и ковёр в зоне отдыха, кинодиван из тёмного бархата',
-  'Пианино с банкеткой и музыкальный автомат вместо «Винила и колонки»: купленное осталось, поменялся вид',
-  'Торшеры у диванов вместо палок с абажуром',
-  'Мусор на полу стал читаемым: салфетки, стаканчики, бутылки, следы и лужи',
-  'Премия сотруднику: настроение +40, бодрость и ускорение, держится полдня',
-  'В админке можно выдать зону отдыха, кино, интерьер, опыт и уровень'
+  'Сам выбираешь, где стоит вещь: в основном зале или в зоне отдыха',
+  'Зона отдыха хорошеет с уровнем интерьера: шторы, гирлянда, торшеры, неон, ковёр с узором, растения, свечи',
+  'Интерьер и траты доступны и из зоны отдыха',
+  'Кассиров можно нанять до четырёх: второй с 5 уровня, третий с 10, четвёртый с 15',
+  'Два официанта или две мойщицы больше не бегут к одному столу',
+  'Задание «ответить на отзывы»: отзывов всегда хватает',
+  'Выкуп помещения: кнопка вернулась у тех, у кого пропала'
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -57,6 +59,8 @@ export async function channelTick(env, origin) {
       const ok = await post(env, origin, 'banner.jpg', ['<b>Brew Crew открыта</b>', '', 'Кофейня в Telegram, где всё на грани. Снимаешь пустое помещение, ставишь кофемашину, нанимаешь бариста, который завтра проспит, и разбираешься с проверками, гусями и бабушкой с купоном 2011 года.', '', '18+. Бесплатно. Работает, даже когда ты спишь.'].join('\n'));
       await mark(env, 'launch', ok); return;
     }
+    // снятые посты: удаляем из канала один раз
+    for (const k of UNPOST) { const p = await posted(env, k); if (p && p.msg_id) { await tgApi(env, 'deleteMessage', { chat_id: env.CHANNEL_ID, message_id: p.msg_id }); await env.DB.prepare('UPDATE posts SET msg_id = NULL, ok = 0, info = ?2 WHERE key = ?1').bind(k, 'deleted').run(); } }
     const vkey = 'ver_' + VERSION;
     if (!(await posted(env, vkey))) {
       let intro = []; if (VERSION === '8') try { const st = await env.DB.prepare(`SELECT COUNT(*) n, COALESCE(SUM(earned),0) e FROM players WHERE sessions > 0 AND tg_id NOT IN (${ADMINS.join(',')})`).first(); const pl = (n, a, b, c) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? b : c; }; if (st && st.n) intro = [`В районе уже ${st.n} ${pl(st.n, 'кофейня', 'кофейни', 'кофеен')}, вместе они заработали ${fmt(st.e)} ₽. Вы играете больше, чем мы думали, поэтому вот большое обновление:`, '']; } catch {}
