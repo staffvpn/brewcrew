@@ -4,19 +4,18 @@ import { tgApi, getBot, mskDay, ADMINS, sezId, SEZ_NAMES } from './_lib.js';
 import { GOAL, goalInfo } from './_goal.js';
 
 export const UNPOST = ['ver_8.5'];
-export const VERSION = '8.4';
-export const VERSION_TITLE = 'обустраиваем зону отдыха';
-export const VERSION_IMG = 'hall.jpg';
-export const VERSION_TAIL = 'Пишите, что бесит. Чиним быстро.';
-export const VERSION_SHORT = 'Любую вещь можно поставить в основной зал или в зону отдыха, а сама зона хорошеет с уровнем интерьера. До 4 кассиров, отзывов хватает на задание, выкуп помещения снова доступен.';
+export const VERSION = '8.6';
+export const VERSION_TITLE = 'особый гость недели';
+export const VERSION_IMG = 'events.jpg';
+export const VERSION_TAIL = 'Первым в эту пятницу придёт мишленовский инспектор. Отмывайте зал.';
+export const VERSION_SHORT = 'Каждую пятницу с 12:00 во все кофейни приходит особый гость: инспектор, критик, миллионер и другие. Три испытания, за все три — значок и премия. Ещё: свайп между залами починен, у зоны отдыха появилась польза.';
 export const CHANGELOG = [
-  'Сам выбираешь, где стоит вещь: в основном зале или в зоне отдыха',
-  'Зона отдыха хорошеет с уровнем интерьера: шторы, гирлянда, торшеры, неон, ковёр с узором, растения, свечи',
-  'Интерьер и траты доступны и из зоны отдыха',
-  'Кассиров можно нанять до четырёх: второй с 5 уровня, третий с 10, четвёртый с 15',
-  'Два официанта или две мойщицы больше не бегут к одному столу',
-  'Задание «ответить на отзывы»: отзывов всегда хватает',
-  'Выкуп помещения: кнопка вернулась у тех, у кого пропала'
+  'Особый гость недели: каждую пятницу с 12:00 во все кофейни сразу. Мишленовский инспектор, критик с камерой, владелец сети, тайный миллионер, генерал санэпида',
+  'Три испытания, и часть оценки — по тому, что у вас на самом деле: чистота, очередь, команда, склад. За все три — значок, премия и рейтинг',
+  'Анонс в четверг вечером, итоги района в субботу',
+  'Свайп между залами работает на всех телефонах',
+  'Зона отдыха больше не «в убытке»: она даёт до +12% гостей в основном зале и делает очередь терпеливее',
+  'В зоне отдыха видно робота-пылесоса и остальные улучшения уборки'
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -88,6 +87,8 @@ export async function channelTick(env, origin) {
         }
         const ok = true; // итоги сезона без поста в канал: значки и легенды приходят в игру
         await mark(env, skey, ok); return; } }
+    // особый гость недели: анонс в четверг, рассылка в пятницу, итоги в субботу
+    if (await bossTick(env, origin)) return;
     // голосование в канале раз в неделю: что случится у всех
     if (await pollTick(env, origin)) return;
     // рассылка игрокам о новой версии: коротко и со ссылкой на пост
@@ -170,4 +171,41 @@ async function pollTick(env, origin) {
 export async function worldInfo(env) {
   const r = await env.DB.prepare("SELECT info FROM posts WHERE key LIKE 'world_%' ORDER BY at DESC LIMIT 1").first();
   if (!r || !r.info) return null; try { const w = JSON.parse(r.info); return w && w.day === mskDay() ? w : null; } catch { return null; }
+}
+
+// особый гость недели — тот же порядок, что в игре
+export const BOSSES = [
+  { id: 'michelin', n: 'Мишленовский инспектор', d: 'Смотрит на пол, засекает время эспрессо и лезет в подсобку.', hint: 'Отмойте зал и подсобку, держите очередь короткой.' },
+  { id: 'critic', n: 'Ресторанный критик с камерой', d: 'Миллион подписчиков, кольцевая лампа и ноль жалости.', hint: 'Нужны рейтинг, хороший раф и довольная команда.' },
+  { id: 'owner', n: 'Владелец крупной сети', d: 'Хочет купить вашу кофейню. Целиком. С котом.', hint: 'Решите заранее: продаться или нет. И чтобы цифры были в плюсе.' },
+  { id: 'millionaire', n: 'Тайный миллионер', d: 'Выглядит как бездомный, в пакете из «Пятёрочки» — миллион.', hint: 'Будьте людьми. И держите свободные места.' },
+  { id: 'sanepid', n: 'Генерал санэпида', d: 'Его последний визит закрыл три кофейни и одну шаурму.', hint: 'Хозтовары на складе, свежий холодильник, чистота.' }
+];
+export function bossOf(week) { const n = Math.floor(Date.parse(week + 'T00:00:00Z') / 604800000); return BOSSES[((n % BOSSES.length) + BOSSES.length) % BOSSES.length]; }
+async function bossTick(env, origin) {
+  const d = new Date(Date.now() + 3 * 3600000); const dow = d.getUTCDay(), hr = d.getUTCHours();
+  const wk = tourWeek(); const b = bossOf(wk);
+  // анонс: четверг после 18:00
+  if (dow === 4 && hr >= 18) { const k = 'bossann_' + wk; if (!(await posted(env, k))) {
+    const ok = await post(env, origin, 'events.jpg', [`<b>Завтра в районе: ${esc(b.n)}</b>`, '', esc(b.d), '', `С 12:00 пятницы он зайдёт в каждую кофейню. Три испытания, и часть оценки — по тому, что у вас на самом деле. ${esc(b.hint)}`, '', 'Прошёл все три — значок и премия. Итоги в субботу.'].join('\n'));
+    await mark(env, k, ok); return true; } }
+  // рассылка в боте: пятница после 12:00, по 25 за тик
+  if (dow === 5 && hr >= 12) { const k = 'bossbc_' + wk; const st = await posted(env, k); if (!st || st.info !== 'done') {
+    const after = st ? Number(st.info) || 0 : 0;
+    const rows = (await env.DB.prepare('SELECT tg_id FROM players WHERE tg_id > ?1 AND COALESCE(banned,0) = 0 AND level >= 2 ORDER BY tg_id LIMIT 25').bind(after).all()).results || [];
+    if (!rows.length) { await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info) VALUES (?1, ?2, 1, ?3)').bind(k, Date.now() - 3 * 60000, 'done').run(); return false; }
+    const bot = await getBot(env); const app = bot ? `https://t.me/${bot.username}${env.APP_SHORT ? '/' + env.APP_SHORT : ''}?${env.APP_SHORT ? 'startapp' : 'start'}=boss` : origin;
+    for (const r of rows) { try { await tgApi(env, 'sendMessage', { chat_id: r.tg_id, text: `<b>${esc(b.n)} уже в районе</b>\n\nСегодня он зайдёт и к тебе. Три испытания, за все три — значок и премия.`, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Открыть кофейню', url: app }]] } }); } catch {} }
+    await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info) VALUES (?1, ?2, 1, ?3)').bind(k, Date.now() - 3 * 60000, String(rows[rows.length - 1].tg_id)).run();
+    return false; } }
+  // итоги: суббота после 12:00
+  if (dow === 6 && hr >= 12) { const k = 'bossres_' + wk; if (!(await posted(env, k))) {
+    const st = await env.DB.prepare('SELECT COUNT(*) n, SUM(CASE WHEN pass >= 3 THEN 1 ELSE 0 END) p, SUM(CASE WHEN res = \'sold\' THEN 1 ELSE 0 END) s FROM boss WHERE week = ?1').bind(wk).first();
+    if (!st || !st.n) { await mark(env, k, true, 'empty'); return false; }
+    const top = (await env.DB.prepare('SELECT cafe, first_name FROM boss WHERE week = ?1 AND pass >= 3 ORDER BY at LIMIT 3').bind(wk).all()).results || [];
+    const lines = [`<b>Итоги: ${esc(b.n)}</b>`, '', `Посетил кофеен: ${st.n}. Прошли все три испытания: ${st.p || 0}.` + (b.id === 'owner' ? ` Продали долю: ${st.s || 0}.` : '')];
+    if (top.length) lines.push('', 'Первыми справились:', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${esc(t.first_name || 'аноним')}`));
+    lines.push('', 'В следующую пятницу придёт другой гость.');
+    const ok = await post(env, origin, 'events.jpg', lines.join('\n')); await mark(env, k, ok); return true; } }
+  return false;
 }

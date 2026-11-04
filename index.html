@@ -8014,7 +8014,7 @@ attention = function(){
 function track(force){
   if(!S || !tg || !tg.initData) return;
   const z = szState();
-  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(z.sp), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(z.sp), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
@@ -8974,6 +8974,126 @@ onTrack = function(r){
     else if(o.op==='cand'){ const n = Math.max(5, Math.min(50, Math.round(Number(o.amount)||10))); const st = makePrizeStaff(n); syncScene('main'); toast('Подарок: '+st.name+', уровень '+st.lvl+', вышел на смену'); } } }catch(e){ console.error(e); }
   return _onTrack22(r);
 };
+
+/* ================= v20: особый гость недели — по пятницам у всех сразу ================= */
+const BOSSES = [
+  {id:'michelin', n:'Мишленовский инспектор', badge:'Пережил Мишлен', d:'Худой мужчина в сером пальто. Ничего не заказывает, только смотрит и что-то пишет в чёрный блокнот.', stages:[
+    {t:'Инспектор смотрит на пол', x:'{boss} молча провёл ботинком по полу и посмотрел на подошву. Потом на тебя. Потом снова на подошву.', o:[
+      {t:'Показать зал как есть', test:()=>dirtLevel('main') < 0.3, win:'Подошва чистая. Он кивнул и перевернул страницу.', lose:'На подошве осталось что-то липкое. Он сфотографировал подошву.'},
+      {t:'Срочно отправить мойщицу с тряпкой', test:()=>anyStaff('Мойщица').length > 0 ? chance(0.7) : chance(0.2), win:'Мойщица вымыла пол прямо у него под ногами. Он оценил скорость.', lose:'Мойщица поскользнулась на только что вымытом полу. Он записал и это.'},
+      {t:'Отвлечь разговором о погоде', test:()=>chance(0.35), win:'Он оказался любителем метеорологии. Проговорили двадцать минут, про пол забыл.', lose:'«Погода прекрасная. А пол — нет», — сказал он и записал.'}]},
+    {t:'Инспектор заказывает эспрессо', x:'{boss} заказал эспрессо и засёк время на часах. Бариста вспотел.', o:[
+      {t:'Делать как обычно', test:()=>rt('main').queue.length <= 3 && anyStaff('Бариста').length >= 1, win:'Эспрессо за сорок секунд, крема идеальная. Он сделал глоток и впервые моргнул.', lose:'Очередь длинная, эспрессо через семь минут. Он выпил его холодным, глядя тебе в глаза.'},
+      {t:'Пропустить его без очереди', test:()=>chance(0.55), win:'Очередь возмутилась, но эспрессо идеальный. Он записал «смелость».', lose:'Очередь устроила скандал. Он записал «скандал».'},
+      {t:'Сварить самому', test:()=>chance(0.4), win:'Получилось на удивление хорошо. Он поднял бровь.', lose:'Ты забыл засыпать кофе. В чашке горячая вода. Он долго её нюхал.'}]},
+    {t:'Инспектор просит показать кухню', x:'{boss} встал и направился в подсобку, не спрашивая разрешения.', o:[
+      {t:'Пустить, скрывать нечего', test:()=>S.meters.chaos < 50, win:'В подсобке порядок. Он даже потрогал коробки — ровные.', lose:'В подсобке он нашёл кота, раскладушку бариста и чей-то вейп.'},
+      {t:'Сказать, что там ремонт', test:()=>chance(0.3), win:'Он поверил. Или сделал вид.', lose:'Он заглянул в щель и увидел, что ремонта нет, а раскладушка есть.'},
+      {t:'Угостить фирменным десертом', test:()=>isUnlocked('dessert') && chance(0.6), win:'Десерт его смягчил. Кухню он смотрел вполглаза.', lose:'Он не ест сладкое. Записал «пытались подкупить».'}]}]},
+  {id:'critic', n:'Ресторанный критик с камерой', badge:'Пережил критика', d:'Миллион подписчиков, кольцевая лампа и полное отсутствие жалости.', stages:[
+    {t:'Критик снимает вход', x:'{boss} снимает вашу дверь и говорит в камеру: «Ну, посмотрим, что тут за кофейня, о которой все молчат».', o:[
+      {t:'Улыбнуться в камеру', test:()=>S.rep >= 3.8, win:'Подписчики в чате пишут «милые». Начало хорошее.', lose:'Рейтинг на картах у вас средний, он зачитал худший отзыв вслух.'},
+      {t:'Попросить не снимать', test:()=>chance(0.25), win:'Он уважительно выключил камеру. На пять минут.', lose:'«Они запрещают снимать! Что они скрывают?» — уже в прямом эфире.'},
+      {t:'Сделать ему комплимент', test:()=>chance(0.5), win:'Он растаял и сказал зрителям, что тут «приятные люди».', lose:'Он сказал зрителям, что к нему подлизываются. Это плохо.'}]},
+    {t:'Критик пробует фирменный напиток', x:'{boss} заказал «самое фирменное, что у вас есть» и навёл камеру на чашку.', o:[
+      {t:'Подать раф', test:()=>isUnlocked('raf') && chance(0.75), win:'«Это лучший раф района», — сказал он и попросил добавку.', lose:'Он скривился: «Сладкая вата с кофейным запахом». Чат в восторге, вы — нет.'},
+      {t:'Подать простой эспрессо', test:()=>room('main').upg.machine >= 8, win:'Машина хорошая, эспрессо честный. «Уважаю», — сказал он.', lose:'«Эспрессо как из автомата на вокзале». Тысяча лайков.'},
+      {t:'Подать что-то новое, без названия', test:()=>chance(0.45), win:'Он назвал напиток своим именем. Теперь это хит.', lose:'Он не понял, что это было. Зрители тоже.'}]},
+    {t:'Критик смотрит на команду', x:'{boss} навёл камеру на бариста: «А вы тут довольны работой?»', o:[
+      {t:'Пусть отвечает сам', test:()=>avgMood() >= 60, win:'Бариста сказал, что тут лучшая команда в городе. И кажется, не врал.', lose:'Бариста сказал «нормально» таким голосом, что всё стало ясно.'},
+      {t:'Ответить за него', test:()=>chance(0.4), win:'Ты сказал, что команда — семья. Бариста кивнул. Поверили.', lose:'Бариста закатил глаза прямо в кадр.'},
+      {t:'Выдать бариста премию прямо в кадре', test:()=>S.money >= 20000 && (spend(20000, 'wages', 'Премия в эфире'), true), win:'Эффектно. Чат пишет «хочу тут работать».', lose:'Не хватило денег на премию. Неловкая пауза в эфире.'}]}]},
+  {id:'owner', n:'Владелец крупной сети', badge:'Не продался', d:'Дорогие часы, водитель ждёт у входа. Хочет купить вашу кофейню. Целиком. С котом.', stages:[
+    {t:'Владелец сети делает предложение', x:'{boss} кладёт на стол визитку и говорит: «Назовите цену. Я всё равно её перебью».', o:[
+      {t:'Выслушать', test:()=>true, win:'Предложение щедрое, но он хочет вашу вывеску сменить на свою. Думаем дальше.', lose:''},
+      {t:'Сразу отказать', test:()=>chance(0.6), win:'Он улыбнулся: «Я вернусь». Это прозвучало как угроза, но уважение он запомнил.', lose:'Он обиделся и пообещал открыть точку напротив.'}]},
+    {t:'Владелец смотрит цифры', x:'{boss} просит показать выручку за неделю. Его бухгалтер уже достал калькулятор.', o:[
+      {t:'Показать честно', test:()=>(S.fin.hist||[]).slice(0,3).every(f=>opProfit(f) > 0), win:'Цифры хорошие. Цена в его глазах выросла вдвое.', lose:'Цифры в минусе. Он предложил купить за символический рубль.'},
+      {t:'Приукрасить', test:()=>chance(0.35), win:'Бухгалтер ничего не заметил. Пока.', lose:'Бухгалтер заметил с третьей строки. Неловко.'}]},
+    {t:'Последнее слово', x:'{boss} встаёт: «Последнее предложение. Деньги сегодня, а через месяц тут будет моя вывеска. Или нет?»', o:[
+      {t:'Продать долю за большие деньги', sell:true, win:'', lose:''},
+      {t:'Отказать окончательно', test:()=>true, win:'Он пожал руку: «Уважаю. Нечасто мне отказывают». Команда смотрит на тебя как на героя.', lose:''}]}]},
+  {id:'millionaire', n:'Тайный миллионер', badge:'Накормил миллионера', d:'Выглядит как бездомный: старая куртка, пакет из «Пятёрочки», борода. В пакете, говорят, миллион.', stages:[
+    {t:'Странный гость у двери', x:'{boss} топчется у двери и спрашивает, можно ли просто погреться. Гости в очереди морщатся.', o:[
+      {t:'Пустить и посадить в тепле', test:()=>true, win:'Он сел у окна и тихо улыбается. Гости косятся, но молчат.', lose:''},
+      {t:'Попросить уйти', test:()=>false, win:'', lose:'Он ушёл. А потом вы увидели, как он садится в машину с водителем.'}]},
+    {t:'Гость просит чай за 50 рублей', x:'{boss} высыпает на стойку горсть мелочи: «Хватит на чай?» Не хватает.', o:[
+      {t:'Налить за счёт заведения', test:()=>true, win:'Он долго держал стакан двумя руками и смотрел на бариста.', lose:''},
+      {t:'Налить, но взять что есть', test:()=>chance(0.6), win:'Он кивнул и забрал сдачу в один рубль. Честно.', lose:'Он посчитал, что ты пожадничал. Мелочь осталась на стойке.'},
+      {t:'Отказать', test:()=>false, win:'', lose:'Он молча собрал мелочь и ушёл. Бариста тихо выругался.'}]},
+    {t:'Гость сидит уже три часа', x:'{boss} сидит три часа с одним стаканом чая. Очередь растёт, мест нет.', o:[
+      {t:'Не трогать', test:()=>freeSeats('main').length > 0 || (room('hall2') && freeSeats('hall2').length > 0), win:'Места хватает всем. Он сидит, никому не мешая.', lose:'Мест нет, гости уходят. Но его вы не тронули — он это заметил.'},
+      {t:'Предложить пересесть в зону отдыха', test:()=>!!room('hall2'), win:'Он пересел на диван и уснул. Это лучшее, что с ним было за неделю.', lose:'Зоны отдыха нет. Пришлось просить уйти.'},
+      {t:'Попросить освободить место', test:()=>false, win:'', lose:'Он встал без слов. А на столе оставил визитку банка, где он председатель.'}]}]},
+  {id:'sanepid', n:'Генерал санэпида', badge:'Пережил генерала', d:'Сам начальник санэпида. Говорят, его последний визит закрыл три кофейни и одну шаурму.', stages:[
+    {t:'Генерал проверяет руки', x:'{boss} требует, чтобы весь персонал показал руки. И ногти. И перчатки.', o:[
+      {t:'Показать', test:()=>!hozEmpty() && stockQty('hoz') > 0.5, win:'Перчатки есть, руки чистые. Генерал хмыкнул.', lose:'Перчаток нет, у бариста под ногтями кофе. Генерал достал протокол.'},
+      {t:'Срочно купить перчатки', test:()=>S.money >= 15000 && (spend(15000, 'other', 'Перчатки для генерала'), chance(0.7)), win:'Курьер принёс перчатки за семь минут. Генерал оценил.', lose:'Курьер не успел. Генерал ждал. Генерал не любит ждать.'}]},
+    {t:'Генерал открывает холодильник', x:'{boss} открывает холодильник и смотрит на сроки годности. Вслух.', o:[
+      {t:'Пусть смотрит', test:()=>shrinkValue() < 5000 && !room('main').broken.fridge, win:'Всё свежее. Он закрыл холодильник почти разочарованно.', lose:'Нашёл просрочку. Прочитал дату вслух дважды.'},
+      {t:'Встать между ним и холодильником', test:()=>chance(0.2), win:'Он посмотрел на тебя так, что ты отошёл. Но холодильник оказался чистым.', lose:'Он отодвинул тебя одним пальцем.'}]},
+    {t:'Генерал садится писать акт', x:'{boss} достал бланк акта. Ручка зависла над строкой «нарушения».', o:[
+      {t:'Молча ждать', test:()=>dirtLevel('main') < 0.35 && S.meters.chaos < 50, win:'Он написал «нарушений не выявлено» и сам удивился.', lose:'Строка «нарушения» не поместилась на одной странице.'},
+      {t:'Предложить кофе', test:()=>chance(0.45), win:'Выпил, похвалил, написал мягче, чем собирался.', lose:'«Взятка напитками», — сказал он и записал.'}]}]}
+];
+function avgMood(){ const st = S.staff.filter(s=>!s.isYou); return st.length ? st.reduce((a,s)=>a+s.mood,0)/st.length : 50; }
+function anyStaffB(role){ return S.staff.filter(s=>!s.isYou && s.role===role && s.today==='work'); }
+function mskNow(){ return new Date(Date.now() + 3*3600000); }
+function bossWeek(){ return tourWeek(); }
+function bossOf(week){ const n = Math.floor(Date.parse(week+'T00:00:00Z') / 604800000); return BOSSES[((n % BOSSES.length) + BOSSES.length) % BOSSES.length]; }
+let BOSS_FORCE = false;
+function bossActive(){ if(BOSS_FORCE) return true; const d = mskNow(); return d.getUTCDay() === 5 && d.getUTCHours() >= 12; }
+function bossState(){ const w = bossWeek(); if(!S.boss || S.boss.w !== w) S.boss = {w, id:bossOf(w).id, stage:-1, pass:0, at:0, done:false, res:null}; return S.boss; }
+// этапы
+BOSSES.forEach(b=>b.stages.forEach((st, si)=>{
+  def('boss_'+b.id+'_'+si, {cat:'boss', t:st.t, x:st.x.replace('{boss}', b.n), o:st.o.map(o=>({t:o.t, fx:(S, inc)=>{
+    const z = bossState(); z.resolved = si;
+    if(o.sell){ const v = Math.max(1000000, Math.round(dayBase()*8/100000)*100000); income(v, 'events', 'Продал долю сети'); addMod('traffic', 0.9, 72, 'Чужая вывеска: гостей −10%'); z.sold = true; z.pass++; return {fx:{}, out:'Деньги на счету: +'+fmt(v)+' ₽. Через неделю над дверью появилась чужая вывеска поменьше. Команда молчит.'}; }
+    let ok = false; try{ ok = !!o.test(); }catch(e){ ok = false; }
+    if(ok){ z.pass++; return {fx:{}, out:o.win}; }
+    return {fx:{chaos:1}, out:o.lose || 'Не вышло.'}; }}))});
+}));
+function bossNext(){
+  const z = bossState(), b = bossOf(z.w); z.stage++; z.at = Date.now();
+  if(z.stage >= b.stages.length){ bossFinish(); return; }
+  if(z.stage === 0) queueModal({kind:'note', title:'Особый гость: '+b.n, text:b.d+' Сегодня он заходит во все кофейни района. Три испытания. Итоги — завтра в канале.'});
+  pushIncident('boss_'+b.id+'_'+z.stage, {});
+}
+function bossFinish(){
+  const z = bossState(), b = bossOf(z.w); z.done = true; const base = Math.max(100000, dayBase());
+  REP_CAUSE = 'events';
+  if(z.pass >= 3){ const v = Math.round(base*2/1000)*1000; income(v, 'events', 'Особый гость: '+b.n); repAdd(0.1); badgeAdd('boss_'+b.id, b.badge, 'Особый гость недели'); z.res = 'pass';
+    queueModal({kind:'note', title:'Ты прошёл: '+b.n, text:'Все три испытания. +'+fmt(v)+' ₽, рейтинг вверх и значок «'+b.badge+'». Завтра в канале будут итоги района.'}); }
+  else if(z.pass === 2){ const v = Math.round(base*0.7/1000)*1000; income(v, 'events', 'Особый гость: '+b.n); repAdd(0.03); z.res = 'half';
+    queueModal({kind:'note', title:b.n+': почти', text:'Два испытания из трёх. +'+fmt(v)+' ₽. Значок достаётся только за все три. Через неделю придёт другой гость.'}); }
+  else { repAdd(-0.05); z.res = 'fail';
+    queueModal({kind:'note', title:b.n+' ушёл недовольным', text:'Пройдено испытаний: '+z.pass+' из трёх. Рейтинг немного упал. Через неделю — новый гость, готовься заранее: чистый зал, довольная команда, короткая очередь.'}); }
+  REP_CAUSE = null;
+  if(b.id==='owner' && z.sold) z.res = 'sold';
+  if(typeof track === 'function') setTimeout(()=>track(), 500);
+  save();
+}
+function bossTick(){
+  if(!S || !bossActive() || S.level < 2) return; const z = bossState(); if(z.done) return;
+  const b = bossOf(z.w); const cur = z.stage >= 0 ? 'boss_'+b.id+'_'+z.stage : null;
+  if(cur && S.incidents.some(i=>i.id===cur)) return; // ждёт решения
+  if(z.stage === -1){ if(!z.seen) z.seen = Date.now(); if(Date.now() - z.seen < 20000) return; bossNext(); return; }
+  if(Date.now() - z.at < 60000) return; // пауза между испытаниями
+  bossNext();
+}
+setInterval(()=>{ try{ bossTick(); }catch(e){ console.error(e); } }, 4000);
+// карточка в «Делах»
+function bossCard(){
+  const w = bossWeek(), b = bossOf(w), z = S.boss && S.boss.w === w ? S.boss : null;
+  const d = mskNow(); const dow = d.getUTCDay();
+  let st;
+  if(z && z.done) st = z.res==='pass' ? 'Пройден: все три испытания' : z.res==='sold' ? 'Ты продал долю' : 'Пройдено '+z.pass+' из трёх';
+  else if(bossActive()) st = z && z.stage >= 0 ? 'Сейчас у тебя: испытание '+(z.stage+1)+' из трёх' : 'Сегодня в районе. Скоро зайдёт к тебе';
+  else { const days = (5 - dow + 7) % 7; st = days === 0 ? 'Сегодня с 12:00' : 'Придёт в пятницу с 12:00'+(days===1 ? ' — уже завтра' : ''); }
+  return el(`<div class="card note kraft"><div class="row"><span class="t">Особый гость недели</span><span class="sp"></span><span class="tag">${esc(st)}</span></div><div class="d"><b>${esc(b.n)}.</b> ${esc(b.d)} Три испытания, часть оценки — по тому, что у тебя в кофейне на самом деле. За все три — значок «${esc(b.badge)}», деньги и рейтинг.</div></div>`);
+}
+const _renderTasks23 = renderTasks;
+renderTasks = function(p){ _renderTasks23(p); try{ const g = p.querySelector('.card.goal'); const c = bossCard(); if(g) g.insertAdjacentElement('beforebegin', c); else p.prepend(c); }catch(e){ console.error(e); } };
 
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());

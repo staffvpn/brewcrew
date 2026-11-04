@@ -56,6 +56,10 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (!was) { const name = (str(s.cafe) || 'Без названия').replace(/[&<>]/g, ''); const okp = await channelPost(env, new URL(request.url).origin, 'events.jpg', `<b>Первая золотая кофемашина района</b>\n\nКофейня «${name}» купила трофей за 50 миллионов. Кофе от этого не стал вкуснее, но фотографируют его теперь чаще, чем бариста.`);
       await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5)').bind('trophy_first', now, okp ? 1 : 0, okp && okp.id ? okp.id : null, 'Золотая кофемашина: ' + name).run(); }
   }
+  // особый гость недели: итог игрока
+  if (!ADMINS.includes(user.id) && s.bs && typeof s.bs === 'object' && s.bs.w === tourWeek(now)) {
+    try { await env.DB.prepare('INSERT OR IGNORE INTO boss (week, tg_id, boss, pass, res, cafe, first_name, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)').bind(s.bs.w, user.id, str(s.bs.id, 20), Math.max(0, Math.min(3, Math.round(Number(s.bs.pass) || 0))), str(s.bs.res, 10), str(s.cafe), str(user.first_name), now).run(); } catch {}
+  }
   // общая цель: миллион стаканов
   try { await goalTrack(env, user.id, s.gc, dt); } catch {}
   let goal = null; try { goal = await goalInfo(env, false); } catch {}
