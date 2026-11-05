@@ -9276,7 +9276,7 @@ function lzFinish(){
 }
 function drawLiza(){
   const m = LZRUN; if(!m || S.active !== 'main' || !lizaReady) return; const [b] = walkPose(m);
-  shadow(m.x, m.y, 9); const h = SPR_H*1.06, w = h * LIZA_IMG.width / LIZA_IMG.height;
+  shadow(m.x, m.y, 9); const h = SPR_H*1.5, w = h * LIZA_IMG.width / LIZA_IMG.height;
   ctx.save(); ctx.translate(m.x, m.y - b); if(m.flip) ctx.scale(-1, 1); ctx.drawImage(LIZA_IMG, -w/2, -h, w, h); ctx.restore();
   if(m.stage==='look'){ RR(m.x + (m.flip?-14:6), m.y - h*0.62, 8, 6, 1, '#2a2a2e'); if(m.fx > 0){ glow2(m.x + (m.flip?-10:10), m.y - h*0.6, 26, '255,255,255', 0.6); }
     const t = Math.max(0, Math.ceil(m.left)); RR(m.x - 22, m.y + 4, 44, 10, 3, 'rgba(30,20,14,.7)'); txt('обзор · '+t, m.x, m.y + 11.5, '700 6px "Golos Text",sans-serif', '#f3e8d3', 'center'); }
