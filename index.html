@@ -795,10 +795,10 @@ const QUIRKS = {
   genius:{n:'Гений-драматург', d:'Работает на 25% быстрее, но раз в пару дней обижается и бросает работу на пару часов.'},
   late:{n:'Опаздун', d:'Каждый день приходит на полтора часа позже.'},
   talker:{n:'Болтун', d:'Часто болтает с гостями. Зато гости в очереди терпеливее.'},
-  thief:{n:'Таскает десерты', d:'Десерты пропадают со склада. Сам всегда в отличном настроении.'},
+  thief:{n:'Таскает десерты', d:'Десерты пропадают со склада. Настроение всегда отличное.'},
   smoker:{n:'Курильщик', d:'Часто уходит на перекур.'},
   sleepy:{n:'Соня', d:'Засыпает за стойкой.'},
-  blogger:{n:'Тиктокер', d:'Сидит в телефоне. Иногда его видео заходит, и гостей становится больше.'},
+  blogger:{n:'Тиктокер', d:'Сидит в телефоне. Иногда видео из кофейни заходит, и гостей становится больше.'},
   bore:{n:'Душнила', d:'Качество выше, рейтинг растёт. Но спорит с гостями, и у них кончается терпение.'},
   drinker:{n:'Выпивает', d:'По понедельникам часто не выходит на смену. Настроение всегда хорошее.'},
   philo:{n:'Философ', d:'Отвечает гостям цитатами. На работу не влияет, на атмосферу — да.'},
@@ -1015,7 +1015,7 @@ function sellOne(roomId, opt){
   for(const m of av){ r -= promoW(m); if(r<=0){ item = m; break; } }
   let amount = itemPrice(item, roomId); takeStock(item.need); let cogs = needCost(item.need);
   const tired = workingStaff(roomId).find(s=>s.role==='Бариста' && !s.isYou && staffState(s) < 40);
-  if(tired && chance(0.04)){ const f0 = S.fin.today; f0.cogs += cogs; S.c.mistakes = (S.c.mistakes||0)+1; HOOK.toast(tired.name+' перепутал заказ. Гость ушёл без кофе'); addFault(tired, 'mistake'); return {fail:'mistake'}; }
+  if(tired && chance(0.04)){ const f0 = S.fin.today; f0.cogs += cogs; S.c.mistakes = (S.c.mistakes||0)+1; HOOK.toast(tired.name+' перепутал'+he(tired,'','а')+' заказ. Гость ушёл без кофе'); addFault(tired, 'mistake'); return {fail:'mistake'}; }
   let dessert = false;
   const dm = MENU.find(x=>x.id==='dessert');
   if(isUnlocked('dessert') && chance(dessertP(rm.upg.showcase)) && hasStock(dm.need)){ amount += itemPrice(dm, roomId); takeStock(dm.need); cogs += needCost(dm.need); dessert = true; S.c.byItem.dessert = (S.c.byItem.dessert||0)+1; }
@@ -1227,7 +1227,7 @@ function openDay(){
     if(chance(p)){ s.today = 'absent'; s.absences++; s.recentAbs++; S.c.absences++; const r = pick(ABSENCE_REASONS); HOOK.event('absent', {sid:s.id, reason:r[0], kind:r[1]}); addFault(s, 'absent'); }
     else if(s.quirk==='late') { s.lateUntil = absNow() + 90; addFault(s, 'late'); }
   }
-  if(chance(0.25)) S.staff.filter(s=>s.today==='work' && s.quirk==='genius' && chance(0.4)).forEach(s=>{ s.away = true; s.awayUntil = absNow()+RI(60,150); HOOK.toast(s.name+' обиделся и ушёл в подсобку'); });
+  if(chance(0.25)) S.staff.filter(s=>s.today==='work' && s.quirk==='genius' && chance(0.4)).forEach(s=>{ s.away = true; s.awayUntil = absNow()+RI(60,150); HOOK.toast(s.name+' '+he(s,'обиделся и ушёл','обиделась и ушла')+' в подсобку'); });
   if(S.day > 3 && chance(0.12)) S.pending.push({at:absNow()+RI(5,40), ev:'handover'});
   rollWeather();
   if(!S.tasks || !S.tasks.length || S.tasks[0].day !== S.day) newTasks();
@@ -1266,7 +1266,7 @@ function closeDay(){
   // увольнения по желанию
   for(const s of S.staff){
     if(s.isYou) continue;
-    if(s.notice && s.notice <= S.day){ removeStaff(s.id); S.c.quits++; HOOK.toast(s.name+' отработал и ушёл'); continue; }
+    if(s.notice && s.notice <= S.day){ removeStaff(s.id); S.c.quits++; HOOK.toast(s.name+' '+he(s,'отработал и ушёл','отработала и ушла')); continue; }
     if(s.promise && s.promise < S.day && s.rank < s.promiseRank){ HOOK.event('promise_broken', {sid:s.id}); s.promise = 0; continue; }
     const stv = staffState(s); let p = (stv<30 ? 0.06 : 0.004) + (unpaid ? 0.12 : 0);
     if(s.legendId) p *= 0.4;
@@ -1329,7 +1329,7 @@ function tryPromote(s){
   const info = promoInfo(s); if(!info.can) return {ok:false, t:'Условия не выполнены'};
   if(info.req.exam){
     const p = clamp(0.35 + 0.05*(s.lvl - info.req.lvl) + s.mood/400 - s.fatigue/300, 0.1, 0.9);
-    if(!chance(p)){ s.examAt = S.day + 3; s.mood = clamp(s.mood-12,0,100); return {ok:false, t:s.name+' завалил аттестацию. Пересдача через 3 дня.'}; }
+    if(!chance(p)){ s.examAt = S.day + 3; s.mood = clamp(s.mood-12,0,100); return {ok:false, t:s.name+' завалил'+he(s,'','а')+' аттестацию. Пересдача через 3 дня.'}; }
   }
   s.rank++; S.c.promoted++; s.mood = clamp(s.mood+20,0,100);
   if(s.promise && s.rank >= s.promiseRank) s.promise = 0;
@@ -1359,7 +1359,7 @@ def('blogger_back', {cat:'normal', t:'Блогер вернулся', x:'Тот 
   {t:'Продать права на съёмку', fx:{m:6000, chaos:2}, out:'Заплатил и снял. Ролик скучный, деньги не скучные.'}]});
 def('dog', {cat:'normal', t:'Гость с корги', x:'Гость с корги просит налить собаке воды. Корги смотрит на витрину.', o:[
   {t:'Воды и печеньку', fx:{soul:3, rep:1}, out:'Корги счастлив. Хозяин сфотографировал вас для чата района.', then:[{after:[1200,2800], p:0.7, ev:'dog_club'}]},
-  {t:'Продать собачий пуччино', fx:{m:350, soul:1}, out:'Взбитые сливки в маленькой чашке. Корги в восторге, хозяин тоже.'},
+  {t:'Продать собачий пуппучино', fx:{m:350, soul:1}, out:'Взбитые сливки в маленькой чашке. Корги в восторге, хозяин тоже.'},
   {t:'С собаками нельзя', fx:{pathos:2, rep:-1}, out:'Гость ушёл. Корги посмотрел так, что стало стыдно.', then:[{after:[300,700], p:0.6, ev:'dog_revenge'}]}]});
 def('dog_club', {cat:'result', t:'Собачий клуб', x:'Хозяин корги привёл весь собачий клуб района. Двадцать собак и их люди.', auto:{mod:['traffic',1.3,10,'Собачий клуб: гостей +30%'], chaos:4, soul:2}});
 def('dog_revenge', {cat:'result', t:'Месть корги', x:'Корги вернулся один, пометил дверь и ушёл с достоинством.', auto:{chaos:5, rep:-1}});
@@ -1497,7 +1497,7 @@ function dailyEventsRoll(){
 }
 
 /* ---------- события персонала ---------- */
-def('absent', {cat:'staff', t:'Не вышел на смену', x:'{s} не вышел на смену: {reason}.', o:[
+def('absent', {cat:'staff', t:'Прогул', x:'{s} не вышел на смену: {reason}.', o:[
   {t:'Вызвать подмену за двойную ставку', fx:{sub:1}, out:'Подмена будет через полчаса.'},
   {t:'Встать за стойку самому', fx:{selfwork:1}, out:'Ты в фартуке. Нервы на пределе, но смена идёт.'},
   {t:'Работать без него', fx:{moodOthers:-8}, out:'Остальные работают за двоих и ворчат.'},
@@ -1505,25 +1505,25 @@ def('absent', {cat:'staff', t:'Не вышел на смену', x:'{s} не в�
 def('quit', {cat:'staff', t:'Заявление об уходе', x:'{s} кладёт на стойку заявление. Причина: {reason}.', o:[
   {t:'Подписать', fx:{fire:1, quit:1}, out:'{s} забрал вещи и ушёл.'},
   {t:'Уговорить: ставка +20%', fx:{raise:1.2, mood:25}, out:'{s} подумал и остался.', p:0.65, fail:'{s} всё равно уходит. Деньги не главное, говорит.'},
-  {t:'Дать неделю отпуска', fx:{vacation:7, mood:30, fatigue:-80}, out:'{s} уехал отдыхать. Обещал вернуться.', p:0.75, fail:'Отпуск взял, но уходит всё равно.'},
+  {t:'Дать неделю отпуска', fx:{vacation:7, mood:30, fatigue:-80}, out:'{s} уехал отдыхать. Обещает вернуться.', p:0.75, fail:'Отпуск взял, но уходит всё равно.'},
   {t:'Пообещать повышение', fx:{promise:1, mood:20}, out:'{s} поверил. Не подведи: если не повысишь за 10 дней, будет хуже.'},
   {t:'Пусть отработает две недели', fx:{notice:14}, out:'{s} будет работать ещё 14 дней. Вполсилы.'}]});
 def('promise_broken', {cat:'staff', t:'Обещание не выполнено', x:'{s} так и не дождался повышения и уходит со скандалом при гостях.', auto:{fire:1, chaos:5, rep:-2, moodAll:-10, complain:1}});
 def('conflict', {cat:'staff', t:'Ссора в команде', x:'{s} и {s2} орут друг на друга за стойкой. Причина: {reason}.', o:[
-  {t:'Встать на сторону {s}', fx:{mood:12, mood2:-25}, out:'{s} доволен. {s2} затаил обиду.'},
-  {t:'Встать на сторону {s2}', fx:{mood:-25, mood2:12}, out:'{s2} доволен. {s} затаил обиду.'},
+  {t:'Поддержать: {s}', fx:{mood:12, mood2:-25}, out:'{s} доволен. {s2} затаил обиду.'},
+  {t:'Поддержать: {s2}', fx:{mood:-25, mood2:12}, out:'{s2} доволен. {s} затаил обиду.'},
   {t:'Развести по разным сменам', fx:{split:1}, out:'Теперь они не пересекаются. Почти.'},
   {t:'Помирить премией обоим: 6 000 ₽', fx:{m:-6000, mood:8, mood2:8}, out:'Помирились. До следующего сырника.'},
   {t:'Уволить обоих', fx:{fire:1, fire2:1, moodAll:-10}, out:'Тишина. Очень много тишины.'}]});
 const CONFLICT_REASONS = ['кто-то съел чужой сырник','кто моет питчеры','музыка в зале','график на выходные','ревность','чаевые','один назвал другого «стажёром»','кто-то переставил кофемолку на 2 миллиметра'];
-def('poach', {cat:'staff', t:'Переманивают', x:'Конкуренты предложили {s} ставку на 40% выше. {s} пришёл посоветоваться.', o:[
+def('poach', {cat:'staff', t:'Переманивают', x:'Конкуренты зовут к себе и обещают ставку на 40% выше. {s} пришёл посоветоваться.', o:[
   {t:'Поднять ставку на 30%', fx:{raise:1.3, mood:15}, out:'{s} остаётся.'},
   {t:'Пожелать удачи', fx:{fire:1, rival:[0]}, out:'{s} ушёл к конкурентам.'},
   {t:'Пообещать повышение', fx:{promise:1, mood:10}, out:'{s} остаётся, но ждёт.'}]});
-def('revenge', {cat:'staff', t:'Сотрудник сорвался', x:'{s} не выдержал: {reason}', o:[
+def('revenge', {cat:'staff', t:'Срыв на смене', x:'{s} не выдержал: {reason}', o:[
   {t:'Извиниться при всех', fx:{mood:20, pat:45, soul:2, rep:-1}, out:'{s} кивнул и вернулся к работе.'},
   {t:'Уволить на месте', fx:{fire:1, chaos:4, moodAll:-10, complainGrey:1}, out:'{s} ушёл, хлопнув дверью.'},
-  {t:'Выходной и премия 5 000 ₽', fx:{m:-5000, mood:35, pat:70, dayoff:1}, out:'{s} вернётся завтра. Говорит, что погорячился.'}]});
+  {t:'Выходной и премия 5 000 ₽', fx:{m:-5000, mood:35, pat:70, dayoff:1}, out:'{s} вернётся завтра. Говорит, что это были нервы.'}]});
 const REVENGE = ['при гостях сказал всё, что о тебе думает. Громко и с матом.','швырнул фартук на стойку и ушёл в подсобку. Очередь ждёт.','записал, как ты на него орёшь, и выложил в чат района.','насыпал соли в твой кофе. Ты уже отпил.'];
 def('supplier_sour', {cat:'normal', t:'Кислое молоко', x:'Поставщик привёз молоко, которое уже начало киснуть.', o:[
   {t:'Вернуть и требовать замену', fx:{nerves:-1}, out:'Замену привезут завтра.'},
@@ -1710,7 +1710,7 @@ function applyFx(fx, inc){
     if(fx.sub){ const sub = makeStaff(st.role, {quirk:'none'}); sub.name = 'Подмена '+sub.name; sub.today = 'sub'; sub.room = st.room; sub.lvl = Math.max(1, st.lvl-2); sub.subPay = shiftPay(st)*2; S.staff.push(sub); S.c.subs++; chips.push(['Подмена за '+fmtR(sub.subPay), false]); }
     if(fx.selfwork){ const sub = makeStaff(st.role, {quirk:'none'}); sub.name = 'Ты'; sub.today = 'sub'; sub.room = st.room; sub.lvl = 2; sub.subPay = 0; sub.isYou = true; S.staff.push(sub); }
     if(fx.split){ if(st2){ st2.off = st.off.map(d=>(d+2)%7); st2.sched = st.sched; st2.phase = st.phase+2; st.lastConflict = S.day; st2.lastConflict = S.day; } }
-    if(fx.complainGrey && st.contract==='grey' && chance(0.6)){ S.flags.complaint = 1; chips.push([st.name+' пообещал нажаловаться в трудовую', false]); }
+    if(fx.complainGrey && st.contract==='grey' && chance(0.6)){ S.flags.complaint = 1; chips.push([st.name+' пообещал'+he(st,'','а')+' нажаловаться в трудовую', false]); }
     if(fx.fire){ if(fx.quit) S.c.quits++; else S.c.fired++; if(st.contract==='grey' && !fx.quit && chance(0.4)) S.flags.complaint = 1; removeStaff(st.id); chips.push([st.name+' больше не работает', false]); }
   }
   if(st2 && fx.fire2){ removeStaff(st2.id); S.c.fired++; }
@@ -2174,13 +2174,13 @@ function fulfillWish(s){
   if(k==='training'){ spend(c,'other'); s.trainNext = true; }
   if(k==='bonus'){ spend(c,'wages','Премия: '+s.name); giveBonus(s, true); }
   s.mood = clamp(s.mood+28,0,100); s.pat = clamp((s.pat||100)+25,0,100); meter('soul', 1);
-  s.wish = null; return s.name+' доволен. Это запомнится';
+  s.wish = null; return s.name+' '+he(s,'доволен','довольна')+'. Это запомнится';
 }
 function praiseGain(s){ if(s.praiseDay !== S.day){ s.praiseDay = S.day; s.praiseN = 0; } s.praiseN++; return [12, 6, 3][s.praiseN-1] || 0; }
 function envyTick(){
   for(const s of S.staff){ if(s.isYou) continue;
     const peers = S.staff.filter(x=>!x.isYou && x!==s && x.role===s.role && x.rank===s.rank);
-    if(peers.some(x=>(x.rateMul||1) > (s.rateMul||1)*1.05)){ s.mood = clamp(s.mood-6,0,100); if(chance(0.2)) HOOK.toast(s.name+' узнал, сколько получает коллега. Обиделся'); } }
+    if(peers.some(x=>(x.rateMul||1) > (s.rateMul||1)*1.05)){ s.mood = clamp(s.mood-6,0,100); if(chance(0.2)) HOOK.toast(s.name+' узнал'+he(s,'','а')+', сколько получает коллега. Обиделся'+he(s,'','сь')); } }
 }
 
 /* ---------- инвентаризация: скрытая недостача ---------- */
@@ -2355,10 +2355,10 @@ function staffPrio(s){ return (s.prio==='help' ? 0 : 1000) + (s.legendId || s.pr
 
 /* ---------- косяки и пиздюли ---------- */
 const FAULTS = {
-  smoke_rush:{t:'Ушёл курить в запару', w:'smoke', hard:true},
+  smoke_rush:{t:'Перекур в запару', w:'smoke', hard:true},
   smoke:{t:'Ушёл на перекур, пока очередь', w:'smoke'},
   phone:{t:'Сидел в телефоне при очереди', w:'phone'},
-  sleep:{t:'Уснул на смене', w:'sleep', hard:true},
+  sleep:{t:'Сон на смене', w:'sleep', hard:true},
   chat:{t:'Трепался с гостем вместо работы', w:'chat'},
   late:{t:'Опоздал на смену', w:'late'},
   absent:{t:'Прогулял смену', w:'absent', hard:true},
@@ -2927,7 +2927,7 @@ function szClaim(track, n, silent){
   if(rw.k==='money') income(rw.v, track==='p' ? 'pass' : 'season', track==='p' ? 'Пропуск сезона: '+rw.t.toLowerCase() : 'Сезон: '+rw.t.toLowerCase());
   else if(rw.k==='xp') addXp(rw.v);
   else if(rw.k==='mod') addMod('traffic', n===20 ? 1.2 : 1.15, 24, rw.t+': гостей +'+(n===20?20:15)+'%');
-  else if(rw.k==='staff'){ const st = makePrizeStaff(rw.v); if(typeof syncScene==='function') syncScene('main'); if(!silent) HOOK.toast(st.name+' вышел на смену'); }
+  else if(rw.k==='staff'){ const st = makePrizeStaff(rw.v); if(typeof syncScene==='function') syncScene('main'); if(!silent) HOOK.toast(st.name+' вышел'+he(st,'','а')+' на смену'); }
   else if(rw.k==='item') addDecor(info.item);
   else if(rw.k==='style'){ S.szStyles = Array.from(new Set((S.szStyles||[]).concat([info.style]))); }
   else if(rw.k==='pet') S.szPet = true;
@@ -2945,7 +2945,7 @@ function szLegend(info){
   S.pending.push({at:absNow()+DAY_MIN, ev:'szleg_1', data:{sid:s.id}}, {at:absNow()+3*DAY_MIN, ev:'szleg_2', data:{sid:s.id}}, {at:absNow()+6*DAY_MIN, ev:'szleg_3', data:{sid:s.id}});
 }
 def('szleg_1', {cat:'result', t:'Легенда сезона: первая смена', x:'{s} попробовала ваш капучино и молча вылила его в раковину. Потом сварила свой. Гости в очереди зааплодировали.', auto:{rep:2, soul:1}});
-def('szleg_2', {cat:'result', t:'Легенда сезона: прошлое', x:'К {s} пришёл бывший ресторатор и предложил вернуться за тройную ставку. Ответ был короткий и громкий. Команда теперь считает её семьёй.', auto:{moodAll:8}});
+def('szleg_2', {cat:'result', t:'Легенда сезона: прошлое', x:'В кофейню пришёл бывший ресторатор и позвал легенду обратно за тройную ставку. {s} ответил коротко и громко: нет. Команда теперь считает вас семьёй.', auto:{moodAll:8}});
 def('szleg_3', {cat:'result', t:'Легенда сезона: мастер-класс', x:'{s} устроила вечерний мастер-класс по латте-арту. Билеты разошлись за час, деньги в кассу.', auto:{m:25000, rep:1}});
 // напиток сезона
 MENU.push({id:'szdrink', n:'Напиток сезона', price:520, w:1.8, need:{beans:18, milk:150, syrup:25, cups:1}, coffee:1, szPass:1, unlock:{t:'Пропуск сезона, 15 ступень', f:()=>false}});
@@ -3042,7 +3042,7 @@ function promoRevoke(code){
   const p = (S.promos||{})[code]; if(!p || p.revoked) return null; p.revoked = Date.now();
   let msg = 'Промокод «'+code+'» отозван: ты отписался от канала';
   if(p.kind==='money' || p.kind==='days'){ const v = Math.min(Math.max(0, S.money), p.amount||0); if(v > 0){ MONEY_CTX = {out:'promoback', why:'Инвестор отозвал вложения: отписка от канала'}; S.money -= v; MONEY_CTX = null; } msg += '. Инвестор забрал '+fmtR(v); }
-  if(p.kind==='legend'){ const st = S.staff.find(s=>s.promo===code); if(st){ removeStaff(st.id); msg += '. '+st.name+' ушёл вместе с инвестором'; } }
+  if(p.kind==='legend'){ const st = S.staff.find(s=>s.promo===code); if(st){ removeStaff(st.id); msg += '. '+st.name+' '+he(st,'ушёл','ушла')+' вместе с инвестором'; } }
   if(p.kind==='boost' && S.promoBoost && S.promoBoost.code===code) S.promoBoost = null;
   if(p.kind==='style' && S.promoStyles) for(const k in S.promoStyles) S.promoStyles[k] = 0;
   HOOK.struct(); return msg;
@@ -3148,7 +3148,7 @@ function invUse(uid){
   if(it.k==='money') income(it.v, it.track==='p' ? 'pass' : 'season', it.track==='p' ? 'Пропуск сезона: '+it.t.toLowerCase() : 'Сезон: '+it.t.toLowerCase());
   else if(it.k==='xp') addXp(it.v);
   else if(it.k==='mod') addMod('traffic', it.boost || 1.15, 24, it.t+': гостей +'+Math.round(((it.boost||1.15)-1)*100)+'%');
-  else if(it.k==='staff'){ const st = makePrizeStaff(it.v || 12); if(typeof syncScene==='function') syncScene('main'); HOOK.toast(st.name+' вышел на смену'); }
+  else if(it.k==='staff'){ const st = makePrizeStaff(it.v || 12); if(typeof syncScene==='function') syncScene('main'); HOOK.toast(st.name+' вышел'+he(st,'','а')+' на смену'); }
   else if(it.k==='item'){ addDecor(it.item); }
   S.inv.splice(i, 1); HOOK.sfx('level'); HOOK.struct(); return null;
 }
@@ -3485,7 +3485,7 @@ function storyFx(st, inc, chips){
   if(st.next2) scheduleBeat(st.next2[0], st.next2[1]);
   if(st.season) startSeason(T.season+1, st.season);
   if(st.delay){ const d = T.dl; if(d){ if(srel('palych') >= 0 || chance(0.3)){ d.amount = Math.round(d.amount*1.3/1000)*1000; d.by = S.day+7; scheduleBeat(7, d.beat, 13); chips.push(['Отсрочка на 7 дней, долг +30%', null]); return 'Палыч кивает: «Неделя. И тридцать процентов сверху»'; }
-    const v = bestStaff(); if(v){ removeStaff(v.id); chips.push([v.name+' уволился от страха', false]); } repAdd(-0.2); d.by = S.day+5; scheduleBeat(5, d.beat, 13); chips.push(['Отсрочка 5 дней', null]); return 'Палыч ничего не ответил. Вечером '+(v?v.name+' позвонил и сказал, что больше не придёт: ему «объяснили»':'тебе прокололи шины')+'.'; } }
+    const v = bestStaff(); if(v){ removeStaff(v.id); chips.push([v.name+' '+he(v,'уволился','уволилась')+' от страха', false]); } repAdd(-0.2); d.by = S.day+5; scheduleBeat(5, d.beat, 13); chips.push(['Отсрочка 5 дней', null]); return 'Палыч ничего не ответил. Вечером '+(v?v.name+' позвонил'+he(v,'','а')+' и сказал'+he(v,'','а')+', что больше не придёт: '+he(v,'ему','ей')+' «объяснили»':'тебе прокололи шины')+'.'; } }
   if(st.permMod){ addMod(st.permMod[0], st.permMod[1], 24*400, st.permMod[2]); chips.push([st.permMod[2], st.permMod[1]>=1 === (st.permMod[0]==='traffic'||st.permMod[0]==='check')]); }
   return null;
 }
@@ -3641,10 +3641,10 @@ def('a_bets', {cat:'story', t:'Аванс', x:'{s} просит аванс 30 00
  {t:'Дать аванс', fx:{m:-30000, mood:10, st:{next:[6,'a_bets2']}}, out:'{s} обещает вернуть с зарплаты.'},
  {t:'Отказать', fx:{mood:-15}, out:'{s} обиделся, но работает.'},
  {t:'Поговорить про ставки', fx:{mood:-5, st:{karma:1}}, out:'Тяжёлый разговор. {s} удалил приложение. Надолго ли?'}]});
-def('a_bets2', {cat:'story', t:'Коллекторы за сотрудником', x:'В кофейню пришли двое и спросили {s}. Оказывается, он должен букмекеру ещё 80 000 ₽.', o:[
+def('a_bets2', {cat:'story', t:'Коллекторы за сотрудником', x:'В кофейню пришли двое и спросили, где тут работает {s}. Оказывается, за сотрудником долг букмекеру: ещё 80 000 ₽.', o:[
  {t:'Заплатить за него', fx:{m:-80000, mood:40, st:{karma:2}}, out:'{s} плачет и клянётся отработать. Похоже, правда отработает.'},
  {t:'Сказать, что он тут не работает', fx:{mood:15, chaos:2}, out:'Ушли. Но вернутся.'},
- {t:'Уволить', fx:{fire:1, st:{karma:-1}}, out:'Проблема ушла вместе с {s}.'}]});
+ {t:'Уволить', fx:{fire:1, st:{karma:-1}}, out:'{s} больше здесь не работает. Проблема ушла вместе с увольнением.'}]});
 def('a_romance', {cat:'story', t:'Служебный роман', x:'{s} и {s2} держатся за руки в подсобке. Все уже знают.', pre:inc=>{ const o = S.staff.filter(x=>x.id!==inc.sid && x.room===(S.staff.find(y=>y.id===inc.sid)||{}).room && x.today!=='sub'); if(!o.length) return false; inc.sid2 = pick(o).id; return true; }, o:[
  {t:'Порадоваться за них', fx:{mood:15, mood2:15, soul:2, st:{next:[14,'a_wedding']}}, out:'Атмосфера в команде теплее.'},
  {t:'Запретить отношения на работе', fx:{mood:-20, mood2:-20, pathos:2}, out:'Теперь они встречаются у мусорных баков.'},
@@ -4119,9 +4119,9 @@ def('l_stamp', {cat:'normal', cond:S=>!!S.loyalty, t:'Поддельный шт�
 
 /* ================= v7: события команды и ещё пачка историй ================= */
 const QUIT_LATER = (inc, why) => { S.pending.push({at:absNow()+RI(60,240), ev:'quit', data:{sid:inc.sid, why:'burn', reason:why}}); };
-def('want_quit', {cat:'staff', t:'{s} на грани', x:'{s} уже третий день молча смотрит в кофемолку. Сегодня спросил, где у нас бланк заявления. «Просто посмотреть».', o:[
+def('want_quit', {cat:'staff', t:'{s} на грани', x:'{s} уже третий день молча смотрит в кофемолку. Сегодня спрашивает, где у нас бланк заявления. «Просто посмотреть».', o:[
  {t:'Поговорить по душам', fx:(S, inc)=>{ if(chance(0.6)) return {fx:{mood:30, pat:30, soul:1}, out:'Проговорили час в подсобке. {s} выдохнул и вернулся за стойку. Даже улыбнулся.'}; QUIT_LATER(inc, 'разговор по душам только всё испортил'); return {fx:{mood:5}, out:'{s} выслушал, кивнул и ушёл писать заявление. Красивым почерком.'}; }},
- {t:'Отправить в отпуск на 3 дня', fx:{vacation:3, fatigue:-70, mood:25, pat:20}, out:'{s} уехал на дачу. Обещал вернуться другим человеком. Желательно — тем же, но отдохнувшим.'},
+ {t:'Отправить в отпуск на 3 дня', fx:{vacation:3, fatigue:-70, mood:25, pat:20}, out:'{s} уехал на дачу. Обещает вернуться другим человеком. Желательно — тем же, но отдохнувшим.'},
  {t:'Поднять ставку на 15%', fx:{raise:1.15, mood:30, pat:25}, out:'{s} оживился. Деньги не главное, но приятно.'},
  {t:'Подарить абонемент в спортзал', fx:(S, inc)=>{ spend(4000,'other'); if(chance(0.4)) return {fx:{mood:35, pat:20}, out:'{s} начал ходить в зал и стал бодрее всех. Теперь всем советует протеин в раф.'}; return {fx:{mood:-10}, out:'{s} посмотрел на абонемент, как на оскорбление. «Вы считаете, что я толстый?»'}; }},
  {t:'Пусть уходит', fx:{fire:1, quit:1}, out:'{s} ушёл, оставив на стойке фартук и записку «удачи с этим всем».'}]});
@@ -4442,7 +4442,7 @@ def('staff_eat', {cat:'normal', t:'Персонал жрёт витрину', x:
  pre:inc=>{ const s = pick(anyStaff()); if(!s) return false; inc.sid = s.id; }});
 
 // санкнижки
-def('medbook', {cat:'staff', t:'Санкнижка просрочена', x:'У {s} просрочена медкнижка на полгода. Если завтра придёт санэпидемстанция — штраф и скандал.', o:[
+def('medbook', {cat:'staff', t:'Санкнижка просрочена', x:'{s}: медкнижка просрочена на полгода. Если завтра придёт санэпидемстанция — штраф и скандал.', o:[
  {t:'Отправить продлевать', fx:(S, inc)=>{ spend(3500, 'other', 'Медкнижка'); const s = S.staff.find(x=>x.id===inc.sid); if(s){ s.vacation = S.day + 1; } return {fx:{}, out:'Завтра '+(s?s.name:'он')+' сдаёт анализы вместо смены. Мазок из носа, мазок из совести'}; }},
  {t:'Купить в подземном переходе', fx:S=>{ spend(900, 'other', 'Медкнижка из перехода'); if(chance(0.5)) S.flags.medbad = 1; return {fx:{chaos:1}, out:'Медкнижка за 900 рублей, печать слегка кривая, фото не того человека. Но вроде пойдёт'}; }},
  {t:'Забить', fx:S=>{ S.flags.medbad = 1; return {fx:{}, out:'Авось пронесёт. Обычно не проносит'}; }}],
@@ -5969,7 +5969,7 @@ function onTrack(r){
     else if(o.op==='set'){ S.money = a; toast('Администрация установила баланс '+fmt(a)+' ₽'); }
     else if(o.op==='ent'){ refreshEntitlements(); toast('Покупки обновлены'); }
     else if(o.op==='msg'){ queueModal({kind:'adminmsg', text:String(o.text||'')}); }
-    else if(o.op==='staff'){ const st = makePrizeStaff(Math.max(5, Math.min(50, a||20))); toast('В команду пришёл '+st.name+', уровень '+st.lvl+'. '+(o.text||'')); sfx('level'); syncScene('main'); }
+    else if(o.op==='staff'){ const st = makePrizeStaff(Math.max(5, Math.min(50, a||20))); toast('В команду '+he(st,'пришёл','пришла')+' '+st.name+', уровень '+st.lvl+'. '+(o.text||'')); sfx('level'); syncScene('main'); }
     else if(o.op==='rename'){ S.name = String(o.text||S.name).slice(0,28); toast('Название кофейни изменено: «'+S.name+'»'); setTimeout(renderGame, 50); }
     else if(o.op==='fpraise'){ S.reviews = S.reviews||[]; S.reviews.unshift({id:S.uid++, day:S.day, stars:5, author:String(o.text||'Друг'), text:'Зашёл к другу. Кофе отличный, бариста живой, кот наглый. Пять звёзд.', reply:null}); repAdd(0.05); toast(String(o.text||'Друг')+' заходил и поставил 5 звёзд'); }
     else if(o.op==='fgift'){ S.money += a; toast(String(o.text||'Друг')+' оставил чаевые '+fmt(a)+' ₽'); sfx('coin'); }
@@ -6100,12 +6100,12 @@ function attention(){
   for(const inc of S.incidents){ const d = evDef(inc); if(d) out.push(['tasks', fillText(d.t, inc), true]); }
   if(youNeeded('main')){ const crew = S.staff.filter(x=>!x.isYou && x.room==='main'); out.push(['team', !crew.some(x=>x.role==='Бариста') && !crew.some(x=>x.role==='Кассир') ? 'Ты один за стойкой: найми бариста и кассира' : !crew.some(x=>x.role==='Бариста') ? 'Нет бариста: ты варишь кофе сам' : 'Нет кассира: ты стоишь на кассе сам', true]); }
   for(const st of S.staff){ if(st.isYou) continue;
-    if(st.distract) out.push(['team', st.name+': '+DISTRACT[st.distract.kind].toLowerCase(), false]);
-    else if(st.today==='absent') out.push(['team', st.name+' не вышел на смену', true]);
+    if(st.distract) out.push(['team', st.name+': '+distN(st).toLowerCase(), false]);
+    else if(st.today==='absent') out.push(['team', st.name+' не вышел'+he(st,'','а')+' на смену', true]);
     else if(st.pat < 35) out.push(['team', st.name+' вот-вот сорвётся', false]);
     else if(st.mood < 30) out.push(['team', st.name+': плохое настроение', false]); }
   const ls = lowStock(); if(ls.length) out.push(['stock', 'Заканчивается: '+ls.map(k=>STOCK[k].n.toLowerCase()).join(', '), true]);
-  for(const r of S.rooms) for(const k in r.broken) if(r.broken[k]) out.push(['stock', EQ[k].n+' сломана', true]);
+  for(const r of S.rooms) for(const k in r.broken) if(r.broken[k]) out.push(['stock', EQ[k].n+' '+eqBroke(k), true]);
   const rm = room(id); for(const k in rm.eq) if(!rm.broken[k] && rm.eq[k] < 40) { out.push(['stock', EQ[k].n+': износ, пора обслужить', false]); break; }
   if(S.debt.stage>=1 || S.money<0) out.push(['money', 'Касса в минусе', true]);
   if(S.fin.taxDueDay - S.day <= 2 && S.money < S.fin.taxAcc) out.push(['money', 'Скоро налог, а денег не хватает', true]);
@@ -6314,7 +6314,7 @@ function renderHud(){
   if(S.debt.stage>=1) warn.push(['Долги '+S.debt.stage+'/3','money']);
   if(S.closedUntil > absNow()) warn.push(['Закрыто '+Math.ceil((S.closedUntil-absNow())/60)+' ч','tasks']);
   const ls = lowStock(); if(ls.length) warn.push(['Мало: '+ls.map(k=>STOCK[k].n.toLowerCase()).join(', '),'stock']);
-  for(const r of S.rooms) for(const k in r.broken) if(r.broken[k]) warn.push([EQ[k].n+' сломана','stock']);
+  for(const r of S.rooms) for(const k in r.broken) if(r.broken[k]) warn.push([EQ[k].n+' '+eqBroke(k),'stock']);
   warn.forEach(([w,go])=>pills.push(`<button class="pill warn" data-go="${go}">${esc(w)}</button>`));
 
   const pe = $('#pills'); const html = pills.join('');
@@ -6359,7 +6359,7 @@ function buyUpg(u, id, n){
 
 /* ---------- команда ---------- */
 function staffStatus(s){
-  if(s.distract) return ['warn', DISTRACT[s.distract.kind]];
+  if(s.distract) return ['warn', distN(s)];
   if(s.today==='absent') return ['warn','Прогул'];
   if(s.today==='training') return ['','На обучении'];
   if(s.vacation && s.vacation>=S.day) return ['','В отпуске'];
@@ -6385,7 +6385,7 @@ function renderTeam(p, id){
     const [cls, txt] = staffStatus(s);
     const stamp = (s.legendId || s.prize) ? '<span class="stamp gold">ЛЕГЕНДА</span>' : s.today==='absent' ? '<span class="stamp red">ПРОГУЛ</span>' : s.notice ? '<span class="stamp red">УХОДИТ</span>' : '';
     const card = el(`<button class="card staff badge-card${(s.legendId || s.prize) ? ' legend' : ''}"><div class="lanyard"></div>${stamp}<div class="spr" style="${sprStyle(staffSpr(s),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-      <div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl}</span>${(s.legendId || s.prize)?'<span class="tag gold">Легенда</span>':''}${s.role==='Бариста'?(s.prio==='help'?'<span class="tag">На подхвате</span>':'<span class="tag g">Основной</span>'):''}${freshFault(s)?'<span class="tag warn">Косяк</span>':''}${s.quirk!=='none'?`<span class="tag">${QUIRKS[s.quirk].n}</span>`:''}${s.contract==='grey'?'<span class="tag warn">В серую</span>':''}<span class="tag ${cls}">${txt}</span></div>
+      <div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl}</span>${(s.legendId || s.prize)?'<span class="tag gold">Легенда</span>':''}${s.role==='Бариста'?(s.prio==='help'?'<span class="tag">На подхвате</span>':'<span class="tag g">Основной</span>'):''}${freshFault(s)?'<span class="tag warn">Косяк</span>':''}${s.quirk!=='none'?`<span class="tag">${qN(s)}</span>`:''}${s.contract==='grey'?'<span class="tag warn">В серую</span>':''}<span class="tag ${cls}">${txt}</span></div>
       <div class="mood">Состояние ${bar(staffState(s), moodCol(staffState(s)))}<span class="st ${staffState(s)<45?'bad':''}">${stateLabel(staffState(s))}</span></div>${s.wish?`<div class="wishline">${esc(WISHES[s.wish.k].t)} · ${Math.max(0,s.wish.by-S.day)} дн.</div>`:''}
       <div class="d">${s.today==='sub'?'Подмена на сегодня':s.sched==='every'?'Без выходных':s.sched==='2/2'?'2 через 2':'5/2, выходные: '+s.off.map(d=>WEEKDAYS[d]).join(', ')} · ${fmt(s.today==='sub'?s.subPay:shiftPay(s))} ₽ за смену · смен ${s.shifts}</div></div></button>`);
     card.onclick = () => { if(s.today!=='sub') queueModal({kind:'staff', sid:s.id}, true); };
@@ -6396,8 +6396,8 @@ function renderTeam(p, id){
   S.cands.forEach(c=>{
     const cnt = list.filter(s=>s.role===c.role && s.today!=='sub' && !s.isYou).length, full = cnt >= staffCap(c.role);
     const known = c.interviewed || c.legendId;
-    const qTag = known ? (c.quirk!=='none'?`<span class="tag">${QUIRKS[c.quirk].n}</span>`:'<span class="tag g">Без странностей</span>') : '<span class="tag">Характер: ?</span>';
-    const card = el(`<div class="card staff badge-card cand"><div class="lanyard"></div>${c.interviewed?'<span class="stamp green">СОБЕСЕДОВАН</span>':''}<div class="spr" style="${sprStyle(staffSpr(c),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+    const qTag = known ? (c.quirk!=='none'?`<span class="tag">${qN(c)}</span>`:'<span class="tag g">Без странностей</span>') : '<span class="tag">Характер: ?</span>';
+    const card = el(`<div class="card staff badge-card cand"><div class="lanyard"></div>${c.interviewed?'<span class="stamp green">ПРОВЕРЕНО</span>':''}<div class="spr" style="${sprStyle(staffSpr(c),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:5px;min-width:0">
       <div class="row wrap"><span class="t">${esc(c.name)}</span><span class="tag">${c.role}</span><span class="tag num">ур. ${c.lvl}${!known&&c.claim?' (со слов)':''}</span>${c.legendId?'<span class="tag gold">Легенда</span>':''}${qTag}</div>
       <div class="d">${c.legendId?esc(LEGENDS[c.legendId-1].legend):esc(ROLES[c.role].d)}${known && c.quirk!=='none'?' '+esc(QUIRKS[c.quirk].d):''}</div>
       <div class="d">Смена: ${fmt(shiftPay(Object.assign({}, c, {contract:'white'})))} ₽ официально или ${fmt(shiftPay(Object.assign({}, c, {contract:'grey'})))} ₽ в серую</div>
@@ -6413,7 +6413,7 @@ function renderTeam(p, id){
 }
 function doHire(c, id, contract, cost){
   if(S.money < cost) return;
-  if(c.claim && !c.interviewed){ const said = c.lvl; c.lvl = c.realLvl || c.lvl; c.claim = false; setTimeout(()=>toast(c.name+' говорил, что уровень '+said+'. На деле — '+c.lvl+'. Надо было собеседовать'), 1200); }
+  if(c.claim && !c.interviewed){ const said = c.lvl; c.lvl = c.realLvl || c.lvl; c.claim = false; setTimeout(()=>toast(c.name+' говорил'+he(c,'','а')+', что уровень '+said+'. На деле — '+c.lvl+'. Надо было собеседовать'), 1200); }
   spend(Math.round(cost), 'invest', 'Найм: '+c.name+' ('+c.role.toLowerCase()+')'); hire(c, id, contract); syncScene(id); sfx('buy'); toast(c.name+' в команде. Выходные: '+c.off.map(d=>WEEKDAYS[d]).join(', ')); save(); structDirty = true; renderPanel();
 }
 
@@ -6686,7 +6686,7 @@ function showModal(){
     box.append(el(`<div class="row"><div class="spr" style="${sprStyle(staffSpr(c),60)}"></div><div><div class="eyebrow">Собеседование · ${c.role}</div><h2>${esc(c.name)}</h2></div></div>`));
     const qd = el(`<div class="qa"></div>`); box.appendChild(qd);
     qa.forEach((x,k)=>setTimeout(()=>{ qd.appendChild(el(`<div class="q">${esc(x.q)}</div>`)); setTimeout(()=>{ qd.appendChild(el(`<div class="a">— ${esc(x.a)}</div>`)); sfx('tap'); }, 450); }, k*1100));
-    setTimeout(()=>{ box.insertBefore(el(`<div class="verdict">${c.quirk!=='none'?'Похоже: <b>'+QUIRKS[c.quirk].n+'</b>. '+esc(QUIRKS[c.quirk].d):'Нормальный человек. Подозрительно нормальный.'}${said!==c.lvl?'<br>Говорил, что уровень '+said+'. На деле — <b>'+c.lvl+'</b>.':'<br>Уровень '+c.lvl+' подтвердился.'}</div>`), box.lastElementChild); structDirty = true; save(); }, qa.length*1100 + 300);
+    setTimeout(()=>{ box.insertBefore(el(`<div class="verdict">${c.quirk!=='none'?'Похоже: <b>'+qN(c)+'</b>. '+esc(QUIRKS[c.quirk].d):he(c,'Нормальный человек. Подозрительно нормальный.','Нормальный человек. Подозрительно нормальная.')}${said!==c.lvl?'<br>Говорил'+he(c,'','а')+', что уровень '+said+'. На деле — <b>'+c.lvl+'</b>.':'<br>Уровень '+c.lvl+' подтвердился.'}</div>`), box.lastElementChild); structDirty = true; save(); }, qa.length*1100 + 300);
     box.appendChild(btn('Понятно', closeModal));
   }
   else if(m.kind==='level'){
@@ -6828,9 +6828,9 @@ function staffModal(box, m, btn){
   const now = Date.now(); const [cls, txt] = staffStatus(s);
   const pi = promoInfo(s), ti = trainInfo(s);
   box.append(el(`<div class="row"><div class="spr" style="${sprStyle(staffSpr(s),64)}"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1">
-    <h2>${esc(s.name)}</h2><div class="row wrap"><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl} из ${RANK_CAP[s.rank]}</span>${s.legendId?'<span class="tag gold">Легенда</span>':''}${s.quirk!=='none'?`<span class="tag">${QUIRKS[s.quirk].n}</span>`:''}<span class="tag ${cls}">${txt}</span></div>
-    <div class="d">Скорость ×${staffSpeed(s).toFixed(2).replace('.',',')} · смен ${s.shifts} · прогулов ${s.absences} · ${s.contract==='grey'?'в серую':'оформлен'} · ${fmt(shiftPay(s))} ₽ за смену</div></div></div>`));
-  { const v = staffState(s); box.append(el(`<div class="mood">Состояние ${bar(v, moodCol(v))}<span class="st ${v<45?'bad':''}">${stateLabel(v)}</span></div>`), el(`<div class="d">${s.fatigue>70?'Сильно устал. ':''}${s.mood<40?'Настроение плохое. ':''}${(s.pat||100)<40?'Терпение на исходе. ':''}${v<32?'Если так пойдёт дальше — напишет заявление.':v>=80?'Работает с удовольствием, быстрее обычного.':''}</div>`)); }
+    <h2>${esc(s.name)}</h2><div class="row wrap"><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl} из ${RANK_CAP[s.rank]}</span>${s.legendId?'<span class="tag gold">Легенда</span>':''}${s.quirk!=='none'?`<span class="tag">${qN(s)}</span>`:''}<span class="tag ${cls}">${txt}</span></div>
+    <div class="d">Скорость ×${staffSpeed(s).toFixed(2).replace('.',',')} · смен ${s.shifts} · прогулов ${s.absences} · ${s.contract==='grey'?'в серую':he(s,'оформлен','оформлена')} · ${fmt(shiftPay(s))} ₽ за смену</div></div></div>`));
+  { const v = staffState(s); box.append(el(`<div class="mood">Состояние ${bar(v, moodCol(v))}<span class="st ${v<45?'bad':''}">${stateLabel(v)}</span></div>`), el(`<div class="d">${s.fatigue>70?'Сильно '+he(s,'устал','устала')+'. ':''}${s.mood<40?'Настроение плохое. ':''}${(s.pat||100)<40?'Терпение на исходе. ':''}${v<32?'Если так пойдёт дальше — напишет заявление.':v>=80?'Работает с удовольствием, быстрее обычного.':''}</div>`)); }
   if(s.wish){ const w = wishOf(s), c = wishCost(s); const wb = el(`<div class="wish"><b>${esc(w.t)}</b><span>${esc(w.d)} Осталось ${Math.max(0, s.wish.by - S.day)} дн.</span><button class="btn">${s.wish.k==='raise'?'Поднять ставку на 10%':s.wish.k==='dayoff'?'Дать выходной завтра':s.wish.k==='training'?'Записать на курсы: '+fmt(c)+' ₽':s.wish.k==='bonus'?'Выдать премию: '+fmt(c)+' ₽':'Поговорить пять минут'}</button></div>`); wb.querySelector('button').onclick = () => { const r = fulfillWish(s); if(r) toast(r); sfx('buy'); save(); $('#modalRoot').innerHTML=''; showModal(); }; box.appendChild(wb); }
   if(s.legendId) box.appendChild(el(`<div class="d" style="color:#e9c46a">${esc(LEGENDS[s.legendId-1].legend)}</div>`));
   if(s.quirk!=='none') box.appendChild(el(`<div class="d">${esc(QUIRKS[s.quirk].d)}</div>`));
@@ -6845,7 +6845,7 @@ function staffModal(box, m, btn){
   if(onShift){
     act('Подогнать','Быстрее на минуту, настроение −10', ()=>{ s.distract = null; s.boostUntil = now+60000; s.boostMul = 1.5; s.mood = clamp(s.mood-10,0,100); s.pat = clamp(s.pat-15,0,100); checkPatience(s); }, 'ghost');
     const ff = freshFault(s);
-    if(ff){ act('Дать пиздюлей', 'За дело: «'+FAULTS[ff.k].t.toLowerCase()+'». Три дня как шёлковый', ()=>{ toast(punish(s,'hit')); s.distract = null; checkPatience(s); }, 'red');
+    if(ff){ act('Дать пиздюлей', 'За дело: «'+FAULTS[ff.k].t.toLowerCase()+'». Три дня как '+he(s,'шёлковый','шёлковая'), ()=>{ toast(punish(s,'hit')); s.distract = null; checkPatience(s); }, 'red');
       act('Поговорить', 'Мягко. Поможет на день', ()=>{ toast(punish(s,'talk')); s.distract = null; }, 'ghost');
       act('Штраф '+fmt(Math.round(shiftPay(s)*0.3/10)*10)+' ₽', 'Из зарплаты. Часто — жди трудовую', ()=>{ toast(punish(s,'fine')); s.distract = null; }, 'ghost'); }
     else act('Дать пиздюлей просто так', 'Без повода: обидится вся смена', ()=>{ toast(punish(s,'hit')); s.distract = null; checkPatience(s); }, 'red ghost');
@@ -6863,7 +6863,7 @@ function staffModal(box, m, btn){
   if(s.contract==='grey'){ const oc = shiftPay(s)*2; act('Оформить официально', fmt(oc)+' ₽, ставка +30%', ()=>{ if(S.money<oc) return; spend(oc,'other','Оформление: '+s.name); s.contract='white'; s.mood = clamp(s.mood+10,0,100); }, 'ghost', S.money<oc); }
   if(S.rooms.length>1){ act('Перевести в другой зал', 'В следующий по списку', ()=>{ const ids = S.rooms.map(r=>r.id); s.room = ids[(ids.indexOf(s.room)+1)%ids.length]; s.off = pickOffDays(s.role, s.room); syncScene(S.active); toast(s.name+' теперь в зале «'+roomDef(s.room).n+'»'); }, 'ghost'); }
   const fire = el(`<button class="btn ghost">Уволить<small>${s.contract==='grey'?'Может нажаловаться в трудовую':'По соглашению сторон'}</small></button>`);
-  fire.onclick = () => { if(!fire.dataset.sure){ fire.dataset.sure = '1'; fire.firstChild.textContent = 'Точно уволить?'; return; } applyFx({fire:1}, {sid:s.id}); S.staff.filter(x=>x.room===s.room).forEach(x=>x.mood = clamp(x.mood-4,0,100)); toast(s.name+' уволен'); sfx('bad'); achCheck(); save(); closeModal(); };
+  fire.onclick = () => { if(!fire.dataset.sure){ fire.dataset.sure = '1'; fire.firstChild.textContent = 'Точно уволить?'; return; } applyFx({fire:1}, {sid:s.id}); S.staff.filter(x=>x.room===s.room).forEach(x=>x.mood = clamp(x.mood-4,0,100)); toast(s.name+' '+he(s,'уволен','уволена')); sfx('bad'); achCheck(); save(); closeModal(); };
   acts.appendChild(fire);
   box.append(acts, btn('Закрыть', closeModal, 'ghost'));
 }
@@ -7949,11 +7949,11 @@ MODAL15.carpet = (box, m, btn) => {
     const hi = Math.max(st.A, st.B), lo = Math.min(st.A, st.B), angry = st.A >= st.B ? a : b, calm = angry === a ? b : a;
     if(st.R < 25 || (st.A > 60 && st.B > 60 && st.R < 45 && chance(0.6))){ res = 'united'; [a,b].forEach(s=>s.mood = clamp(s.mood-20,0,100)); meter('chaos', 3); tSetPair(a, b, 20); chips.push(['Оба против тебя', false]); }
     else if(st.A < 35 && st.B < 35){ res = 'peace'; [a,b].forEach(s=>s.mood = clamp(s.mood+15,0,100)); tSetPair(a, b, 0); meter('soul', 2); chips.push(['Мир', true], ['Настроение обоих +15', true]); }
-    else if(hi - lo > 40 && hi >= 70){ res = 'hurt'; angry.mood = clamp(angry.mood-30,0,100); calm.mood = clamp(calm.mood+8,0,100); chips.push([angry.name+' обиделся: настроение −30', false]); tSetPair(a, b, 0); }
+    else if(hi - lo > 40 && hi >= 70){ res = 'hurt'; angry.mood = clamp(angry.mood-30,0,100); calm.mood = clamp(calm.mood+8,0,100); chips.push([angry.name+' '+he(angry,'обиделся','обиделась')+': настроение −30', false]); tSetPair(a, b, 0); }
     else if(st.A >= 70 && st.B >= 70){ res = 'fight'; [a,b].forEach(s=>{ s.vacation = S.day + 1; s.mood = clamp(s.mood-15,0,100); }); repAdd(-0.05); meter('chaos', 4); tSetPair(a, b, 30); chips.push(['Оба отстранены на день', false], ['Рейтинг −0,05', false]); }
     else { res = 'meh'; tSetPair(a, b, tension(a.id, b.id) * 0.4); chips.push(['Напряжение ниже', true]); }
     szAdd(10, 'carpet');
-    const text = res==='hurt' ? angry.name+' '+pick(['ушёл в подсобку и хлопнул дверью. Вернётся, но обиду запомнит','демонстративно надел наушники и молчит до конца смены','сказал «понятно» таким тоном, что всем стало понятно']) : pick(CARPET_END[res]);
+    const text = res==='hurt' ? angry.name+' '+pick([he(angry,'ушёл','ушла')+' в подсобку и '+he(angry,'хлопнул','хлопнула')+' дверью. Вернётся, но обиду запомнит','демонстративно '+he(angry,'надел','надела')+' наушники и молчит до конца смены',he(angry,'сказал','сказала')+' «понятно» таким тоном, что всем стало понятно']) : pick(CARPET_END[res]);
     st.out = {res, text, chips, title:{peace:'Мир',hurt:'Обида',united:'Против тебя',fight:'Драка',meh:'Ничья'}[res]}; st.done = true; save();
     finish();
   };
@@ -8069,7 +8069,7 @@ function onTrack(r){
     else if(o.op==='set'){ MONEY_CTX = {cat:'admin', out:'other', why:'Баланс выставлен администрацией'}; S.money = a; MONEY_CTX = null; toast('Администрация установила баланс '+fmt(a)+' ₽'); }
     else if(o.op==='ent'){ refreshEntitlements(); toast('Покупки обновлены'); }
     else if(o.op==='msg'){ queueModal({kind:'adminmsg', text:tx}); }
-    else if(o.op==='staff'){ const st = makePrizeStaff(Math.max(5, Math.min(50, a||20))); toast('В команду пришёл '+st.name+', уровень '+st.lvl+'. '+tx); sfx('level'); syncScene('main'); }
+    else if(o.op==='staff'){ const st = makePrizeStaff(Math.max(5, Math.min(50, a||20))); toast('В команду '+he(st,'пришёл','пришла')+' '+st.name+', уровень '+st.lvl+'. '+tx); sfx('level'); syncScene('main'); }
     else if(o.op==='rename'){ S.name = String(tx||S.name).slice(0,28); toast('Название кофейни изменено: «'+S.name+'»'); setTimeout(renderGame, 50); }
     else if(o.op==='fpraise'){ S.reviews = S.reviews||[]; S.reviews.unshift({id:S.uid++, day:S.day, stars:5, author:tx||'Друг', text:'Зашёл к другу. Кофе отличный, бариста живой, кот наглый. Пять звёзд.', reply:null}); repAdd(0.05); toast((tx||'Друг')+' оставил отзыв на пять звёзд'); }
     else if(o.op==='fgift'){ income(a, 'friends', (tx||'Друг')+' оставил чаевые'); toast((tx||'Друг')+' оставил чаевые '+fmt(a)+' ₽'); sfx('coin'); }
@@ -9007,7 +9007,7 @@ onTrack = function(r){
   try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const o of r.ops){
     if(o.op==='sp'){ const a = Math.max(0, Math.round(Number(o.amount)||0)); if(a){ const z = szState(); z.sp += a; if(typeof badgeTick==='function') badgeTick(); toast('Подарок: очки сезона +'+fmt(a)); } }
     else if(o.op==='badge' && o.text){ const t = String(o.text).slice(0, 40); badgeAdd('adm_'+t.replace(/\s+/g,'_').slice(0, 30), t, 'Особый значок'); }
-    else if(o.op==='cand'){ const n = Math.max(5, Math.min(50, Math.round(Number(o.amount)||10))); const st = makePrizeStaff(n); syncScene('main'); toast('Подарок: '+st.name+', уровень '+st.lvl+', вышел на смену'); } } }catch(e){ console.error(e); }
+    else if(o.op==='cand'){ const n = Math.max(5, Math.min(50, Math.round(Number(o.amount)||10))); const st = makePrizeStaff(n); syncScene('main'); toast('Подарок: '+st.name+', уровень '+st.lvl+', '+he(st,'вышел','вышла')+' на смену'); } } }catch(e){ console.error(e); }
   return _onTrack22(r);
 };
 
@@ -9502,15 +9502,15 @@ function marketSection(id){
   mkLoad();
   const box = el(`<div><div class="h chalk">Трансферное окно</div><div class="empty" style="font-size:12px">Сотрудники других игроков. Покупаешь — человек переходит к тебе со своим уровнем и характером. Своего можно выставить из его карточки.</div></div>`);
   for(const it of MARKET.mine){ const c = el(`<div class="card"><div class="row wrap"><span class="t">${esc(it.staff.name)}</span><span class="tag">${esc(it.staff.role)}</span><span class="tag num">ур. ${it.staff.lvl}</span><span class="sp"></span><span class="tag ${it.status==='sold'?'g':''}">${it.status==='sold'?'Продан':'Выставлен'}</span></div><div class="d">${it.status==='sold'?'Купил'+'а кофейня «'+esc(it.buyer_cafe||'?')+'». Деньги придут при следующем отчёте.':'Цена '+fmt(it.price)+' ₽. Пока ждёт покупателя.'}</div>${it.status==='open'?'<div class="row"><button class="btn ghost">Снять с продажи и вернуть</button></div>':''}</div>`);
-    const b = c.querySelector('button'); if(b) b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'cancel', id:it.id}); if(r && r.ok && r.staff){ const s = mkUnpack(r.staff); hire(s, 'main', 'white'); syncScene('main'); toast(s.name+' вернулся в команду'); save(); } else toast((r && r.error) || 'Не получилось'); mkLoad(true); };
+    const b = c.querySelector('button'); if(b) b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'cancel', id:it.id}); if(r && r.ok && r.staff){ const s = mkUnpack(r.staff); hire(s, 'main', 'white'); syncScene('main'); toast(s.name+' '+he(s,'вернулся','вернулась')+' в команду'); save(); } else toast((r && r.error) || 'Не получилось'); mkLoad(true); };
     box.appendChild(c); }
   const others = MARKET.list.slice(0, 12);
   if(!others.length) box.appendChild(el(`<div class="empty">${MARKET.at ? 'Пока никто никого не продаёт.' : 'Загружаем…'}</div>`));
   for(const it of others){ const s = it.staff; const cnt = staffIn(id).filter(x=>x.role===s.role && !x.isYou).length, full = cnt >= staffCap(s.role);
-    const q = s.quirk && s.quirk!=='none' && QUIRKS[s.quirk] ? QUIRKS[s.quirk].n : 'без странностей';
+    const q = s.quirk && s.quirk!=='none' && QUIRKS[s.quirk] ? qN(s) : 'без странностей';
     const c = el(`<div class="card staff"><div class="spr" style="${sprStyle(s.spr, 48)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${esc(s.role)}</span><span class="tag num">ур. ${s.lvl}</span>${s.legendId||s.prize?'<span class="tag gold">Легенда</span>':''}</div><div class="d">${esc(q)} · из «${esc(it.seller_cafe||'?')}»</div><div class="row">${full?'<span class="tag">Мест на эту роль нет</span>':btnHtml('Купить · '+fmt(it.price)+' ₽', it.price, S.money < it.price)}</div></div></div>`);
     const b = c.querySelector('button[data-cost]'); if(b) b.onclick = async () => { if(S.money < it.price){ toast('Не хватает денег'); return; } b.disabled = true; const r = await mkApi({op:'buy', id:it.id});
-      if(r && r.ok && r.staff){ spend(it.price, 'invest', 'Трансфер: '+r.staff.name); const ns = mkUnpack(r.staff); hire(ns, id, 'white'); syncScene(id); sfx('buy'); toast(ns.name+' перешёл к тебе из «'+(it.seller_cafe||'?')+'»'); save(); } else toast((r && r.error) || 'Уже купили'); mkLoad(true); };
+      if(r && r.ok && r.staff){ spend(it.price, 'invest', 'Трансфер: '+r.staff.name); const ns = mkUnpack(r.staff); hire(ns, id, 'white'); syncScene(id); sfx('buy'); toast(ns.name+' '+he(ns,'перешёл','перешла')+' к тебе из «'+(it.seller_cafe||'?')+'»'); save(); } else toast((r && r.error) || 'Уже купили'); mkLoad(true); };
     box.appendChild(c); }
   return box;
 }
@@ -9523,7 +9523,7 @@ staffModal = function(box, m, btn){
   const wrap = el(`<div class="card" style="margin-top:8px"><div class="t">Трансферное окно</div><div class="d">Выставить ${esc(s.name)} на продажу другим игрокам. Пока висит объявление, сотрудник уходит из команды. Снять можно в любой момент — вернётся. Комиссия площадки 10%.</div><div class="row wrap mk-p"></div></div>`);
   const row = wrap.querySelector('.mk-p');
   [[0.7,'Дёшево'],[1,'Норма'],[1.5,'Дорого']].forEach(([k, n])=>{ const price = Math.round(v*k/1000)*1000; const b = el(`<button class="btn ghost">${n} · ${fmt(price)} ₽</button>`);
-    b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'list', staff:mkPack(s), price, cafe:S.name}); if(r && r.ok){ removeStaff(s.id); syncScene(s.room||'main'); toast(s.name+' выставлен за '+fmt(price)+' ₽'); save(); closeModal(); mkLoad(true); } else { b.disabled = false; toast((r && r.error) || 'Не получилось'); } };
+    b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'list', staff:mkPack(s), price, cafe:S.name}); if(r && r.ok){ removeStaff(s.id); syncScene(s.room||'main'); toast(s.name+' '+he(s,'выставлен','выставлена')+' за '+fmt(price)+' ₽'); save(); closeModal(); mkLoad(true); } else { b.disabled = false; toast((r && r.error) || 'Не получилось'); } };
     row.appendChild(b); });
   box.appendChild(wrap);
 };
@@ -9665,6 +9665,65 @@ const _saveCloud25 = saveCloud;
 saveCloud = function(){ const n = Date.now(); if(n - _cloudGate < 90000) return; _cloudGate = n; _saveCloud25(); };
 window.addEventListener('visibilitychange', ()=>{ if(document.hidden){ _cloudGate = 0; try{ saveCloud(); }catch(e){} } });
 window.addEventListener('pagehide', ()=>{ _cloudGate = 0; try{ saveCloud(); }catch(e){} }, {capture:true});
+function eqBroke(k){ return {machine:'сломалась', terminal:'сломался', kkt:'сломалась', fridge:'сломался'}[k] || 'сломано'; }
+const Q_F = {late:'Опаздунья', talker:'Болтушка', smoker:'Курильщица', blogger:'Тиктокерша', workaholic:'Трудоголичка', lover:'Влюбчивая'};
+function qN(s){ const q = QUIRKS[s.quirk]; if(!q) return ''; return s.sex==='f' && Q_F[s.quirk] ? Q_F[s.quirk] : q.n; }
+function distN(s){ const k = s.distract && s.distract.kind; if(s.sex==='f') return {phone:'Сидит в телефоне', sleep:'Уснула', smoke:'Ушла курить', chat:'Болтает с гостем'}[k] || ''; return DISTRACT[k] || ''; }
+
+/* род в текстах событий: если сотрудник — женщина, глаголы после имени в женском роде */
+const FEM_SHORT = {'уволен':'уволена','доволен':'довольна','растроган':'растрогана','разочарован':'разочарована','обижен':'обижена','рад':'рада','готов':'готова','согласен':'согласна','занят':'занята','уверен':'уверена','счастлив':'счастлива','пьян':'пьяна','влюблён':'влюблена'};
+const FEM_SPECIAL = {'пришёл':'пришла','ушёл':'ушла','зашёл':'зашла','вышел':'вышла','нашёл':'нашла','перешёл':'перешла','подошёл':'подошла','прошёл':'прошла','вошёл':'вошла','унёс':'унесла','принёс':'принесла','привёз':'привезла','смог':'смогла','помог':'помогла','лёг':'легла','сел':'села','съел':'съела','затаил':'затаила'};
+const NOT_VERB = new Set(['прогул','сериал','скандал','оригинал','бокал','пенал','вокал','фестивал','крокодил','портал','терминал','штурвал','подвал','интервал','арсенал','криминал','минимал','максимал','стол','зал','пол','вокзал','сигнал','канал','стул','угол','мол','тыл','пыл','ил','бал','финал','капитал','персонал','журнал','материал','идеал','кал','тотал']);
+function femWord(w){ const lw = w.toLowerCase(); let r = null;
+  if(FEM_SPECIAL[lw]) r = FEM_SPECIAL[lw];
+  else if(FEM_SHORT[lw]) r = FEM_SHORT[lw];
+  else if(NOT_VERB.has(lw) || lw.length < 4) return w;
+  else if(/(ал|ил|ел|ул|ыл|ял|ол)ся$/.test(lw)) r = lw.slice(0,-2)+'ась';
+  else if(/(ал|ил|ел|ул|ыл|ял)$/.test(lw)) r = lw+'а';
+  else return w;
+  return w[0] === w[0].toUpperCase() ? r[0].toUpperCase()+r.slice(1) : r; }
+function femAfter(text, name){ if(!name) return text; let out = '', i = 0; const PREP = /(^|[\s«(])(к|у|от|для|с|со|о|об|про|за|при|без|до|по|на|в)\s*$/i;
+  while(true){ const j = text.indexOf(name, i); if(j < 0){ out += text.slice(i); break; }
+    out += text.slice(i, j + name.length); i = j + name.length;
+    if(PREP.test(text.slice(Math.max(0, j-6), j))) continue;
+    let k = i; while(k < text.length && !/[.!?:;«»"\n]/.test(text[k]) && !(text[k]===',' && /^,\s*[А-ЯЁ]/.test(text.slice(k, k+3)))) k++;
+    const seg = text.slice(i, k);
+    if(/\bи\s+[А-ЯЁ][а-яё]+\s/.test(seg.slice(0, 12))){ continue; }
+    out += seg.replace(/(^|[^А-Яа-яЁё])([А-Яа-яЁё]+)/g, (m0, p, w, off)=>{ const prev = (seg.slice(0, off).match(/([А-Яа-яЁё]+)\s*$/) || [])[1]; if(prev && /^(за|на|в|во|у|с|со|к|ко|о|об|по|от|до|из|без|для|про|через|при|над|под)$/i.test(prev)) return m0; return p + femWord(w); }); i = k; }
+  return out; }
+const _fillText25 = fillText;
+fillText = function(str, inc){ let t = _fillText25(str, inc); try{
+  const st = inc.sid ? S.staff.find(x=>x.id===inc.sid) : null, st2 = inc.sid2 ? S.staff.find(x=>x.id===inc.sid2) : null;
+  if(st && st.sex==='f'){ t = femAfter(t, st.name);
+    const d = evDef(inc), x = (d && typeof d.x === 'string') ? d.x : '';
+    if(inc.id === 's3_secret'){ t = t.replace(/Я сын/g, 'Я дочь').replace(/Я ушёл/g, 'Я ушла').replace(/Мой сын/g, 'Моя дочь'); }
+    if(x.includes('{s}') && !x.includes('{s2}') && !/Палыч|Арсени|Виктор|Степаныч|Костя|Лев|Ашот|[Гг]ость|[Гг]ид|[Дд]ед|[Кк]урьер|[Бб]логер|[Мм]ужчин|бывший/.test(t))
+      t = t.replace(/(^|[^А-Яа-яЁё])(него|нему|ним|нём|его|ему|он|Него|Его|Ему|Он)(?=[^А-Яа-яЁё]|$)/g, (m0, p, w)=>{ const r = {'него':'неё','нему':'ней','ним':'ней','нём':'ней','его':'её','ему':'ей','он':'она'}[w.toLowerCase()]; return p + (w[0] !== w[0].toLowerCase() ? r[0].toUpperCase()+r.slice(1) : r); }); }
+  if(st2 && st2.sex==='f') t = femAfter(t, st2.name); }catch(e){} return t; };
+
+/* реплики: женский или мужской род по говорящему */
+FEM_SPECIAL['сам'] = 'сама'; FEM_SPECIAL['один'] = 'одна'; FEM_SPECIAL['устал'] = 'устала';
+const MASC_SPECIAL = {'пришла':'пришёл','ушла':'ушёл','зашла':'зашёл','вышла':'вышел','нашла':'нашёл','сама':'сам','одна':'один','готова':'готов','уверена':'уверен','рада':'рад','довольна':'доволен','согласна':'согласен','смогла':'смог','помогла':'помог','легла':'лёг','влюблена':'влюблён'};
+const NOT_FVERB = new Set(['сила','пила','могила','стрела','игла','мгла','скала','пчела','юла','мула','ангела','школа','земля','весла','дела','тела','села','масла','числа','смысла','стола','зала','пола','сигнала','канала','угла','дятла','козла','орла','посла','мила']);
+function mascWord(w){ const lw = w.toLowerCase(); let r = null; if(NOT_FVERB.has(lw)) return w;
+  if(MASC_SPECIAL[lw]) r = MASC_SPECIAL[lw];
+  else if(/(а|и|е|у|ы|я)лась$/.test(lw) && lw.length > 5) r = lw.slice(0,-3)+'ся';
+  else if(/(а|и|е|у|ы|я)ла$/.test(lw) && lw.length > 4) r = lw.slice(0,-1);
+  else return w;
+  return w[0] === w[0].toUpperCase() ? r[0].toUpperCase()+r.slice(1) : r; }
+function sayAs(text, sex){ if(!text || !sex) return text;
+  const conv = sex === 'f' ? femWord : mascWord;
+  return String(text).replace(/(^|[.!?…]\s*)([^.!?…]*)/g, (m0, p, sent)=>{
+    const mm = sent.match(/(^|[^А-Яа-яЁё])(я|Я)(?=[^А-Яа-яЁё]|$)/); if(!mm) return m0;
+    const at = mm.index + mm[0].length, head = sent.slice(0, at), tail = sent.slice(at);
+    const t2 = tail.replace(/(^|[^А-Яа-яЁё])([А-Яа-яЁё]+)/g, (q0, pp, w, off)=>{ const prev = (tail.slice(0, off).match(/([А-Яа-яЁё]+)\s*$/) || [])[1]; if(prev && /^(за|на|в|во|у|с|со|к|ко|о|об|по|от|до|из|без|для|про|через|при|над|под|ты|вы|он|она|они|кто|все|тот)$/i.test(prev)) return q0; if(/^(ты|вы|он|она|они|кто)$/i.test(w)) return q0; return pp + conv(w); });
+    return p + head + t2; }); }
+function speakerSex(follow){ if(!follow) return null; try{
+  if(follow.spr != null && typeof follow.spr === 'number' && !follow.home) return sexOf(follow.spr);
+  for(const id in RT){ const r = RT[id]; for(const sid in (r.staff||{})) if(r.staff[sid] === follow){ const s = S.staff.find(x=>String(x.id)===String(sid)); return s ? s.sex : null; } }
+  }catch(e){} return null; }
+const _bubble25 = bubble2;
+bubble2 = function(x, y, text, ms, follow){ try{ const sx = speakerSex(follow); if(sx) text = sayAs(text, sx); }catch(e){} return _bubble25(x, y, text, ms, follow); };
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
