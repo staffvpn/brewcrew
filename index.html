@@ -9576,6 +9576,21 @@ setInterval(()=>{ try{ if(!modals.length) streakCheck(); }catch(e){} }, 5*60000)
 const _giveBonus25 = giveBonus;
 giveBonus = function(s, wish){ S.c.lastBonusDay = S.day; return _giveBonus25(s, wish); };
 
+/* hall2: тап по посуде на столиках и диванах */
+cv.addEventListener('pointerdown', e => {
+  if(S.active !== 'hall2' || sheet) return;
+  const r = rt('hall2'); if(!r || !r.dirty) return;
+  const b = cv.getBoundingClientRect(); const x = OX + (e.clientX-b.left)/b.width*VW, y = (e.clientY-b.top)/b.height*H;
+  let best = null, bd = 1e9;
+  for(const k in r.dirty){ const s = H2_SLOTS[+k.slice(1)]; if(!s) continue;
+    let cx, cy; if(s[3] < 0){ const sf = H2_SOFAS[s[5]]; cx = s[0]; cy = sf ? sf.y + 16 : s[1] + 16; } else { const t = H2_TABLES[s[3]]; cx = t.x + (s[4] ? 8 : -8); cy = t.y - 9; }
+    const dx = Math.abs(x-cx), dy = Math.abs(y-cy), w = s[3] < 0 ? 16 : 22;
+    if(dx < w && dy < (s[3] < 0 ? 24 : 20) && dx+dy < bd){ bd = dx+dy; best = {k, cx, cy}; } }
+  if(!best) return;
+  e.stopImmediatePropagation(); swipe0 = {x:e.clientX, y:e.clientY};
+  cleanDirty('hall2', best.k); tapFx(best.cx, best.cy-8); sfx('tap'); addXp(2); taskProg('clean', 1);
+}, {capture:true});
+
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
   // покрытие недели и график — под одну кнопку
