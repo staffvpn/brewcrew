@@ -9290,12 +9290,36 @@ function lizaTick(dt){
     bubble2(0, 0, pick(['Привет! Можно я тут осмотрюсь? Кот тоже хочет.', 'Здравствуйте! Я на минутку. Кот на дольше.']), 3200, LZRUN); return; }
   const m = LZRUN; m.t += dt;
   if(m.stage==='in'){ m.walk = true; if(moveTo(m, m.tx, m.ty, 44, dt)){ m.walk = false; m.stage = 'ask'; queueModal({kind:'lzask'}, true); } return; }
-  if(m.stage==='look'){ m.left -= dt; m.flash = (m.flash||0) - dt; if(m.flash <= 0){ m.flash = R(2.5, 5); m.fx = 0.25; }
-    if(m.fx > 0) m.fx -= dt; if(Math.random() < dt*0.25){ m.flip = !m.flip; }
-    if(m.left <= 0){ lzFinish(); } return; }
+  if(m.stage==='look'){ lzWalk(m, dt); return; }
   if(m.stage==='out'){ m.walk = true; m.flip = false; if(moveTo(m, DOOR[0] + 14, DOOR[1], 50, dt)) LZRUN = null; }
 }
-function lzStart(focus){ const m = LZRUN; if(!m) return; m.focus = focus; m.stage = 'look'; m.left = 40; bubble2(0, 0, pick(['Так, сейчас сфоткаю…', 'Минутку, ловлю свет.', 'Кот, не трогай пенку.']), 2600, m); }
+function lzStops(focus){
+  const by = BAR_BOT + 16, staff = S.staff.filter(x=>!x.isYou && x.today==='work' && x.room==='main');
+  const st = staff.length ? pick(staff) : null; const dirty = dirtLevel('main') > 0.35;
+  const t = TABLES.length ? pick(TABLES) : {x:120, y:BAR_BOT+90};
+  const bar = {x:168, y:by, act:'cup', dur:5.5, flipTo:'up', say:[pick(['Можно ваш самый честный эспрессо?', 'Мне то, что вы сами пьёте после смены.', 'Раф есть? Кот спрашивает.']), pick(['Так… крема плотная. Записываю.', 'М-м. Кислинка, но приятная.', 'Кот хотел лизнуть. Не дала.'])]};
+  const show = {x:104, y:by, act:'photo', dur:4, say:[pick(['А что у вас в витрине?', 'Это пирожное или произведение искусства?', 'Сфоткаю десерты, пока кот не добрался.'])]};
+  const tab = {x:t.x + 22, y:t.y + 6, act:'sit', dur:4.5, say:[pick(['Удобно. Кот одобряет стул.', 'Проверяю, качается ли стол. Не качается — плюс.', 'Сижу как гость. Слушаю, о чём тут говорят.'])]};
+  const floor = {x:R(60, 230), y:BAR_BOT + R(60, 140), act:'look', dur:3.5, say:[dirty ? pick(['Пол сегодня немного липкий. Ничего, бывает.', 'Кот не хочет спускаться на пол. Это знак.']) : pick(['Чисто. Кот даже лапы не поджал.', 'Пол блестит. Можно смотреться.'])]};
+  const win = {x:40, y:BAR_BOT + 40, act:'photo', dur:4, say:[pick(['Свет из окна — мечта для фото.', 'Отсюда видно весь зал. Идеальный кадр.'])]};
+  const tm = st ? {x:Math.max(30, Math.min(260, (rt('main').staff[st.id]||{x:150}).x)), y:by, act:'talk', dur:5, say:[pick([st.name+', давно тут работаете?', st.name+', а что вы любите варить больше всего?', st.name+', честно: тут хорошо работать?']), st.mood >= 60 ? pick(['Улыбается. Хороший знак.', 'Отвечает с удовольствием. Записываю.']) : pick(['Вздохнул. Понятно, без слов.', 'Сказал «нормально». Запомню интонацию.'])]} : null;
+  let list = focus==='drink' ? [bar, show, floor, tab] : focus==='interior' ? [win, tab, floor, show] : [tm || floor, bar, tab, floor];
+  if(focus!=='drink' && !list.includes(bar)) list.splice(1, 0, bar);
+  return list.filter(Boolean).slice(0, 5);
+}
+function lzWalk(m, dt){
+  if(!m.route){ m.route = lzStops(m.focus); m.ri = 0; m.wait = 0; }
+  m.fx = Math.max(0, (m.fx||0) - dt);
+  const stp = m.route[m.ri];
+  if(!stp){ m.left = 0; lzFinish(); return; }
+  m.left = m.route.slice(m.ri).reduce((a,x)=>a + x.dur + 2.5, 0) - (m.wait||0);
+  if(!m.at){ m.walk = true; m.act = null; if(moveTo(m, stp.x, stp.y, 46, dt)){ m.walk = false; m.at = true; m.wait = 0; m.si = 0; m.act = stp.act; m.flip = stp.x < 150; bubble2(0, 0, stp.say[0], 2600, m); } return; }
+  m.wait += dt;
+  if(stp.say[1] && m.si === 0 && m.wait > 2.7){ m.si = 1; bubble2(0, 0, stp.say[1], 2400, m); }
+  if(stp.act==='photo' || stp.act==='look'){ m.flash = (m.flash||0) - dt; if(m.flash <= 0){ m.flash = R(1.2, 2.2); m.fx = 0.22; } }
+  if(m.wait >= stp.dur){ m.at = false; m.ri++; m.act = null; }
+}
+function lzStart(focus){ const m = LZRUN; if(!m) return; m.focus = focus; m.stage = 'look'; m.route = null; m.at = false; m.left = 30; bubble2(0, 0, pick(['Так, пройдусь посмотрю.', 'Начнём обход. Кот, держись.', 'Сейчас всё изучу. Не обращайте внимания.']), 2400, m); }
 function lzFinish(){
   const m = LZRUN; if(!m) return; const v = lzState(); const rv = lzReview(m.focus || 'drink');
   v.reviews.push(rv); v.n++; v.met = true; v.next = Date.now() + 3*86400000;
@@ -9308,8 +9332,13 @@ function drawLiza(){
   const m = LZRUN; if(!m || S.active !== 'main' || !lizaReady) return; const [b] = walkPose(m);
   shadow(m.x, m.y, 9); const h = SPR_H*1.5, w = h * LIZA_IMG.width / LIZA_IMG.height;
   ctx.save(); ctx.translate(m.x, m.y - b); if(m.flip) ctx.scale(-1, 1); ctx.drawImage(LIZA_IMG, -w/2, -h, w, h); ctx.restore();
-  if(m.stage==='look'){ RR(m.x + (m.flip?-14:6), m.y - h*0.62, 8, 6, 1, '#2a2a2e'); if(m.fx > 0){ glow2(m.x + (m.flip?-10:10), m.y - h*0.6, 26, '255,255,255', 0.6); }
-    const t = Math.max(0, Math.ceil(m.left)); RR(m.x - 22, m.y + 4, 44, 10, 3, 'rgba(30,20,14,.7)'); txt('обзор · '+t, m.x, m.y + 11.5, '700 6px "Golos Text",sans-serif', '#f3e8d3', 'center'); }
+  if(m.stage==='look'){
+    const hx = m.x + (m.flip?-11:11), hy = m.y - h*0.6;
+    if(m.act==='photo' || m.act==='look'){ RR(hx-4, hy-3, 8, 6, 1, '#2a2a2e'); EL(hx, hy, 1.6, 1.6, '#6a8ab0'); if(m.fx > 0) glow2(hx, hy, 28, '255,255,255', 0.65); }
+    if(m.act==='cup' && m.wait > 1.2){ RR(hx-3, hy-1, 6, 7, 1.5, '#f4efe6'); rect(hx-3, hy-1, 6, 1.5, '#7a4a2a'); for(let k=0;k<2;k++){ const tt = (performance.now()/600 + k*0.5) % 1; ctx.fillStyle = `rgba(255,255,255,${0.5*(1-tt)})`; ctx.fillRect(hx-1+k*2, hy-4-tt*8, 1.2, 2); } }
+    if(m.act==='talk'){ for(let k=0;k<3;k++){ ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(m.x + (m.flip?-16:16) + k*3, m.y - h - 2 - Math.sin(performance.now()/200 + k)*1.5, 1.2, 0, 7); ctx.fill(); } }
+    if(m.act==='sit'){ ctx.fillStyle = 'rgba(255,214,120,.8)'; ctx.font = '700 7px "Golos Text",sans-serif'; ctx.fillText('…', m.x + 8, m.y - h + 4); }
+    const t = Math.max(0, Math.ceil(m.left||0)); RR(m.x - 22, m.y + 4, 44, 10, 3, 'rgba(30,20,14,.7)'); txt('обзор · '+t, m.x, m.y + 11.5, '700 6px "Golos Text",sans-serif', '#f3e8d3', 'center'); }
 }
 const _draw24 = draw;
 draw = function(){ _draw24(); try{ lizaTick(1/60); ctx.setTransform(scale,0,0,scale,-OX*scale,0); drawLiza(); }catch(e){ console.error(e); } };
