@@ -5140,7 +5140,7 @@ function messTick(id, r, dt){
   if(r.messT <= 0){ r.messT = R(30, 70) / (1 + r.guests.length/12) * (1 + 0.1*room(id).upg.clean); if(r.mess.length < 5){ const t = pick(TABLES) || {x:120, y:300}; const onTable = chance(0.4) && TABLES.length; r.mess.push({kind: onTable ? 'cups' : pick(['spill','crumbs','shards']), x: onTable ? t.x+R(-8,8) : R(20, 236), y: onTable ? t.y-4 : R(244, H-12), t:0}); } }
   if(r.mess.length >= 3) meter('chaos', 0.02*dt*r.mess.length);
 }
-function resizeCanvas(){ const box = cv.parentElement; const w = (box && box.clientWidth) || cv.clientWidth || 340; const hh = (box && box.clientHeight) || w*1.6; const dpr = Math.min(2, window.devicePixelRatio||1);
+function resizeCanvas(){ const box = cv.parentElement; const w = (box && box.clientWidth) || cv.clientWidth || 340; const hh = (box && box.clientHeight) || w*1.6; const dpr = Math.min((typeof LOWFX!=='undefined' && LOWFX) ? 1.25 : 2, window.devicePixelRatio||1);
   const css = Math.max(w/W, hh/560); const nh = clamp(Math.round(hh/css), 340, 560); if(nh !== H){ H = nh; layoutSlots(); }
   VW = w/css; OX = Math.max(0, (W - VW) * 0.5);
   cv.width = Math.round(w*dpr); cv.height = Math.round(hh*dpr); scale = css*dpr; }
@@ -8324,8 +8324,9 @@ renderMore = function(p){ if(sub !== 'book') return _renderMore17(p);
   p.appendChild(g);
 };
 // тик и отрисовка поверх сцены
+var DRAW_DT = 1/60;
 const _draw17 = draw;
-draw = function(){ _draw17(); try{ const r = rt(S.active); const dt = 1/60; fightTick(); cleaningTick(dt); vipTick(dt);
+draw = function(){ _draw17(); try{ const r = rt(S.active); const dt = DRAW_DT; fightTick(); cleaningTick(dt); vipTick(dt);
   ctx.setTransform(scale,0,0,scale,-OX*scale,0); drawBrewFx(S.active, r); drawNeon(); drawVip(); }catch(e){ console.error(e); } };
 // миграция
 const _migrate17 = migrate;
@@ -9336,7 +9337,7 @@ function drawLiza(){
     const t = Math.max(0, Math.ceil(m.left||0)); RR(m.x - 22, m.y + 4, 44, 10, 3, 'rgba(30,20,14,.7)'); txt('обзор · '+t, m.x, m.y + 11.5, '700 6px "Golos Text",sans-serif', '#f3e8d3', 'center'); }
 }
 const _draw24 = draw;
-draw = function(){ _draw24(); try{ lizaTick(1/60); ctx.setTransform(scale,0,0,scale,-OX*scale,0); drawLiza(); }catch(e){ console.error(e); } };
+draw = function(){ _draw24(); try{ lizaTick(DRAW_DT); ctx.setTransform(scale,0,0,scale,-OX*scale,0); drawLiza(); }catch(e){ console.error(e); } };
 
 /* ---------- окна ---------- */
 MODAL15.lzask = (box, m, btn) => {
@@ -9640,6 +9641,30 @@ sellFranchise = function(cityId){ const sh = _sellFr25('spb'); if(sh && S.sz) S.
 
 const _migrate25b = migrate;
 migrate = function(){ const r = _migrate25b.apply(this, arguments); try{ decorGoneFix(); }catch(e){} return r; };
+
+/* производительность: картинка 30 кадров в секунду, при открытой панели 8; сезон считается раз в минуту */
+var LOWFX = false; try{ LOWFX = localStorage.getItem('bc_lowfx')==='1'; }catch(e){}
+let _drawLast25 = 0, _slowN = 0, _slowT = 0;
+const _draw25 = draw;
+draw = function(){ const now = performance.now(), gap = now - _drawLast25;
+  const cover = sheet || (modals && modals.length) || document.hidden;
+  if(gap < (cover ? 120 : (LOWFX ? 45 : 31))) return;
+  if(!cover && !LOWFX && _drawLast25){ _slowT++; if(gap > 70) _slowN++; if(_slowT >= 150){ if(_slowN > 75){ LOWFX = true; try{ localStorage.setItem('bc_lowfx','1'); }catch(e){} try{ resizeCanvas(); }catch(e){} } _slowT = 0; _slowN = 0; } }
+  DRAW_DT = Math.min(0.15, gap/1000); if(!_drawLast25) DRAW_DT = 1/30; _drawLast25 = now; _draw25(); };
+let _sezC = {t:0, v:''};
+const _sezId25 = sezId;
+sezId = function(ts){ if(ts) return _sezId25(ts); const n = Date.now(); if(n - _sezC.t > 60000){ _sezC = {t:n, v:_sezId25()}; } return _sezC.v; };
+
+/* облако: сохраняем реже и только изменённые части; старые дни без подробной росписи */
+let _cloudPrev = [];
+saveCloud = function(){ if(!S || !cloudOK()) return; try{ slimHist(); }catch(e){} const js = snapshot(); const parts = []; for(let i=0;i<js.length;i+=3900) parts.push(js.slice(i,i+3900)); if(parts.length > 200) return;
+  try{ parts.forEach((p,i)=>{ if(_cloudPrev[i] !== p) tg.CloudStorage.setItem('bc3_'+i, p); }); if(_cloudPrev.length !== parts.length) tg.CloudStorage.setItem('bc3_n', String(parts.length)); _cloudPrev = parts; }catch(e){} };
+function slimHist(){ const h = S && S.fin && S.fin.hist; if(!h) return; for(let i=7;i<h.length;i++){ const L = h[i].L; if(L && (L.inW || L.outW)){ delete L.inW; delete L.outW; } } }
+let _cloudGate = 0;
+const _saveCloud25 = saveCloud;
+saveCloud = function(){ const n = Date.now(); if(n - _cloudGate < 90000) return; _cloudGate = n; _saveCloud25(); };
+window.addEventListener('visibilitychange', ()=>{ if(document.hidden){ _cloudGate = 0; try{ saveCloud(); }catch(e){} } });
+window.addEventListener('pagehide', ()=>{ _cloudGate = 0; try{ saveCloud(); }catch(e){} }, {capture:true});
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
