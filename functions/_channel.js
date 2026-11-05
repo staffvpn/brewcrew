@@ -137,7 +137,7 @@ async function goalTick(env, origin) {
     await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, 'staff', 25, ?2, ?3, 0)").bind(top[i].tg_id, `Приз за ${i + 1} место по вкладу в миллион стаканов.`, Date.now()).run();
   }
   const lines = done
-    ? ['<b>Миллион стаканов. Район сделал это</b>', '', 'Все, кто продал от 2 000 стаканов, получают Золотой миллионный стакан, три дня прибыли и трое суток +25% гостей. Значок «Миллионник» — всем участникам.', '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${esc(t.first_name || 'аноним')} — ${fmt(t.goal_cups)} стаканов · легенда 25 уровня`)]
+    ? ['<b>Миллион стаканов. Район сделал это</b>', '', 'Все, кто продал от 2 000 стаканов, получают Золотой миллионный стакан, три дня прибыли и трое суток +25% гостей. Значок «Миллионник» — всем участникам.', '', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}» — ${fmt(t.goal_cups)} стаканов · легенда 25 уровня`)]
     : ['<b>Миллион не взят</b>', '', `Район продал ${fmt(g.total)} стаканов. Не хватило ${fmt(GOAL.target - g.total)}.`, '', 'Треснувший стакан на стойке — памятник тому, как близко это было. В следующий раз зовите друзей раньше.'];
   const ok = await post(env, origin, 'events.jpg', lines.join('\n'));
   await mark(env, fk, ok);
@@ -204,7 +204,7 @@ async function bossTick(env, origin) {
     if (!st || !st.n) { await mark(env, k, true, 'empty'); return false; }
     const top = (await env.DB.prepare('SELECT cafe, first_name FROM boss WHERE week = ?1 AND pass >= 3 ORDER BY at LIMIT 3').bind(wk).all()).results || [];
     const lines = [`<b>Итоги: ${esc(b.n)}</b>`, '', `Посетил кофеен: ${st.n}. Прошли все три испытания: ${st.p || 0}.` + (b.id === 'owner' ? ` Продали долю: ${st.s || 0}.` : '')];
-    if (top.length) lines.push('', 'Первыми справились:', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${esc(t.first_name || 'аноним')}`));
+    if (top.length) lines.push('', 'Первыми справились:', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}»`));
     lines.push('', 'В следующую пятницу придёт другой гость.');
     const ok = await post(env, origin, 'events.jpg', lines.join('\n')); await mark(env, k, ok); return true; } }
   return false;

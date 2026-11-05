@@ -59,14 +59,14 @@ async function vHome(env) {
     q('SELECT COUNT(*) n FROM players'), q('SELECT COUNT(*) n FROM players WHERE last_seen >= ?1', now - ONLINE_MS),
     q('SELECT COUNT(*) n FROM players WHERE created_at >= ?1', today), q('SELECT COUNT(*) n FROM players WHERE last_seen >= ?1', today),
     q('SELECT COALESCE(SUM(CASE WHEN created_at >= ?1 THEN stars ELSE 0 END),0) t, COALESCE(SUM(CASE WHEN created_at >= ?2 THEN stars ELSE 0 END),0) w, COALESCE(SUM(stars),0) a FROM purchases WHERE refunded = 0 AND stars > 0', today, now - 7 * 86400000),
-    env.DB.prepare('SELECT cafe, first_name, level, earned FROM players ORDER BY earned DESC LIMIT 5').all(),
+    env.DB.prepare(`SELECT cafe, first_name, level, earned, money, best_day FROM players WHERE banned = 0 AND last_seen >= ?1 AND tg_id NOT IN (${ADMINS.join(',')}) ORDER BY best_day DESC LIMIT 5`).bind(now - 3 * 86400000).all(),
     q('SELECT COUNT(*) n, COALESCE(SUM(CASE WHEN created_at >= ?1 THEN 1 ELSE 0 END),0) t, COALESCE(SUM(ref_paid),0) paid FROM players WHERE referrer IS NOT NULL', today)
   ]);
   const lines = ['<b>Brew Crew · админка</b>', '',
     `Сейчас в игре: <b>${online.n}</b>`, `Заходили сегодня: <b>${actT.n}</b> · новых: <b>${newT.n}</b>`, `Всего игроков: <b>${total.n}</b>`, '',
     `По приглашениям: <b>${refs.n}</b> (сегодня ${refs.t}) · наград выдано ${refs.paid}`, '',
     `Звёзды: сегодня <b>${pay.t}</b> · за неделю <b>${pay.w}</b> · всего <b>${pay.a}</b>`, '',
-    '<b>Топ-5 кофеен</b>', ...((top.results || []).map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}» — ${esc(t.first_name || '')}, ур. ${t.level}, ${fmt(t.earned)} ₽`))];
+    '<b>Топ-5 кофеен по лучшему дню</b>', '<i>активные за 3 дня; рекорд выручки за игровой день · сейчас на счету · заработано за всё время</i>', ...((top.results || []).map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}» — ${esc(t.first_name || '')}, ур. ${t.level}\n    день ${fmt(t.best_day || 0)} ₽ · счёт ${fmt(t.money || 0)} ₽ · всего ${fmt(t.earned || 0)} ₽`))];
   return { text: lines.join('\n'), kb: [
     [B('Все игроки', 'p:pl:last:0'), B('Найти игрока', 'p:find')],
     [B('Сейчас в игре', 'p:pl:on:0'), B('Новые', 'p:pl:new:0')],
@@ -108,7 +108,7 @@ async function vCard(env, id, note) {
     note ? `<i>${esc(note)}</i>\n` : '',
     `<b>${esc(p.first_name || 'Без имени')}</b>${p.username ? ' @' + esc(p.username) : ''}${p.banned ? ' · <b>ЗАБАНЕН</b>' : ''}`,
     `ID <code>${p.tg_id}</code>`, '',
-    '<b>Кофейня</b>', `«${esc(p.cafe || '?')}», ${CITY[p.city] || p.city || '?'} · уровень ${p.level} · залов ${p.rooms}`,
+    '<b>Кофейня</b>', `«${esc(p.cafe || '?')}» · помещение №${(p.franchises || 0) + 1} · уровень ${p.level} · залов ${p.rooms}`,
     `Баланс <b>${fmt(p.money)} ₽</b>${pd.some(o => ['give', 'refgift', 'take', 'set'].includes(o.op)) ? ` → станет ${fmt(expected)} ₽` : ''}`,
     `Заработано всего ${fmt(p.earned)} ₽ · франшиз ${p.franchises} · банкротств ${p.bankrupt}`, '',
     '<b>Активность</b>', `Был в игре: ${ago(p.last_seen)} · заходов ${p.sessions} · ${Math.round(p.play_seconds / 60)} мин всего`,
@@ -146,7 +146,7 @@ async function vSeason(env) {
   const all = await env.DB.prepare("SELECT COUNT(*) n, COALESCE(SUM(stars),0) st FROM purchases WHERE item IN ('pass','pass15') AND refunded = 0 AND created_at >= ?1").bind(Date.parse(sz + '-01T00:00:00+03:00') - 40 * 86400000).first();
   const lines = [`<b>Сезон «${esc(SEZ_NAMES[sz] || sz)}»</b>`, '', `Пропусков куплено: ${all.n} · звёзд: ${all.st}`, `В топ-20 с пропуском: ${passN}`, '', '<b>Топ по очкам сезона</b>'];
   if (!rows.length) lines.push('Пока пусто.');
-  rows.forEach((r, i) => lines.push(`${i + 1}. «${esc(r.cafe || '?')}» — ${esc(r.first_name || '')} · ${fmt(r.sp)} оч. · ступень ${Math.min(30, Math.floor(r.sp / 140))}${r.pass ? ' · <b>пропуск</b>' : ''}${r.badge_name ? ' · ' + esc(r.badge_name) : ''}`));
+  rows.forEach((r, i) => lines.push(`${i + 1}. «${esc(r.cafe || '?')}» — ${esc(r.first_name || '')} · ${fmt(r.sp)} оч. · ступень ${Math.min(30, Math.floor(r.sp / 160))}${r.pass ? ' · <b>пропуск</b>' : ''}${r.badge_name ? ' · ' + esc(r.badge_name) : ''}`));
   const kb = []; for (let i = 0; i < Math.min(rows.length, 10); i += 2) kb.push(rows.slice(i, i + 2).map(r => B((r.first_name || '?').slice(0, 16) + ' · ' + r.sp, 'p:u:' + r.tg_id)));
   kb.push([B('Только с пропуском', 'p:szp'), B('Обновить', 'p:sz')], HOME);
   return { text: lines.join('\n'), kb };
@@ -156,7 +156,7 @@ async function vSeasonPass(env) {
   const rows = (await env.DB.prepare(`SELECT p.tg_id, p.first_name, p.cafe, COALESCE(s.sp, 0) sp, GROUP_CONCAT(u.item) items FROM purchases u JOIN players p ON p.tg_id = u.tg_id LEFT JOIN season s ON s.tg_id = u.tg_id AND s.season = ?1 WHERE u.item IN ('pass','pass15') AND u.refunded = 0 AND u.created_at >= ?2 GROUP BY p.tg_id ORDER BY sp DESC LIMIT 30`).bind(sz, Date.parse(sz + '-01T00:00:00+03:00') - 40 * 86400000).all()).results || [];
   const lines = ['<b>Владельцы пропуска сезона</b>', ''];
   if (!rows.length) lines.push('Пока никто не купил.');
-  rows.forEach((r, i) => lines.push(`${i + 1}. «${esc(r.cafe || '?')}» — ${esc(r.first_name || '')} · ${fmt(r.sp)} оч. · ступень ${Math.min(30, Math.floor(r.sp / 140))}${String(r.items).includes('pass15') ? ' · +15' : ''}`));
+  rows.forEach((r, i) => lines.push(`${i + 1}. «${esc(r.cafe || '?')}» — ${esc(r.first_name || '')} · ${fmt(r.sp)} оч. · ступень ${Math.min(30, Math.floor(r.sp / 160))}${String(r.items).includes('pass15') ? ' · +15' : ''}`));
   const kb = []; for (let i = 0; i < Math.min(rows.length, 10); i += 2) kb.push(rows.slice(i, i + 2).map(r => B((r.first_name || '?').slice(0, 16) + ' · ' + r.sp, 'p:u:' + r.tg_id)));
   kb.push([B('‹ Сезон', 'p:sz')], HOME);
   return { text: lines.join('\n'), kb };
@@ -190,7 +190,7 @@ async function vStyles(env, id) {
     [B('‹ Карточка', 'p:u:' + id), ...HOME]] };
 }
 const GRANTS = { hall2: 'Зона отдыха', proj: 'Проектор', sofa: 'Кинодиван', h2upg5: 'Зона отдыха: улучшения +5', upg5: 'Основной зал: улучшения +5', stock: 'Полный склад', rep: 'Рейтинг +0,5', party: 'Команде настроение 100', kitchen: 'Кухня +1 ступень', buyout: 'Выкуп помещения', roaster: 'Своя обжарка', goldm: 'Золотая кофемашина' };
-const DECOR_N = { ficus: 'Фикус «Геннадий»', aquarium: 'Аквариум', claw: 'Автомат с игрушками', vinyl: 'Винил и колонка', sofa: 'Диван', piano: 'Пианино', easel: 'Картина', photo: 'Фотозона с неоном', toilet: 'Золотой унитаз' };
+const DECOR_N = { ficus: 'Фикус «Геннадий»', aquarium: 'Аквариум', vinyl: 'Винил и колонка', easel: 'Картина' };
 function vGive(id, note) {
   return { text: '<b>Выдать игроку</b>\n\nВсё применится при входе игрока в игру. Веранда, лаунж и выкупленные залы сейчас закрыты на ремонт, их выдать нельзя. Деньги — в разделе «Деньги».' + (note ? '\n\n<b>' + note + '</b>' : ''), kb: [
     ...Object.entries(GRANTS).reduce((rows, [k, n], i) => { if (i % 2 === 0) rows.push([]); rows[rows.length - 1].push(B(n, `p:gr:${id}:${k}`)); return rows; }, []),

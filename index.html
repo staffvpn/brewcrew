@@ -1203,7 +1203,7 @@ const QUIT_REASONS = {
   burn:['выгорел. Говорит, что ему снится запах молока','устал от графика и людей','хочет полгода лежать'],
   conflict:['не может работать с коллегой','говорит, что в команде токсично'],
   poach:['конкуренты предложили больше','его переманили в сетевую кофейню'],
-  life:['переезжает в другой город','поступил в магистратуру','уходит в декрет','уезжает зимовать в Таиланд'],
+  life:['переезжает на другой конец страны','поступил в магистратуру','уходит в декрет','уезжает зимовать в Таиланд'],
   odd:['луна в неправильной фазе для работы с молоком','позвали в секту, там соцпакет','кот против','решил стать блогером про хлеб','астролог сказал, что ему нельзя работать с зерном','обнаружил в себе дар целителя']
 };
 function openDay(){
@@ -1355,7 +1355,7 @@ def('blog_good', {cat:'result', t:'Сторис вышла', x:'Блогер в�
 def('blog_bad', {cat:'result', t:'Сторис вышла', x:'Блогер выложил сторис: «Кофе так себе, а бариста хамло». Комментарии жёсткие.', auto:{rep:-2, mod:['traffic',0.85,6,'Разгромная сторис: гостей −15%']}});
 def('blogger_back', {cat:'normal', t:'Блогер вернулся', x:'Тот самый блогер пришёл с оператором и светом. Снимает выпуск «Кофейни, которые мне отказали».', o:[
   {t:'Дать интервью и угостить всю команду', fx:{m:-2500, soul:2}, out:'Выпуск вышел добрым. Даже смешным.', then:[{after:[120,300], p:1, fx:{mod:['traffic',1.35,10,'Выпуск блогера: гостей +35%']}}]},
-  {t:'Выгнать вместе с оператором', fx:{pathos:3, rep:-2}, out:'Выпуск называется «Самая злая кофейня города». Приходят посмотреть на злых.', then:[{after:[120,300], p:1, fx:{mod:['traffic',1.2,6,'Злая слава: гостей +20%']}}]},
+  {t:'Выгнать вместе с оператором', fx:{pathos:3, rep:-2}, out:'Выпуск называется «Самая злая кофейня района». Приходят посмотреть на злых.', then:[{after:[120,300], p:1, fx:{mod:['traffic',1.2,6,'Злая слава: гостей +20%']}}]},
   {t:'Продать права на съёмку', fx:{m:6000, chaos:2}, out:'Заплатил и снял. Ролик скучный, деньги не скучные.'}]});
 def('dog', {cat:'normal', t:'Гость с корги', x:'Гость с корги просит налить собаке воды. Корги смотрит на витрину.', o:[
   {t:'Воды и печеньку', fx:{soul:3, rep:1}, out:'Корги счастлив. Хозяин сфотографировал вас для чата района.', then:[{after:[1200,2800], p:0.7, ev:'dog_club'}]},
@@ -1378,9 +1378,9 @@ def('critic', {cat:'normal', t:'Ресторанный критик', x:'За д
   {t:'Угостить фирменным десертом', fx:{m:-260}, out:'Критик записал что-то и улыбнулся. Рецензия выйдет на днях.', then:[{after:[1000,3000], p:0.7, ev:'critic_good'},{after:[1000,3000], p:1, ev:'critic_meh'}]},
   {t:'Вести себя как обычно', fx:{}, out:'Критик ушёл молча.', then:[{after:[1000,3000], p:-1, ev:'critic_good', cond:'rep4'},{after:[1000,3000], p:1, ev:'critic_meh'}]},
   {t:'Подослать лучшего бариста с лекцией', fx:{pathos:2}, out:'Бариста 15 минут рассказывал про кислотность. Критик впечатлён или напуган.', then:[{after:[1000,3000], p:0.5, ev:'critic_good'},{after:[1000,3000], p:1, ev:'critic_bad'}]}]});
-def('critic_good', {cat:'result', t:'Вышла рецензия', x:'Критик написал: «Честный кофе и люди, которым не всё равно». Рецензию разошлась по городским каналам.', auto:{rep:3, mod:['traffic',1.25,24,'Рецензия критика: гостей +25%']}});
+def('critic_good', {cat:'result', t:'Вышла рецензия', x:'Критик написал: «Честный кофе и люди, которым не всё равно». Рецензию разошлась по районным каналам.', auto:{rep:3, mod:['traffic',1.25,24,'Рецензия критика: гостей +25%']}});
 def('critic_meh', {cat:'result', t:'Вышла рецензия', x:'Рецензия сдержанная: «Есть куда расти». Обидно, но справедливо.', auto:{rep:-1}});
-def('critic_bad', {cat:'result', t:'Вышла рецензия', x:'«Бариста читал мне нотации, пока остывал мой кофе». Город смеётся.', auto:{rep:-2, pathos:2}});
+def('critic_bad', {cat:'result', t:'Вышла рецензия', x:'«Бариста читал мне нотации, пока остывал мой кофе». Район смеётся.', auto:{rep:-2, pathos:2}});
 def('milk_out', {cat:'normal', t:'Кончилось молоко', x:'Утренний наплыв, а молоко кончается. Поставщик приедет только завтра.', cond:S=>stockQty('milk')<4000, o:[
   {t:'Сбегать в магазин у дома', fx:{m:-1500, stock:{milk:6000}}, out:'Шесть литров по рознице. Дорого, но капучино спасён.'},
   {t:'Предлагать всем чёрный кофе', fx:{pathos:2, rep:-1}, out:'Ценители рады, остальные ворчат.'},
@@ -1541,10 +1541,10 @@ const WHO = ['Мужик с живым гусем под мышкой','Меди
 const WHAT = ['требует латте на крови. Говорит, что для ритуала','хочет расплатиться купоном 1997 года','пытается провести сеанс связи с духом кофемашины','хочет арендовать туалет под студию подкаста','требует жалобную книгу и пишет в неё стихи','заказал 40 эспрессо и пьёт их на скорость','встал на стол и толкает речь о свободе молока','принёс свою кофемашину и требует баттл','требует позвать директора. Директор — это ты','хочет оставить кота на передержку на неделю','утверждает, что кофейня стоит на его участке','раздаёт гостям визитки и обещает всех вылечить','рыдает у кассы и никому не объясняет почему','пытается купить твоего бариста','устроил стрим и требует, чтобы все махали','просит спрятать его в подсобке от бывшей жены','хочет кофе, но платить только комплиментами','заявляет, что он тайный покупатель, и требует скидку','начал разбирать витрину, потому что «так надо»','орёт, что у него день рождения, и требует торт'];
 const TWISTS = [
   {r:'Оказалось, это новый владелец здания.', o:[{fx:{mod:['rent',0.8,168,'Добрый владелец здания: аренда −20%'], rep:1}, out:'Растроган. Снизил аренду на неделю.'},{fx:{mod:['rent',1.3,240,'Злой владелец здания: аренда +30%'], chaos:3}, out:'Через час пришло письмо: аренда выросла на 30%.'},{fx:{m:15000, mod:['rent',1.1,168,'Владелец здания: аренда +10%']}, out:'Продал ему годовой абонемент. Аренду он поднял, но меньше, чем хотел.'}]},
-  {r:'Оказалось, это скрытая камера для шоу.', o:[{fx:{mod:['traffic',1.6,4,'Шоу со скрытой камерой: гостей +60%'], rep:2}, out:'Ролик вышел через час. Народ повалил толпой.'},{fx:{pathos:4, rep:-2, mod:['traffic',1.2,3,'Злая слава: гостей +20%']}, out:'Ролик назвали «Самая злая кофейня города». Приходят посмотреть.'},{fx:{m:25000}, out:'Выбил гонорар за съёмку. Ролик так себе, гонорар отличный.'}]},
+  {r:'Оказалось, это скрытая камера для шоу.', o:[{fx:{mod:['traffic',1.6,4,'Шоу со скрытой камерой: гостей +60%'], rep:2}, out:'Ролик вышел через час. Народ повалил толпой.'},{fx:{pathos:4, rep:-2, mod:['traffic',1.2,3,'Злая слава: гостей +20%']}, out:'Ролик назвали «Самая злая кофейня района». Приходят посмотреть.'},{fx:{m:25000}, out:'Выбил гонорар за съёмку. Ролик так себе, гонорар отличный.'}]},
   {r:'Оказалось, это проверяющий под прикрытием.', o:[{fx:{rep:2, soul:3, noInspect:20}, out:'В протоколе «персонал вежлив». Проверок не будет недели три.'},{fx:{m:-40000, rep:-1}, out:'Протокол, штраф 40 000 ₽ и очень неприятный разговор.'},{fx:{gamble:[{m:-10000, noInspect:10, out:'Предложил «решить вопрос». Он согласился. Дешевле, чем штраф.'},{m:-80000, chaos:5, out:'Предложил «решить вопрос». Это была проверка на взятку. Штраф 80 000 ₽.'}]}, out:''}]},
   {r:'Уходя, он проклял кофейню.', o:[{fx:{soul:2}, out:'Проклятие снято. Он забрал всё печенье.'},{fx:{mod:['wear',4,12,'Проклятие: техника ломается чаще'], chaos:3}, out:'Через полчаса заискрил терминал. Совпадение?'},{fx:{mod:['check',1.15,24,'Проклятый раф: чек +15%'], pathos:2}, out:'Запустил «Проклятый раф». Продаётся лучше обычного.'}]},
-  {r:'Оказалось, это звезда, которую узнали все, кроме тебя.', o:[{fx:{rep:3, mod:['traffic',1.4,8,'Звезда в кофейне: гостей +40%']}, out:'Звезда выложила фото с бариста. Весь город хочет сюда.'},{fx:{rep:-3, soul:-3}, out:'Фанаты устроили травлю в отзывах.'},{fx:{m:8000, mod:['traffic',1.25,6,'Фото со звездой: гостей +25%']}, out:'Сделал фото на стену и продаёшь его копии.'}]},
+  {r:'Оказалось, это звезда, которую узнали все, кроме тебя.', o:[{fx:{rep:3, mod:['traffic',1.4,8,'Звезда в кофейне: гостей +40%']}, out:'Звезда выложила фото с бариста. Весь район хочет сюда.'},{fx:{rep:-3, soul:-3}, out:'Фанаты устроили травлю в отзывах.'},{fx:{m:8000, mod:['traffic',1.25,6,'Фото со звездой: гостей +25%']}, out:'Сделал фото на стену и продаёшь его копии.'}]},
   {r:'Через час выяснилось, что он оставил у вас живого гуся.', o:[{fx:{soul:4, goose:1, mod:['traffic',1.1,48,'Гусь-талисман: гостей +10%']}, out:'Гусь стал талисманом. Гостям нравится, санитарке — нет.'},{fx:{chaos:6, moodAll:-6}, out:'Гуся выгоняли всей командой сорок минут. Гусь победил.'},{fx:{m:6000, rival:[15,'shawarma']}, out:'Продал гуся шаурмичной напротив. Не спрашивай.'}]},
   {r:'Через час он вернулся с друзьями. Их двенадцать.', o:[{fx:{m:9000, chaos:6, fights:1}, out:'Касса звенит, зал разнесён, одного уносили.'},{fx:{chaos:3, rep:-1}, out:'Двенадцать человек долго объясняли, что ты не прав.'},{fx:{m:14000, chaos:8, rep:-1, fights:1}, out:'Продал им всё, включая сиропы. Утром нашёл одного в подсобке.'}]},
   {r:'Оказалось, у него действительно чемодан денег.', o:[{fx:{m:20000, soul:2}, out:'Оставил чаевые, которых хватит на полкофемолки.'},{fx:{rep:-1, rival:[0]}, out:'Ушёл к конкурентам и оставил чемодан чаевых там.'},{fx:{m:40000, chaos:4}, out:'Продал ему «VIP-обслуживание» за 40 тысяч.', then:[{after:[600,1600], p:0.6, ev:'suitcase'}]}]},
@@ -2271,7 +2271,7 @@ function interiorMul(roomId, what){
 const SERVICES = [
   {id:'clean', n:'Клининг', cost:9000, d:'Бригада тёток с ведрами: моют пол, столы и всю посуду, 4 игровых часа держат зал чистым. Бардак −40.'},
   {id:'pest', n:'Дезинсекция', cost:12000, d:'Две недели без тараканов и крыс. Санэпидемстанция довольна.'},
-  {id:'master', n:'Мастер на час', cost:7000, d:'Подтянет всю технику: износ +30%.'},
+  {id:'master', n:'Мастер на час', cost:7000, d:'Чинит сломанное и подтягивает всю технику: износ +30%.'},
   {id:'security', n:'Охрана на вечер', cost:6000, d:'До закрытия дня никаких драк и краж.'}
 ];
 function callService(id){
@@ -2455,7 +2455,7 @@ const CHAPTERS = [
     ['Уровень 8', ()=>S.level >= 8], ['Открыть второй зал', ()=>!!room('hall2')], ['Выручка за день 300 000 ₽', ()=>(S.c.maxDayRev||0) >= 300000]], reward:{m:1500000, t:'1,5 млн ₽'}},
   {n:'Кофейня года района', d:'Стань местом, о котором говорит весь район. Три идеальные смены подряд — и ты легенда.', goals:[
     ['Уровень 16', ()=>S.level >= 16], ['Рейтинг 4,6', ()=>S.rep >= 4.6], ['Стать «Кофейней недели»', ()=>(S.c.weekStars||0) >= 1], ['Полная кухня', ()=>S.kitchen && S.kitchen.tier >= 3]], reward:{m:5000000, legend:15, t:'5 млн ₽ и легенда 15 уровня'}},
-  {n:'Франшиза', d:'Продай сеть и начни заново в другом городе, уже с опытом.', goals:[
+  {n:'Франшиза', d:'Продай сеть и начни заново в новом помещении, уже с опытом.', goals:[
     ['Продать сеть', ()=>(S.franchises||0) >= 1]], reward:{shares:2, t:'+2 опыта владельца'}}
 ];
 function chapterNow(){ const i = S.chapter||0; if(i < CHAPTERS.length) return CHAPTERS[i]; const k = i - CHAPTERS.length + 2; return {n:'Империя', d:'Продай ещё одну сеть.', goals:[['Продать сеть №'+k, ()=>(S.franchises||0) >= k]], reward:{shares:2, t:'+2 опыта владельца'}}; }
@@ -2578,7 +2578,7 @@ const ABSURD14 = [
   ['Свадьба в очереди', 'Пара решила пожениться прямо в очереди. Свидетель — бариста, кольца из соломинок.', ['Поженить','Попросить не задерживать очередь','Продать свадебный торт-круассан']],
   ['Чемодан денег', 'Мужчина в тёмных очках платит за американо из чемодана с наличными. Чемодан полный.', ['Взять и не задавать вопросов','Отказать на всякий случай','Предложить VIP-обслуживание']],
   ['Дрысясися', 'Подросток уверяет, что видел у вас за витриной «дрысясисю» — сиреневого пушистого инопланетянина. Все ищут.', ['Помочь искать','Нет у нас инопланетян','Продать «дрысясися-латте» сиреневый']],
-  ['Бабушка-рэпер', 'Бабушка в спортивном костюме читает рэп про цены на капучино. Рифмует «дорого» и «город».', ['Дать микрофон','Попросить потише','Записать трек для рекламы']],
+  ['Бабушка-рэпер', 'Бабушка в спортивном костюме читает рэп про цены на капучино. Рифмует «капучино» и «причина».', ['Дать микрофон','Попросить потише','Записать трек для рекламы']],
   ['Можно, а зачем?', 'Гость спрашивает, можно ли приготовить кофе как в дорогой сети напротив. Бариста отвечает: «Можно, а зачем?» Гость в шоке.', ['Сделать как в сети','Сказать, что у нас лучше','Продать «можно-а-зачем-раф»']],
   ['Фитнес-блогер', 'Голый по пояс фитнес-блогер снимает «кофе после тренировки» и отжимается у кассы. Девятый подход.', ['Подождать подход','Попросить одеться','Предложить рекламный контракт']],
   ['Ленивый мэр', 'Депутат районного совета зашёл с охраной и требует «самый народный кофе». Охрана стоит в проходе.', ['Сделать народный кофе','Попросить охрану выйти','Заломить «депутатскую цену»']],
@@ -3335,7 +3335,7 @@ function callService(id){
   S.svcDay[id] = S.day;
   if(id==='clean'){ meter('chaos', -30); S.cleanUntil = absNow() + 120; for(const k in RT){ RT[k].mess = []; for(const t in (RT[k].dirty||{})) cleanDirty(k, t); } return 'Клининг: пол и столы чистые на 2 игровых часа. Посуда — на мойщицах'; }
   if(id==='pest'){ S.flags.pestUntil = S.day + 14; return 'Дезинсекция: 14 дней без тараканов и крыс'; }
-  if(id==='master'){ const before = breakRisk(), line = eqLine(); for(const r of S.rooms) for(const k in r.eq) r.eq[k] = Math.min(100, r.eq[k] + 30); return 'Мастер на час: '+line+'. Риск поломки сегодня '+before+'% → '+breakRisk()+'%'; }
+  if(id==='master'){ const before = breakRisk(), line = eqLine(); for(const r of S.rooms){ for(const k in r.eq) r.eq[k] = Math.min(100, r.eq[k] + 30); for(const k in (r.broken||{})) if(r.broken[k]){ r.broken[k] = false; r.eq[k] = Math.max(r.eq[k], 50); } } HOOK.struct(); return 'Мастер на час: '+line+'. Риск поломки сегодня '+before+'% → '+breakRisk()+'%'; }
   if(id==='security'){ S.flags.guardDay = S.day; return 'Охрана до закрытия дня: никаких драк и краж'; }
   return s.n+': готово';
 }
@@ -3522,7 +3522,7 @@ def('s1_paint', {cat:'story', t:'Надпись на двери', x:'Утром 
 def('s1_window', {cat:'story', t:'Разбитая витрина', x:'Ночью кто-то разбил витрину кирпичом. К кирпичу скотчем примотана записка: «Полиция не поможет».', o:[
  {t:'Вставить новое стекло', fx:{m:-40000}, out:'Стекольщик сказал, что это уже третья витрина в районе за месяц.'},
  {t:'Заклеить скотчем и работать', fx:{chaos:6, rep:-2}, out:'Ветер свистит. Гости сидят в куртках.'},
- {t:'Снять видео и выложить в сеть', fx:{rep:2, soul:3, m:-40000, st:{rel:{palych:-15}, karma:1}}, out:'Город на твоей стороне: сотни репостов и очередь из сочувствующих. Палыч — не на твоей.'}]});
+ {t:'Снять видео и выложить в сеть', fx:{rep:2, soul:3, m:-40000, st:{rel:{palych:-15}, karma:1}}, out:'Район на твоей стороне: сотни репостов и очередь из сочувствующих. Палыч — не на твоей.'}]});
 def('s1_roof', {cat:'story', who:'palych', t:'Предложение Палыча', x:'Палыч заходит один, без охраны, берёт американо. «Слушай, ты нормальный. Давай так: долг прощу наполовину, а ты мне — пятьдесят тысяч каждый месяц. И проверки к тебе ходить перестанут»', o:[
  {t:'Согласиться на «крышу»', fx:{noInspect:28, st:{f:{roof:1}, karma:-2, rel:{palych:20}, dl:{amount:225000, days:9, label:'Долг Палычу', beat:'s1_deadline'}}}, out:'Палыч жмёт руку. Рука тяжёлая.'},
  {t:'Отказаться вежливо', fx:{st:{rel:{palych:-5}}}, out:'«Как знаешь». Допивает американо и оставляет ровно без сдачи.'},
@@ -3570,7 +3570,7 @@ def('s3_film', {cat:'story', who:'alena', t:'Выпуск вышел', x:'Съё
 
 def('s4_somov', {cat:'story', who:'somov', t:'Депутат Сомов', x:'Депутат Сомов садится за лучший столик: «Хотите расширяться? Веранда, второй зал? Разрешения — через меня. Триста тысяч, и через неделю всё будет»', o:[
  {t:'Заплатить 300 000 ₽', req:S=>S.money>=300000, fx:{m:-300000, st:{f:{permit:1}, karma:-2, rel:{somov:20}, season:20}}, out:'Сомов пересчитывает, не стесняясь. «Приятно работать с понимающими людьми»'},
- {t:'Отказаться', fx:{st:{rel:{somov:-25}, next:[5,'s4_revenge'], season:22}}, out:'«Ну что ж. Город большой, проверок много»'},
+ {t:'Отказаться', fx:{st:{rel:{somov:-25}, next:[5,'s4_revenge'], season:22}}, out:'«Ну что ж. Район большой, проверок много»'},
  {t:'Записать разговор и отдать Алёне', req:S=>srel('alena')>=0, fx:{st:{karma:3, next:[4,'s4_scandal'], season:22}}, out:'Диктофон в кармане фартука сделал своё дело.'}]});
 def('s4_revenge', {cat:'story', t:'Месть депутата', x:'С утра в дверях сразу две проверки: санитарная и пожарная. Говорят, «по обращению граждан».', o:[
  {t:'Принять обеих честно', fx:S=>{ const r1 = inspectionResult('san','honest'), r2 = inspectionResult('fire','honest'); applyFx(r1.fx,{}); applyFx(r2.fx,{}); return {fx:{}, out:r1.txt+' '+r2.txt}; }},
@@ -3587,7 +3587,7 @@ def('s5_auction', {cat:'story', t:'Аукцион', x:'Зал управляющ
  {t:'Не тянем', fx:S=>{ const p = srel('palych') > srel('arseniy'); return {fx:{st:{clear:1, f:{building_lost:1}, permMod:['rent',1.3, p?'Здание у Палыча: аренда +30%':'Здание у сети: аренда +30%'], season:12}}, out:p ? 'Здание купил Палыч. «Аренду поднимем по-дружески»' : 'Здание купила сеть. Аренда растёт, а Арсений присылает открытку.'}; }}]});
 
 def('s6_viktor', {cat:'story', who:'viktor', t:'Возвращение Виктора', x:'Виктор вернулся. Загорелый, с чемоданом. «Я передумал. Кофейня моя. Документы мы тогда оформили криво, юрист подтвердит»', o:[
- {t:'Показать расписку и выгнать', req:S=>sflag('kept'), fx:{st:{rel:{viktor:-30}, karma:1, season:10}}, out:'Виктор бледнеет при виде расписки и уходит. Говорят, Палыч уже знает, что он в городе.'},
+ {t:'Показать расписку и выгнать', req:S=>sflag('kept'), fx:{st:{rel:{viktor:-30}, karma:1, season:10}}, out:'Виктор бледнеет при виде расписки и уходит. Говорят, Палыч уже знает, что он в районе.'},
  {t:'Выкупить его претензию', fx:S=>({fx:{m:-Math.round(Math.max(300000, avgRev()*5)/1000)*1000, st:{rel:{viktor:20}, season:10}}, out:'Виктор берёт деньги и обещает исчезнуть навсегда. В который раз.'})},
  {t:'Сдать его Палычу', fx:{st:{karma:-3, rel:{palych:30, viktor:-100}, f:{viktor_gone:1}, season:10}}, out:'Один звонок. Виктора больше никто не видел.'},
  {t:'Взять его бариста', fx:S=>{ const v = makeStaff('Бариста', {quirk:'genius'}); v.name = 'Виктор'; v.lvl = 7; v.rank = 1; v.shifts = 20; hire(v, 'main', 'grey'); return {fx:{st:{rel:{viktor:40}, karma:2, season:10}}, out:'Виктор надевает фартук: «Я ведь всегда хотел просто варить кофе»'}; }}]});
@@ -4047,7 +4047,7 @@ def('e_milk_vegan', {cat:'normal', t:'Овсяный бунт', x:'Шесть ч
 def('e_night_taxi', {cat:'normal', cond:NIGHT, t:'Таксисты', x:'Три часа ночи. Двенадцать таксистов поставили машины у входа и устроили у вас летучку: кто где стоит, кого где развели и почему «Яндекс» опять поднял комиссию.', o:[
  {t:'Сделать «таксистский» американо 0,5 за 150', fx:{m:3000, soul:2}, out:'Теперь ночью у вас стоянка такси. Безопасно, шумно, выгодно.', then:[{after:DAYS(2,4), p:1, fx:{mod:['traffic',1.1,72,'Ночные таксисты: гостей +10%']}, note:'Таксисты сделали вас своей точкой'}]},
  {t:'Попросить убрать машины', fx:{}, out:'Убрали. Стали приходить пешком. Ещё громче.'},
- {t:'Пожаловаться на комиссию вместе с ними', fx:{soul:2, chaos:1}, out:'Вы поговорили до утра. Теперь вы знаете, где в городе лучшая шаурма в 4 утра. У Ашота, естественно.'}]});
+ {t:'Пожаловаться на комиссию вместе с ними', fx:{soul:2, chaos:1}, out:'Вы поговорили до утра. Теперь вы знаете, где в районе лучшая шаурма в 4 утра. У Ашота, естественно.'}]});
 def('e_night_dj', {cat:'normal', cond:NIGHT, t:'Афтепати', x:'После клуба к вам пришли двадцать человек в блёстках и диджей с колонкой. «Можно мы тут чуть-чуть потанцуем? Минуточку».', o:[
  {t:'Разрешить до шести утра', fx:{m:9000, chaos:6}, out:'Минуточка длилась четыре часа. Касса довольна. Кот ушёл к соседям.'},
  {t:'Только кофе, без колонки', fx:{m:3000}, out:'Танцевали без музыки. Это было ещё страшнее.'},
@@ -4180,7 +4180,7 @@ def('e_parrot', {cat:'normal', t:'Попугай-матерщинник', x:'Г�
  {t:'Попросить вывести попугая', fx:{}, out:'Попугай на выходе обложил всю очередь. Очередь аплодировала.'},
  {t:'Ответить попугаю в его стиле', fx:{pathos:3, chaos:2}, out:'Попугай замолчал. Впервые в жизни. Гостья в шоке, вы — легенда.'}]});
 def('e_flashmob', {cat:'normal', t:'Флешмоб', x:'В зал заходят двадцать человек, замирают на месте на пять минут, а потом резко начинают танцевать под музыку из колонки. Никто ничего не заказал.', o:[
- {t:'Присоединиться к танцу всей сменой', fx:{soul:3, chaos:2, moodAll:10}, out:'Видео флешмоба с танцующим бариста разошлось по городу. В кадре виден ваш логотип.', then:[{after:[60,240], p:1, fx:{mod:['traffic',1.15,8,'Флешмоб: гостей +15%']}, note:'Видео флешмоба привело гостей'}]},
+ {t:'Присоединиться к танцу всей сменой', fx:{soul:3, chaos:2, moodAll:10}, out:'Видео флешмоба с танцующим бариста разошлось по району. В кадре виден ваш логотип.', then:[{after:[60,240], p:1, fx:{mod:['traffic',1.15,8,'Флешмоб: гостей +15%']}, note:'Видео флешмоба привело гостей'}]},
  {t:'Объявить минимальный заказ', fx:{m:2000}, out:'Купили двадцать воды и станцевали ещё раз. Уже из принципа.'},
  {t:'Включить другую музыку', fx:{chaos:3}, out:'Флешмоб продолжил танцевать под «Ласковый май». Профессионалы.'}]});
 def('e_mother_in_law', {cat:'normal', t:'Тёща владельца', x:'В зал заходит твоя тёща (или будущая — неважно). Встаёт у стойки и начинает учить бариста, как «правильно» варить кофе в турке.', o:[
@@ -5233,7 +5233,7 @@ function shopperReport(id, g){
   score = clamp(Math.round(score), 0, 100);
   const lines = ['Ожидание в очереди: '+wait+' с', 'Чистота зала: '+(100-dirt)+'%', angry ? 'Ушёл без заказа' : 'Заказ получил'];
   let title, txt, fx;
-  if(score >= 75){ title = 'Тайный покупатель: '+score+' из 100'; txt = 'Это был проверяющий из гида «Кофейни города». Он доволен: вас добавили в подборку «Куда не стыдно привести маму».'; fx = {rep:3, mod:['traffic',1.2,48,'Подборка гида: гостей +20%']}; }
+  if(score >= 75){ title = 'Тайный покупатель: '+score+' из 100'; txt = 'Это был проверяющий из гида «Кофейни района». Он доволен: вас добавили в подборку «Куда не стыдно привести маму».'; fx = {rep:3, mod:['traffic',1.2,48,'Подборка гида: гостей +20%']}; }
   else if(score >= 45){ title = 'Тайный покупатель: '+score+' из 100'; txt = 'Проверяющий из гида поставил «на троечку»: «Кофе нормальный, атмосфера как в МФЦ».'; fx = {rep:-1}; }
   else { title = 'Тайный покупатель: '+score+' из 100'; txt = 'Проверяющий из гида в ужасе. В подборке «Куда не ходить» вы на первом месте, с фотографией грязной чашки.'; fx = {rep:-4, mod:['traffic',0.85,48,'Антиподборка гида: гостей −15%']}; }
   const res = applyFx(fx, {});
@@ -6011,7 +6011,7 @@ function ageGate(next){ if(ageOk()) return next(); const v = el(`<div class="vei
 function renderStart(){
   if(!ageOk()){ ageGate(renderStart); return; }
   const app = $('#app'); app.innerHTML = ''; app.className = 'startapp';
-  let name = randomName(), cityId = 'msk';
+  let name = randomName(), cityId = 'spb';
   const ref = startParam();
   const w = el(`<div class="start">
     <div class="logo">Brew Crew</div>
@@ -6020,11 +6020,6 @@ function renderStart(){
     <div class="namegen"><div class="bigname" id="bn"></div><button class="btn ghost" id="dice">Другое</button></div>
     <input class="field" id="own" maxlength="28" placeholder="Или впиши своё" autocomplete="off">
     <div class="d" id="nmst" style="min-height:16px"></div>
-    <div class="h chalk">Город</div>
-    <div class="two" id="ct">
-      <button class="opt" aria-pressed="true" data-v="msk"><b>Москва</b><span>Дорогая аренда, высокий чек.</span></button>
-      <button class="opt" aria-pressed="false" data-v="spb"><b>Петербург</b><span>Дожди загоняют гостей внутрь.</span></button>
-    </div>
     <button class="btn big" id="go">Дальше: обставить зал</button>
     <div class="empty" style="font-size:12px">Кофейня работает круглосуточно, даже когда игра закрыта. Только для 18+. <a href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a></div>
   </div>`);
@@ -6266,7 +6261,7 @@ function renderSettings(p){
     [['','Домашний']].concat(own.map(k=>[k, INTERIORS[k].n])).forEach(([k,n])=>{ const b = el(`<button class="chipbtn" aria-pressed="${(S.interior||{})[S.active]===k || (!k && !(S.interior||{})[S.active])}">${n}</button>`); b.onclick = () => { S.interior = S.interior || {}; S.interior[S.active] = k; save(); renderSheet(); }; nav.appendChild(b); });
     p.appendChild(ic);
   }
-  const misc = el(`<div class="card"><div class="t">Игра</div><div class="d">«${esc(S.name)}», ${city().n}, игровой день ${S.day}. Прогресс сохраняется на устройстве${cloudOK()?' и в облаке Telegram':''}.</div><div class="row wrap"></div></div>`);
+  const misc = el(`<div class="card"><div class="t">Игра</div><div class="d">«${esc(S.name)}», ${placeName()}, игровой день ${S.day}. Прогресс сохраняется на устройстве${cloudOK()?' и в облаке Telegram':''}.</div><div class="row wrap"></div></div>`);
   const row = misc.lastElementChild;
   const rs = el(`<button class="btn ghost">Начать заново</button>`);
   rs.onclick = () => { if(!rs.dataset.sure){ rs.dataset.sure='1'; rs.textContent='Точно? Пропадёт всё'; return; } try{ localStorage.removeItem(KEY); }catch(e){} if(cloudOK()){ try{ tg.CloudStorage.setItem('bc3_n','0'); }catch(e){} } S = null; modals = []; sheet = null; $('#modalRoot').innerHTML=''; $('#sheetRoot').innerHTML=''; for(const k in RT) delete RT[k]; renderStart(); };
@@ -6612,7 +6607,7 @@ function renderMore(p){
   else if(sub==='fr'){
     const need = franchiseNeed(), e = S.c.earnedRun||0, sh = franchiseShares();
     p.appendChild(el(`<div class="card"><div class="t">Опыт владельца: ${S.shares}</div><div class="d">Это твой опыт как хозяина. Каждое очко навсегда даёт +3% к доходу во всех будущих кофейнях. Сейчас доход ×${shareMult().toFixed(2).replace('.',',')}. Опыт дают достижения и продажа сети. Его можно потратить на вечные бонусы ниже.</div></div>`));
-    const fr = el(`<div class="card"><div class="t">Продать сеть и начать в новом городе</div><div class="d">Когда сеть заработает ${fmt(need)} ₽, её можно продать. Залы, команда и деньги уйдут покупателю, а ты получишь опыт и начнёшь заново в другом городе с новым сюжетом.</div>
+    const fr = el(`<div class="card"><div class="t">Продать сеть и начать заново</div><div class="d">Когда сеть заработает ${fmt(need)} ₽, её можно продать. Залы, команда и деньги уйдут покупателю, а ты получишь опыт и начнёшь заново в новом помещении с новым сюжетом.</div>
       <div class="mood">Заработано ${bar(e/need*100,'var(--caramel)')}<span class="num">${fmt(e)}</span></div>
       <div class="d">За продажу сейчас: <b>${sh}</b> опыта. Продано сетей: ${S.franchises}.</div>
       <div class="row">${btnHtml('Продать сеть', 0, sh<=0)}</div></div>`);
@@ -6809,17 +6804,17 @@ function showModal(){
   else if(m.kind==='z'){ const z = m.z; box.append(el(`<div class="zrep"><div class="zh">«${esc(S.name)}»<br>Z-ОТЧЁТ · ДЕНЬ ${m.day}</div>${z.lines.map(([a,b])=>`<div class="zl"><span>${esc(a)}</span><i></i><b class="num">${esc(b)}</b></div>`).join('')}<div class="zj">${esc(z.joke)}</div><div class="zf">СМЕНА ЗАКРЫТА · КАССИР ПОДПИСАЛ КРИВО</div></div>`), btn(pick(HARD.close), closeModal)); }
   else if(m.kind==='ach'){ box.append(el(`<div class="eyebrow">Достижение</div>`), el(`<h2>${esc(m.n)}</h2>`), el(`<p>${esc(m.d)}${m.reward?' Награда: +'+m.reward+' опыта владельца (+'+(m.reward*3)+'% к доходу навсегда).':''}</p>`), btn(pick(HARD.close), closeModal)); }
   else if(m.kind==='bankrupt'){
-    box.append(el(`<div class="eyebrow">Конец</div>`), el(`<h2>Банкротство</h2>`), el(`<p>Две недели в минусе. Помещение опечатано, команда разошлась, «серьёзные люди» забрали кофемашину. Достижения, гостевая книга и опыт владельца остаются. Начинаем с нуля в том же городе.</p>`), btn('Начать заново', ()=>{ goBankrupt(); for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; save(); renderGame(); }));
+    box.append(el(`<div class="eyebrow">Конец</div>`), el(`<h2>Банкротство</h2>`), el(`<p>Две недели в минусе. Помещение опечатано, команда разошлась, «серьёзные люди» забрали кофемашину. Достижения, гостевая книга и опыт владельца остаются. Начинаем с нуля в том же помещении.</p>`), btn('Начать заново', ()=>{ goBankrupt(); for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; save(); renderGame(); }));
   }
   else if(m.kind==='franchise'){
     const sh = franchiseShares();
-    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} опыта?</h2>`), el(`<p>Залы, команда, деньги и улучшения уйдут новому владельцу. Останутся опыт владельца, вечные бонусы, достижения и гостевая книга. Где открываемся дальше?</p>`));
+    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} опыта?</h2>`), el(`<p>Залы, команда, деньги и улучшения уйдут новому владельцу. Останутся опыт владельца, вечные бонусы, достижения и гостевая книга. Новое помещение будет ждать сразу после продажи.</p>`));
     const opts = el(`<div class="opts"></div>`);
-    Object.keys(CITIES).forEach(cid=>{ const c = CITIES[cid]; const b = el(`<button class="opt"><b>${c.n}</b> · аренда ×${c.rent.toFixed(2).replace('.',',')}, чек ×${c.check.toFixed(2).replace('.',',')}, гостей ×${c.traffic.toFixed(2).replace('.',',')}</button>`); b.onclick = () => { sellFranchise(cid); for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; save(); renderGame(); toast('Новая кофейня в городе '+c.n); }; opts.appendChild(b); });
+    const b = el(`<button class="opt"><b>Продать и переехать в Помещение №${(S.franchises||0)+2}</b></button>`); b.onclick = () => { sellFranchise('spb'); for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; save(); renderGame(); toast('Новая кофейня: '+placeName()); }; opts.appendChild(b);
     box.append(opts, btn('Пока нет', closeModal, 'ghost'));
   }
   else if(m.kind==='menu'){
-    box.append(el(`<h2>Меню</h2>`), el(`<p style="font-size:13px;color:var(--muted)">«${esc(S.name)}», ${city().n}, игровой день ${S.day}. Прогресс сохраняется на устройстве${cloudOK()?' и в облаке Telegram':''}.</p>`));
+    box.append(el(`<h2>Меню</h2>`), el(`<p style="font-size:13px;color:var(--muted)">«${esc(S.name)}», ${placeName()}, игровой день ${S.day}. Прогресс сохраняется на устройстве${cloudOK()?' и в облаке Telegram':''}.</p>`));
     const snd = btn(soundOn?'Звук: включён':'Звук: выключен', ()=>{ soundOn = !soundOn; if(soundOn) unlockAudio(); snd.textContent = soundOn?'Звук: включён':'Звук: выключен'; save(); }, 'ghost');
     const rs = btn('Начать заново', ()=>{ if(!rs.dataset.sure){ rs.dataset.sure='1'; rs.textContent='Точно? Всё пропадёт, даже достижения'; return; } try{ localStorage.removeItem(KEY); }catch(e){} if(cloudOK()){ try{ tg.CloudStorage.setItem('bc3_n','0'); }catch(e){} } S = null; modals = []; $('#modalRoot').innerHTML=''; for(const k in RT) delete RT[k]; renderStart(); }, 'ghost');
     box.append(snd, rs, btn('Закрыть', closeModal));
@@ -7143,7 +7138,7 @@ function invite(){ withLink(url=>{ const txt = 'Открыл кофейню «'+
 function copyInvite(){ withLink(url=>{ try{ navigator.clipboard.writeText(url).then(()=>toast('Ссылка скопирована: '+url)).catch(()=>toast(url)); }catch(e){ toast(url); } }); }
 function agoShort(ts){ if(!ts) return 'не заходил'; const m = Math.round((Date.now()-ts)/60000); if(m < 5) return 'в игре'; if(m < 60) return 'был '+m+' мин назад'; const h = Math.round(m/60); if(h < 24) return 'был '+h+' ч назад'; return 'был '+Math.round(h/24)+' дн. назад'; }
 function friendRow(f, label){
-  const L = f.level||1, city = f.city==='spb'?'Петербург':f.city==='msk'?'Москва':(f.city||'');
+  const L = f.level||1, city = '';
   const since = f.created_at ? new Date(f.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) : '';
   const st = label || (f.ref_paid ? 'награда получена' : L>=3 ? 'награда в пути' : 'до награды ур. 3, осталось '+(3-L));
   const d = el(`<div class="friend"><b>«${esc(f.cafe||'ещё не открыл кофейню')}»</b><span>${esc(f.first_name||'')} · ур. ${L}${city?' · '+esc(city):''}</span><span>Заработал ${fmt(f.earned||0)} ₽ · залов ${f.rooms||1} · ${agoShort(f.last_seen)}${since?' · в игре с '+since:''}</span><span><i>${esc(st)}</i></span>${f.cafe?'<button class="btn ghost">Зайти в гости</button>':''}</div>`);
@@ -7181,7 +7176,7 @@ function renderTour(p){
   const c = el(`<div class="card chalkboard"><div class="t chalk">Турнир района · топ-10</div><div class="d">Кто заработает больше чистой прибыли за неделю (по понедельник 00:00 МСК). Призы: 1 000 000, 500 000 и 250 000 ₽, победители попадают в канал. До конца: ${left>48?Math.round(left/24)+' дн.':left+' ч'}.</div><div class="tour"></div><div class="d">Твоя прибыль за неделю: <b class="num">${fmt(my)} ₽</b>${rank?' · примерно '+rank+' место из '+Math.max(TOUR.total, rank):''}</div>${upd!=null?`<div class="d" style="opacity:.6;font-size:11px">Таблица обновляется раз в 5 часов. Обновлена ${upd<1?'меньше часа':upd+' ч'} назад.</div>`:''}</div>`);
   const t = c.querySelector('.tour');
   const top = cur ? TOUR.top : [];
-  if(top.length) top.forEach((x,i)=>t.appendChild(el(`<div class="trow ${x.cafe===S.name?'me':''}"><b>${i+1}</b><span>«${esc(x.cafe||'?')}»${x.badge?' <i class="bdg">'+esc(x.badge)+'</i>':''} · ${esc(x.city==='spb'?'Петербург':x.city==='msk'?'Москва':(x.city||''))}</span><i class="num">${fmt(x.profit)} ₽</i></div>`)));
+  if(top.length) top.forEach((x,i)=>t.appendChild(el(`<div class="trow ${x.cafe===S.name?'me':''}"><b>${i+1}</b><span>«${esc(x.cafe||'?')}»${x.badge?' <i class="bdg">'+esc(x.badge)+'</i>':''}</span><i class="num">${fmt(x.profit)} ₽</i></div>`)));
   else t.appendChild(el(`<div class="d">${cur && TOUR.at ? 'На этой неделе ещё никто не заработал. Будь первым.' : 'Загружаем таблицу…'}</div>`));
   p.appendChild(c);
 }
@@ -7212,7 +7207,7 @@ function makeCard(){
   // чек
   x.save(); x.translate(170, 1230); x.rotate(0.015); x.fillStyle = '#fbf8f1'; x.fillRect(0,0,740,520);
   x.fillStyle = '#1d1410'; x.font = '700 34px "PT Mono", monospace'; x.textAlign = 'left';
-  const rows = [['ГОРОД', city().n], ['ДЕНЬ', String(S.day)], ['РЕЙТИНГ', S.rep.toFixed(1).replace('.',',')], ['ГОСТЕЙ', fmt(S.c.guests)], ['ЗАРАБОТАНО', fmt(S.c.earnedRun||0)+' ₽'], ['КОМАНДА', String(S.staff.filter(s=>!s.isYou).length)], ['ХАРАКТЕР', charName().toUpperCase()]];
+  const rows = [['ПОМЕЩЕНИЕ', placeName().replace('Помещение ','')], ['ДЕНЬ', String(S.day)], ['РЕЙТИНГ', S.rep.toFixed(1).replace('.',',')], ['ГОСТЕЙ', fmt(S.c.guests)], ['ЗАРАБОТАНО', fmt(S.c.earnedRun||0)+' ₽'], ['КОМАНДА', String(S.staff.filter(s=>!s.isYou).length)], ['ХАРАКТЕР', charName().toUpperCase()]];
   rows.forEach(([a,b],i)=>{ const y = 70 + i*62; x.textAlign = 'left'; x.fillText(a, 40, y); x.textAlign = 'right'; x.fillText(b, 700, y); x.fillStyle = 'rgba(29,20,16,.25)'; for(let d=40; d<700; d+=16) x.fillRect(d, y+16, 8, 2); x.fillStyle = '#1d1410'; });
   x.restore();
   x.fillStyle = '#1d1410'; x.textAlign = 'center'; x.font = '700 60px Caveat, "Golos Text", sans-serif'; x.fillText('Открой свою — заходи в игру', 540, 1840);
@@ -7820,7 +7815,7 @@ function renderSeason(p){
   if((S.badges||[]).length) p.appendChild(el(`<div class="card"><div class="t">Твои значки</div><div class="d">${S.badges.map(esc).join(' · ')}</div></div>`));
 }
 function renderDecor(p){
-  p.appendChild(el(`<div class="card note kraft"><div class="t">Интерьер</div><div class="d">У каждого предмета своё место. Диван, пианино, фотозона, картина и винил встают в зону отдыха, если она есть. Каждый что-то даёт и иногда приносит приключения. Продать можно за 30% цены.</div><div class="d">Свободно: на полу ${decorFree('floor')}, на стойке ${decorFree('counter')}.</div></div>`));
+  p.appendChild(el(`<div class="card note kraft"><div class="t">Интерьер</div><div class="d">У каждого предмета своё место. Картина и винил встают в зону отдыха, если она есть. Каждый что-то даёт и иногда приносит приключения. Продать можно за 30% цены.</div><div class="d">Свободно: на полу ${decorFree('floor')}, на стойке ${decorFree('counter')}.</div></div>`));
   const owned = decorOwned();
   if(owned.length){ p.appendChild(el(`<div class="h chalk">Уже стоит</div>`));
     owned.forEach(it=>{ const d = decorDef(it.id); if(!d) return; const dry = it.id==='ficus' ? S.day - (it.water||it.day) : 0;
@@ -8054,7 +8049,7 @@ attention = function(){
 function track(force){
   if(!S || !tg || !tg.initData) return;
   const z = szState();
-  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(z.sp), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
@@ -8530,7 +8525,7 @@ onTrack = function(r){ try{ if(r && r.goal) goalSet(r.goal); }catch(e){} return 
 const GOAL_MS = [
   {n:250000, t:'четверть миллиона стаканов', d:'Район распробовал: сутки гостей на 15% больше у всех.', fx:()=>addMod('traffic', 1.15, 24, 'Четверть миллиона стаканов: гостей +15%')},
   {n:500000, t:'полмиллиона стаканов', d:'Поставщики в шоке и дарят каждому мешок денег: в инвентаре 150 000 ₽.', fx:()=>invAdd({k:'money', v:150000, t:'Подарок поставщиков за полмиллиона', d:'', src:'Цель района'})},
-  {n:750000, t:'три четверти миллиона', d:'Город заговорил о районе: двое суток гостей на 20% больше.', fx:()=>addMod('traffic', 1.2, 48, 'Три четверти миллиона: гостей +20%')}];
+  {n:750000, t:'три четверти миллиона', d:'О районе заговорили все: двое суток гостей на 20% больше.', fx:()=>addMod('traffic', 1.2, 48, 'Три четверти миллиона: гостей +20%')}];
 function goalCheck(){
   if(!S) return; S.goalMs = S.goalMs || [];
   for(const m of GOAL_MS){ if(GOAL_SNAP.total >= m.n && !S.goalMs.includes(m.n)){ S.goalMs.push(m.n); try{ m.fx(); }catch(e){} queueModal({kind:'note', title:'Район продал '+m.t, text:m.d+' Всего продано '+fmt(GOAL_SNAP.total)+' из миллиона.'}); } }
@@ -9040,7 +9035,7 @@ const BOSSES = [
       {t:'Подать простой эспрессо', test:()=>room('main').upg.machine >= 8, win:'Машина хорошая, эспрессо честный. «Уважаю», — сказал он.', lose:'«Эспрессо как из автомата на вокзале». Тысяча лайков.'},
       {t:'Подать что-то новое, без названия', test:()=>chance(0.45), win:'Он назвал напиток своим именем. Теперь это хит.', lose:'Он не понял, что это было. Зрители тоже.'}]},
     {t:'Критик смотрит на команду', x:'{boss} навёл камеру на бариста: «А вы тут довольны работой?»', o:[
-      {t:'Пусть отвечает сам', test:()=>avgMood() >= 60, win:'Бариста сказал, что тут лучшая команда в городе. И кажется, не врал.', lose:'Бариста сказал «нормально» таким голосом, что всё стало ясно.'},
+      {t:'Пусть отвечает сам', test:()=>avgMood() >= 60, win:'Бариста сказал, что тут лучшая команда в районе. И кажется, не врал.', lose:'Бариста сказал «нормально» таким голосом, что всё стало ясно.'},
       {t:'Ответить за него', test:()=>chance(0.4), win:'Ты сказал, что команда — семья. Бариста кивнул. Поверили.', lose:'Бариста закатил глаза прямо в кадр.'},
       {t:'Выдать бариста премию прямо в кадре', test:()=>S.money >= 20000 && (spend(20000, 'wages', 'Премия в эфире'), true), win:'Эффектно. Чат пишет «хочу тут работать».', lose:'Не хватило денег на премию. Неловкая пауза в эфире.'}]}]},
   {id:'owner', n:'Владелец крупной сети', badge:'Не продался', d:'Дорогие часы, водитель ждёт у входа. Хочет купить вашу кофейню. Целиком. С котом.', stages:[
@@ -9604,13 +9599,47 @@ function modsDedupe(){ if(!S || !S.mods) return; const now = absNow(), seen = {}
     if(!o){ seen[key] = m; out.push(m); continue; }
     if(m.mul >= 1 ? m.mul > o.mul : m.mul < o.mul){ o.mul = m.mul; o.label = m.label; } o.until = Math.max(o.until, m.until); }
   S.mods = out; }
-const MOD_CAP = {traffic:[0.45, 2.5], check:[0.6, 1.8], supply:[0.6, 1.6], rent:[0.7, 2], wear:[0.5, 2]};
+const MOD_CAP = {traffic:[0.45, 2.5], check:[0.6, 1.5], supply:[0.6, 1.6], rent:[0.7, 2], wear:[0.5, 2]};
 function softCap(m, lo, hi){ if(m > 1.6){ m = 1.6 + (m - 1.6) * 0.4; } return Math.max(lo, Math.min(hi, m)); }
 const _modMul25 = modMul;
 modMul = function(k){ const m = _modMul25(k); const c = MOD_CAP[k]; return c ? softCap(m, c[0], c[1]) : m; };
 const _migrate25 = migrate;
 migrate = function(){ const r = _migrate25.apply(this, arguments); try{ modsDedupe(); }catch(e){} return r; };
 setTimeout(()=>{ try{ modsDedupe(); }catch(e){} }, 1500);
+
+/* без городов: помещение по номеру */
+function placeName(){ return 'Помещение №' + ((S && S.franchises || 0) + 1); }
+
+/* интерьер: убраны диван, пианино, фотозона, золотой унитаз и автомат с игрушками; владельцам возврат */
+const DECOR_GONE = ['sofa','piano','photo','toilet','claw'];
+for(let i = DECOR.length - 1; i >= 0; i--) if(DECOR_GONE.includes(DECOR[i].id)) DECOR.splice(i, 1);
+DECOR_SETS.length = 0;
+DECOR_SETS.push({id:'cozy', n:'Уютный угол', need:['ficus','aquarium','vinyl'], d:'Гостей ещё +3%', fx:{traffic:1.03}}, {id:'hip', n:'Хипстерский набор', need:['vinyl','easel'], d:'Средний чек +3%', fx:{check:1.03}});
+const DECOR_GONE_PRICE = {sofa:700000, piano:900000, photo:1200000, toilet:3000000, claw:500000};
+const DECOR_GONE_N = {sofa:'Диван', piano:'Пианино', photo:'Фотозона', toilet:'Золотой унитаз', claw:'Автомат с игрушками'};
+function decorGoneFix(){ if(!S || !S.decor || !S.decor.items) return; const gone = S.decor.items.filter(x=>DECOR_GONE.includes(x.id)); if(!gone.length) return;
+  S.decor.items = S.decor.items.filter(x=>!DECOR_GONE.includes(x.id)); if(S.decorLoc) for(const k of DECOR_GONE) delete S.decorLoc[k];
+  let sum = 0; for(const x of gone) sum += DECOR_GONE_PRICE[x.id] || 0;
+  if(sum > 0){ income(sum, 'other', 'Возврат за убранный интерьер'); }
+  queueModal({kind:'note', title:'Интерьер обновили', text:'Из игры убрали: '+gone.map(x=>DECOR_GONE_N[x.id]).join(', ')+'. Деньги за них вернули на счёт: '+fmt(sum)+' ₽.'});
+  HOOK.struct(); }
+
+/* сезон: очки за гостей и рутину ограничены в игровой день */
+const _szAdd25 = szAdd;
+szAdd = function(v, why){ if(!S) return; const z = szState();
+  if(why==='guests' || why==='clean' || why==='tasks' || why==='event' || why==='carpet'){
+    if(z.dDay !== S.day){ z.dDay = S.day; z.dG = 0; z.dR = 0; }
+    if(why==='guests'){ if(z.dG >= 25) return; z.dG += v; }
+    else { v = Math.round(v * 0.6); if(z.dR >= 30) return; v = Math.min(v, 30 - z.dR); z.dR += v; }
+  }
+  return _szAdd25(v, why); };
+
+/* продажа сети: рейтинг сезона считается заново для нового помещения */
+const _sellFr25 = sellFranchise;
+sellFranchise = function(cityId){ const sh = _sellFr25('spb'); if(sh && S.sz) S.sz.rbase = S.sz.sp; return sh; };
+
+const _migrate25b = migrate;
+migrate = function(){ const r = _migrate25b.apply(this, arguments); try{ decorGoneFix(); }catch(e){} return r; };
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
