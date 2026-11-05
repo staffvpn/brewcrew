@@ -23,13 +23,13 @@ export async function onRequestPost({ request, env, waitUntil }) {
       VALUES (?1, ?2, ?3, ?4, ?5, ?5, 1, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?16)
       ON CONFLICT(tg_id) DO UPDATE SET username = ?2, first_name = ?3, lang = ?4, last_seen = ?5,
         sessions = sessions + (CASE WHEN ?15 = 1 THEN 1 ELSE 0 END), cafe = ?6, city = ?7, level = ?8, money = ?9, earned = ?10,
-        rooms = ?11, franchises = ?12, bankrupt = ?13, play_seconds = play_seconds + ?14`)
+        rooms = ?11, franchises = ?12, bankrupt = ?13, play_seconds = play_seconds + ?14,
+        best_day = MAX(COALESCE(best_day,0), ?17), snap = COALESCE(?18, snap), badge_name = ?19`)
       .bind(user.id, str(user.username), str(user.first_name), str(user.language_code, 8), now,
         str(s.cafe), str(s.city, 20), Math.round(num(s.level, 1e6)), num(s.money), num(s.earned), Math.round(num(s.rooms, 100)),
-        Math.round(num(s.franchises, 1e4)), Math.round(num(s.bankrupt, 1e4)), dt, s.start ? 1 : 0, referrer),
-    env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id),
-    env.DB.prepare('UPDATE players SET best_day = MAX(COALESCE(best_day,0), ?2) WHERE tg_id = ?1').bind(user.id, Math.min(num(s.best), 5e9)),
-    env.DB.prepare('UPDATE players SET snap = ?2 WHERE tg_id = ?1').bind(user.id, s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null)
+        Math.round(num(s.franchises, 1e4)), Math.round(num(s.bankrupt, 1e4)), dt, s.start ? 1 : 0, referrer,
+        Math.min(num(s.best), 5e9), s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null, typeof s.bdn === 'string' ? s.bdn.slice(0, 40) : null),
+    env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id)
   ]);
   // рефералы: привязка нового игрока и награда пригласившему за 3 уровень
   try { if (refId) await bindReferrer(env, user, refId, 'app'); await payReferrer(env, user.id); } catch {}
@@ -43,12 +43,11 @@ export async function onRequestPost({ request, env, waitUntil }) {
       await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5)').bind(key, now, okp ? 1 : 0, okp && okp.id ? okp.id : null, 'Кофейня недели: ' + name).run();
     }
   }
-  // значок рядом с названием
-  await env.DB.prepare('UPDATE players SET badge_name = ?2 WHERE tg_id = ?1').bind(user.id, typeof s.bdn === 'string' ? s.bdn.slice(0, 40) : null).run();
   // сезон: очки за месяц
   if (!ADMINS.includes(user.id) && s.sz === sezId(now) && Number.isFinite(Number(s.sp))) {
     await env.DB.prepare(`INSERT INTO season (season, tg_id, sp, cafe, city, first_name, badge, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
-      ON CONFLICT(season, tg_id) DO UPDATE SET sp = ?3, cafe = ?4, city = ?5, first_name = ?6, badge = ?7, updated_at = ?8`).bind(s.sz, user.id, Math.max(0, Math.min(1e7, Math.round(Number(s.sp)))), str(s.cafe), str(s.city, 20), str(user.first_name), s.bd ? 1 : 0, now).run();
+      ON CONFLICT(season, tg_id) DO UPDATE SET sp = ?3, cafe = ?4, city = ?5, first_name = ?6, badge = ?7, updated_at = ?8
+      WHERE season.sp IS NOT ?3 OR season.badge IS NOT ?7 OR season.cafe IS NOT ?4`).bind(s.sz, user.id, Math.max(0, Math.min(1e7, Math.round(Number(s.sp)))), str(s.cafe), str(s.city, 20), str(user.first_name), s.bd ? 1 : 0, now).run();
   }
   // трофей: первый владелец золотой кофемашины попадает в канал
   if (s.trophy && env.CHANNEL_ID) {
