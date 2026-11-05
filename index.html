@@ -9256,7 +9256,7 @@ function lizaTick(dt){
   if(!LZRUN){
     if(Date.now() < LZ_LAUNCH || S.level < 2) return; const v = lzState(); if(v.n >= 5 || Date.now() < v.next) return;
     if(VIPRUN || S.active !== 'main' || sheet || modals.length || !isWorking() || document.hidden) return;
-    LZRUN = {stage:'in', x:DOOR[0], y:DOOR[1], tx:150, ty:QUEUE_Y + 46, t:0, flip:true};
+    LZRUN = {stage:'in', x:DOOR[0], y:DOOR[1], tx:150, ty:QUEUE_Y + 46, t:0, flip:true, h:SPR_H*1.5 + 4};
     bubble2(0, 0, pick(['Привет! Можно я тут осмотрюсь? Кот тоже хочет.', 'Здравствуйте! Я на минутку. Кот на дольше.']), 3200, LZRUN); return; }
   const m = LZRUN; m.t += dt;
   if(m.stage==='in'){ m.walk = true; if(moveTo(m, m.tx, m.ty, 44, dt)){ m.walk = false; m.stage = 'ask'; queueModal({kind:'lzask'}, true); } return; }
