@@ -6540,7 +6540,7 @@ function renderEvents(p){
     p.appendChild(card);
   });
   const mods = activeMods();
-  if(mods.length){ const st = stats(S.active), mt = modMul('traffic'); p.appendChild(el(`<div class="h">Действуют сейчас</div>`)); if(Math.abs(mt-1) >= 0.05 && st.lambda > 0) p.appendChild(el(`<div class="card"><div class="t">Гостей за игровой час: ${fmt(st.lambda/mt*840)} → <b class="num">${fmt(st.lambda*840)}</b></div><div class="d">Итог всех бонусов и штрафов к потоку: ${mt>=1?'+':'−'}${Math.round(Math.abs(mt-1)*100)}%</div></div>`)); mods.forEach(m=>p.appendChild(el(`<div class="card"><div class="row"><span class="t">${esc(m.label)}</span><span class="sp"></span><span class="tag num">${Math.ceil((m.until-absNow())/60)} игр. ч</span></div></div>`))); }
+  if(mods.length){ const st = stats(S.active), mt = modMul('traffic'); p.appendChild(el(`<div class="h">Действуют сейчас</div>`)); if(Math.abs(mt-1) >= 0.05 && st.lambda > 0) p.appendChild(el(`<div class="card"><div class="t">Гостей за игровой час: ${fmt(st.lambda/mt*840)} → <b class="num">${fmt(st.lambda*840)}</b></div><div class="d">Итог всех бонусов и штрафов к потоку: ${mt>=1?'+':'−'}${Math.round(Math.abs(mt-1)*100)}%${mt >= 2.5 ? ' (это потолок, больше не складывается)' : ''}</div></div>`)); mods.forEach(m=>p.appendChild(el(`<div class="card"><div class="row"><span class="t">${esc(m.label)}</span><span class="sp"></span><span class="tag num">${(m.until-absNow())/60 > 2000 ? 'постоянно' : Math.ceil((m.until-absNow())/60)+' игр. ч'}</span></div></div>`))); }
 }
 
 /* ---------- ещё ---------- */
@@ -9590,6 +9590,27 @@ cv.addEventListener('pointerdown', e => {
   e.stopImmediatePropagation(); swipe0 = {x:e.clientX, y:e.clientY};
   cleanDirty('hall2', best.k); tapFx(best.cx, best.cy-8); sfx('tap'); addXp(2); taskProg('clean', 1);
 }, {capture:true});
+
+/* баланс модификаторов: одинаковые не складываются, общий итог с потолком */
+function modKey(m){ return m.k+'|'+String(m.label||'').replace(/[−\-+]?\d+\s*%.*$/, '').trim(); }
+addMod = function(k, mul, hours, label){
+  S.mods = S.mods || []; const now = absNow(), until = now + Math.round(hours*60), nk = modKey({k, label});
+  const same = S.mods.find(m=>m.until > now && modKey(m) === nk);
+  if(same){ const better = mul >= 1 ? mul >= same.mul : mul <= same.mul; if(better){ same.mul = mul; same.label = label; } same.until = Math.max(same.until, until); }
+  else S.mods.push({k, mul, until, label});
+  HOOK.struct(); };
+function modsDedupe(){ if(!S || !S.mods) return; const now = absNow(), seen = {}, out = [];
+  for(const m of S.mods){ if(m.until <= now) continue; const key = modKey(m), o = seen[key];
+    if(!o){ seen[key] = m; out.push(m); continue; }
+    if(m.mul >= 1 ? m.mul > o.mul : m.mul < o.mul){ o.mul = m.mul; o.label = m.label; } o.until = Math.max(o.until, m.until); }
+  S.mods = out; }
+const MOD_CAP = {traffic:[0.45, 2.5], check:[0.6, 1.8], supply:[0.6, 1.6], rent:[0.7, 2], wear:[0.5, 2]};
+function softCap(m, lo, hi){ if(m > 1.6){ m = 1.6 + (m - 1.6) * 0.4; } return Math.max(lo, Math.min(hi, m)); }
+const _modMul25 = modMul;
+modMul = function(k){ const m = _modMul25(k); const c = MOD_CAP[k]; return c ? softCap(m, c[0], c[1]) : m; };
+const _migrate25 = migrate;
+migrate = function(){ const r = _migrate25.apply(this, arguments); try{ modsDedupe(); }catch(e){} return r; };
+setTimeout(()=>{ try{ modsDedupe(); }catch(e){} }, 1500);
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
