@@ -640,6 +640,23 @@ input,textarea,select{font-size:16px!important}
 .stk-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0}
 .stk{background:rgba(0,0,0,.08);border-radius:8px;padding:6px 0;text-align:center;font-size:10px;opacity:.6}
 .stk b{display:block;font-size:15px}.stk.on{background:#eac54f;color:#3a2a10;opacity:1}.stk.big{outline:2px solid rgba(181,101,42,.6)}
+/* облегчение: тот же стиль, меньше шума */
+.toast{top:auto !important;bottom:calc(96px + env(safe-area-inset-bottom,0px)) !important;font-size:12px;padding:7px 12px;max-width:88vw;left:50%;transform:translateX(-50%);text-align:center}
+.pills .pill.task,.pills .pill.onb,.pills .pill.hol{display:none}
+.pill{font-size:11.5px;padding:3px 9px}
+.sheethead .subnav{flex-wrap:wrap !important;overflow:visible !important;gap:5px}
+.sheethead .chipbtn{font-size:12px !important;padding:5px 9px !important}
+.attn,.attnbar{display:none !important}
+.card .d{font-size:12.5px;line-height:1.35}
+.card.staff .tag.rank,.card.staff .tag.main,.card.staff .tag.shift{display:none}
+.empty.tip{display:none}
+.lite-more{font-size:12px;opacity:.75;text-decoration:underline;background:none;border:none;color:inherit;padding:2px 0}
+.card.up .nextline{display:none}.card.up.open .nextline{display:block}
+.card.up .maxbtn{display:none}.card.up.open .maxbtn{display:inline-flex}
+.top .cafe{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px;line-height:1.15;display:block;-webkit-line-clamp:unset}
+.top .cafe small{display:none}
+.top .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lite-x{background:none;border:none;color:var(--caramel,#b5652a);font-weight:700;font-size:12px;padding:0 0 0 4px;cursor:pointer}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -9529,6 +9546,45 @@ setInterval(()=>{ try{ if(!modals.length) streakCheck(); }catch(e){} }, 5*60000)
 // премия запоминается для сплетен
 const _giveBonus25 = giveBonus;
 giveBonus = function(s, wish){ S.c.lastBonusDay = S.day; return _giveBonus25(s, wish); };
+
+/* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
+function liteTeam(p){
+  // покрытие недели и график — под одну кнопку
+  const covs = Array.from(p.querySelectorAll('.card')).filter(c=>{ const t = c.querySelector('.t'); return t && /Кто выходит на неделе|^График$/.test(t.textContent.trim()); });
+  if(covs.length){ const b = el(`<div class="card"><div class="row"><span class="t">График недели</span><span class="sp"></span><button class="btn ghost">Показать</button></div></div>`); covs[0].before(b); covs.forEach(c=>c.style.display='none'); b.querySelector('button').onclick = () => { covs.forEach(c=>c.style.display=''); b.remove(); }; }
+  // карточки сотрудников: только роль и уровень, строка смены короче
+  p.querySelectorAll('.card.staff').forEach(c=>{
+    c.querySelectorAll('.tag').forEach(t=>{ const x = t.textContent.trim(); if(/^(Стажёр|Специалист|Старший|Управляющий зала|Основной|На подхвате|На смене|Без странностей|Характер: \?)$/.test(x)) t.remove(); });
+    c.querySelectorAll('.d').forEach(d=>{ const x = d.textContent; const m = x.match(/выходные: ([^·]+)·\s*([\d\s ]+₽)/); if(m) d.textContent = 'вых. '+m[1].trim().toLowerCase()+' · '+m[2].trim()+' за смену'; else if(/^Смена: /.test(x)) d.textContent = x.replace(/ официально или .+$/, ''); });
+  });
+  // карточка «Ты» — одной строкой
+  p.querySelectorAll('.card.you').forEach(c=>{ const st = c.querySelector('.stamp'); const off = st && /ОТДЫХ/.test(st.textContent); c.querySelectorAll('.d, p').forEach(d=>{ if(d.textContent.length > 60) d.textContent = off ? 'Ты сегодня отдыхаешь.' : 'Ты сегодня за стойкой.'; }); });
+  // шкала без слова «Состояние»
+  p.querySelectorAll('.mood').forEach(m=>{ for(const n of Array.from(m.childNodes)) if(n.nodeType===3 && /Состояние/.test(n.textContent)) n.textContent = ''; });
+  // длинные подсказки мелким шрифтом убираем
+  p.querySelectorAll('.empty').forEach(e=>{ if(e.getAttribute('style') && /font-size:12px/.test(e.getAttribute('style'))) e.remove(); });
+}
+// длинное описание — первая фраза и «ещё»
+function liteShort(p){
+  p.querySelectorAll('.card > .d').forEach(d=>{ if(d.dataset.lite || d.children.length > 2) return; const full = d.innerHTML, txtc = d.textContent.trim(); if(txtc.length < 130) return;
+    const m = txtc.match(/^.{30,}?[.!?](\s|$)/); if(!m || m[0].length > txtc.length - 20) return;
+    d.dataset.lite = '1'; d.textContent = m[0].trim() + ' '; const b = document.createElement('button'); b.className = 'lite-x'; b.textContent = 'ещё'; b.onclick = e => { e.stopPropagation(); d.innerHTML = full; }; d.appendChild(b); });
+}
+function liteUp(p){
+  p.querySelectorAll('.card').forEach(c=>{
+    const max = Array.from(c.querySelectorAll('button')).find(b=>b.textContent.trim()==='Макс');
+    const next = Array.from(c.querySelectorAll('.d, div')).find(d=>/^Дальше:/.test(d.textContent.trim()) && d.children.length <= 1);
+    if(!max && !next) return;
+    c.classList.add('up'); if(max) max.classList.add('maxbtn'); if(next) next.classList.add('nextline');
+    const t = c.querySelector('.t'); if(t){ t.style.cursor = 'pointer'; t.addEventListener('click', ()=>c.classList.toggle('open')); }
+  });
+  p.querySelectorAll('.empty').forEach(e=>{ if(e.getAttribute('style') && /font-size:12px/.test(e.getAttribute('style'))) e.remove(); });
+}
+const _renderSheetLite = renderSheet;
+renderSheet = function(){ _renderSheetLite.apply(this, arguments); try{ const p = $('#panel'); if(!p) return; liteShort(p); if(sheet==='up') liteUp(p); else if(sheet==='hall' && hallTab==='team') liteTeam(p); else p.querySelectorAll('.empty').forEach(e=>{ if(e.getAttribute('style') && /font-size:12px/.test(e.getAttribute('style'))) e.remove(); }); }catch(e){ console.error(e); } };
+// одно уведомление за раз
+const _toastLite = toast;
+toast = function(msg){ document.querySelectorAll('.toast').forEach(t=>t.remove()); const t = el(`<div class="toast" role="status">${esc(msg)}</div>`); document.body.appendChild(t); setTimeout(()=>t.remove(), 2400); };
 
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());
