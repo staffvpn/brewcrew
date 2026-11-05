@@ -87,6 +87,8 @@ export async function channelTick(env, origin) {
         }
         const ok = true; // итоги сезона без поста в канал: значки и легенды приходят в игру
         await mark(env, skey, ok); return; } }
+    // Елизавета из «кофеРУинер»: пост и рассылка в момент запуска
+    if (await lizaTick(env, origin)) return;
     // особый гость недели: анонс в четверг, рассылка в пятницу, итоги в субботу
     if (await bossTick(env, origin)) return;
     // голосование в канале раз в неделю: что случится у всех
@@ -207,5 +209,23 @@ async function bossTick(env, origin) {
     if (top.length) lines.push('', 'Первыми справились:', ...top.map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}», ${esc(t.first_name || 'аноним')}`));
     lines.push('', 'В следующую пятницу придёт другой гость.');
     const ok = await post(env, origin, 'events.jpg', lines.join('\n')); await mark(env, k, ok); return true; } }
+  return false;
+}
+
+// запуск Елизаветы: один пост в канал и одно сообщение игрокам
+const LIZA_AT = Date.parse('2026-11-05T18:00:00+03:00');
+async function lizaTick(env, origin) {
+  if (Date.now() < LIZA_AT) return false;
+  if (!(await posted(env, 'liza_post'))) {
+    const ok = await post(env, origin, 'liza_card.png', ['<b>В районе новая гостья: Елизавета из «кофеРУинер»</b>', '', 'Она ходит по кофейням с котом на плече и пишет обзоры. Смешные, честные и добрые. У каждой кофейни свой: она смотрит, какая вы, а не сколько вы потратили.', '', 'Пять визитов, раз в три дня. Между визитами можно что-то поменять и поднять оценку. После пятого — личный значок по типу вашей кофейни.', '', 'Её канал: <a href="https://t.me/eve_channel777">кофеРУинер</a>'].join('\n'));
+    await mark(env, 'liza_post', ok); return true;
+  }
+  const k = 'liza_bc'; const st = await posted(env, k); if (st && st.info === 'done') return false;
+  const after = st ? Number(st.info) || 0 : 0;
+  const rows = (await env.DB.prepare('SELECT tg_id FROM players WHERE tg_id > ?1 AND COALESCE(banned,0) = 0 AND level >= 2 ORDER BY tg_id LIMIT 25').bind(after).all()).results || [];
+  if (!rows.length) { await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info) VALUES (?1, ?2, 1, ?3)').bind(k, Date.now() - 3 * 60000, 'done').run(); return false; }
+  const bot = await getBot(env); const app = bot ? `https://t.me/${bot.username}${env.APP_SHORT ? '/' + env.APP_SHORT : ''}?${env.APP_SHORT ? 'startapp' : 'start'}=liza` : origin;
+  for (const r of rows) { try { await tgApi(env, 'sendMessage', { chat_id: r.tg_id, text: '<b>Елизавета из «кофеРУинер» вышла в район</b>\n\nСкоро она зайдёт и к тебе с котом на плече и напишет обзор твоей кофейни. У каждого он свой.', parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Открыть кофейню', url: app }], [{ text: 'Канал кофеРУинер', url: 'https://t.me/eve_channel777' }]] } }); } catch {} }
+  await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info) VALUES (?1, ?2, 1, ?3)').bind(k, Date.now() - 3 * 60000, String(rows[rows.length - 1].tg_id)).run();
   return false;
 }

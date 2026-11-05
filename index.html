@@ -617,6 +617,16 @@ input,textarea,select{font-size:16px!important}
 .goalbar i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:linear-gradient(90deg,#c9822e,#eac54f)}
 .goalbar b{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:rgba(255,255,255,.55)}
 .card.goal .num b{font-size:15px}
+.lz-post{background:#fff;color:#1d1a17;border-radius:12px;padding:12px 12px 6px;margin:8px 0;text-align:left;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.lz-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.lz-head img{width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:50% 8%;background:#e9dccb}
+.lz-head b{display:block;font-size:14px}.lz-head span{font-size:11px;color:#7a6e64}
+.lz-score{margin-left:auto;font-weight:800;font-size:22px;color:#b5652a}.lz-score i{font-style:normal;font-size:12px;color:#7a6e64}
+.lz-title{font-weight:800;font-size:15px;margin:2px 0 6px}
+.lz-post p{font-size:13px;line-height:1.4;margin:0 0 7px}
+.lz-post p.lz-cat{font-style:italic;color:#6a5a4e}
+.lz-post p.lz-badge{font-weight:700;color:#3a6a3a}
+.lz-fx{font-size:12px;opacity:.85;margin:4px 0 8px}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -9094,6 +9104,212 @@ function bossCard(){
 }
 const _renderTasks23 = renderTasks;
 renderTasks = function(p){ _renderTasks23(p); try{ const g = p.querySelector('.card.goal'); const c = bossCard(); if(g) g.insertAdjacentElement('beforebegin', c); else p.prepend(c); }catch(e){ console.error(e); } };
+
+/* ================= v21: Елизавета из «кофеРУинер» — обзор кофейни, 5 визитов раз в 3 дня ================= */
+const LZ_LAUNCH = Date.parse('2026-11-05T18:00:00+03:00');
+VIPS.push({id:'liza', n:'Елизавета', title:'кофеРУинер', role:'Кофейный блогер', bio:'Ведёт канал «кофеРУинер» о кофе и кофейнях. Ходит по району с котом на плече и пишет обзоры: смешные, честные и добрые. Кот пишет свои.', ev:'Обзор кофейни', url:'https://t.me/eve_channel777', img:'img/liza_card.png', spr:'img/liza.png', max:5});
+const LIZA_IMG = new Image(); let lizaReady = false; LIZA_IMG.onload = () => { lizaReady = true; }; LIZA_IMG.src = 'img/liza.png';
+function lzState(){ const v = vipState('liza'); if(!v.lz){ v.lz = true; v.next = Math.max(v.next, LZ_LAUNCH + RI(2, 30)*60000); v.reviews = v.reviews || []; } v.reviews = v.reviews || []; return v; }
+
+/* ---------- признаки кофейни: всё в долях от своих возможностей, не от денег ---------- */
+const LZ_ADJ = {
+  soul:['душевный','душевная','душевное'], pathos:['изысканный','изысканная','изысканное'], chaos:['шумный','шумная','шумное'], fast:['скоростной','скоростная','скоростное'],
+  night:['ночной','ночная','ночное'], team:['дружный','дружная','дружное'], cheap:['щедрый','щедрая','щедрое'], lounge:['гостеприимный','гостеприимная','гостеприимное'],
+  sweet:['сладкий','сладкая','сладкое'], lab:['экспериментальный','экспериментальная','экспериментальное'], young:['молодой','молодая','молодое'], legend:['бывалый','бывалая','бывалое'],
+  odd:['эксцентричный','эксцентричная','эксцентричное'], flawless:['безупречный','безупречная','безупречное'], broken:['непредсказуемый','непредсказуемая','непредсказуемое'],
+  zoo:['пушистый','пушистая','пушистое'], drama:['драматичный','драматичная','драматичное']};
+const LZ_NOUN = {
+  soul:['Точка силы района','f'], pathos:['Кофейный бутик','m'], chaos:['Цирк с кофемашиной','m'], fast:['Кофейный пит-стоп','m'], night:['Ночной кофейный клуб','m'],
+  team:['Кофейное братство','n'], cheap:['Кофейня народного доверия','f'], lounge:['Вторая гостиная района','f'], sweet:['Кондитерская под прикрытием','f'],
+  lab:['Кофейная лаборатория','f'], young:['Восходящая звезда','f'], legend:['Кофейня-легенда','f'], odd:['Кофейный арт-объект','m'], flawless:['Любимица карт','f'],
+  broken:['Кофейня на изоленте','f'], zoo:['Кофейный зоопарк','m'], drama:['Кофейня-сериал','f']};
+const LZ_WHY = {
+  soul:'Сюда возвращаются. Не за кофе даже, а за ощущением, что тебя тут ждали.',
+  pathos:'Здесь чашку подают так, будто это последний эспрессо на планете. И цены соответствующие. Но знаете — красиво.',
+  chaos:'Тут всегда что-то происходит. Кто-то поёт, что-то падает, кто-то спорит про молоко. И при этом гости довольны — магия.',
+  fast:'Зашла, моргнула — кофе уже в руке. Очередь тут не стоит, она пролетает.',
+  night:'Днём это просто кофейня, а ночью — клуб: диваны, кино и люди, которым не хочется домой.',
+  team:'Команда тут держится друг за друга. Никто не уходит, все давно сработались — это видно по тому, как они передают чашки.',
+  cheap:'Цены такие, что хочется проверить, не ошиблись ли в меню. Не ошиблись. Народ это знает и идёт.',
+  lounge:'Сюда приходят посидеть, а не забежать. Мест много, никто не торопит, официант сам приносит добавку.',
+  sweet:'Скажу честно: я пришла за кофе, а ушла с десертом. И не одна такая — десерты тут продаются лучше эспрессо.',
+  lab:'Меню здесь похоже на учебник по химии, только вкусный. Своя обжарка, свои рецепты, свои странные идеи.',
+  young:'Кофейня совсем молодая, ещё пахнет свежей краской. Но характер уже виден.',
+  legend:'Эта кофейня пережила гусей, проверки и запары. Стены тут помнят больше, чем бариста.',
+  odd:'Здесь есть вещи, которые я не ожидала увидеть в кофейне. И не уверена, что хотела. Но запомнила навсегда.',
+  flawless:'Рейтинг на картах тут такой, что я пришла искать подвох. Не нашла. Обидно даже.',
+  broken:'Здесь всё время что-то ломается, но команда чинит быстрее, чем я успеваю достать телефон.',
+  zoo:'Кот на моём плече тут сразу нашёл друзей. Кажется, питомцев здесь больше, чем столиков.',
+  drama:'За час здесь произошло больше, чем в трёх сезонах моего любимого сериала. Ссоры, примирения, гусь.'};
+const LZ_ADJWHY = {soul:'душевно', pathos:'с размахом', chaos:'шумно', fast:'быстро', night:'по-ночному', team:'дружно', cheap:'щедро', lounge:'гостеприимно', sweet:'сладко', lab:'с экспериментами', young:'по-молодому дерзко', legend:'со стажем', odd:'эксцентрично', flawless:'без единой помарки', broken:'непредсказуемо', zoo:'пушисто', drama:'драматично'};
+function lzSeats(){ return seatTotal('main') + (room('hall2') ? h2Seats() : 0); }
+function lzTraits(){
+  const c = S.c || {}, m = S.meters || {soul:0, pathos:0, chaos:0}, u = room('main').upg, day = Math.max(1, S.day);
+  const st = S.staff.filter(s=>!s.isYou); const lvl = st.length ? st.reduce((a,s)=>a+(s.lvl||1),0)/st.length : 1;
+  const bi = c.byItem || {}; const sweetN = (bi.dessert||0) + (bi.breakfast||0); const allN = Object.values(bi).reduce((a,b)=>a+(b||0),0) || 1;
+  const odd = ['toilet','claw','aquarium','photo','piano'].filter(id=>hasDecor(id)).length;
+  const guestsDay = ((S.fin.hist||[])[0]||{}).guests || 0;
+  const q = rt('main').queue.length, cash = anyStaff('Кассир').length || 1;
+  const T = {
+    soul: m.soul/100*0.8 + Math.min(0.3, (c.regularsMax||0)/30),
+    pathos: m.pathos/100*0.8 + Math.max(0, (u.menu - u.machine))/20,
+    chaos: m.chaos/100 * (S.rep >= 3.5 ? 1 : 0.5) + 0.1,
+    fast: guestsDay >= 80 && q <= 1 && seatTotal('main') <= 10 ? 0.6 : 0.1,
+    night: room('hall2') && cineReady() ? 0.85 : room('hall2') ? 0.4 : 0,
+    team: Math.min(1, lvl/12) * (1 - Math.min(1, ((c.quits||0) + (c.fired||0)) / (day*0.3))),
+    cheap: (u.menu <= u.machine - 3 ? 0.5 : 0.15) + Math.min(0.4, guestsDay/600),
+    lounge: Math.min(1, lzSeats()/30),
+    sweet: Math.min(1, sweetN/allN * 2),
+    lab: (S.spends && S.spends.roaster ? 0.5 : 0) + Math.min(0.5, MENU.filter(x=>isUnlocked(x.id)).length/16),
+    young: S.day <= 7 ? 0.55 : S.day <= 15 ? 0.42 : 0,
+    legend: Math.min(1, S.day/90) * 0.6 + Math.min(0.4, ((c.geese||0) + (c.inspections||0))/30),
+    odd: Math.min(1, odd*0.35),
+    flawless: S.rep >= 4.6 ? 0.6 + (1 - Math.min(1, (c.angry||0)/Math.max(1, c.guests||1)*20))*0.35 : 0,
+    broken: Math.min(1, (c.breakdowns||0)/day),
+    zoo: Math.min(1, (u.pets||0)/8),
+    drama: Math.min(1, ((c.fights||0) + (c.conflicts||0) + (c.absurd||0))/(day*1.5))};
+  return T;
+}
+function lzType(){
+  const T = lzTraits(); const arr = Object.entries(T).sort((a,b)=>b[1]-a[1]);
+  const [k1, v1] = arr[0], [k2, v2] = arr[1];
+  if(v1 < 0.4) return {key:null, title:'Кофейня, которая ещё ищет себя', main:null, sub:null};
+  const [noun, g] = LZ_NOUN[k1];
+  if(v2 >= 0.4){ const adj = LZ_ADJ[k2][g==='m'?0:g==='f'?1:2]; const title = adj[0].toUpperCase() + adj.slice(1) + ' ' + noun[0].toLowerCase() + noun.slice(1); return {key:k1+'+'+k2, title, main:k1, sub:k2}; }
+  return {key:k1, title:noun, main:k1, sub:null};
+}
+/* ---------- оценка: 7–10, за то, как кофейня держит свой стиль ---------- */
+function lzMetrics(){
+  const u = room('main').upg, q = rt('main').queue.length, cash = anyStaff('Кассир').length || 1;
+  const hist = (S.fin.hist||[]).slice(0, 3);
+  return {
+    clean: 1 - Math.min(1, dirtLevel('main')),
+    queue: 1 - Math.min(1, q / (2 + cash*3)),
+    mood: avgMood()/100,
+    stable: hist.length ? hist.filter(f=>opProfit(f) > 0).length / hist.length : 0.6,
+    fair: 1 - Math.min(1, Math.max(0, u.menu - u.machine)/10),
+    style: Math.min(1, Object.values(lzTraits()).sort((a,b)=>b-a)[0])};
+}
+function lzScore(focus){
+  const M = lzMetrics(); const w = {clean:1, queue:1, mood:1, stable:1, fair:1, style:1};
+  if(focus==='drink'){ w.fair = 2.5; } if(focus==='interior'){ w.clean = 2; w.style = 2; } if(focus==='team'){ w.mood = 2.5; }
+  let s = 0, t = 0; for(const k in w){ s += M[k]*w[k]; t += w[k]; }
+  const q = s/t; return {score: Math.min(10, Math.round((7 + 3*q)*2)/2), M};
+}
+/* ---------- текст обзора ---------- */
+function lzFocusText(focus){
+  const u = room('main').upg;
+  if(focus==='drink'){ const raf = isUnlocked('raf'); const m = u.machine;
+    return pick(raf ? ['Попросила самое фирменное — принесли раф. Он мягкий, как плед в ноябре. Я бы за ним вернулась даже под дождём.', 'Раф тут такой, что я забыла сфотографировать его до первого глотка. Профессиональный провал, личная победа.'] :
+      ['Взяла эспрессо, потому что по нему видно всё. Здесь он честный: без понтов, но и без кислой обиды.', 'Капучино с аккуратной пенкой. Сердечко немного кривое, зато искреннее.'])
+      + (m >= 15 ? ' Кофемашина тут как космический корабль, бариста управляет ей с лицом пилота.' : m <= 5 ? ' Кофемашина скромная, но работает на совесть — это редкость.' : ''); }
+  if(focus==='interior'){ const k = interiorOf('main'); const n = k && INTERIORS[k] ? INTERIORS[k].n : null;
+    const dirty = dirtLevel('main') > 0.4;
+    return (n ? 'Интерьер — '+n.toLowerCase()+', и он тут к месту. ' : 'Интерьер без пафоса, зато всё на своих местах. ')
+      + (dirty ? 'Пол, правда, слегка липнет к кроссовкам, но я решила считать это фирменной фишкой.' : 'Чисто так, что кот на плече даже не стал ничего ронять.')
+      + (room('hall2') ? ' А в зоне отдыха диваны, на которых хочется остаться жить.' : ''); }
+  const st = S.staff.filter(s=>!s.isYou && s.today==='work'); const s = st.length ? pick(st) : null;
+  if(!s) return 'Команду я так и не увидела — кажется, тут всё делает владелец. Уважаю, но берегите себя.';
+  return s.mood >= 70 ? pick([s.role+' '+s.name+' улыбается не по инструкции. Это видно и это заразно.', s.role+' '+s.name+' работает так, будто это лучшая смена в жизни. Может, так и есть.'])
+    : s.mood >= 40 ? s.role+' '+s.name+' держится молодцом, хотя лицо у '+(s.sex==='f'?'неё':'него')+' говорит «мне бы выходной». Дайте ему выходной, пожалуйста.'
+    : s.role+' '+s.name+' смотрит в одну точку с видом человека, который видел слишком много запар. Обнимите '+(s.sex==='f'?'её':'его')+'. Ну или премию.';
+}
+function lzHook(){
+  const c = S.c || {}; const h = [];
+  if(hasDecor('toilet')) h.push('Отдельно про золотой унитаз. Я пришла за кофе, а ушла с вопросами к мирозданию.');
+  if(hasDecor('claw')) h.push('Автомат с игрушками съел у меня три монеты и выдал ничего. Всё как в детстве.');
+  if(hasDecor('aquarium')) h.push('Рыбки в аквариуме выглядят спокойнее всех людей в этом районе.');
+  if((c.geese||0) >= 2) h.push('Местные шепчут, что гусь побеждал тут '+c.geese+' раз. Я гуся не видела, но чувствовала его присутствие.');
+  if((c.slips||0) >= 5) h.push('Гости тут поскальзывались '+c.slips+' раз. Я прошла аккуратно, как по льду. Табличка есть, верить ей можно.');
+  if(S.cine && S.cine.films) h.push('Говорят, по ночам тут крутят кино. Хочу на «Бариста 2». Без спойлеров.');
+  if((S.franchises||0) >= 1) h.push('Владелец уже продавал сеть и начинал заново. Это либо смелость, либо азарт. Мне нравится и то и другое.');
+  if(hasDecor('piano')) h.push('Пианино в углу. Никто не играл, но атмосфера уже есть.');
+  return h.length ? pick(h) : pick(['Музыка играла ровно так громко, чтобы не мешать думать. Это искусство.', 'Салфетки лежали аккуратной стопкой. Мелочь, а приятно.']);
+}
+function lzAdvice(M){
+  const low = Object.entries(M).sort((a,b)=>a[1]-b[1])[0][0];
+  return ({clean:'Протрите пол — и следующий визит будет на балл выше. Я в вас верю, правда.',
+    queue:'Очередь немного длинновата: ещё один человек на кассе — и вы станете легендой утра.',
+    mood:'Команда устала. Одна премия творит чудеса — проверено на моём коте и вкусняшках.',
+    stable:'Последние дни были неровными, но это нормально. Каждая хорошая кофейня через это проходит.',
+    fair:'Цены чуть смелее, чем кофемашина. Подтяните машину — и всё сойдётся.',
+    style:'Вы пока пробуете всё понемногу. Выберите своё — и вас запомнят.'})[low];
+}
+const LZ_CAT = ['Кот одобрил диван и не одобрил пылесос.', 'Кот съел пенку и поставил девять.', 'Кот считает, что кассир слишком громко чихает.', 'Кот уснул на стойке. Это высшая оценка.', 'Кот хотел остаться работать. Я не разрешила.', 'Кот попытался сесть в кофемашину. Вывод: тёплая.', 'Кот поругался с местным гусем. Ничья.', 'Кот трижды пытался залезть в витрину с десертами. Значит, вкусно.'];
+function lzReview(focus){
+  const v = lzState(); const ty = lzType(); const {score, M} = lzScore(focus); const prev = v.reviews[v.reviews.length - 1];
+  const p = [];
+  p.push(ty.main ? LZ_WHY[ty.main] + (ty.sub ? ' И всё это — '+LZ_ADJWHY[ty.sub]+'.' : '') : 'Пока сложно сказать, кем станет эта кофейня. Тут есть всего понемногу — и это интересно, как первая серия.');
+  p.push(lzFocusText(focus));
+  p.push(lzHook());
+  if(prev){ const d = score - prev.score; p.push(d > 0 ? 'В прошлый раз было '+fmtScore(prev.score)+', теперь '+fmtScore(score)+'. Вы растёте, и это видно.' : d < 0 ? 'В прошлый раз было '+fmtScore(prev.score)+'. Сегодня чуть скромнее, но я знаю, на что вы способны.' : 'Оценка та же, что и в прошлый раз: стабильность — тоже талант.');
+    if(prev.type !== ty.title) p.push('Кстати, в прошлый раз вы были «'+prev.type+'», а теперь — «'+ty.title+'». Меняетесь, и мне это нравится.'); }
+  p.push(score >= 9.5 ? 'Ничего не трогайте. Просто продолжайте.' : lzAdvice(M));
+  p.push(pick(LZ_CAT));
+  return {n:v.reviews.length + 1, score, type:ty.title, key:ty.key, text:p, day:S.day, at:Date.now(), focus};
+}
+function fmtScore(s){ return String(s).replace('.', ','); }
+
+/* ---------- визит ---------- */
+let LZRUN = null;
+function lizaTick(dt){
+  if(!LZRUN){
+    if(Date.now() < LZ_LAUNCH || S.level < 2) return; const v = lzState(); if(v.n >= 5 || Date.now() < v.next) return;
+    if(VIPRUN || S.active !== 'main' || sheet || modals.length || !isWorking() || document.hidden) return;
+    LZRUN = {stage:'in', x:DOOR[0], y:DOOR[1], tx:150, ty:QUEUE_Y + 46, t:0, flip:true};
+    bubble2(0, 0, pick(['Привет! Можно я тут осмотрюсь? Кот тоже хочет.', 'Здравствуйте! Я на минутку. Кот на дольше.']), 3200, LZRUN); return; }
+  const m = LZRUN; m.t += dt;
+  if(m.stage==='in'){ m.walk = true; if(moveTo(m, m.tx, m.ty, 44, dt)){ m.walk = false; m.stage = 'ask'; queueModal({kind:'lzask'}, true); } return; }
+  if(m.stage==='look'){ m.left -= dt; m.flash = (m.flash||0) - dt; if(m.flash <= 0){ m.flash = R(2.5, 5); m.fx = 0.25; }
+    if(m.fx > 0) m.fx -= dt; if(Math.random() < dt*0.25){ m.flip = !m.flip; }
+    if(m.left <= 0){ lzFinish(); } return; }
+  if(m.stage==='out'){ m.walk = true; m.flip = false; if(moveTo(m, DOOR[0] + 14, DOOR[1], 50, dt)) LZRUN = null; }
+}
+function lzStart(focus){ const m = LZRUN; if(!m) return; m.focus = focus; m.stage = 'look'; m.left = 40; bubble2(0, 0, pick(['Так, сейчас сфоткаю…', 'Минутку, ловлю свет.', 'Кот, не трогай пенку.']), 2600, m); }
+function lzFinish(){
+  const m = LZRUN; if(!m) return; const v = lzState(); const rv = lzReview(m.focus || 'drink');
+  v.reviews.push(rv); v.n++; v.met = true; v.next = Date.now() + 3*86400000;
+  const pct = Math.round(5 + (rv.score - 7)/3*10); addMod('traffic', 1 + pct/100, 24, 'Обзор кофеРУинер: гостей +'+pct+'%');
+  REP_CAUSE = 'events'; repAdd(0.02*(rv.score - 7) + 0.01); REP_CAUSE = null; sfx('level');
+  if(v.n >= 5){ const name = (rv.type + ' района').slice(0, 40); badgeAdd('liza_'+(rv.key||'none'), name, 'Итог пяти обзоров кофеРУинер'); rv.badge = name; }
+  m.stage = 'out'; queueModal({kind:'lzrev', i:v.reviews.length - 1}, true); save();
+}
+function drawLiza(){
+  const m = LZRUN; if(!m || S.active !== 'main' || !lizaReady) return; const [b] = walkPose(m);
+  shadow(m.x, m.y, 9); const h = SPR_H*1.06, w = h * LIZA_IMG.width / LIZA_IMG.height;
+  ctx.save(); ctx.translate(m.x, m.y - b); if(m.flip) ctx.scale(-1, 1); ctx.drawImage(LIZA_IMG, -w/2, -h, w, h); ctx.restore();
+  if(m.stage==='look'){ RR(m.x + (m.flip?-14:6), m.y - h*0.62, 8, 6, 1, '#2a2a2e'); if(m.fx > 0){ glow2(m.x + (m.flip?-10:10), m.y - h*0.6, 26, '255,255,255', 0.6); }
+    const t = Math.max(0, Math.ceil(m.left)); RR(m.x - 22, m.y + 4, 44, 10, 3, 'rgba(30,20,14,.7)'); txt('обзор · '+t, m.x, m.y + 11.5, '700 6px "Golos Text",sans-serif', '#f3e8d3', 'center'); }
+}
+const _draw24 = draw;
+draw = function(){ _draw24(); try{ lizaTick(1/60); ctx.setTransform(scale,0,0,scale,-OX*scale,0); drawLiza(); }catch(e){ console.error(e); } };
+
+/* ---------- окна ---------- */
+MODAL15.lzask = (box, m, btn) => {
+  box.append(el(`<div class="vip-card"><img src="img/liza_card.png" alt="Елизавета"><div><div class="eyebrow">Особый гость · кофеРУинер</div><h2>Елизавета пишет обзор</h2><p>Она осмотрит кофейню и напишет о ней пост. Что ей показать в первую очередь? Это будет главным в обзоре.</p></div></div>`));
+  box.append(btn('Фирменный напиток', ()=>{ closeModal(); lzStart('drink'); }), btn('Интерьер', ()=>{ closeModal(); lzStart('interior'); }), btn('Команду', ()=>{ closeModal(); lzStart('team'); }));
+};
+function lzPostHtml(rv){
+  return `<div class="lz-post"><div class="lz-head"><img src="img/liza_card.png" alt=""><div><b>кофеРУинер</b><span>Обзор ${rv.n} из 5 · день ${rv.day}</span></div><div class="lz-score">${fmtScore(rv.score)}<i>/10</i></div></div>
+    <div class="lz-title">${esc(rv.type)} «${esc(S.name)}»</div>${rv.text.map((t,i)=>`<p class="${i===rv.text.length-1?'lz-cat':''}">${esc(t)}</p>`).join('')}${rv.badge ? `<p class="lz-badge">Значок: «${esc(rv.badge)}»</p>` : ''}</div>`;
+}
+MODAL15.lzrev = (box, m, btn) => { const v = lzState(); const rv = v.reviews[m.i]; if(!rv){ box.append(btn('Закрыть', closeModal)); return; }
+  const pct = Math.round(5 + (rv.score - 7)/3*10);
+  box.append(el(lzPostHtml(rv)), el(`<p class="lz-fx">Сутки гостей +${pct}%. ${v.n < 5 ? 'Следующий визит — через 3 дня: успеете что-то поменять.' : 'Это был последний обзор.'}</p>`));
+  box.append(btn('Канал кофеРУинер', ()=>openUrl('https://t.me/eve_channel777')),
+    btn('В историю', ()=>{ withLink(url=>{ const img = location.origin + '/img/story.jpg'; const t = ('Обзор кофеРУинер: «'+S.name+'» — '+rv.type+', '+fmtScore(rv.score)+'/10. Играй: '+url).slice(0, 200); if(tg && tg.shareToStory){ try{ tg.shareToStory(img, {text:t, widget_link:{url, name:'Brew Crew'}}); return; }catch(e){} } toast('Истории работают в приложении Telegram'); }); }, 'ghost'),
+    btn('В чат', ()=>{ withLink(url=>{ const t = 'Мою кофейню «'+S.name+'» разобрала кофеРУинер: '+rv.type+', '+fmtScore(rv.score)+'/10. Свою открывай тут: '+url; const u = 'https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(t); openUrl(u); }); }, 'ghost'),
+    btn('Закрыть', closeModal, 'ghost')); };
+// карточка в книге гостей: все обзоры
+const _vipModal24 = MODAL15.vip;
+MODAL15.vip = (box, m, btn) => { if(m.vid !== 'liza') return _vipModal24(box, m, btn);
+  const v = VIPS.find(x=>x.id==='liza'), st = lzState();
+  box.append(el(`<div class="vip-card"><img src="${v.img}" alt="${esc(v.n)}" class="${st.met?'':'unmet'}"><div><div class="eyebrow">Особый гость · ${esc(v.role)}</div><h2>${esc(v.n)}</h2><p>${esc(v.bio)}</p><p class="vip-ev">Событие: «${esc(v.ev)}»</p></div></div>`));
+  if(st.reviews.length) st.reviews.slice().reverse().forEach(rv=>box.append(el(lzPostHtml(rv))));
+  else box.append(el(`<p class="lz-fx">Она ещё не заходила. Когда придёт, здесь будут все её обзоры вашей кофейни.</p>`));
+  box.append(btn('Канал кофеРУинер', ()=>openUrl(v.url)), btn('Закрыть', closeModal, 'ghost')); };
+const _migrate24 = migrate;
+migrate = function(){ _migrate24(); lzState(); };
 
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
 boot(loadLocal());
