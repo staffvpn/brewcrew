@@ -43,6 +43,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
       await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5)').bind(key, now, okp ? 1 : 0, okp && okp.id ? okp.id : null, 'Кофейня недели: ' + name).run();
     }
   }
+  // продажа сети: старая кофейня уходит из рейтинга сезона
+  if (Number(s.sold) > 0) { try { const r = await env.DB.prepare('DELETE FROM season WHERE tg_id = ?1 AND season = ?2 AND updated_at < ?3').bind(user.id, sezId(now), Math.min(Number(s.sold), now)).run(); if (r && r.meta && r.meta.changes) await env.DB.prepare('DELETE FROM cache WHERE key = ?1').bind('sz_' + sezId(now)).run(); } catch {} }
   // сезон: очки за месяц
   if (!ADMINS.includes(user.id) && s.sz === sezId(now) && Number.isFinite(Number(s.sp))) {
     await env.DB.prepare(`INSERT INTO season (season, tg_id, sp, cafe, city, first_name, badge, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)

@@ -6768,7 +6768,7 @@ function showModal(){
       el(`<ol class="introl"><li><b>Найми бариста и кассира.</b> Зал → Команда. Новые кандидаты каждые 5 минут.</li><li><b>Выбери позицию дня.</b> Зал → Меню. Её берут втрое чаще.</li><li><b>Тапай по гостям</b> у кассы и на выдаче, и по кофемашине, чтобы работать быстрее.</li><li><b>Три задания каждый день</b> — во вкладке «Дела». Там же события.</li></ol>`), btn('Поехали', ()=>{ closeModal(); openSheet('hall','team'); }));
   }
   else if(m.kind==='streak'){ box.append(el(`<div class="eyebrow">С возвращением</div>`), el(`<h2>${m.n} ${m.n===1?'день':m.n<5?'дня':'дней'} подряд</h2>`), el(`<p>Команда рада тебя видеть. Бонус за серию: +${fmt(m.bonus)} ₽.</p>`), btn('К делу', closeModal)); }
-  else if(m.kind==='note'){ box.append(el(`<div class="eyebrow">Последствия</div>`), el(`<h2>${esc(m.title)}</h2>`), chipsEl(m.chips), btn('Понятно', closeModal)); }
+  else if(m.kind==='note'){ box.append(el(`<div class="eyebrow">${m.text?'Новости':'Последствия'}</div>`), el(`<h2>${esc(m.title)}</h2>`)); if(m.text) box.append(el(`<p>${esc(m.text)}</p>`)); box.append(chipsEl(m.chips), btn('Понятно', closeModal)); }
   else if(m.kind==='staff') staffModal(box, m, btn);
   else if(m.kind==='sched'){
     const s = S.staff.find(x=>x.id===m.sid); if(!s){ closeModal(); return; }
@@ -6823,7 +6823,9 @@ function showModal(){
     const sh = franchiseShares();
     box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} опыта?</h2>`), el(`<p>Залы, команда, деньги и улучшения уйдут новому владельцу. Останутся опыт владельца, вечные бонусы, достижения и гостевая книга. Новое помещение будет ждать сразу после продажи.</p>`));
     const opts = el(`<div class="opts"></div>`);
-    const b = el(`<button class="opt"><b>Продать и переехать в Помещение №${(S.franchises||0)+2}</b></button>`); b.onclick = () => { sellFranchise('spb'); for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; save(); renderGame(); toast('Новая кофейня: '+placeName()); }; opts.appendChild(b);
+    const nm = el(`<div class="d" style="margin:6px 0 4px">Новая кофейня — новое название. Старая уйдёт из рейтинга сезона.</div>`);
+    const inp = el(`<input class="field" maxlength="28" placeholder="Название новой кофейни" value="${esc(randomName())}" style="width:100%;margin-bottom:8px">`);
+    const b = el(`<button class="opt"><b>Продать и переехать в Помещение №${(S.franchises||0)+2}</b></button>`); b.onclick = () => { const nn = inp.value.trim().slice(0,28); if(nn.length < 2){ toast('Придумай название'); return; } if(nn.toLowerCase()===String(S.name).toLowerCase()){ toast('Нужно новое название'); return; } sellFranchise('spb', nn); for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; save(); renderGame(); toast('«'+nn+'», '+placeName()); try{ track(true); }catch(e){} }; opts.append(nm, inp, b);
     box.append(opts, btn('Пока нет', closeModal, 'ghost'));
   }
   else if(m.kind==='menu'){
@@ -7610,7 +7612,7 @@ DUMB_LINES.push('А латте — это капучино, но длиннее?
 FAST_LINES.push('Двойной эспрессо, я в такси','Без пенки, без сиропа, без вопросов','Картой. Пакет не надо. Жизнь тоже не надо, я опаздываю','Как в прошлый раз, только быстрее, чем в прошлый раз');
 KID_LINES.push('А почему у вас кот не работает?','Мама, а почему дядя такой злой? А, это бариста','Мне какао, но чтобы как кофе, как у взрослых','А вы умеете рисовать на пенке динозавра?','Я сам заплачу! Мама, дай карту');
 CAT_LINES.push('Кот спит на кассе. Можно не будить?','Это ваш кот или он просто сюда ходит?','Кот посмотрел на меня как бухгалтер');
-ROLE_LINES14['Бариста'].push('Пенка держится лучше, чем я','Сегодня в меню: эспрессо, американо и моё выгорание','Не трогайте кофемашину, у неё сегодня тоже тяжёлый день','Гость попросил «сделать с душой». Душа кончилась в обед','Рисую сердечко пятый раз. Получается почка. Гость доволен: «оригинально»','Если вы видите, что я улыбаюсь, — это спазм','Опять «латте на кокосовом без кокоса». Это просто латте, Карина','Холдер упал. Вместе с ним упала моя вера в людей','Кофе — это просто горячая вода с амбициями','Гость вернул капучино: «пенка слишком пенистая»','Кто сказал «можно побыстрее», тот сделает сам','Я не бариста. Я бариста-психолог-уборщик-кассир','Тамперовал так, будто это бывший','Мне сказали, что бариста — это творческая профессия. Творю очередь','Выпил шестой эспресс. Вижу звуки');
+ROLE_LINES14['Бариста'].push('Пенка держится лучше, чем я','Сегодня в меню: эспрессо, американо и моё выгорание','Не трогайте кофемашину, у неё сегодня тоже тяжёлый день','Гость попросил «сделать с душой». Душа кончилась в обед','Рисую сердечко пятый раз. Получается почка. Гость доволен: «оригинально»','Если вы видите, что я улыбаюсь, — это спазм','Опять «латте на кокосовом без кокоса». Это просто латте, Карина','Холдер упал. Вместе с ним упала моя вера в людей','Кофе — это просто горячая вода с амбициями','Гость вернул капучино: «пенка слишком пенистая»','Кто сказал «можно побыстрее», тот сделает сам','Я не бариста. Я бариста-психолог-уборщик-кассир','Тамперовал так, будто это бывший','Мне сказали, что бариста — это творческая профессия. Творю очередь','Выпил шестой эспрессо. Вижу звуки');
 ROLE_LINES14['Кассир'].push('Карта не проходит? Попробуйте пройти сами','«Сдачи не надо» — самая красивая фраза в русском языке','Мне четвёртый раз за день показали QR-код скидки из 2021-го','У вас бонусная карта? У меня тоже нет','Касса сошлась! А нет, показалось','Пакет? Пакет к кофе? Вы его в пакете пить будете?','Попросили «чек без сумм». Это называется «пожелание»','Гость оплатил телефоном, часами и кольцом. Кольцо не прошло','Я не грубый, я на кассе с семи утра','Терминал завис. Предлагаю всем помолчать и подумать о вечном');
 ROLE_LINES14['Повар'].push('Кто трогал мой фритюр, тот трогал мою семью','Сэндвич собран с любовью и ненавистью в равных долях','Шеф сказал: «чистота — залог». Не сказал чего','Если упало — значит, это шоу с элементами пола','Технолог сказал «по ТТК». Я сказал «по ощущениям». Мы не общаемся','Сырники кончились. Сырники всегда кончаются, когда их хотят','Половник — продолжение руки. Особенно когда кто-то лезет на кухню');
 ROLE_LINES14['Мойщица'].push('Я видела эту чашку чаще, чем свою семью','Пена до локтей, нервы до предела','Ещё раз положат ложку в стакан — сломаю ложку. Об кого-нибудь','Тридцать лет мою посуду. Посуда не кончается. Я кончаюсь','Губка старше половины персонала','Кто моет пол во время запары, тот видел всё','У меня не перерыв, у меня экзистенциальная пауза');
@@ -8062,7 +8064,7 @@ attention = function(){
 function track(force){
   if(!S || !tg || !tg.initData) return;
   const z = szState();
-  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, snap:{fr:frameOwnedId(), rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
@@ -9787,6 +9789,80 @@ renderSettings = function(p){ _renderMore26.apply(this, arguments); try{
   const host = shopCard.closest('.card');
   if(host && host.nextSibling) p.insertBefore(c, host.nextSibling); else p.appendChild(c);
   }catch(e){} };
+
+/* ===== 13:28: чистка вкладок ===== */
+function cutSection(p, title){ const hs = [...p.querySelectorAll('.h')].filter(h=>h.textContent.trim()===title); hs.forEach(h=>{ let n = h.nextElementSibling; h.remove(); while(n && !n.classList.contains('h')){ const nx = n.nextElementSibling; n.remove(); n = nx; } }); }
+function cutCard(p, test){ [...p.querySelectorAll('.card')].forEach(c=>{ const t = c.querySelector('.t'); if(t && test(t.textContent.trim(), c)) c.remove(); }); }
+
+/* Дела: без «Похвастаться», планёрки, рекламы и продаж */
+let _noSales26 = false;
+const _salesCards26 = salesCards;
+salesCards = function(p){ if(_noSales26) return; return _salesCards26(p); };
+const _renderTasks26 = renderTasks;
+renderTasks = function(p){ _noSales26 = true; try{ _renderTasks26(p); } finally { _noSales26 = false; }
+  try{ cutCard(p, t=>t==='Похвастаться' || t.startsWith('Планёрка')); cutSection(p, 'Реклама'); cutSection(p, 'Продажи'); }catch(e){} };
+
+/* Улучшения: без декора и магазина, без карточки о верандах; реклама и продажи здесь; продажа сети в самом низу */
+const _renderUpgrades26 = renderUpgrades;
+renderUpgrades = function(p, id){ _renderUpgrades26(p, id);
+  try{
+    cutCard(p, t=>t.startsWith('Веранда, лаунж'));
+    const dh = p.querySelector('#decorH');
+    if(dh){ let n = dh.nextElementSibling; while(n && !(n.classList.contains('h') && n.textContent.trim()==='Куда ещё потратить')){ const nx = n.nextElementSibling; n.remove(); n = nx; } dh.remove(); }
+    cutSection(p, 'Магазин'); cutSection(p, 'Уже стоит'); cutCard(p, t=>t==='Наборы' || t==='Интерьер' || t==='Как меняется зона отдыха');
+    if(id==='main' || !id){ const last = p.querySelector('.h.chalk:last-of-type'); _salesCards26(p); }
+    const fr = [...p.querySelectorAll('.card')].find(c=>{ const t = c.querySelector('.t'); return t && t.textContent.trim().startsWith('Продать сеть'); });
+    if(fr){ p.appendChild(el(`<div class="h chalk">Франшиза</div>`)); p.appendChild(fr); }
+  }catch(e){ console.error(e); } };
+
+/* декор убран из игры: деньги за купленное возвращаем */
+function decorRefund26(){ if(!S || !S.decor || !S.decor.items || S.c.decorRefund26) return; S.c.decorRefund26 = 1;
+  const paid = S.decor.items.filter(x=>{ const d = decorDef(x.id); return d && d.price > 0; });
+  S.decor.items = S.decor.items.filter(x=>{ const d = decorDef(x.id); return !(d && d.price > 0); });
+  let sum = 0; for(const x of paid){ const d = decorDef(x.id); sum += d.price; }
+  if(sum > 0){ income(sum, 'other', 'Возврат за интерьер'); queueModal({kind:'note', title:'Интерьер убрали из игры', text:'Купленные предметы забрали, деньги вернули на счёт: '+fmt(sum)+' ₽.'}); }
+  HOOK.struct(); }
+DECOR_SETS.length = 0;
+const _migrate26 = migrate;
+migrate = function(){ const r = _migrate26.apply(this, arguments); try{ decorRefund26(); }catch(e){} return r; };
+
+/* планёрка: окно в начале смены */
+MODAL15.focus = (box, m, btn) => {
+  box.append(el(`<div class="eyebrow">Новая смена · день ${S.day}</div>`), el(`<h2>Планёрка</h2>`), el(`<p>На чём сегодня держим фокус? У каждого выбора есть цена.</p>`));
+  const opts = el(`<div class="opts"></div>`);
+  Object.keys(FOCUS).forEach(k=>{ const f = FOCUS[k]; const b = el(`<button class="opt"><b>${f.n}</b><br><span class="d">${esc(f.d)}</span></button>`);
+    b.onclick = () => { S.focus = {day:S.day, k}; sfx('tap'); toast('Фокус дня: '+f.n.toLowerCase()); save(); closeModal(); structDirty = true; }; opts.appendChild(b); });
+  box.append(opts, btn('Без фокуса', closeModal, 'ghost'));
+};
+const _openDay26 = openDay;
+openDay = function(){ const r = _openDay26.apply(this, arguments); try{ if(!HOOK.quiet && S.level >= 2 && !(S.focus && S.focus.day===S.day) && !(modals||[]).some(m=>m.kind==='focus')) queueModal({kind:'focus'}); }catch(e){} return r; };
+
+/* продажа сети: новое название и чистый рейтинг */
+const _sellFr26 = sellFranchise;
+sellFranchise = function(cityId, newName){ const sh = _sellFr26(cityId); if(sh){ if(newName) S.name = newName; S.c.soldAt = Date.now(); if(S.sz) S.sz.rbase = S.sz.sp; } return sh; };
+const _renderSheet26 = renderSheet;
+renderSheet = function(){ _renderSheet26.apply(this, arguments); try{ if(sheet==='hall'){ const p = $('#panel'); const fr = p && [...p.querySelectorAll('.card')].find(c=>{ const t = c.querySelector('.t'); return t && t.textContent.trim().startsWith('Продать сеть'); }); if(fr && fr !== p.lastElementChild){ p.appendChild(el(`<div class="h chalk">Франшиза</div>`)); p.appendChild(fr); } } if(sheet==='hall' && hallTab==='tasks'){ const p = $('#panel'); if(p){ cutCard(p, t=>t==='Похвастаться' || t.startsWith('Планёрка')); cutSection(p, 'Реклама'); cutSection(p, 'Продажи'); } } }catch(e){} };
+
+/* ===== баланс: игра сложнее, прибыль не гарантирована ===== */
+const WD_TRAFFIC = [0.75, 0.85, 0.95, 1, 1.1, 1.2, 1.1];
+function balRamp(){ return Math.max(0, Math.min(1, ((S && S.level || 1) - 4) / 8)); }
+function wageIndex(){ return 1 + 0.1 * Math.max(0, (S.level||1) - 4); }
+function avgRev7(){ const h = (S.fin && S.fin.hist || []).slice(0, 7); if(!h.length) return 0; return h.reduce((a,f)=>a+(f.rev||0),0) / h.length; }
+const _modMul26 = modMul;
+modMul = function(k){ let m = _modMul26(k);
+  if(k==='traffic' && S) m *= WD_TRAFFIC[weekday()] || 1;
+  if(k==='supply' && S) m *= 1 + 0.5 * balRamp();
+  return m; };
+const _shiftPay26 = shiftPay;
+shiftPay = function(s){ return Math.round(_shiftPay26(s) * wageIndex() / 10) * 10; };
+const _closeDay26 = closeDay;
+closeDay = function(){ try{ if(S && S.fin && S.fin.today){ const f = S.fin.today, r = balRamp();
+    if(r > 0){
+      const rs = Math.round(0.18 * r * Math.max(avgRev7(), f.rev||0) * modMul('rent')); if(rs > 0) spend(rs, 'rent', 'Аренда: '+Math.round(18*r)+'% с оборота');
+      const ts = Math.round(0.10 * r * (f.rev||0)); if(ts > 0 && S.staff.some(x=>!x.isYou)) spend(ts, 'wages', 'Процент смене: '+Math.round(10*r)+'% выручки');
+    }
+    const ut = Math.round((f.guests||0) * 10); if(ut > 0) spend(ut, 'util', 'Вода и свет за гостей');
+  } }catch(e){} return _closeDay26.apply(this, arguments); };
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
