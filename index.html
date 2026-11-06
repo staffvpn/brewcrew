@@ -669,6 +669,28 @@ input,textarea,select{font-size:16px!important}
 .trow.fr-marble span,.trow.fr-marble b,.trow.fr-marble i{color:#3a3430}
 .trow.fr-ice{border-color:#8fd0dc;background:linear-gradient(90deg,rgba(191,239,255,.25),rgba(191,239,255,.06));box-shadow:0 0 6px rgba(143,208,220,.45)}
 .trow.fr-ice span{color:#dff6ff}
+/* верх, вариант 1 */
+.top{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;grid-template-areas:"name name" "clk reg"!important;gap:6px 8px!important;align-items:stretch!important}
+.top .topL{display:contents!important}
+.top .cafe{grid-area:name;font-family:var(--disp)!important;font-size:17px!important;line-height:1.2!important;color:var(--cream)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;display:block!important;-webkit-line-clamp:unset!important}
+.top .cafe small{display:none!important}
+.top #clk{grid-area:clk;background:#2a1d15;border:2px solid #4d3727;padding:4px 9px;font-family:var(--mono);font-size:12px;color:#c9b79c;line-height:1.35;white-space:nowrap;display:flex;flex-direction:column;justify-content:center}
+.top #clk b{font-size:14px;color:#f4ead8;font-weight:700}
+.top .topR{grid-area:reg;min-width:0;text-align:right}
+.top .topR .money{white-space:nowrap}
+.top .topR .money.long{font-size:24px!important}
+.top .topR .money.xlong{font-size:20px!important}
+.top .topR .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pillrow{display:flex;gap:6px;align-items:stretch;min-width:0}
+.pillrow #pills{flex:1 1 auto;min-width:0;overflow:hidden;flex-wrap:nowrap}
+.pillrow #pills:not(.all)>.px{display:none!important}
+.pillrow #pills.all{flex-wrap:wrap;overflow:visible}
+.pillrow #pills>*{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pill.pmore{flex:none;background:#3a2a1e!important;color:#e8d9c0!important;font-family:var(--mono)}
+/* низ, вариант A */
+.dock{gap:6px!important}
+.dockb{flex-direction:row!important;min-height:46px!important;gap:8px!important;font-size:14px!important}
+.dockb svg{width:20px!important;height:20px!important;flex:none}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -9863,6 +9885,20 @@ closeDay = function(){ try{ if(S && S.fin && S.fin.today){ const f = S.fin.today
     }
     const ut = Math.round((f.guests||0) * 10); if(ut > 0) spend(ut, 'util', 'Вода и свет за гостей');
   } }catch(e){} return _closeDay26.apply(this, arguments); };
+
+/* ===== верх: вариант 1 (название сверху, часы и касса ниже, две плашки + «ещё») ===== */
+let _pillsAll = false;
+function hud1Init(){ const pe = $('#pills'); if(!pe || pe.parentElement.classList.contains('pillrow')) return;
+  const w = document.createElement('div'); w.className = 'pillrow'; pe.parentElement.insertBefore(w, pe); w.appendChild(pe);
+  const more = document.createElement('button'); more.className = 'pill pmore'; more.id = 'pmore'; more.onclick = () => { _pillsAll = !_pillsAll; hud1Pills(); }; w.appendChild(more); }
+function hud1Pills(){ const pe = $('#pills'), more = $('#pmore'); if(!pe || !more) return; let n = 0;
+  for(const ch of pe.children){ ch.classList.remove('px'); if(getComputedStyle(ch).display === 'none') continue; n++; if(n > 2) ch.classList.add('px'); }
+  pe.classList.toggle('all', _pillsAll); more.style.display = n > 2 ? '' : 'none'; more.textContent = _pillsAll ? 'Свернуть' : '+'+(n-2); }
+const _renderHud26 = renderHud;
+renderHud = function(){ _renderHud26.apply(this, arguments); try{ if(!S) return; hud1Init();
+  const c = $('#clk'); if(c) c.innerHTML = '<b>'+WEEKDAYS[weekday()].slice(0,2)+' '+clockStr()+'</b>день '+S.day;
+  const m = $('#sMoney'); if(m){ const t = fmt(S.money)+' ₽'; if(m.textContent !== t) m.textContent = t; m.classList.toggle('long', t.length > 12); m.classList.toggle('xlong', t.length > 15); }
+  hud1Pills(); }catch(e){} };
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
