@@ -12,6 +12,7 @@ export async function onRequestPost({ request, env }) {
   const interiors = [...new Set(rows.filter(r => r.item.startsWith('int_')).map(r => r.item))];
   const tips = rows.filter(r => r.item.startsWith('tip_')).reduce((a, r) => a + r.stars, 0);
   const renames = rows.filter(r => r.item === 'rename').length;
+  const frames = [...new Set(rows.filter(r => r.item.startsWith('frame_')).map(r => r.item))];
   const passes = rows.filter(r => r.item === 'pass' || r.item === 'pass15').map(r => ({ id: String(r.charge_id).slice(-24), season: sezId(r.created_at), plus: r.item === 'pass15' ? 15 : 0 }));
-  return json({ ok: true, sub: subUntil > now ? subUntil : 0, interiors, tips, renames, passes });
+  return json({ ok: true, sub: subUntil > now ? subUntil : 0, interiors, tips, renames, passes, frames });
 }

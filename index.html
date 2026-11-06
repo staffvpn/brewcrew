@@ -657,6 +657,18 @@ input,textarea,select{font-size:16px!important}
 .top .cafe small{display:none}
 .top .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lite-x{background:none;border:none;color:var(--caramel,#b5652a);font-weight:700;font-size:12px;padding:0 0 0 4px;cursor:pointer}
+.roomdots{top:auto;bottom:auto;top:6px;left:6px;right:auto;justify-content:flex-start;gap:5px}
+.rname{font-size:10px;padding:1px 6px}
+
+.trow.fr{border:1.5px solid;border-radius:5px;padding:3px 5px;margin:3px 0;border-bottom-style:solid}
+.trow.fr-gold{border-color:#d9a93c;background:linear-gradient(90deg,rgba(217,169,60,.22),rgba(217,169,60,.05));box-shadow:0 0 6px rgba(255,207,90,.35)}
+.trow.fr-gold span{color:#ffd978}
+.trow.fr-neon{border-color:#e89ac0;background:rgba(29,24,48,.6);box-shadow:0 0 7px rgba(232,154,192,.55)}
+.trow.fr-neon span{color:#ffe0ee;text-shadow:0 0 4px #e89ac0}
+.trow.fr-marble{border-color:#b8b0a4;background:linear-gradient(120deg,#f1ede6,#e2ddd4 60%,#f1ede6);color:#3a3430}
+.trow.fr-marble span,.trow.fr-marble b,.trow.fr-marble i{color:#3a3430}
+.trow.fr-ice{border-color:#8fd0dc;background:linear-gradient(90deg,rgba(191,239,255,.25),rgba(191,239,255,.06));box-shadow:0 0 6px rgba(143,208,220,.45)}
+.trow.fr-ice span{color:#dff6ff}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -6240,6 +6252,7 @@ function renderSettings(p){
     ['int_loft','Интерьер «Заводской лофт»','Мягкий кирпич, бетонный пол, чёрный металл и лампы Эдисона. '+INTERIOR_FX.int_loft.d+'.', 75, hasInterior('int_loft')],
     ['int_scandi','Интерьер «Фика»','Белые стены, светлый дуб, шалфейные кресла и керамика на полке. '+INTERIOR_FX.int_scandi.d+'.', 100, hasInterior('int_scandi')],
     ['int_neon','Интерьер «Не спим»','Вечерний сиреневый зал, бархат и мягкий неон без мигания. '+INTERIOR_FX.int_neon.d+'.', 150, hasInterior('int_neon')],
+    ...FRAME_SHOP.map(k=>['frame_'+k, 'Рамка «'+SIGN_FRAMES[k].n+'»', 'Вывеска с названием над меню и строка кофейни в рейтингах сезона и недели в этом стиле. Навсегда.', 50, frameOwned(k)]),
     ['cash_s','Конверт от инвестора','Около дня выручки: +'+fmt(cashPack(1))+' ₽ в кассу.', 25, false],
     ['cash_m','Мама дала в долг без процентов','Около трёх дней выручки: +'+fmt(cashPack(3))+' ₽.', 60, false],
     ['cash_l','Чемодан из девяностых','Около восьми дней выручки: +'+fmt(cashPack(8))+' ₽.', 150, false],
@@ -7176,7 +7189,7 @@ function renderTour(p){
   const c = el(`<div class="card chalkboard"><div class="t chalk">Турнир района · топ-10</div><div class="d">Кто заработает больше чистой прибыли за неделю (по понедельник 00:00 МСК). Призы: 1 000 000, 500 000 и 250 000 ₽, победители попадают в канал. До конца: ${left>48?Math.round(left/24)+' дн.':left+' ч'}.</div><div class="tour"></div><div class="d">Твоя прибыль за неделю: <b class="num">${fmt(my)} ₽</b>${rank?' · примерно '+rank+' место из '+Math.max(TOUR.total, rank):''}</div>${upd!=null?`<div class="d" style="opacity:.6;font-size:11px">Таблица обновляется раз в 5 часов. Обновлена ${upd<1?'меньше часа':upd+' ч'} назад.</div>`:''}</div>`);
   const t = c.querySelector('.tour');
   const top = cur ? TOUR.top : [];
-  if(top.length) top.forEach((x,i)=>t.appendChild(el(`<div class="trow ${x.cafe===S.name?'me':''}"><b>${i+1}</b><span>«${esc(x.cafe||'?')}»${x.badge?' <i class="bdg">'+esc(x.badge)+'</i>':''}</span><i class="num">${fmt(x.profit)} ₽</i></div>`)));
+  if(top.length) top.forEach((x,i)=>t.appendChild(el(`<div class="trow ${x.cafe===S.name?'me':''} ${x.fr?'fr fr-'+esc(x.fr):''}"><b>${i+1}</b><span>«${esc(x.cafe||'?')}»${x.badge?' <i class="bdg">'+esc(x.badge)+'</i>':''}</span><i class="num">${fmt(x.profit)} ₽</i></div>`)));
   else t.appendChild(el(`<div class="d">${cur && TOUR.at ? 'На этой неделе ещё никто не заработал. Будь первым.' : 'Загружаем таблицу…'}</div>`));
   p.appendChild(c);
 }
@@ -7809,7 +7822,7 @@ function renderSeason(p){
   const cur = SZ_SNAP.season === sezId(); const rank = cur && SZ_SNAP.sps.length ? SZ_SNAP.sps.filter(x=>x > z.sp).length + 1 : 0;
   const tc = el(`<div class="card chalkboard"><div class="t chalk">Рейтинг сезона · топ-10</div><div class="d">По очкам сезона. В конце месяца тройка лидеров попадает в канал и получает значок «Кофейня сезона» навсегда. Таблица обновляется раз в 5 часов.</div><div class="tour"></div><div class="d">Твои очки: <b class="num">${fmt(z.sp)}</b>${rank?' · примерно '+rank+' место из '+Math.max(SZ_SNAP.total, rank):''}</div></div>`);
   const t = tc.querySelector('.tour'); const top = cur ? SZ_SNAP.top : [];
-  if(top.length) top.forEach((x,i)=>t.appendChild(el(`<div class="trow ${x.cafe===S.name?'me':''}"><b>${i+1}</b><span>«${esc(x.cafe||'?')}»${x.bname?' <i class="bdg">'+esc(x.bname)+'</i>':x.badge?' <i class="bdg">пропуск</i>':''}</span><i class="num">${fmt(x.sp)}</i></div>`)));
+  if(top.length) top.forEach((x,i)=>t.appendChild(el(`<div class="trow ${x.cafe===S.name?'me':''} ${x.fr?'fr fr-'+esc(x.fr):''}"><b>${i+1}</b><span>«${esc(x.cafe||'?')}»${x.bname?' <i class="bdg">'+esc(x.bname)+'</i>':x.badge?' <i class="bdg">пропуск</i>':''}</span><i class="num">${fmt(x.sp)}</i></div>`)));
   else t.appendChild(el(`<div class="d">${cur && SZ_SNAP.at ? 'В этом сезоне ещё пусто. Будь первым.' : 'Загружаем таблицу…'}</div>`));
   p.appendChild(tc);
   if((S.badges||[]).length) p.appendChild(el(`<div class="card"><div class="t">Твои значки</div><div class="d">${S.badges.map(esc).join(' · ')}</div></div>`));
@@ -7995,7 +8008,7 @@ function usePromo(code){
 }
 
 /* ---------- покупки: пропуск сезона ---------- */
-function refreshEntitlements(){ if(!tg || !tg.initData) return; apiPost('/api/purchases').then(r=>{ if(r && r.ok){ S.ent = {sub:r.sub, interiors:r.interiors, tips:r.tips, renames:r.renames||0, passes:r.passes||[], at:Date.now()}; mergeInteriors(); passWatch(true); save(); structDirty = true; } }).catch(()=>{}); }
+function refreshEntitlements(){ if(!tg || !tg.initData) return; apiPost('/api/purchases').then(r=>{ if(r && r.ok){ S.ent = {sub:r.sub, interiors:r.interiors, tips:r.tips, renames:r.renames||0, passes:r.passes||[], frames:r.frames||[], at:Date.now()}; mergeInteriors(); passWatch(true); save(); structDirty = true; } }).catch(()=>{}); }
 function passWatch(force){
   if(!S || !S.ent || !S.ent.passes) return; if(!force && Math.random() > 0.02) return;
   S.passSeen = S.passSeen || [];
@@ -8049,7 +8062,7 @@ attention = function(){
 function track(force){
   if(!S || !tg || !tg.initData) return;
   const z = szState();
-  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, snap:{fr:frameOwnedId(), rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
@@ -8953,7 +8966,9 @@ onTrack = function(r){
 };
 
 /* ---------- окно обновления: не показывать версию старше уже виденной ---------- */
-function verCheck(){ if(!S || !CFG || !CFG.ver || !CFG.ver.v) return; const v = CFG.ver.v; if(S.verSeen === v || (S.verSeen && parseFloat(S.verSeen) >= parseFloat(v))) return; if(!S.verSeen && S.day <= 1 && (S.c.guests||0) < 5){ S.verSeen = v; return; } S.verSeen = v; queueModal({kind:'ver', v:CFG.ver}); save(); }
+function verCheck(){ if(!S || !CFG || !CFG.ver || !CFG.ver.v) return; const v = CFG.ver.v; if(S.verSeen === v || (S.verSeen && verCmp(S.verSeen, v) >= 0)) return; if(!S.verSeen && S.day <= 1 && (S.c.guests||0) < 5){ S.verSeen = v; return; } S.verSeen = v; queueModal({kind:'ver', v:CFG.ver}); save(); }
+
+function verCmp(a, b){ const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for(let i=0;i<Math.max(x.length,y.length);i++){ const d = (x[i]||0) - (y[i]||0); if(d) return d; } return 0; }
 
 /* ================= v19: свайп между залами, робот-пылесос в зоне отдыха, польза зоны отдыха, выдачи из админки ================= */
 
@@ -9724,6 +9739,54 @@ function speakerSex(follow){ if(!follow) return null; try{
   }catch(e){} return null; }
 const _bubble25 = bubble2;
 bubble2 = function(x, y, text, ms, follow){ try{ const sx = speakerSex(follow); if(sx) text = sayAs(text, sx); }catch(e){} return _bubble25(x, y, text, ms, follow); };
+
+/* v26: порядок на стене — вывеска, меню, лампы, переключатель залов */
+const SIGN_FRAMES = {
+  wood:  {n:'Дерево', bg:'#a07a52', edge:'#6e4a2c', ink:'#2a1a10'},
+  gold:  {n:'Золото', bg:'#2a1d12', edge:'#d9a93c', ink:'#ffd978', glow:'#ffcf5a'},
+  neon:  {n:'Неон', bg:'#1d1830', edge:'#e89ac0', ink:'#ffe0ee', glow:'#e89ac0'},
+  marble:{n:'Мрамор', bg:'#f1ede6', edge:'#b8b0a4', ink:'#3a3430', vein:true},
+  chalk: {n:'Меловая', bg:'#2f3b33', edge:'#7a5232', ink:'#f3efe4'},
+  ice:   {n:'Лёд', bg:'#dff3fb', edge:'#8fd0dc', ink:'#1e5a6e', glow:'#bfefff'}
+};
+const FRAME_SHOP = ['gold','neon','marble','ice'];
+function frameOwned(k){ return !!(S && S.ent && (S.ent.frames||[]).includes('frame_'+k)) || !!(S && S.c && (S.c.frameGift||[]).includes(k)); }
+function frameOwnedId(){ if(!S || !S.c) return undefined; let k = S.c.signFrame; if(k === undefined){ k = FRAME_SHOP.find(frameOwned); } return k && FRAME_SHOP.includes(k) && frameOwned(k) ? k : undefined; }
+function signFrameId(u){ const k = frameOwnedId(); if(k) return k; return u.sign>=10 ? 'chalk' : 'wood'; }
+sceneSign = function(st, u, now){
+  if(u.sign<1) return;
+  const cx = 150, name = S.name.toUpperCase(), F = SIGN_FRAMES[signFrameId(u)];
+  let fs = 8.5; ctx.font = `800 ${fs}px "Golos Text",sans-serif`; while(ctx.measureText(name).width > 132 && fs > 5){ fs -= 0.5; ctx.font = `800 ${fs}px "Golos Text",sans-serif`; }
+  const tw = Math.max(64, ctx.measureText(name).width + 18), x0 = Math.round(cx - tw/2);
+  ctx.save();
+  rect(x0+10, 0, 1, 3, '#3a2a1e'); rect(x0+tw-11, 0, 1, 3, '#3a2a1e');
+  if(F.glow){ ctx.shadowColor = F.glow; ctx.shadowBlur = 5; }
+  RR(x0, 3, tw, 15, 2, F.edge); ctx.shadowBlur = 0; RR(x0+1.5, 4.5, tw-3, 12, 1.5, F.bg);
+  if(F.vein){ ctx.strokeStyle = 'rgba(150,140,130,.35)'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(x0+6,6); ctx.quadraticCurveTo(x0+tw*0.4,14,x0+tw*0.7,7); ctx.moveTo(x0+tw*0.5,16); ctx.quadraticCurveTo(x0+tw*0.75,10,x0+tw-4,13); ctx.stroke(); }
+  ctx.textAlign = 'center'; ctx.fillStyle = F.ink; if(F.glow){ ctx.shadowColor = F.glow; ctx.shadowBlur = 4; }
+  ctx.fillText(name, cx, 13.6); ctx.restore(); ctx.textAlign = 'left';
+};
+const _menuBoard26 = sceneMenuBoard;
+sceneMenuBoard = function(st, id, u){ ctx.save(); ctx.translate(0, 4); _menuBoard26(st, id, u); ctx.restore(); };
+const _lamps26 = sceneLamps;
+sceneLamps = function(st, u, now){
+  if(st.outdoor) return;
+  const on = st !== SCENE_STYLES.base || u.decor >= 2; if(!on) return;
+  ctx.save();
+  const clip = new Path2D(); clip.rect(0,0,W,H); clip.rect(106, 0, 88, 72); ctx.clip(clip, 'evenodd');
+  _lamps26(st, u, now); ctx.restore();
+};
+
+/* выбор рамки в настройках */
+const _renderMore26 = renderSettings;
+renderSettings = function(p){ _renderMore26.apply(this, arguments); try{
+  const shopCard = p.querySelector('#shop'); if(!shopCard) return; const own = FRAME_SHOP.filter(frameOwned); if(!own.length) return;
+  const cur = frameOwnedId() || '';
+  const c = el(`<div class="card"><div class="t">Рамка вывески</div><div class="subnav">${[['','Обычная'], ...own.map(k=>[k, SIGN_FRAMES[k].n])].map(([k,n])=>`<button class="chipbtn" data-f="${k}" aria-pressed="${k===cur}">${n}</button>`).join('')}</div><div class="d">Видна над меню и в рейтингах сезона и недели.</div></div>`);
+  c.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ S.c.signFrame = b.dataset.f || null; save(); structDirty = true; toast(b.dataset.f ? 'Рамка «'+SIGN_FRAMES[b.dataset.f].n+'»' : 'Обычная вывеска'); try{ track(true); }catch(e){} });
+  const host = shopCard.closest('.card');
+  if(host && host.nextSibling) p.insertBefore(c, host.nextSibling); else p.appendChild(c);
+  }catch(e){} };
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){

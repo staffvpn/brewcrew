@@ -26,8 +26,15 @@ export async function onRequestGet({ env }) {
     if (c && now - c.at < SNAP_MS) return json(Object.assign({ ok: true, week, at: c.at, next: c.at + SNAP_MS }, JSON.parse(c.val)));
   } catch {}
   const noAdm = 'AND tg_id NOT IN (' + ADMINS.join(',') + ')';
-  const rows = (await env.DB.prepare(`SELECT t.cafe, t.city, t.profit, p.badge_name FROM tour t LEFT JOIN players p ON p.tg_id = t.tg_id WHERE t.week = ?1 AND t.tg_id NOT IN (${ADMINS.join(',')}) ORDER BY t.profit DESC LIMIT 300`).bind(week).all()).results || [];
-  const snap = { top: rows.slice(0, 10).map(r => ({ cafe: r.cafe, city: r.city, profit: Math.round(r.profit), badge: r.badge_name || null })), profits: rows.map(r => Math.round(r.profit)), total: rows.length };
+  const rows = (await env.DB.prepare(`SELECT t.tg_id, t.cafe, t.city, t.profit, p.badge_name, p.snap FROM tour t LEFT JOIN players p ON p.tg_id = t.tg_id WHERE t.week = ?1 AND t.tg_id NOT IN (${ADMINS.join(',')}) ORDER BY t.profit DESC LIMIT 300`).bind(week).all()).results || [];
+  let frs = {}; try { const t10 = rows.slice(0, 10); frs = await framesFor(env, t10.map(r => r.tg_id), t10.map(r => r.snap)); } catch {}
+  const snap = { top: rows.slice(0, 10).map(r => ({ cafe: r.cafe, profit: Math.round(r.profit), badge: r.badge_name || null, fr: frs[r.tg_id] || null })), profits: rows.map(r => Math.round(r.profit)), total: rows.length };
   try { await env.DB.prepare('INSERT INTO cache (key, val, at) VALUES (?1, ?2, ?3) ON CONFLICT(key) DO UPDATE SET val = ?2, at = ?3').bind(key, JSON.stringify(snap), now).run(); } catch {}
   return json(Object.assign({ ok: true, week, at: now, next: now + SNAP_MS }, snap));
 }
+
+async function framesFor(env, ids, snaps){ const out = {}; const want = []; ids.forEach((id, i) => { let fr = null; try { fr = JSON.parse(snaps[i] || '{}').fr; } catch {} if (fr && /^[a-z]{2,10}$/.test(fr)) { want.push([id, fr]); } });
+  if (!want.length) return out;
+  const rows = (await env.DB.prepare(`SELECT tg_id, item FROM purchases WHERE refunded = 0 AND item LIKE 'frame_%' AND tg_id IN (${want.map(w => Number(w[0])).join(',')})`).all()).results || [];
+  for (const [id, fr] of want) if (rows.some(r => r.tg_id === id && r.item === 'frame_' + fr)) out[id] = fr;
+  return out; }
