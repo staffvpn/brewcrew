@@ -1223,6 +1223,7 @@ function sellOne(roomId, opt){
   if(item.coffee) rm.eq.machine = Math.max(0, rm.eq.machine - 0.018*wear);
   if(card) rm.eq.terminal = Math.max(0, rm.eq.terminal - 0.007*wear*(roomId==='main' ? q.term/q.wear : 1));
   rm.eq.kkt = Math.max(0, rm.eq.kkt - 0.005*wear);
+  if(!HOOK.quiet){ if(S.c.liveDay!==S.day){ S.c.liveDay=S.day; S.c.liveServed=0; } S.c.liveServed=(S.c.liveServed||0)+1; }
   addXp(1, 'sales'); taskProg('serve', 1); taskProg('earn', amount);
   if(opt.delivery) taskProg('delivery', 1);
   if(item.kitchen) taskProg('kitchen', 1);
@@ -1251,9 +1252,10 @@ function stats(roomId){
   const w = WEATHER[S.weather];
   const wf = def.outdoor ? w.out : w.f;
   const h = S.gm/60;
-  let lambda = (1/140) * awarenessMul() * (1+0.07*u.sign) * (1+0.04*u.decor) * (1+0.02*u.pets) * (1+0.015*tableCount(u.tables)) * (0.4+0.2*S.rep) * wf * hourCurve(h) * city().traffic * modMul('traffic') * (1+0.01*perk('word'));
+  let lambda = (1/100) * awarenessMul() * (1+0.07*u.sign) * (1+0.04*u.decor) * (1+0.02*u.pets) * (1+0.015*tableCount(u.tables)) * (0.4+0.2*S.rep) * wf * hourCurve(h) * city().traffic * modMul('traffic') * (1+0.01*perk('word'));
   if(S.path==='chaos') lambda *= 1.2;
-  // Уровень не создаёт спрос: гости узнают о кофейне через обслуживание и рекламу.
+  // Уровень снова приводит гостей, но мягче прежнего: +10% за уровень, не больше +150% (с 16-го).
+  lambda *= 1 + 0.1*Math.min(15, Math.max(0, (S.level||1)-1));
   // Цена без соответствующего качества снижает конверсию прохожих.
   lambda *= Math.max(0.55,1-0.8*Math.max(0,0.04*u.menu-0.02*u.machine-0.04*Math.max(0,S.rep-3)));
   lambda *= pathTraffic();
@@ -1293,7 +1295,7 @@ function rollWeather(){
 }
 const TASK_HINT = {serve:'Больше гостей: вывеска, интерьер, акции и быстрая касса.', earn:'Подними средний чек: позиция дня, десерты, меню.', praise:'Нажми на сотрудника в зале и похвали.', noangry:'Следи за очередью: подгоняй, вызывай подмену, ставь кассира.', sell:'Поставь эту позицию «позицией дня» или в рекомендации в меню.'};
 function newTasks(){
-  const daily = Math.max(6000, (S.fin.hist[0]||{}).rev || 10000);
+  const h3 = (S.fin.hist||[]).slice(0,3).map(f=>f.rev||0); const daily = Math.max(15000, h3.length ? Math.max(...h3) : 15000);
   const kinds = ['serve','earn','noangry','sell','sell','rush','reviews','tips'].concat(daysSinceInventory()>=5?['inventory','inventory']:[]).concat(S.delivery&&S.delivery.on?['delivery']:[]).concat(S.kitchen&&S.kitchen.tier?['kitchen']:[]).sort(()=>Math.random()-0.5);
   const used = new Set(); S.tasks = [];
   for(const kind of kinds){ if(S.tasks.length>=3) break; if(used.has(kind) && kind!=='sell') continue; used.add(kind);
@@ -1301,7 +1303,7 @@ function newTasks(){
     if(kind==='serve'){ goal = Math.round(daily/220*0.8/10)*10; label = 'Обслужить '+goal+' гостей'; }
     if(kind==='earn'){ goal = Math.round(daily*0.9/1000)*1000; label = 'Выручка за день '+fmtR(goal); }
     if(kind==='praise'){ goal = 3; label = 'Похвалить сотрудников 3 раза'; }
-    if(kind==='noangry'){ goal = 1; label = 'Ни один гость не ушёл из очереди'; }
+    if(kind==='noangry'){ goal = 1; label = 'Обслужить 15+ гостей, и чтобы никто не ушёл из очереди'; }
     if(kind==='rush'){ goal = 1; label = 'Выдержать запару'; }
     if(kind==='reviews'){ goal = 2; label = 'Ответить на 2 отзыва'; }
     if(kind==='tips'){ goal = 1; label = 'Разобраться с банкой чаевых'; }
@@ -1315,6 +1317,7 @@ function newTasks(){
 }
 function newTask(){ newTasks(); }
 function taskProg(kind, v, item){
+  if(HOOK.quiet) return; // пока игрока нет, задания не выполняются сами
   for(const t of (S.tasks||[])){
     if(t.done || t.failed || t.kind !== kind) continue;
     if(kind==='sell' && t.item !== item) continue;
@@ -1445,7 +1448,7 @@ function closeDay(){
   // ежедневные проверки
   if(f.rev > S.c.maxDayRev) S.c.maxDayRev = f.rev;
   if(f.fines === 0) S.c.daysNoFine++; else S.c.daysNoFine = 0;
-  for(const t of (S.tasks||[])) if(t.kind==='noangry' && !t.failed && !t.done){ t.prog = 1; t.done = true; income(t.reward); HOOK.toast('Задание выполнено: +'+fmtR(t.reward)); }
+  for(const t of (S.tasks||[])) if(t.kind==='noangry' && !t.failed && !t.done){ if(S.c.liveDay===S.day && (S.c.liveServed||0)>=15){ t.prog = 1; t.done = true; income(t.reward); HOOK.toast('Задание выполнено: +'+fmtR(t.reward)); } else t.failed = true; }
   // увольнения по желанию
   for(const s of S.staff){
     if(s.isYou) continue;
@@ -7297,7 +7300,7 @@ function renderTasks(p){
   (S.tasks||[]).forEach(t=>{
     const pr = t.kind==='noangry' ? (t.failed?0:t.done?1:0.5) : t.prog/t.goal;
     const card = el(`<div class="card task-card ${t.done?'done':t.failed?'fail':''}">${t.done?'<span class="stamp green">ГОТОВО</span>':t.failed?'<span class="stamp red">ПРОВАЛ</span>':''}<div class="row"><span class="t">${esc(t.label)}</span><span class="sp"></span><span class="tag num">+${fmt(t.reward)} ₽</span></div>${bar(pr*100, t.done?'var(--good)':t.failed?'var(--bad)':'var(--caramel)')}
-      <div class="d">${t.kind==='noangry'?(t.failed?'Кто-то ушёл, не дождавшись.':'До конца дня никто не должен уйти из очереди.'):(t.kind==='earn'?fmt(t.prog)+' из '+fmt(t.goal)+' ₽':Math.floor(t.prog)+' из '+t.goal)}</div>
+      <div class="d">${t.kind==='noangry'?(t.failed?'Кто-то ушёл, не дождавшись.':'Обслужи сам в игре от 15 гостей за день, и чтобы никто не ушёл из очереди. Пока тебя нет, задания не выполняются.'):(t.kind==='earn'?fmt(t.prog)+' из '+fmt(t.goal)+' ₽':Math.floor(t.prog)+' из '+t.goal)}</div>
       ${t.done||t.failed?'':`<div class="hint">Как ускорить: ${esc(t.hint||'')}</div><div class="row wrap"></div>`}</div>`);
     const row = card.querySelector('.row.wrap');
     if(row){
@@ -10064,7 +10067,7 @@ const _renderSheet26 = renderSheet;
 renderSheet = function(){ _renderSheet26.apply(this, arguments); try{ if(sheet==='hall'){ const p = $('#panel'); const fr = p && [...p.querySelectorAll('.card')].find(c=>{ const t = c.querySelector('.t'); return t && t.textContent.trim().startsWith('Продать сеть'); }); if(fr && fr !== p.lastElementChild){ p.appendChild(el(`<div class="h chalk">Франшиза</div>`)); p.appendChild(fr); } } if(sheet==='hall' && hallTab==='tasks'){ const p = $('#panel'); if(p){ cutCard(p, t=>t==='Похвастаться' || t.startsWith('Планёрка')); cutSection(p, 'Реклама'); cutSection(p, 'Продажи'); } } }catch(e){} };
 
 /* ===== баланс: игра сложнее, прибыль не гарантирована ===== */
-const WD_TRAFFIC = [0.75, 0.85, 0.95, 1, 1.1, 1.2, 1.1];
+const WD_TRAFFIC = [0.9, 0.95, 1, 1, 1.1, 1.2, 1.1];
 function balRamp(){ return Math.max(0, Math.min(1, ((S && S.level || 1) - 4) / 8)); }
 function wageIndex(){ return 1; }
 function avgRev7(){ const h = (S.fin && S.fin.hist || []).slice(0, 7); if(!h.length) return 0; return h.reduce((a,f)=>a+(f.rev||0),0) / h.length; }
@@ -10896,7 +10899,7 @@ function ownerHousekeeping(id,r,st,dt){
 function updateAwareness(f){
   const guests = Math.max(0,f.guests||0), lost = Math.max(0,S.c.angry-(S.c._angryDay||0));
   const satisfied = guests/Math.max(1,guests+lost);
-  const gain = Math.min(3,guests*0.035)*satisfied*(S.rep>=3?1:0.5);
+  const gain = Math.min(5,guests*0.05)*satisfied*(S.rep>=3?1:0.5);
   S.awareness = clamp((Number(S.awareness)||0) + gain - (guests ? 0 : 0.5),0,100);
   S.serviceBias = (Number(S.serviceBias)||0)*0.8;
 }
