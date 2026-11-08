@@ -825,6 +825,19 @@ input,textarea,select{font-size:16px!important}
 .dveil .dres{margin:0 10px;padding:6px 10px;background:var(--foam);color:#2a1d15;border-top:1px dashed #cdb894}
 .dveil .dres .h{color:#6d5a46}.dveil .dres .h b{color:#a8641e}.dveil .dres .ok{color:#2f7a35}.dveil .dres .no{color:#b8322a}
 .dveil .dl{color:rgba(236,235,228,.6);margin:12px 12px 4px}
+/* обновление 10 */
+.m32r{display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-top:1px dashed var(--line)}
+.m32r b{font-size:18px;color:var(--muted)}.m32r.on b{color:var(--caramel)}
+.m32r div{position:relative;padding-bottom:6px}.m32r div span{font-weight:800}.m32r div i{position:absolute;left:0;bottom:0;height:4px;background:var(--caramel);max-width:100%}
+.m32r em{font-style:normal;font-size:12px;color:var(--muted)}
+.lg32 .t{font-size:20px}.lg32 .lgt0{color:#a8641e}.lg32 .lgt1{color:#7d8a94}.lg32 .lgt2{color:#c99a1e}
+.lg32 .lgcr{font-weight:800}
+.lg32l{margin-top:8px}
+.lgr{display:grid;grid-template-columns:28px 1fr auto;gap:6px;padding:5px 4px;border-top:1px dashed var(--line);font-size:13px}
+.lgr span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lgr em{font-style:normal}
+.lgr.me{background:rgba(232,184,48,.18);font-weight:800}.lgr.up b{color:#2f7a35}.lgr.down b{color:#b8322a}
+.ro32b{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+.ro32b i{height:8px;background:rgba(0,0,0,.12);position:relative}.ro32b i b{position:absolute;left:0;top:0;bottom:0}.ro32b em{font-style:normal}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -10581,6 +10594,174 @@ szApplyUnlock = function(rw, info, silent){
   if(rw.k === 'gem'){ badgeAdd('gem'+rw.gem+'_'+info.id, rw.gem+' сезона «'+info.n+'»', 'Пропуск сезона: ступень '+Object.keys(SZ31_GEMS).find(k=>SZ31_GEMS[k]===rw.gem)); return; }
   if(rw.k === 'gemf'){ badgeAdd('sz100_'+info.id, 'Сто ступеней «'+info.n+'»', 'Дошёл до 100 ступени'); return; }
   return _szApply31(rw, info, silent); };
+
+/* ===== Обновление 10: включается само 1 декабря 2026 в 12:00 МСК =====
+   До этого видно только админам. Выключатель: команда /rel10off в боте (вернуть: /rel10on). */
+const REL10_AT = Date.parse('2026-12-01T09:00:00Z');
+const REL10_ADMINS = [929887068, 432943377];
+const REL10 = {skew:0, off:false};
+loadConfig = function(){ const t0 = Date.now(); fetch('/api/config').then(r=>r.json()).then(c=>{ if(c && c.ok){ CFG = c; if(c.now) REL10.skew = c.now - Math.round((t0 + Date.now())/2); REL10.off = !!c.rel10off; } structDirty = true; }).catch(()=>{}); };
+loadConfig(); setInterval(()=>{ try{ loadConfig(); }catch(e){} }, 10*60000);
+function srvNow(){ return Date.now() + REL10.skew; }
+function rel10Admin(){ try{ return REL10_ADMINS.includes(Number(myId())); }catch(e){ return false; } }
+function rel10On(){ if(REL10.off) return false; if(window.__rel10 === true || rel10Admin()) return true; return srvNow() >= REL10_AT; }
+
+/* ---------- пропуск: вехи 200 и 300 ---------- */
+const SZ_MILES = [[200, 'Легенда района', 'Дошёл до 200 ступени'], [300, 'Миф сезона', 'Дошёл до 300 ступени']];
+function szMiles(){ const z = szState(), info = sezInfo(), t = Math.floor(z.sp / SZ_TIER);
+  for(const [n, name, d] of SZ_MILES) if(t >= n) badgeAdd('szm'+n+'_'+info.id, name+' «'+info.n+'»', d); }
+const _renderSeason32 = renderSeason;
+renderSeason = function(p){ _renderSeason32.apply(this, arguments); if(!rel10On()) return;
+  try{ const z = szState(), t = Math.floor(z.sp / SZ_TIER); szMiles();
+    const c = el(`<div class="card m32"><div class="t">После сотой ступени</div><div class="d">Дальше только две вехи. За них — звание рядом с названием кофейни, которое останется в коллекции навсегда.</div></div>`);
+    for(const [n, name] of SZ_MILES){ const pr = Math.min(1, z.sp / (n*SZ_TIER)); c.appendChild(el(`<div class="m32r ${t>=n?'on':''}"><b class="num">${n}</b><div><span>${esc(name)}</span><i style="width:${Math.round(pr*100)}%"></i></div><em>${t>=n ? 'Есть' : Math.max(0, n*SZ_TIER - z.sp)+' очков'}</em></div>`)); }
+    p.appendChild(c);
+    const lc = leagueCard(); if(lc){ const first = p.querySelector('.card'); if(first && first.nextSibling) p.insertBefore(lc, first.nextSibling); else p.appendChild(lc); }
+  }catch(e){ console.error(e); } };
+
+/* ---------- лига кофеен (клиент) ---------- */
+const LG_N = ['Бронзовая лига','Серебряная лига','Золотая лига'];
+let LG = {at:0, d:null, busy:false};
+function lgWeek(ts){ const d = new Date((ts || srvNow()) + 3*3600000); const day = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - day); return d.toISOString().slice(0, 10); }
+function lgPush(){ if(!rel10On() || !S || !S.lg || !tg || !tg.initData) return; apiPost('/api/league', {op:'push', w:S.lg.w, p:Math.round(S.lg.p)}).then(r=>{ if(r && r.ok && r.d){ LG.d = r.d; LG.at = Date.now(); } }).catch(()=>{}); }
+function lgLoad(force){ if(!rel10On() || LG.busy || !tg || !tg.initData) return; if(!force && Date.now() - LG.at < 120000) return; LG.busy = true;
+  apiPost('/api/league', {op:'get'}).then(r=>{ LG.busy = false; LG.at = Date.now(); if(r && r.ok){ LG.d = r.off ? null : r.d; if(LG.d && LG.d.crown && LG.d.crown.me && S){ S.crownWeek = LG.d.week; badgeAdd('crown_'+LG.d.crown.week, 'Корона золотой лиги', 'Первое место в золотой лиге за неделю '+LG.d.crown.from); } if(sheet === 'hall') renderSheet(); } }).catch(()=>{ LG.busy = false; }); }
+function leagueCard(){ lgLoad(); const d = LG.d;
+  const c = el(`<div class="card lg32"><div class="eyebrow">Лига кофеен · неделя</div></div>`);
+  if(!d){ c.appendChild(el(`<div class="t">Лига</div>`)); c.appendChild(el(`<div class="d">${tg && tg.initData ? 'Загружаем таблицу…' : 'Лига работает, когда игра открыта в Telegram.'}</div>`)); return c; }
+  const left = Math.max(0, Math.ceil((Date.parse(d.week+'T00:00:00+03:00') + 7*86400000 - srvNow()) / 86400000));
+  c.appendChild(el(`<div class="t lgt${d.tier}">${LG_N[d.tier]}</div>`));
+  c.appendChild(el(`<div class="d">Считается прибыль за неделю (понедельник–воскресенье). ${d.tier < 2 ? 'Лучшие '+d.up+' поднимаются выше. ' : 'Первое место получает корону на вывеску на всю следующую неделю. '}${d.tier > 0 ? 'Последние '+d.down+' опускаются. ' : ''}До конца недели: ${left} ${plural29(left,'день','дня','дней')}.</div>`));
+  if(d.crown) c.appendChild(el(`<div class="d lgcr">Корона этой недели: «${esc(d.crown.cafe)}»${d.crown.me ? ' — это ты' : ''}</div>`));
+  const list = el(`<div class="lg32l"></div>`);
+  (d.top||[]).forEach((r, i)=>{ const zone = d.tier < 2 && i < d.up ? 'up' : d.tier > 0 && d.n >= 3 && i >= d.n - d.down ? 'down' : ''; list.appendChild(el(`<div class="lgr ${r.me?'me':''} ${zone}"><b class="num">${i+1}</b><span>«${esc(r.cafe)}»</span><em class="num">${fmt(r.p)} ₽</em></div>`)); });
+  if(d.me && d.rank > (d.top||[]).length) list.appendChild(el(`<div class="lgr me"><b class="num">${d.rank}</b><span>«${esc(S.name)}»</span><em class="num">${fmt(d.me)} ₽</em></div>`));
+  if(!(d.top||[]).length) list.appendChild(el(`<div class="d">В этой лиге на неделе пока никто не закрыл смену. Закрой день — и ты в таблице.</div>`));
+  c.appendChild(list); return c; }
+// корона на вывеске всю неделю после победы
+const _sceneSign32 = sceneSign;
+sceneSign = function(st, u, now){ _sceneSign32.apply(this, arguments); try{ if(!rel10On() || !S || S.crownWeek !== lgWeek() || u.sign < 1) return;
+  const name = S.name.toUpperCase(); let fs = 8.5; ctx.font = `800 ${fs}px "Golos Text",sans-serif`; while(ctx.measureText(name).width > 132 && fs > 5){ fs -= 0.5; ctx.font = `800 ${fs}px "Golos Text",sans-serif`; }
+  const tw = Math.max(64, ctx.measureText(name).width + 18), x = Math.round(150 - tw/2) - 7, y = 5;
+  ctx.fillStyle = '#e8b830'; ctx.beginPath(); ctx.moveTo(x-5, y+8); ctx.lineTo(x-5, y+1); ctx.lineTo(x-2.5, y+4); ctx.lineTo(x, y); ctx.lineTo(x+2.5, y+4); ctx.lineTo(x+5, y+1); ctx.lineTo(x+5, y+8); ctx.closePath(); ctx.fill(); rect(x-5, y+8, 10, 1.6, '#b8861a'); EL(x, y+5.5, 1, 1, '#c8322b'); }catch(e){} };
+
+/* ---------- конкурент «Кофе Кофе» и история Стаса ---------- */
+CHARS.stas = {n:'Стас', d:'Управляющий «Кофе Кофе». Когда-то работал у тебя бариста и ушёл, хлопнув холдером.', spr:'guest:31'};
+SIGN_FRAMES.kk = {n:'Победитель «Кофе Кофе»', bg:'#3a1414', edge:'#d9a93c', ink:'#ffd978', glow:'#ffb84a'};
+const _frameOwnedId32 = frameOwnedId;
+frameOwnedId = function(){ if(S && S.c && S.c.signFrame === 'kk' && S.rival && S.rival.won) return 'kk'; return _frameOwnedId32.apply(this, arguments); };
+function kkOn(){ return rel10On() && S && S.rival && !S.rival.won; }
+function kkHit(d){ const r = S.rival; if(!r || r.won) return; r.hp = clamp(r.hp + d, -50, 200);
+  if(r.hp <= 60 && !r.stas){ r.stas = true; scheduleBeat(1, 'kk_stas'); }
+  if(r.hp <= 0 && !r.end){ r.end = true; scheduleBeat(0, 'kk_end'); }
+  if(r.hp >= 160){ r.hp = 100; scheduleBeat(0, 'kk_lose'); } }
+const KK = (d, fx, out) => S => { kkHit(d); return {fx: fx || {}, out}; };
+const KKc = (p, a, b) => S => chance(p) ? a(S) : b(S);
+def('kk_open', {cat:'story', t:'Напротив открылась сеть', x:'Через дорогу повесили жёлто-зелёную вывеску «Кофе Кофе». Шарики, промоутер в костюме стакана и капучино за 99 рублей всю первую неделю. Твои постоянные гости косятся на шарики.', o:[
+  {t:'Сходить на разведку', fx:KK(-5, {m:-500}, 'Капучино за 99 горький, пенка как мыльная. Но гости этого пока не знают.')},
+  {t:'Купоны у входа: второй кофе в подарок', fx:KK(-15, {m:-25000, mod:['traffic',1.1,48,'Купоны против сети: гостей +10%']}, 'Очередь из охотников за купонами. Половина останется.')},
+  {t:'Сделать вид, что их нет', fx:KK(10, {}, 'Их нет. А шарики есть. И гости тоже там.')}]});
+def('kk_price', {cat:'story', t:'Кофе за 99', x:'«Кофе Кофе» продлил акцию: любой кофе за 99 рублей до конца месяца. У тебя в зале непривычно тихо.', o:[
+  {t:'Ответить «счастливыми часами»', fx:KK(-15, {mod:['traffic',1.12,72,'Счастливые часы: гостей +12%']}, 'С трёх до пяти скидка. Гости вернулись и обсуждают, где пенка лучше. У тебя.')},
+  {t:'Держать цену и варить лучше', fx:KK(-5, {soul:1, mod:['traffic',0.92,48,'Демпинг напротив: гостей −8%']}, 'Самые верные остались. Остальные пробуют кофе за 99 и морщатся.')},
+  {t:'Написать в сеть про качество', fx:KKc(0.5, KK(-20, {}, 'Сеть прислала проверку к себе же. Акцию свернули на неделю раньше.'), KK(0, {}, 'Ответили шаблоном: «Спасибо за обратную связь». Акция продолжается.'))}]});
+def('kk_poach', {cat:'story', t:'Переманивают {s}', x:'«Кофе Кофе» предложил {s} на треть больше и бесплатный кофе. {s} пока думает и смотрит на тебя.', o:[
+  {t:'Поднять зарплату на 15%', fx:KK(-10, {raise:1.15, mood:15}, '{s} остаётся. В «Кофе Кофе» расстроились: у них кончаются бариста.')},
+  {t:'Отпустить', fx:KK(10, {fire:1}, '{s} ушёл к ним. Через окно видно, как он учит их варить нормально.')},
+  {t:'Переманить их бариста в ответ', fx:KK(-20, {m:-60000, mood:5}, 'Их лучший бариста теперь у тебя. Принёс свой темпер и обиду на сеть.')}]});
+def('kk_reviews', {cat:'story', t:'Волна плохих отзывов', x:'За ночь на картах появилось 14 одинаковых отзывов: «тараканы, грубый персонал, кофе как из лужи». Все от аккаунтов без фото, созданных вчера.', o:[
+  {t:'Спокойно ответить с фактами', fx:KK(-10, {soul:1}, 'Ответили каждому с фото зала и сертификатами. Карты удалили половину отзывов как спам.')},
+  {t:'Заказать такие же им', fx:KKc(0.3, KK(5, {rep:-1, st:{karma:-1}}, 'Заказ вскрылся. Скриншоты переписки ходят по району. Неловко.'), KK(-25, {st:{karma:-1}}, 'У них теперь тоже тараканы. На картах. Совесть немного скребёт.'))},
+  {t:'Ничего не делать', fx:KK(5, {mod:['traffic',0.9,48,'Плохие отзывы: гостей −10%']}, 'Новые гости читают отзывы и идут мимо. Старые знают правду.')}]});
+def('kk_promo', {cat:'story', t:'Стакан у твоей двери', x:'Человек в костюме стакана раздаёт купоны «Кофе Кофе» прямо у твоего входа. Гости берут купон и разворачиваются.', o:[
+  {t:'Нанять своего промоутера', fx:KK(-10, {m:-15000, mod:['traffic',1.08,48,'Свой промоутер: гостей +8%']}, 'Теперь у входа битва двух стаканов. Прохожие снимают на телефоны.')},
+  {t:'Угостить стакан и переманить', fx:KK(-15, {m:-3000}, 'Стакан выпил капучино и теперь раздаёт твои купоны. Костюм чужой, но кому какое дело.')},
+  {t:'Вызвать охрану', fx:KK(-5, {soul:-1}, 'Стакан отошёл на два метра. Продолжает.')}]});
+def('kk_supplier', {cat:'story', t:'Поставщик выбирает', x:'Твой поставщик молока говорит, что «Кофе Кофе» предлагает ему контракт на весь объём. Тебе может не остаться.', o:[
+  {t:'Подписать долгий контракт', fx:KK(-15, {m:-40000, mod:['supply',0.95,72,'Контракт на молоко: закупка −5%']}, 'Молоко твоё до весны. В сети ищут нового поставщика.')},
+  {t:'Найти второго поставщика', fx:KK(-5, {m:-10000, mod:['supply',1.05,48,'Новый поставщик: закупка +5%']}, 'Дороже, но надёжнее. Яйца в разных корзинах, молоко в разных бидонах.')},
+  {t:'Пусть уходит', fx:KK(10, {mod:['supply',1.15,72,'Без поставщика: закупка +15%']}, 'Молоко теперь покупаешь в магазине у дома. Кассирша уже узнаёт.')}]});
+def('kk_party', {cat:'story', t:'У них вечеринка', x:'В субботу у «Кофе Кофе» диджей, бесплатные кексы и конкурс селфи. Весь район идёт туда.', o:[
+  {t:'Свой вечер: акустика и пледы', fx:KK(-15, {m:-20000, mod:['traffic',1.15,24,'Акустический вечер: гостей +15%']}, 'У них громко, у тебя уютно. Половина района к полуночи перебралась к тебе.')},
+  {t:'Сходить всей командой и потанцевать', fx:KK(0, {moodAll:10, soul:1}, 'Ваш официант выиграл конкурс селфи. Приз — купон в «Кофе Кофе». Отдали промоутеру.')},
+  {t:'Работать как обычно', fx:KK(5, {mod:['traffic',0.85,24,'Вечеринка напротив: гостей −15%']}, 'Тихий вечер. Слышно, как у них играет одна и та же песня.')}]});
+def('kk_stas', {who:'stas', cat:'story', t:'Управляющий напротив', x:'В «Кофе Кофе» новый управляющий. Это Стас — тот самый бариста, который год назад ушёл от тебя, хлопнув холдером. Он заходит, берёт эспрессо и говорит: «Неплохо. Но у нас лучше».', o:[
+  {t:'Пожать руку: пусть победит лучший', fx:KK(-5, {soul:2}, 'Стас жмёт руку крепче, чем надо. Это будет честная война.')},
+  {t:'Напомнить, кто научил его варить', fx:KK(-10, {pathos:2}, 'Стас краснеет и уходит, не допив. Эспрессо остыл, а ты нет.')},
+  {t:'Позвать его обратно', fx:KK(0, {st:{f:{kk_offer:1}}}, 'Стас смеётся: «Сначала я тебя закрою, потом подумаю». Но визитку забрал.')}]});
+def('kk_lose', {who:'stas', cat:'story', t:'Гости ушли к ним', x:'«Кофе Кофе» запустил карту лояльности: десятый кофе бесплатно. Половина постоянных гостей теперь носит их жёлто-зелёный стаканчик.', o:[
+  {t:'Своя карта: седьмой кофе бесплатно', fx:KK(-10, {m:-30000, mod:['traffic',0.92,24*3,'Гости у сети: гостей −8%']}, 'Седьмой бесплатно бьёт десятый. Гости медленно возвращаются.')},
+  {t:'Переждать', fx:KK(0, {mod:['traffic',0.85,24*5,'Гости у сети: гостей −15%']}, 'Пять тихих дней. Бариста протирает одну и ту же чашку.')}]});
+def('kk_end', {who:'stas', cat:'story', t:'«Кофе Кофе» закрывается', x:'Сеть сворачивает точку напротив: «нерентабельно». Стас стоит у твоей стойки с коробкой вещей. «Ты выиграл. Возьмёшь обратно?»', o:[
+  {t:'Взять обратно старшим бариста', fx:S=>{ kkWin(); const s = makePrizeStaff(20); s.name = 'Стас'; s.sex = 'm'; if(typeof syncScene==='function') syncScene('main'); return {fx:{soul:2}, out:'Стас снова за твоей стойкой. Холдером больше не хлопает. Над входом теперь вывеска победителя.'}; }},
+  {t:'Пожелать удачи', fx:S=>{ kkWin(); return {fx:{soul:3}, out:'Стас уходит с коробкой. Через месяц открывает свою маленькую кофейню на другом конце района. Шлёт открытку.'}; }},
+  {t:'Забрать их гостей акцией', fx:S=>{ kkWin(); return {fx:{m:-30000, mod:['traffic',1.15,72,'Гости «Кофе Кофе» теперь ваши: гостей +15%']}, out:'«Покажи стаканчик «Кофе Кофе» — получи капучино». Три дня очередь из жёлто-зелёных стаканчиков.'}; }}]});
+function kkWin(){ const r = S.rival; if(!r || r.won) return; r.won = true; r.wonDay = S.day; S.c.signFrame = 'kk'; badgeAdd('kkwin', 'Победитель «Кофе Кофе»', 'Закрыл сетевую кофейню напротив'); toast('Новая вывеска: «Победитель «Кофе Кофе»»'); }
+const KK_MOVES = ['kk_price','kk_poach','kk_reviews','kk_promo','kk_supplier','kk_party'];
+function kkTick(){ if(!rel10On() || !S || S.level < 12) return;
+  if(!S.rival){ if(S.incidents.some(i=>/^kk_/.test(i.id))) return; S.rival = {hp:100, next:S.day + RI(2,3), last:null, won:false}; pushIncident('kk_open', {}); return; }
+  const r = S.rival; if(r.won || S.day < r.next || S.incidents.some(i=>/^kk_/.test(i.id))) return;
+  const opts = KK_MOVES.filter(m=>m !== r.last); let id = pick(opts); const data = {};
+  if(id === 'kk_poach'){ const st = S.staff.filter(s=>!s.isYou && s.today !== 'sub' && !s.prize); if(st.length < 2) id = 'kk_price'; else data.sid = pick(st).id; }
+  r.last = id; r.next = S.day + RI(2,3); r.hp = clamp(r.hp + 3, -50, 200); // сеть сама подрастает, если её не трогать
+  pushIncident(id, data); }
+const _modMul32 = modMul;
+modMul = function(k){ let m = _modMul32(k); try{ if(k === 'traffic' && kkOn()) m *= S.rival.hp > 100 ? 0.92 : 0.95; if(k === 'supply' && roastWorks()) m *= 0.9; }catch(e){} return m; };
+
+/* ---------- обжарочный цех ---------- */
+const ROAST_PRICE = 1500000, ROAST_WAGE = 6000, ROAST_REPAIR = 120000, ROAST_SERVICE = 40000;
+function roastWorks(){ return rel10On() && S && S.roast && !S.roast.broken; }
+function roastDay(){ const r = S.roast; if(!r || !rel10On()) return;
+  spend(ROAST_WAGE, 'wages', 'Обжарщик: смена');
+  if(r.broken){ return; }
+  const rev = (S.fin.hist[0] || {}).rev || 0;
+  r.cond = Math.max(0, r.cond - RI(3, 6));
+  if(chance(0.06)){ spend(15000, 'other', 'Пережжённая партия'); HOOK.modal({kind:'note', title:'Пережжённая партия', text:'Обжарщик отвлёкся на телефон, и партия ушла в угли. Зерно в мусор, в цеху пахнет пожаром, пачек навынос сегодня не будет.', chips:[['−15 000 ₽', false]]}); }
+  else { const packs = Math.min(50000, Math.round(rev * 0.03 / 100) * 100); if(packs > 0) income(packs, 'sales', 'Пачки своей обжарки навынос'); }
+  if(r.cond < 40 && chance((40 - r.cond) / 100)){ r.broken = true; HOOK.modal({kind:'note', title:'Ростер сломался', text:'Ростер задымил и остановился. Пока не починишь, зерно покупаешь как раньше, а обжарщик пьёт чай за твой счёт.', chips:[['Ремонт '+fmt(ROAST_REPAIR)+' ₽', false]]}); } }
+const _closeDay32 = closeDay;
+closeDay = function(){ const r = _closeDay32.apply(this, arguments);
+  try{ if(rel10On()){ const f = S.fin.hist[0]; const w = lgWeek(); if(!S.lg || S.lg.w !== w) S.lg = {w, p:0}; if(f) S.lg.p += opProfit(f); lgPush(); } }catch(e){ console.error(e); }
+  try{ roastDay(); }catch(e){ console.error(e); }
+  try{ kkTick(); }catch(e){ console.error(e); }
+  try{ nyTick(); }catch(e){ console.error(e); }
+  return r; };
+function roastCard(){ const r = S.roast, c = el(`<div class="card ro32"><div class="t">Обжарочный цех</div></div>`);
+  if(!r){ const can = S.level >= 10 && S.spends && S.spends.roaster;
+    c.appendChild(el(`<div class="d">Свой цех: зерно примерно на 30% дешевле и пачки кофе навынос (около 3% выручки, до 50 000 ₽ в день). Но каждый день смена обжарщика ${fmt(ROAST_WAGE)} ₽, ростер изнашивается и может сломаться, а партия — сгореть.${can ? '' : ' Нужны 10 уровень и маленький ростер в подсобке.'}</div>`));
+    const b = el(`<div class="row"><button class="btn num" ${can && S.money >= ROAST_PRICE ? '' : 'disabled'}>Построить за ${fmt(ROAST_PRICE)} ₽</button></div>`);
+    b.querySelector('button').onclick = () => { if(S.money < ROAST_PRICE) return; spend(ROAST_PRICE, 'invest', 'Обжарочный цех'); S.roast = {cond:100, broken:false, at:S.day}; sfx('buy'); toast('Цех построен. Пахнет на весь квартал'); save(); renderSheet(); };
+    c.appendChild(b); return c; }
+  c.appendChild(el(`<div class="d">${r.broken ? 'Ростер сломан. Цех стоит, обжарщик получает зарплату.' : 'Работает: закупка дешевле, пачки навынос продаются.'} Обжарщик: ${fmt(ROAST_WAGE)} ₽ в день.</div>`));
+  c.appendChild(el(`<div class="ro32b"><span>Состояние ростера</span><i><b style="width:${Math.round(r.cond)}%;background:${r.cond < 40 ? 'var(--bad)' : 'var(--good)'}"></b></i><em class="num">${Math.round(r.cond)}%</em></div>`));
+  const row = el(`<div class="row"></div>`);
+  if(r.broken){ const b = el(`<button class="btn num" ${S.money >= ROAST_REPAIR ? '' : 'disabled'}>Починить за ${fmt(ROAST_REPAIR)} ₽</button>`); b.onclick = () => { spend(ROAST_REPAIR, 'repairs', 'Ремонт ростера'); r.broken = false; r.cond = 70; sfx('buy'); toast('Ростер снова жарит'); save(); renderSheet(); }; row.appendChild(b); }
+  else { const b = el(`<button class="btn num ghost" ${S.money >= ROAST_SERVICE && r.cond < 95 ? '' : 'disabled'}>Обслужить за ${fmt(ROAST_SERVICE)} ₽</button>`); b.onclick = () => { spend(ROAST_SERVICE, 'repairs', 'Обслуживание ростера'); r.cond = 100; sfx('buy'); toast('Ростер почищен и смазан'); save(); renderSheet(); }; row.appendChild(b); }
+  c.appendChild(row); return c; }
+const _renderUpgrades32 = renderUpgrades;
+renderUpgrades = function(p, id){ _renderUpgrades32.apply(this, arguments); try{ if(rel10On() && (id || S.active || 'main') === 'main') p.appendChild(roastCard()); }catch(e){ console.error(e); } };
+
+/* ---------- новогодний сюжет: стартует 20 декабря ---------- */
+const NY_AT = Date.parse('2026-12-19T21:00:00Z'), NY_END = Date.parse('2027-01-10T21:00:00Z');
+function nyTick(){ if(!rel10On() || !S || !S.story) return; const t = srvNow(); if(t < NY_AT || t > NY_END) return; const f = S.story.flags || (S.story.flags = {});
+  if(f.ny26) return; f.ny26 = 1; scheduleBeat(0, 'ny_corp'); }
+setInterval(()=>{ try{ if(S && S.story && rel10On() && srvNow() >= NY_AT && srvNow() <= NY_END && !(S.story.flags||{}).ny26 && S.isOpen) nyTick(); }catch(e){} }, 60000);
+def('ny_corp', {cat:'story', t:'Корпоратив на сто человек', x:'Офис напротив хочет снять весь зал под корпоратив 27 декабря: сто человек, караоке, «бюджет есть». Постоянные гости в этот вечер к тебе не попадут.', o:[
+  {t:'Сдать весь зал', fx:S=>({fx:{m:Math.round(dayBase()*2/1000)*1000, mod:['traffic',0.9,48,'Постоянные обиделись: гостей −10%'], st:{next:[3,'ny_santa']}}, out:'Сто человек спели «Владимирский централ» четыре раза. Зато касса полная, а у караоке сгорел микрофон.'})},
+  {t:'Сдать полкофейни', fx:S=>({fx:{m:Math.round(dayBase()/1000)*1000, st:{next:[3,'ny_santa']}}, out:'Полкофейни поют, полкофейни работает в наушниках. Компромисс звучит громко.'})},
+  {t:'Отказать: кофейня для всех', fx:{soul:2, pathos:1, st:{next:[3,'ny_santa']}}, out:'Офис обиделся и ушёл в ресторан. Постоянные гости принесли тебе мандарины.'}]});
+def('ny_santa', {cat:'story', t:'Дед Мороз за стойкой', x:'Бариста просит разрешения работать в костюме Деда Мороза. Борода чешется и лезет в пенку, зато дети в восторге и требуют подарки.', o:[
+  {t:'Разрешить и купить мешок конфет', fx:{m:-8000, moodAll:5, mod:['traffic',1.15,72,'Дед Мороз за стойкой: гостей +15%'], st:{next:[3,'ny_31']}}, out:'Очередь из детей и их родителей. Родители берут раф, дети конфеты. Все счастливы, кроме бороды.'},
+  {t:'Можно, но без подарков', fx:{mod:['traffic',1.07,48,'Дед Мороз за стойкой: гостей +7%'], st:{next:[3,'ny_31']}}, out:'Дед Мороз без подарков — это просто бородатый бариста. Но фотографируются всё равно.'},
+  {t:'Нет, у нас серьёзное место', fx:{moodAll:-10, st:{next:[3,'ny_31']}}, out:'Бариста снял шапку и стал варить кофе с лицом человека, у которого отменили праздник.'}]});
+def('ny_31', {cat:'story', t:'31 декабря', x:'Последний день года. Команда смотрит на тебя: работаем до последнего гостя или закрываемся в шесть и идём по домам?', o:[
+  {t:'Работаем до ночи, двойная оплата', fx:S=>({fx:{m:-5000*Math.max(1, S.staff.filter(s=>!s.isYou && s.today==='work').length), moodAll:5, mod:['traffic',1.3,24,'Новогодняя ночь: гостей +30%'], st:{next:[2,'ny_gift']}}, out:'Без пяти двенадцать весь зал считает вслух. Бариста открывает шампанское холдером. Это лучшая смена года.'})},
+  {t:'Закрываемся в шесть', fx:{moodAll:20, soul:2, st:{next:[2,'ny_gift']}}, out:'В шесть вечера выключили свет, обнялись и разошлись. Команда это запомнит.'},
+  {t:'Работаем как обычно', fx:{moodAll:-20, st:{next:[2,'ny_gift']}}, out:'Обычная смена в необычный день. Кто-то из команды тихо плачет в подсобке над оливье из контейнера.'}]});
+def('ny_gift', {cat:'story', t:'Подарки команде', x:'Первое января. В подсобке тихо, на столе мандарины и чья-то забытая шапка Деда Мороза. Пора решить, что подарить команде.', o:[
+  {t:'Премия каждому', fx:S=>{ badgeAdd('ny2027', 'Пережили новогоднюю запару', 'Новый год 2027 в кофейне'); return {fx:{m:-10000*Math.max(1, S.staff.filter(s=>!s.isYou).length), moodAll:25}, out:'Конверты с премией. Мойщица впервые за год улыбается на работе.'}; }},
+  {t:'Корпоратив для своих', fx:S=>{ badgeAdd('ny2027', 'Пережили новогоднюю запару', 'Новый год 2027 в кофейне'); return {fx:{m:-30000, moodAll:15, soul:2}, out:'Свои, караоке и тот самый микрофон, который починили. «Владимирский централ» никто не поёт.'}; }},
+  {t:'Открытки от руки', fx:S=>{ badgeAdd('ny2027', 'Пережили новогоднюю запару', 'Новый год 2027 в кофейне'); return {fx:{moodAll:8, pathos:2}, out:'Каждому открытка с честными словами. Кассир повесила свою над кассой.'}; }}]});
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */

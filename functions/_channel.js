@@ -2,6 +2,7 @@
 // Вызывается фоном из /api/track и вебхука. Ничего не делает, пока не задан CHANNEL_ID.
 import { tgApi, getBot, mskDay, ADMINS, sezId, SEZ_NAMES } from './_lib.js';
 import { GOAL, goalInfo } from './_goal.js';
+import { REL10_AT, rel10Off } from './api/league.js';
 
 export const UNPOST = ['ver_8.5'];
 export const VERSION = '9.2';
@@ -10,6 +11,20 @@ export const VERSION_IMG = 'updates.jpg';
 export const VERSION_TAIL = 'Дальше крупные изменения баланса будем проверять заранее, прежде чем выпускать для всех.';
 export const VERSION_SHORT = 'Обновление 9.0 оказалось неудачным. Экономика возвращена к прежней, всё из 9.1 остаётся.';
 export const VERSION_INTRO = 'Обновление 9.0 оказалось неудачным: после него гости почти перестали приходить, а расходы кофеен выросли. Это наша ошибка. Приносим извинения всем, кто сегодня потратил на игру время и нервы.';
+// Обновление 10 публикуется само 1 декабря 2026 в 12:00 МСК (если не выключено командой /rel10off)
+export const R10 = {
+  v: '10', title: 'соперники, лига и своя обжарка', img: 'updates.jpg',
+  short: 'Напротив открывается сеть «Кофе Кофе», появилась лига кофеен, свой обжарочный цех и пропуск на 100 ступеней. 20 декабря начнётся новогодняя история.',
+  changelog: [
+    'Напротив открывается сеть «Кофе Кофе» (с 12 уровня): демпинг, переманивание сотрудников, накрученные отзывы. Закроете её — получите вывеску победителя. А управляющего там вы, возможно, узнаете',
+    'Лига кофеен: бронзовая, серебряная и золотая по прибыли за неделю. Лучшие поднимаются, последние опускаются, первый в золотой лиге неделю носит корону на вывеске',
+    'Обжарочный цех: своё зерно дешевле и пачки кофе навынос. Ростер изнашивается и ломается, а партия может сгореть',
+    'Пропуск сезона на 100 ступеней, а дальше две вехи, 200 и 300, со званиями',
+    '20 декабря начнётся новогодняя история: корпоратив на сто человек, Дед Мороз за стойкой и главный вопрос — работаем ли 31-го'
+  ],
+  tail: 'Нашли что-то кривое — пишите в поддержку, поправим.'
+};
+export async function rel10Live(env) { return Date.now() >= REL10_AT && !(await rel10Off(env)); }
 export const CHANGELOG = [
   'Экономика возвращена к состоянию до 9.0: поток гостей, зарплаты, аренда и опыт снова прежние',
   'Кофейни снова работают круглосуточно',
@@ -65,6 +80,10 @@ export async function channelTick(env, origin) {
       const ok = await post(env, origin, VERSION_IMG || 'updates.jpg', [`<b>Обновление ${VERSION}${VERSION_TITLE ? ': ' + VERSION_TITLE : ''}</b>`, '', ...intro, ...CHANGELOG.map(x => '— ' + esc(x)), ...(VERSION_TAIL ? ['', VERSION_TAIL] : [])].join('\n'));
       await mark(env, vkey, ok); return;
     }
+    if (await rel10Live(env) && !(await posted(env, 'ver_10'))) {
+      const ok = await post(env, origin, R10.img, [`<b>Обновление ${R10.v}: ${R10.title}</b>`, '', ...R10.changelog.map(x => '— ' + esc(x)), '', R10.tail].join('\n'));
+      await mark(env, 'ver_10', ok); return;
+    }
     const h = holiday();
     if (h) {
       const hkey = 'hol_' + h.id + '_' + new Date().getUTCFullYear();
@@ -103,6 +122,7 @@ export async function channelTick(env, origin) {
 
 export function postUrl(env, msgId) { const base = String(env.CHANNEL_URL || '').replace(/\/+$/, ''); return base && msgId && /t\.me\/[A-Za-z0-9_]+$/.test(base) ? base + '/' + msgId : (base || null); }
 export async function versionInfo(env) {
+  try { if (await rel10Live(env)) { let url = env.CHANNEL_URL || null; const p = await env.DB.prepare('SELECT msg_id FROM posts WHERE key = ?1').bind('ver_10').first(); if (p && p.msg_id) url = postUrl(env, p.msg_id); return { v: R10.v, title: R10.title[0].toUpperCase() + R10.title.slice(1), text: R10.short, url }; } } catch {}
   let url = env.CHANNEL_URL || null;
   try { const p = await env.DB.prepare('SELECT msg_id FROM posts WHERE key = ?1').bind('ver_' + VERSION).first(); if (p && p.msg_id) url = postUrl(env, p.msg_id); } catch {}
   return { v: VERSION, title: VERSION_TITLE ? VERSION_TITLE[0].toUpperCase() + VERSION_TITLE.slice(1) : 'Обновление', text: VERSION_SHORT, url };
