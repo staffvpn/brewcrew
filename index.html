@@ -843,7 +843,7 @@ const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
 const chance = p => Math.random() < p;
 const HOOK = {toast(){}, sfx(){}, modal(){}, struct(){}, event(){}};
 
-const REAL_PER_GMIN = 20000;          // 1 реальная минута = 3 игровых; сутки = 8 реальных часов
+const REAL_PER_GMIN = 14000;          // игровая минута = 14 реальных секунд → игровой месяц ≈ реальная неделя
 const DAY_MIN = 1440;
 const MONTH_DAYS = 30;
 const WEEKDAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
@@ -902,10 +902,10 @@ function sold(id){ return (S.c.byItem && S.c.byItem[id]) || 0; }
 
 /* ---------- залы ---------- */
 const ROOMS = [
-  {id:'main', n:'Кофейня', cost:0, rent:2800, mult:1, d:'Первая точка на 25 квадратов: стойка, витрина и пара столиков.', theme:{wall:'#c99f74', wall2:'#a97f58', trim:'#5b3b25', fa:'#8c6446', fb:'#7f5a3d', counter:'#6e4a30', ctop:'#9b7350'}},
-  {id:'hall2', n:'Второй зал', cost:650000, rent:1800, mult:1.3, need:{t:'Уровень 8 и рейтинг 3,8', f:S=>S.level>=8 && S.rep>=3.8}, d:'Помещение по соседству со своей стойкой. Своя команда и улучшения.', theme:{wall:'#8fab8a', wall2:'#6f8b6b', trim:'#33452f', fa:'#a08566', fb:'#937858', counter:'#3d5a48', ctop:'#58806a'}},
-  {id:'veranda', n:'Веранда', cost:1800000, rent:2400, mult:1.6, outdoor:true, need:{t:'Уровень 16 и 45 игровых дней', f:S=>(S.level>=16 && S.day>=45) || (S.story && S.story.flags.permit && S.level>=12)}, d:'Летняя веранда. В солнце очередь до угла, в дождь пусто.', theme:{wall:'#9ec9e4', wall2:'#cfe6f2', trim:'#6b4b2e', fa:'#b48a5f', fb:'#a47c53', counter:'#7a5233', ctop:'#a87a50'}},
-  {id:'lounge', n:'Лаунж', cost:7000000, rent:6500, mult:2.6, need:{t:'Уровень 26, путь закреплён, рейтинг 4,5', f:S=>S.level>=26 && S.path && S.rep>=4.5}, d:'Второй этаж с неоном и дорогим меню.', theme:{wall:'#3b3550', wall2:'#2c2740', trim:'#151223', fa:'#4a4458', fb:'#423c50', counter:'#1f1b2c', ctop:'#3c3552'}}
+  {id:'main', n:'Кофейня', cost:0, rent:8000, mult:1, d:'Первая точка на 25 квадратов: стойка, витрина и пара столиков.', theme:{wall:'#c99f74', wall2:'#a97f58', trim:'#5b3b25', fa:'#8c6446', fb:'#7f5a3d', counter:'#6e4a30', ctop:'#9b7350'}},
+  {id:'hall2', n:'Второй зал', cost:1500000, rent:10000, mult:1.3, need:{t:'Уровень 8 и рейтинг 3,8', f:S=>S.level>=8 && S.rep>=3.8}, d:'Помещение по соседству со своей стойкой. Своя команда и улучшения.', theme:{wall:'#8fab8a', wall2:'#6f8b6b', trim:'#33452f', fa:'#a08566', fb:'#937858', counter:'#3d5a48', ctop:'#58806a'}},
+  {id:'veranda', n:'Веранда', cost:9000000, rent:12000, mult:1.6, outdoor:true, need:{t:'Уровень 16 и 3 месяца работы', f:S=>(S.level>=16 && S.day>=45) || (S.story && S.story.flags.permit && S.level>=12)}, d:'Летняя веранда. В солнце очередь до угла, в дождь пусто.', theme:{wall:'#9ec9e4', wall2:'#cfe6f2', trim:'#6b4b2e', fa:'#b48a5f', fb:'#a47c53', counter:'#7a5233', ctop:'#a87a50'}},
+  {id:'lounge', n:'Лаунж', cost:60000000, rent:35000, mult:2.6, need:{t:'Уровень 26, путь закреплён, рейтинг 4,5', f:S=>S.level>=26 && S.path && S.rep>=4.5}, d:'Второй этаж с неоном и дорогим меню.', theme:{wall:'#3b3550', wall2:'#2c2740', trim:'#151223', fa:'#4a4458', fb:'#423c50', counter:'#1f1b2c', ctop:'#3c3552'}}
 ];
 const RIVAL_ROOM_THEME = {
   chain:{wall:'#d9d4cc', wall2:'#bcb6ac', trim:'#5a1e1e', fa:'#9a8f82', fb:'#8d8276', counter:'#7a2424', ctop:'#a03434'},
@@ -915,16 +915,16 @@ const RIVAL_ROOM_THEME = {
 
 /* ---------- улучшения ---------- */
 const UPG = [
-  {id:'machine', n:'Кофемашина', base:15000, eff:L=>'Приготовление ×'+f2(machinePower(L))+', кофе +'+Math.round(Math.min(0.2,0.03*L)*100)+'% к цене, износ ниже'+(L>=5?' · профессиональный блок':' · замена блока с ур. 5')},
+  {id:'machine', n:'Кофемашина', base:15000, eff:L=>'Напитки быстрее ×'+f2(1+0.15*L)+', износ ниже'},
   {id:'register', n:'Касса', base:9000, eff:L=>'Заказ быстрее ×'+f2(1+0.15*L)},
-  {id:'menu', n:'Меню', base:12000, eff:L=>'Цены +'+Math.round(4*L)+'% · спрос зависит от качества'},
+  {id:'menu', n:'Меню', base:12000, eff:L=>'Цены и качество: +'+Math.round(4*L)+'%'},
   {id:'tables', n:'Места', base:16000, eff:L=>'Мест: '+seatCount(L)+' · '+seatStage(L)},
   {id:'showcase', n:'Витрина', base:20000, eff:L=>'Десерт берут: '+Math.round(dessertP(L)*100)+'%'},
   {id:'decor', n:'Интерьер', base:14000, eff:L=>'Гостей +'+Math.round(4*L)+'%, редкие гости с 6 ур.'},
   {id:'sign', n:'Вывеска', base:22000, eff:L=>'Гостей +'+Math.round(7*L)+'%'},
   {id:'clean', n:'Уборка', base:8000, eff:L=>'Бардак уходит ×'+f2(1+0.5*L)+(L>=8?', робот-пылесос, табличка «мокрый пол»':L>=2?', табличка «мокрый пол»':', с 2 ур. — табличка «мокрый пол»')},
   {id:'sink', n:'Мойка', base:9000, eff:L=>sinkLine(L)},
-  {id:'storage', n:'Склад и холодильник', base:10000, eff:L=>'Вместимость +'+Math.round(25*L)+'%, молоко живёт дольше'+(L>=5?' · профессиональное охлаждение':'')},
+  {id:'storage', n:'Склад и холодильник', base:10000, eff:L=>'Вместимость +'+Math.round(25*L)+'%, молоко живёт дольше'},
   {id:'safety', n:'Безопасность', base:6000, eff:L=>L<1?'Нет огнетушителя':L<3?'Огнетушитель':L<6?'Сигнализация':'Охрана и камеры'},
   {id:'pets', n:'Питомцы', base:40000, eff:L=>'Гостей +'+(2*L)+'%, '+petsLine(L)}
 ];
@@ -934,8 +934,9 @@ function tableCount(L){ return seatCount(L); }
 function dessertP(L){ return L<1 ? 0 : Math.min(0.6, 0.08+0.026*L); }
 function petsLine(L){ return L<1?'пока никого':L<3?'миска у двери':L<6?'живёт кошка':L<9?'кошачье дерево':L<12?'аквариум':L<15?'вторая кошка':L<18?'пёс у двери':'попугай на стойке'; }
 function upCost(u, L, roomId){
-  // Цена шага растёт вместе с пользой; без экспоненциальных стен на 5/10/15.
-  return Math.round(u.base * 2.5 * (1 + 0.35*L + 0.045*L*L) * roomMult(roomId) / 100) * 100;
+  const step = Math.pow(1.5, L);
+  const wall = Math.pow(1.9, Math.floor(L/5));      // пороги на 5, 10, 15 уровнях
+  return Math.round(u.base * 2.5 * step * wall * roomMult(roomId) / 100) * 100;
 }
 function roomMult(id){ const d = roomDef(id); return d ? d.mult : 1; }
 function maxUpg(id){ return S.rooms.reduce((a,r)=>Math.max(a, r.upg[id]||0), 0); }
@@ -1008,10 +1009,9 @@ const RIVALS = [
 /* ================= состояние ================= */
 let S = null;
 function newState(name, city, carry){
-  const s = {v:3, name, city, money:ownerCapital(carry && carry.perks), xp:0, level:1, rep:3.0,
+  const s = {v:3, name, city, money:START_CAPITAL + (carry&&carry.perks? (carry.perks.capital||0)*250000 : 0), xp:0, level:1, rep:3.0,
     meters:{soul:10, pathos:10, chaos:5}, path:null,
-    economyVersion:2, awareness:10, rating:{sum:30,count:10,reviews:0}, serviceBias:0,
-    day:1, gm:9*60, hours:{open:8, close:20}, isOpen:false,
+    day:1, gm:9*60, hours:{open:0, close:24}, isOpen:false,
     rooms:[newRoom('main')], active:'main', staff:[], cands:[],
     stock:{beans:5000, cups:600, syrup:1000, tea:100, matcha:0, hoz:12, milk:[{q:24000, exp:4}], desserts:[], food:[], sandwiches:[], pastry:[]},
     orders:[], autoOrder:false, serviceContract:false, accountant:false,
@@ -1023,7 +1023,7 @@ function newState(name, city, carry){
     c:{earnedRun:0, sold:0, byItem:{}, guests:0, angry:0, fights:0, fines:0, finesSum:0, inspections:0, passed:0, fired:0, quits:0, absences:0, absurd:0, geese:0, daysNoFine:0, praised:0, scolded:0, bought:0, maxDayRev:0, subs:0, conflicts:0, breakdowns:0, regularsMax:0, promoted:0},
     seen:{g:[], p:[]}, ach:{}, shares:0, perks:{}, franchises:0, bankrupts:0, cityLog:[city],
     weather:'cloud', task:null, kitchen:{tier:0, build:null}, reviews:[], delivery:null, loyalty:null, tour:null, evLast:{}, restock:true, restockAt:0.35, rush:null, supplier:'normal', tips:{jar:0, since:1}, shrink:{}, shrinkLog:[], invDay:1, focus:null, corp:null, adsCd:{}, sound:true, savedAt:Date.now(), created:Date.now(), noInspectUntil:0, flags:{}};
-  if(carry){ Object.assign(s, {ach:carry.ach, seen:carry.seen, shares:carry.shares, perks:carry.perks, franchises:carry.franchises, bankrupts:carry.bankrupts, cityLog:carry.cityLog.concat(city), sound:carry.sound, opsAppliedThrough:carry.opsAppliedThrough||0});
+  if(carry){ Object.assign(s, {ach:carry.ach, seen:carry.seen, shares:carry.shares, perks:carry.perks, franchises:carry.franchises, bankrupts:carry.bankrupts, cityLog:carry.cityLog.concat(city), sound:carry.sound});
     if(carry.perks.autoorder) s.autoOrder = true; }
   return s;
 }
@@ -1046,9 +1046,8 @@ function holiday(){ const d = new Date(); const m = d.getMonth()+1, day = d.getD
 function holidayEvents(){ const h = holiday(); return h && EV['h_'+h.id] ? ['h_'+h.id] : []; }
 function isHalloween(){ const d = new Date(); const m = d.getMonth(), day = d.getDate(); return (m===9 && day>=24) || (m===10 && day<=2); }
 function city(){ return CITIES[S.city] || CITIES.msk; }
-function perk(k){ const def = PERKS.find(p=>p.id===k); return def ? clamp(Number(S.perks[k])||0, 0, def.max) : 0; }
-function shareMult(){ return 1 + Math.min(0.1, Math.max(0, Number(S.shares)||0)*0.001); }
-function ownerCapital(perks){ return START_CAPITAL + clamp(Number(perks && perks.capital)||0, 0, 10)*50000; }
+function perk(k){ return S.perks[k]||0; }
+function shareMult(){ return 1 + 0.03*S.shares; }
 
 /* ---------- модификаторы (временные эффекты событий) ---------- */
 function addMod(k, mul, hours, label){ S.mods.push({k, mul, until:absNow()+Math.round(hours*60), label}); HOOK.struct(); }
@@ -1061,25 +1060,15 @@ function spend(v, cat, why){ cat = cat||'other'; S.money -= v; const f = S.fin.t
   if(cat!=='wages' && v){ const w = why || SPEND_WHY || 'Разное'; f.why = f.why || {}; const key = cat+'|'+w; f.why[key] = (f.why[key]||0) + v; f.last = f.last || []; f.last.unshift({c:cat, v:Math.round(v), w, gm:S.gm}); if(f.last.length > 30) f.last.length = 30; } }
 function income(v){ S.money += v; }
 function canSpend(v){ return S.money >= v; }
-function addXp(n, source){
-  if(!Number.isFinite(n) || n<=0) return;
-  if(source!=='sales' && source!=='reward'){
-    if(!S.activityXp || S.activityXp.day!==S.day) S.activityXp = {day:S.day, earned:0};
-    n = Math.min(n, Math.max(0,60-S.activityXp.earned)); S.activityXp.earned += n;
-  }
-  if(source!=='reward'){
-    if(!S.cafeXpDay || S.cafeXpDay.day!==S.day) S.cafeXpDay={day:S.day,raw:0};
-    const full=Math.min(n,Math.max(0,180-S.cafeXpDay.raw));
-    S.cafeXpDay.raw+=n; n=full+(n-full)*0.2;
-  }
+function addXp(n){
   S.xp += n; let need = xpNeed();
   while(S.xp >= need){ S.xp -= need; S.level++; need = xpNeed(); HOOK.sfx('level'); onLevel(S.level);
     if(S.level===LOCK_LEVEL && !S.path){ S.path = leader(); HOOK.modal({kind:'path'}); } }
 }
-function xpNeed(){ return cafeXpNeed(S.level); }
+function xpNeed(){ return Math.round(130 * Math.pow(1.42, S.level-1)); }
 function leader(){ const m = S.meters; return Object.keys(m).reduce((a,b)=>m[b]>m[a]?b:a); }
 function meter(k, v){ if(!v) return; const f = S.path && S.path!==k && v>0 ? 0.5 : 1; S.meters[k] = clamp(S.meters[k]+v*f, 0, 100); }
-// Рейтинг пересчитывается по отзывам; события меняют впечатление от сервиса.
+function repAdd(v){ S.rep = clamp(S.rep + v, 1, 5); }
 
 /* ---------- склад ---------- */
 function stockQty(k){ if(S.stock[k]===undefined && STOCK[k] && STOCK[k].perish) S.stock[k] = []; const v = S.stock[k]; return Array.isArray(v) ? v.reduce((a,b)=>a+b.q,0) : (v||0); }
@@ -1092,7 +1081,7 @@ function takeStock(need){
   }
 }
 function unitCost(k){ return STOCK[k].price / STOCK[k].pack * supplyMul(); }
-function supplyMul(){ return modMul('supply') * (1 - 0.01*perk('supplier')) * supplier().mul * (S.level>=18 ? 0.95 : 1); }
+function supplyMul(){ return modMul('supply') * (1 - 0.03*perk('supplier')) * supplier().mul * (S.level>=18 ? 0.95 : 1); }
 function needCost(need){ let c = 0; for(const k in need) c += need[k]*unitCost(k); return c; }
 function stockFree(k){ const pend = S.orders.filter(o=>o.k===k).reduce((a,o)=>a+o.q,0); return Math.max(0, stockCap(k) - stockQty(k) - pend); }
 const SHOP_SHARE = 0.25;
@@ -1131,13 +1120,12 @@ function deliver(){
   HOOK.toast('Приехала поставка'); HOOK.struct();
 }
 function spoilCheck(){
-  for(const k of Object.keys(STOCK).filter(k=>STOCK[k].perish)){
-    const arr = S.stock[k] || []; let lost = 0;
+  for(const k of ['milk','desserts','food']){
+    const arr = S.stock[k]; let lost = 0;
     const fridgeBad = S.rooms.some(r=>r.broken.fridge);
     for(const b of arr){ if(b.exp <= S.day || (fridgeBad && k!=='food' && chance(0.5))){ lost += b.q; b.q = 0; } }
     S.stock[k] = arr.filter(b=>b.q>0);
-    if(lost>0){ const v = lost*unitCost(k); S.fin.today.spoil += v; // Списанное сырьё удалено со склада и не является санитарным нарушением.
-       HOOK.toast(STOCK[k].n+': просрочка списана на '+fmtR(v)); }
+    if(lost>0){ const v = lost*unitCost(k); S.fin.today.spoil += v; S.flags.expired = (S.flags.expired||0)+1; HOOK.toast(STOCK[k].n+': просрочка списана на '+fmtR(v)); }
   }
 }
 function autoOrder(){
@@ -1162,8 +1150,7 @@ function isUnlocked(id){ const m = MENU.find(x=>x.id===id); if(!m) return false;
 function promoW(m){ const p = S.promo || {}; return m.w * (p.day===m.id ? 3 : 1) * ((p.rec||[]).includes(m.id) ? 1.6 : 1); }
 function itemPrice(m, roomId){
   const rm = room(roomId);
-  let p = m.price * (1+0.04*rm.upg.menu) * city().check * roomMult(roomId) * modMul('check') * shareMult();
-  if(m.coffee) p *= 1+Math.min(0.2,0.03*rm.upg.machine);
+  let p = m.price * (1+0.04*rm.upg.menu) * city().check * roomMult(roomId) * modMul('check');
   if(S.path==='pathos') p *= 1.2;
   p *= pathCheck() * focusMul('check') * interiorMul(roomId, 'check');
   if(S.promo && S.promo.day===m.id) p *= 0.85;
@@ -1219,12 +1206,12 @@ function sellOne(roomId, opt){
   S.c.sold++; S.c.byItem[item.id] = (S.c.byItem[item.id]||0)+1; S.c.guests++;
   // износ
   const q = S.q || {wear:1, term:1, fridge:1};
-  const wear = (1 - 0.03*rm.upg.machine) * (S.serviceContract?0.5:1) * modMul('wear') * (roomId==='main' ? Math.min(q.wear, rm.upg.machine>=5 ? 0.8 : q.wear) : 1);
+  const wear = (1 - 0.03*rm.upg.machine) * (S.serviceContract?0.5:1) * modMul('wear') * (roomId==='main' ? q.wear : 1);
   if(item.coffee) rm.eq.machine = Math.max(0, rm.eq.machine - 0.018*wear);
   if(card) rm.eq.terminal = Math.max(0, rm.eq.terminal - 0.007*wear*(roomId==='main' ? q.term/q.wear : 1));
   rm.eq.kkt = Math.max(0, rm.eq.kkt - 0.005*wear);
   if(!HOOK.quiet){ if(S.c.liveDay!==S.day){ S.c.liveDay=S.day; S.c.liveServed=0; } S.c.liveServed=(S.c.liveServed||0)+1; }
-  addXp(1, 'sales'); taskProg('serve', 1); taskProg('earn', amount);
+  addXp(1); taskProg('serve', 1); taskProg('earn', amount);
   if(opt.delivery) taskProg('delivery', 1);
   if(item.kitchen) taskProg('kitchen', 1);
   if(!opt.delivery) tipDrop(amount);
@@ -1252,12 +1239,9 @@ function stats(roomId){
   const w = WEATHER[S.weather];
   const wf = def.outdoor ? w.out : w.f;
   const h = S.gm/60;
-  let lambda = (1/100) * awarenessMul() * (1+0.07*u.sign) * (1+0.04*u.decor) * (1+0.02*u.pets) * (1+0.015*tableCount(u.tables)) * (0.4+0.2*S.rep) * wf * hourCurve(h) * city().traffic * modMul('traffic') * (1+0.01*perk('word'));
+  let lambda = (1/95) * (1+0.07*u.sign) * (1+0.04*u.decor) * (1+0.02*u.pets) * (1+0.015*tableCount(u.tables)) * (0.4+0.2*S.rep) * wf * hourCurve(h) * city().traffic * modMul('traffic') * (1+0.03*perk('word'));
   if(S.path==='chaos') lambda *= 1.2;
-  // Уровень снова приводит гостей, но мягче прежнего: +10% за уровень, не больше +150% (с 16-го).
-  lambda *= 1 + 0.1*Math.min(15, Math.max(0, (S.level||1)-1));
-  // Цена без соответствующего качества снижает конверсию прохожих.
-  lambda *= Math.max(0.55,1-0.8*Math.max(0,0.04*u.menu-0.02*u.machine-0.04*Math.max(0,S.rep-3)));
+  lambda *= 1 + 0.18*(S.level-1);
   lambda *= pathTraffic();
   if(S.loyalty) lambda *= 1.1;
   lambda *= interiorMul(roomId, 'traffic');
@@ -1272,13 +1256,13 @@ function stats(roomId){
   let cashiers = ws.filter(s=>s.role==='Кассир' && !s.distract && !s.isYou), baristas = ws.filter(s=>s.role==='Бариста' && !s.distract && !s.isYou);
   const you = ws.find(s=>s.isYou); if(you){ if(!cashiers.length) cashiers = [you]; if(!baristas.length) baristas = [you]; }
   const orderSpeed = cashiers.length ? cashiers.reduce((a,s)=>a+staffSpeed(s),0) : (baristas.length ? 0.5 : 0);
-  const orderT = orderSpeed ? 7 * 1.23 * (roomId==='main' && S.q ? Math.sqrt(Math.min(S.q.term,u.register>=4?0.8:S.q.term)) : 1) / (1+0.15*u.register) / orderSpeed : Infinity;
+  const orderT = orderSpeed ? 7 * 1.23 * (roomId==='main' && S.q ? Math.sqrt(S.q.term) : 1) / (1+0.15*u.register) / orderSpeed : Infinity;
   const prepSpeed = baristas.length ? baristas.reduce((a,s)=>a+staffSpeed(s),0) : 0;
-  const prepT = 12 / machinePower(u.machine);
+  const prepT = 12 / (1+0.15*u.machine);
   const alone = you && cashiers[0]===you && baristas[0]===you;
   const orderCap = orderT===Infinity ? 0 : 1/orderT, prepCap = prepSpeed/prepT;
   const through = alone ? 1/(orderT + prepT/prepSpeed) : Math.min(orderCap + 0, prepCap);
-  return {lambda, lambdaD, orderT, prepT, prepSpeed, through, orderCap, prepCap, staff:ws, prepWorkers:baristas, load:(lambda+lambdaD)/Math.max(0.0001, through)};
+  return {lambda, lambdaD, orderT, prepT, prepSpeed, through, orderCap, prepCap, staff:ws, load:(lambda+lambdaD)/Math.max(0.0001, through)};
 }
 function estCheck(roomId){
   const av = available(roomId); if(!av.length) return 0;
@@ -1295,7 +1279,7 @@ function rollWeather(){
 }
 const TASK_HINT = {serve:'Больше гостей: вывеска, интерьер, акции и быстрая касса.', earn:'Подними средний чек: позиция дня, десерты, меню.', praise:'Нажми на сотрудника в зале и похвали.', noangry:'Следи за очередью: подгоняй, вызывай подмену, ставь кассира.', sell:'Поставь эту позицию «позицией дня» или в рекомендации в меню.'};
 function newTasks(){
-  const h3 = (S.fin.hist||[]).slice(0,3).map(f=>f.rev||0); const daily = Math.max(15000, h3.length ? Math.max(...h3) : 15000);
+  const daily = Math.max(30000, (S.fin.hist[0]||{}).rev || 40000);
   const kinds = ['serve','earn','noangry','sell','sell','rush','reviews','tips'].concat(daysSinceInventory()>=5?['inventory','inventory']:[]).concat(S.delivery&&S.delivery.on?['delivery']:[]).concat(S.kitchen&&S.kitchen.tier?['kitchen']:[]).sort(()=>Math.random()-0.5);
   const used = new Set(); S.tasks = [];
   for(const kind of kinds){ if(S.tasks.length>=3) break; if(used.has(kind) && kind!=='sell') continue; used.add(kind);
@@ -1311,7 +1295,7 @@ function newTasks(){
     if(kind==='delivery'){ goal = 15 + RI(0,3)*5; label = 'Отдать '+goal+' заказов доставки'; }
     if(kind==='kitchen'){ goal = 15 + RI(0,3)*5; label = 'Продать '+goal+' блюд кухни'; }
     if(kind==='sell'){ const av = MENU.filter(m=>!m.side && !m.season && isUnlocked(m.id) && !S.tasks.some(t=>t.item===m.id)); if(!av.length) continue; item = pick(av).id; goal = 25 + RI(0,3)*5; label = 'Продать '+goal+': '+MENU.find(x=>x.id===item).n.toLowerCase(); }
-    S.tasks.push({kind, goal, prog:0, label, item, hint:TASK_HINT[kind] || TASK_HINT7[kind], reward: Math.min(2000, Math.round(daily*0.015/100)*100 + 300), done:false, failed:false, day:S.day});
+    S.tasks.push({kind, goal, prog:0, label, item, hint:TASK_HINT[kind] || TASK_HINT7[kind], reward: Math.round(daily*0.06/1000)*1000 + 3000, done:false, failed:false, day:S.day});
   }
   S.task = S.tasks[0];
 }
@@ -1440,7 +1424,7 @@ function closeDay(){
   }
   S.staff = S.staff.filter(s=>s.today!=='sub' || s.isYou);
   // аренда и коммуналка
-  for(const r of S.rooms){ const d = roomDef(r.id), costs = roomDailyCosts(r.id); spend(costs.rent, 'rent', 'Аренда: '+d.n); spend(costs.util, 'util', 'Коммуналка: '+d.n); }
+  for(const r of S.rooms){ const d = roomDef(r.id); const late = S.level >= 10 ? 0.85 : 1; spend(Math.round(d.rent * city().rent * modMul('rent') * late), 'rent', 'Аренда: '+d.n); spend(Math.round((4300 + 60*hoursOpen()) * roomMult(r.id) * late), 'util', 'Коммуналка: '+d.n); }
   if(S.staffMeal){ const n = S.staff.filter(s=>!s.isYou && (s.today==='work'||s.today==='sub')).length; if(n) spend(250*n, 'other', 'Стафф-питание'); }
   if(stockQty('desserts') >= 3 && chance(0.3)) HOOK.event('writeoff', {});
   // кредит
@@ -1465,7 +1449,6 @@ function closeDay(){
   for(const r of S.rooms){ const ws = S.staff.filter(s=>s.room===r.id && s.today==='work' && !s.isYou); if(ws.length>=2 && chance(0.05 + (ws.some(s=>s.quirk==='lover')?0.05:0) - (ws.some(s=>s.legendId===1)?0.05:0))){ const [a,b] = pickTwo(ws); HOOK.event('conflict', {sid:a.id, sid2:b.id}); } }
   staffDayCheck(); pathDaily(); wishTick(); if(S.day % 3 === 0) envyTick(); shrinkDaily();
   tourAdd(typeof opProfit==="function" ? opProfit(f) : profitOf(f));
-  updateAwareness(f);
   S.c._angryDay = S.c.angry;
   (S.reviews||[]).forEach(rv=>{ if(!rv.reply && rv.stars<=2 && S.day - rv.day === 1) repAdd(-0.02); });
   if(!HOOK.quiet && typeof zReport==='function' && (f.guests||0) > 0) HOOK.modal({kind:'z', z:zReport(f), day:S.day});
@@ -1522,7 +1505,7 @@ function tryPromote(s){
   if(s.promise && s.rank >= s.promiseRank) s.promise = 0;
   return {ok:true, t:s.name+' теперь '+RANKS[s.rank].toLowerCase()+'.'};
 }
-function trainCost(s){ return Math.round((8000 + 2000*s.lvl + 70*s.lvl*s.lvl) * (1+0.15*(s.rank||0)) * (S.level>=6 ? 0.8 : 1) / 100) * 100; }
+function trainCost(s){ return Math.round(15000 * Math.pow(1.45, s.lvl-1) * (S.level>=6 ? 0.8 : 1) / 100) * 100; }
 function trainInfo(s){
   if(s.lvl >= RANK_CAP[s.rank]) return {can:false, t:'Потолок для должности «'+RANKS[s.rank]+'». Нужно повышение'};
   if(s.shifts < s.lvl*2) return {can:false, t:'Нужно отработать смен: '+(s.lvl*2)+' (сейчас '+s.shifts+')'};
@@ -1614,7 +1597,6 @@ const EQ = {machine:{n:'Кофемашина', fix:22000, x:'Кофемашин�
   terminal:{n:'Терминал', fix:9000, x:'Терминал завис на надписи «Оплата…» и больше не включается. Только наличные.'},
   kkt:{n:'Онлайн-касса', fix:12000, x:'Онлайн-касса не пробивает чеки. Работать без чека — риск штрафа от налоговой.'},
   fridge:{n:'Холодильник', fix:15000, x:'Холодильник потёк и греется. Молоко и десерты долго не проживут.'}};
-const FRIDGE_WEAR_PER_DAY = 10;
 function breakdown(roomId, k){
   const rm = room(roomId); if(rm.broken[k]) return;
   rm.broken[k] = true; S.c.breakdowns++;
@@ -1648,14 +1630,14 @@ function inspectionResult(kind, mode){
   S.c.inspections++;
   const rm = room(S.active);
   let viol = 0, why = [];
-  if(kind==='san'){ if(dirtLevel(S.active)>0.45){ viol++; why.push('срач в зале и гора посуды'); } if(S.flags.medbad){ viol += 2; why.push('санкнижки куплены в переходе'); S.flags.medbad = 0; } if(S.flags.expired){ viol++; why.push('просрочка'); } if(S.flags.goose){ viol++; why.push('гусь на кухне'); } if(rm.upg.clean<2){ viol += 0.5; } }
+  if(kind==='san'){ if(S.meters.chaos>45){ viol++; why.push('грязно'); } if(dirtLevel(S.active)>0.45){ viol++; why.push('срач в зале и гора посуды'); } if(S.flags.medbad){ viol += 2; why.push('санкнижки куплены в переходе'); S.flags.medbad = 0; } if(S.flags.expired){ viol++; why.push('просрочка'); } if(S.flags.goose){ viol++; why.push('гусь на кухне'); } if(rm.upg.clean<2){ viol += 0.5; } }
   if(kind==='tax'){ if(S.fin.noCheck>0){ viol += 2; why.push('продажи без чеков на '+fmtR(S.fin.noCheck)); } }
-  if(kind==='fire'){ if(rm.upg.safety<1){ viol += 2; why.push('нет огнетушителя'); }  }
-  if(kind==='labor'){ const grey = S.staff.filter(s=>s.contract==='grey'); if(grey.length){ viol += grey.length; why.push('неоформленные: '+grey.map(s=>s.name).join(', ')); } if(S.staff.some(s=>!s.isYou && s.sched==='every')){ viol += 0.5; why.push('без выходных'); } }
-  // Чистая работа без нарушения не превращается в случайный штраф.
+  if(kind==='fire'){ if(rm.upg.safety<1){ viol += 2; why.push('нет огнетушителя'); } else if(rm.upg.safety<3 && chance(0.3)){ viol++; why.push('загромождён выход'); } }
+  if(kind==='labor'){ const grey = S.staff.filter(s=>s.contract==='grey'); if(grey.length){ viol += grey.length; why.push('неоформленные: '+grey.map(s=>s.name).join(', ')); } if(S.staff.some(s=>s.sched==='every')){ viol += 0.5; why.push('без выходных'); } }
+  if(viol < 1 && chance(0.15)) { viol = 1; why.push('нашли, к чему придраться'); }
   let fine = 0, txt = '', fx = {};
   const base = kind==='tax' ? Math.max(10000, S.fin.noCheck*0.5) : kind==='labor' ? 10000*Math.max(1, Math.round(viol)) : RI(FINES[kind][0]/1000, FINES[kind][1]/1000)*1000;
-  const lawyer = 1 - 0.03*perk('lawyer');
+  const lawyer = 1 - 0.1*perk('lawyer');
   if(mode==='bribe'){
     if(chance(0.5)){ fine = Math.round(base*0.35); txt = 'Инспектор взял конверт и ушёл, не глядя по сторонам.'; fx.chaos = 2; }
     else { fine = Math.round(base*2); txt = 'Инспектор оказался принципиальным. Штраф вдвое больше и протокол о попытке подкупа.'; fx.rep = -2; fx.pathos = 2; }
@@ -1847,7 +1829,6 @@ function expireIncident(inc){
   if(!inc) return;
   const d = evDef(inc);
   S.incidents = S.incidents.filter(x=>x!==inc);
-  if(inc.id.startsWith('break_') && EQ[inc.id.slice(6)]){ HOOK.toast('Техника требует ремонта. Оплата — после твоего решения'); HOOK.struct(); return; }
   // если долго не решали: проверки и кадры решаются по умолчанию, остальное — мелкий штраф к рейтингу и бардак
   if(d && d.o){
     if(d.cat==='story'){ let k = d.o.length-1; while(k>0 && d.o[k].req && !d.o[k].req(S, inc)) k--; resolveIncident(inc, k, true); }
@@ -1881,7 +1862,10 @@ function applyFx(fx, inc){
   if(fx.goose){ S.flags.goose = 1; S.c.geese++; }
   if(fx.fights){ S.c.fights += fx.fights; }
   if(fx.loyal){ const rg = S.regs.find(x=>x.id===fx.loyal[0]); if(rg){ rg.loyal = clamp(rg.loyal + fx.loyal[1], 0, 100); const nm = (REGULARS.find(x=>x.id===rg.id)||{}).n; chips.push([nm+': лояльность '+(fx.loyal[1]>0?'+':'')+fx.loyal[1], fx.loyal[1]>0]); if(rg.loyal<=10 && !rg.gone){ rg.gone = true; chips.push([nm+' ушёл навсегда', false]); } } }
-  if(fx.repair){ const [k, how] = fx.repair; repairEquipment(inc && inc.room || S.active, k, how, chips); }
+  if(fx.repair){ const [k, how] = fx.repair; const rm = room(inc && inc.room || S.active);
+    if(how==='full'){ spend(EQ[k].fix, 'repairs'); rm.broken[k] = false; rm.eq[k] = 100; }
+    if(how==='cheap'){ spend(Math.round(EQ[k].fix/3), 'repairs'); if(chance(0.55)){ rm.broken[k] = false; rm.eq[k] = 60; chips.push(['Заработало', true]); } else { chips.push(['Сломалось снова, нужен сервис', false]); } }
+    if(how==='none'){ if(k==='kkt') rm.noCheck = true; } }
   if(fx.inspect){ const r = inspectionResult(fx.inspect, fx.mode); const c2 = applyFx(r.fx, inc); return {chips:c2.chips.concat(r.txt? [] : []), out:r.txt}; }
   if(fx.gamble){ const g = chance(0.5) ? fx.gamble[0] : fx.gamble[1]; const c2 = applyFx(Object.assign({}, g, {out:undefined}), inc); return {chips:chips.concat(c2.chips), out:g.out}; }
   if(fx.loan){ income(fx.loan); S.debt.loan += fx.loan*1.3; chips.push(['Долг «серьёзным людям»: '+fmtR(S.debt.loan), false]); }
@@ -1939,73 +1923,43 @@ function processPending(){
 }
 function scheduleEvents(nowReal){
   if(!S.isOpen) return;
-  if(!S.nextEv) S.nextEv = nowReal + 15*60000;
-  if(!S.nextAbsurd) S.nextAbsurd = nowReal + 60*60000;
+  if(!S.nextEv) S.nextEv = nowReal + 3*60000;
+  if(!S.nextAbsurd) S.nextAbsurd = nowReal + 9*60000;
   if(nowReal >= S.nextEv){
-    S.nextEv = nowReal + R(15, 30)*60000;
+    S.nextEv = nowReal + R(4, 8)*60000;
     const pool = eventPool();
     if(pool.length) pushIncident(pick(pool));
   }
-  if(nowReal >= S.nextAbsurd){ S.nextAbsurd = nowReal + R(60, 120)*60000; const a = makeAbsurd(); pushIncident('absurd', a); }
+  if(nowReal >= S.nextAbsurd){ S.nextAbsurd = nowReal + R(14, 22)*60000; const a = makeAbsurd(); pushIncident('absurd', a); }
+  // поломки техники по износу — раз в игровой час
+  for(const r of S.rooms){ for(const k of ['machine','terminal','kkt']){ if(!r.broken[k] && r.eq[k] < 40 && chance((40 - r.eq[k])/400/60)) breakdown(r.id, k); } if(!r.broken.fridge){ r.eq.fridge = Math.max(0, r.eq.fridge - 0.0006*(S.serviceContract?0.5:1)*(r.id==='main' && S.q ? S.q.fridge : 1)); if(r.eq.fridge<40 && chance((40-r.eq.fridge)/400/60)) breakdown(r.id,'fridge'); } }
 }
-// Пассивный износ считается за игровые сутки, риск поломок — по прошедшему времени.
-function equipmentFailureChance(condition, seconds){
-  const p = clamp((40 - condition)/400/60, 0, 1);
-  return -Math.expm1(60 * seconds * Math.log1p(-p));
-}
-function equipmentTick(seconds){
-  if(!S.isOpen || S.closedUntil > absNow() || !Number.isFinite(seconds) || seconds <= 0) return;
-  // Офлайн использует те же правила; короткие шаги учитывают момент поломки.
-  while(seconds > 0){
-    const dt = Math.min(1, seconds); seconds -= dt;
-    for(const r of S.rooms){
-      for(const k of ['machine','terminal','kkt']){
-        if(!r.broken[k] && r.eq[k] < 40 && chance(equipmentFailureChance(r.eq[k], dt))) breakdown(r.id, k);
-      }
-      if(!r.broken.fridge){
-        r.eq.fridge = Math.max(0, r.eq.fridge - FRIDGE_WEAR_PER_DAY * dt / (DAY_MIN*REAL_PER_GMIN/1000) * (S.serviceContract?0.5:1) * (r.id==='main' && S.q ? Math.min(S.q.fridge, r.upg && r.upg.storage>=5 ? 0.8 : S.q.fridge) : 1));
-        if(r.eq.fridge < 40 && chance(equipmentFailureChance(r.eq.fridge, dt))) breakdown(r.id, 'fridge');
-      }
-    }
-  }
-}
-function serviceCost(r){ let c = 0; for(const k of Object.keys(EQ)) if(!r.broken[k]) c += (100 - r.eq[k]) * EQ[k].fix / 300; return Math.round(c/100)*100; }
-function doService(r){ const c = serviceCost(r); if(c<=0 || !canSpend(c)) return false; spend(c, 'repairs','Профилактика техники'); for(const k of Object.keys(EQ)) if(!r.broken[k]) r.eq[k] = 100; return true; }
-function repairEquipment(roomId, k, how, chips){
-  const rm = room(roomId); if(!rm || !EQ[k] || !rm.broken[k]) return false;
-  if(how==='none'){ if(k==='kkt') rm.noCheck = true; return true; }
-  const cost = how==='full' ? EQ[k].fix : how==='cheap' ? Math.round(EQ[k].fix/3) : 0;
-  if(!cost || !canSpend(cost)){ chips.push(['На ремонт не хватает денег', false]); return false; }
-  spend(cost, 'repairs','Ремонт: '+EQ[k].n);
-  if(how==='full' || chance(0.55)){ rm.broken[k] = false; rm.eq[k] = how==='full'?100:60; if(k==='kkt') rm.noCheck = false; chips.push(['Заработало',true]);
-    S.incidents = S.incidents.filter(i=>!(i.id==='break_'+k && (i.room||S.active)===roomId)); }
-  else chips.push(['Сломалось снова, нужен сервис',false]);
-  return true;
-}
+function serviceCost(r){ let c = 0; for(const k of Object.keys(EQ)) c += (100 - r.eq[k]) * EQ[k].fix / 300; return Math.round(c/100)*100; }
+function doService(r){ const c = serviceCost(r); if(!canSpend(c)) return false; spend(c, 'repairs'); for(const k of Object.keys(EQ)) r.eq[k] = 100; return true; }
 
 /* ================= франшиза и достижения ================= */
-function franchiseNeed(){ return 10000000 * Math.pow(3, S.franchises); }
+function franchiseNeed(){ return 30000000 * Math.pow(3, S.franchises); }
 function franchiseShares(){ const e = S.c.earnedRun || 0; return e < franchiseNeed() ? 0 : Math.floor(10 * Math.sqrt(e / franchiseNeed())); }
 const PERKS = [
-  {id:'capital', n:'Стартовый капитал', d:'+50 000 ₽ на старте за уровень, максимум +500 000 ₽', cost:L=>2+L*2, max:10},
-  {id:'supplier', n:'Свой поставщик', d:'Закупки −1% за уровень, максимум −10%', cost:L=>3+L*2, max:10},
-  {id:'word', n:'Сарафанное радио', d:'Гостей +1% за уровень, максимум +15%', cost:L=>3+L*3, max:15},
+  {id:'capital', n:'Стартовый капитал', d:'+250 000 ₽ на старте за уровень', cost:L=>2+L*2, max:10},
+  {id:'supplier', n:'Свой поставщик', d:'Закупки −3% за уровень', cost:L=>3+L*2, max:10},
+  {id:'word', n:'Сарафанное радио', d:'Гостей +3% за уровень', cost:L=>3+L*3, max:15},
   {id:'agency', n:'Кадровое агентство', d:'Чаще приходят легендарные кандидаты', cost:L=>4+L*3, max:8},
-  {id:'lawyer', n:'Свой юрист', d:'Штрафы −3% за уровень, максимум −18%', cost:L=>3+L*2, max:6},
+  {id:'lawyer', n:'Свой юрист', d:'Штрафы −10% за уровень', cost:L=>3+L*2, max:6},
   {id:'autoorder', n:'Автозаказ с первого дня', d:'Договор с поставщиком сразу', cost:()=>6, max:1}
 ];
-function sellFranchise(cityId, receipt){
-  const sh = receipt ? receipt.shares : franchiseShares(); if(!sh) return false;
-  const carry = {ach:S.ach, seen:S.seen, shares:S.shares+sh, perks:S.perks, franchises:S.franchises+1, bankrupts:S.bankrupts, cityLog:S.cityLog, sound:S.sound, opsAppliedThrough:S.opsAppliedThrough||0};
+function sellFranchise(cityId){
+  const sh = franchiseShares(); if(!sh) return false;
+  const carry = {ach:S.ach, seen:S.seen, shares:S.shares+sh, perks:S.perks, franchises:S.franchises+1, bankrupts:S.bankrupts, cityLog:S.cityLog, sound:S.sound};
   const name = S.name;
   S = newState(name, cityId, carry); initState(); return sh;
 }
 function goBankrupt(){
-  const carry = {ach:S.ach, seen:S.seen, shares:S.shares, perks:S.perks, franchises:S.franchises, bankrupts:S.bankrupts+1, cityLog:S.cityLog, sound:S.sound, opsAppliedThrough:S.opsAppliedThrough||0};
+  const carry = {ach:S.ach, seen:S.seen, shares:S.shares, perks:S.perks, franchises:S.franchises, bankrupts:S.bankrupts+1, cityLog:S.cityLog, sound:S.sound};
   const name = S.name, cityId = S.city;
   S = newState(name, cityId, carry); initState();
 }
-const START_CAPITAL = 600000;
+const START_CAPITAL = 1000000;
 const START_FEES = 150000;
 const BUILD = [
  {id:'machine', n:'Кофемашина', need:true, opts:[
@@ -2037,25 +1991,21 @@ const BUILD = [
    {n:'Световой короб', price:60000, d:'Видно с улицы.', set:{sign:2}, q:{}},
    {n:'Неон и штендер', price:170000, d:'Заметно с другого конца квартала.', set:{sign:4}, q:{}}]}
 ];
-function buildCost(choice){
-  return START_FEES + BUILD.reduce((sum,b)=>sum + b.opts[choice[b.id] || 0].price, 0);
-}
 function applyBuild(choice){
-  const rm = room('main'), total = buildCost(choice); S.q = {wear:1, term:1, fridge:1};
-  for(const b of BUILD){ const o = b.opts[choice[b.id] || 0];
+  const rm = room('main'); let total = 0; S.q = {wear:1, term:1, fridge:1};
+  for(const b of BUILD){ const o = b.opts[choice[b.id] || 0]; total += o.price;
     for(const k in o.set) rm.upg[k] = Math.max(rm.upg[k], o.set[k]);
     if(o.q.wear) S.q.wear = o.q.wear; if(o.q.term) S.q.term = o.q.term; if(o.q.fridge) S.q.fridge = o.q.fridge;
-    if(o.q.rep) S.serviceBias=clamp((S.serviceBias||0)+o.q.rep,-0.4,0.4); if(o.q.chaos) S.meters.chaos += o.q.chaos; }
-  rm.upg.safety=Math.max(1,rm.upg.safety||0); // огнетушитель входит в оформление
+    if(o.q.rep) S.rep = clamp(S.rep + o.q.rep, 1, 5); if(o.q.chaos) S.meters.chaos += o.q.chaos; }
+  total += START_FEES;
   S.money -= total; S.fin.today.invest = (S.fin.today.invest||0) + total; S.build = choice;
   return total;
 }
 function makeYou(){ const y = makeStaff('Бариста', {quirk:'none'}); Object.assign(y, {name:'Ты', isYou:true, room:'main', lvl:2, today:'work', sched:'every', contract:'white'}); return y; }
 function initState(){
-  gAcc = 0;
   S.staff.push(makeYou());
   refreshCands(); rollWeather(); newTasks();
-  // Первые гости приходят от вывески и рекомендаций, без бесплатной толпы открытия.
+  addMod('traffic', 1.3, 48, 'Новая кофейня: гостей +30%');
   S.story = storyInit(); startSeason(1);
   openDay();
 }
@@ -2130,14 +2080,15 @@ function hourly(){
   deliver();
   kitchenTick(); rushTick(); reviewTick(); autoOrder();
   if(S.isOpen && EV.toaster && EV.toaster.cond(S) && chance(0.012) && !S.incidents.some(i=>i.id==='toaster')) HOOK.event('toaster', {});
-  if(S.isOpen && S.day>=4 && S.noInspectUntil<=S.day && dirtLevel('main') > 0.55 && chance(0.04*dirtLevel('main'))) S.pending.push({at:absNow()+RI(10,60), ev:'inspect_san'});
+  if(S.isOpen && dirtLevel('main') > 0.55 && chance(0.04*dirtLevel('main'))) S.pending.push({at:absNow()+RI(10,60), ev:'inspect_san'});
   if(S.delivery && S.delivery.on) deliveryRate((4.6 - S.delivery.rating)*0.02);
   if(S.isOpen){
     const busy = S.rush || (stats('main').load > 0.9); for(const s of S.staff){ if(s.today==='work' && !s.isYou){ s.mood = clamp(s.mood - (busy ? 1.6 : 0.7), 0, 100); s.pat = clamp(s.pat + (busy ? -1 : 2), 0, 100); } }
     const cleaners = S.staff.filter(s=>s.role==='Мойщица' && s.today==='work').reduce((a,s)=>a+(s.legendId===1?3:1),0);
     const cl = S.rooms.reduce((a,r)=>a+r.upg.clean,0)/S.rooms.length;
     meter('chaos', -(0.8 + 0.15*cl + 1.2*cleaners) + 0.05*S.rooms.length);
-
+    const target = clamp(3.0 - (typeof dirtLevel==='function' ? dirtLevel('main')*0.9 : 0) + supplier().rep + 0.3*focusMul('rep') + avgUpg('decor')*0.05 + avgUpg('menu')*0.03 + (S.path==='soul'?0.3:0) - S.meters.chaos*0.01 + (S.staff.some(s=>s.quirk==='bore')?0.1:0), 1, 5);
+    S.rep += (target - S.rep) * 0.03;
   }
   S.c.earnedRun = S.c.earnedRun || 0;
 }
@@ -2148,21 +2099,19 @@ function ownerSub(){ return S.ent && S.ent.sub && S.ent.sub > Date.now(); }
 function simulateOffline(realMs){
   const sub = ownerSub();
   const capped = Math.min(realMs, (sub?24:12)*3600*1000);
-  const steps = Math.ceil(capped / 60000);
+  const steps = Math.floor(capped / 60000);
   const eff = sub ? 0.8 : 0.6;
   const before = S.money, guests0 = S.c.guests; let expired = 0;
   HOOK.quiet = true;
   for(let i=0;i<steps;i++){
-    const stepMs = Math.min(60000, capped - i*60000), seconds = stepMs/1000;
-    const gmins = stepMs / REAL_PER_GMIN;
+    const gmins = 60000 / REAL_PER_GMIN;
     gAcc += gmins; const whole = Math.floor(gAcc); gAcc -= whole; advanceGameMinutes(whole);
     if(S.isOpen && S.closedUntil <= absNow()){
-      for(const r of S.rooms){ const st = stats(r.id); let n = Math.min(st.lambda + st.lambdaD, st.through) * seconds * eff; let k = Math.floor(n) + (chance(n%1)?1:0);
-        const over = Math.max(0, (st.lambda + st.lambdaD) - st.through) * seconds * eff; if(over > 0){ S.c.angry += Math.round(over*0.6); repAdd(-0.0008*over); }
+      for(const r of S.rooms){ const st = stats(r.id); let n = Math.min(st.lambda + st.lambdaD, st.through) * 60 * eff; let k = Math.floor(n) + (chance(n%1)?1:0);
+        const over = Math.max(0, (st.lambda + st.lambdaD) - st.through) * 60 * eff; if(over > 0){ S.c.angry += Math.round(over*0.6); repAdd(-0.0008*over); }
         const dshare = st.lambdaD / Math.max(1e-6, st.lambda + st.lambdaD);
         for(let j=0;j<k;j++){ const res = sellOne(r.id, {delivery: chance(dshare)}); if(res.fail){ S.c.angry++; break; } } }
     }
-    equipmentTick(seconds);
     // нерешённые события решаются сами
     for(const inc of S.incidents.slice()) if(Date.now() - inc.at > 20*60000){ expireIncident(inc); expired++; }
   }
@@ -2184,9 +2133,9 @@ function rushTick(){
     else if(lost > Math.max(2, served*0.25)){ repAdd(-0.04); HOOK.toast('Запару не вытянули: ушли '+lost+' гостей'); HOOK.sfx('bad'); }
     S.rush = null; HOOK.struct();
   }
-  if(!S.rush && S.isOpen && S.closedUntil <= absNow() && rushEligible() && chance(0.12)){
+  if(!S.rush && S.isOpen && S.closedUntil <= absNow() && chance(0.35)){
     const hh = S.gm/60, night = hh >= 23 || hh < 6;
-    S.rush = {until:absNow()+RI(10,20), mul:R(1.4,1.9), why:pick(night ? NIGHT_WHY : RUSH_WHY), angry0:S.c.angry, g0:S.c.guests, burst:true};
+    S.rush = {until:absNow()+RI(10,20), mul:(night ? R(2.2,3) : R(2.5,3.5)) * (1 + 0.025*S.level), why:pick(night ? NIGHT_WHY : RUSH_WHY), angry0:S.c.angry, g0:S.c.guests, burst:true};
     HOOK.toast('Запара! '+S.rush.why); HOOK.sfx('alert'); HOOK.struct();
   }
 }
@@ -2229,8 +2178,17 @@ const REPLIES = [
   {id:'rude', t:'Ответить в стиле «сам дурак»'},
   {id:'joke', t:'Отшутиться'}
 ];
-// Отзывы создаются после реальных посещений, см. reviewTick ниже.
-
+function reviewTick(){
+  if(!S.isOpen || !chance(1/16)) return;
+  let stars = Math.round(S.rep + R(-1.4, 1.2));
+  const today = S.fin.today; if(S.c.angry - (S.c._angryDay||0) > 6) stars--; if(S.meters.chaos > 55) stars--; if(S.rush) stars--;
+  stars = clamp(stars, 1, 5);
+  S.reviews = S.reviews || [];
+  S.reviews.unshift({id:S.uid++, day:S.day, stars, author:pick(REV_AUTH), text:pick(REV_TXT[stars]), reply:null});
+  S.reviews = S.reviews.slice(0, 25);
+  repAdd((stars - 3) * 0.02);
+  if(stars <= 2) HOOK.toast('Новый отзыв на картах: '+stars+' из 5'); HOOK.struct();
+}
 function replyReview(id, rid){
   const rv = (S.reviews||[]).find(x=>x.id===id); if(!rv || rv.reply) return null;
   const bad = rv.stars <= 2, good = rv.stars >= 4; let out = '', chips = [];
@@ -2238,7 +2196,7 @@ function replyReview(id, rid){
   else if(rid==='sorry'){ spend(400,'other'); if(bad){ if(chance(0.6)){ rv.stars = 4; repAdd(0.08); out = 'Автор пришёл, выпил кофе и исправил отзыв на 4 звезды.'; } else { repAdd(0.02); out = 'Автор пришёл, выпил бесплатный кофе и ничего не исправил.'; } } else { repAdd(0.02); out = 'Автор удивился, за что извиняются, но кофе выпил.'; } meter('soul',1); }
   else if(rid==='rude'){ meter('pathos',2); meter('chaos',1); repAdd(-0.04); if(chance(0.35)){ addMod('traffic', 1.15, 5, 'Скандал в отзывах: гостей +15%'); out = 'Скриншот разлетелся по чатам района. Пришли посмотреть на хамов.'; } else out = 'Автор нажаловался в поддержку карт. Поддержка молчит.'; }
   else if(rid==='joke'){ meter('soul',1); if(chance(0.5)){ repAdd(0.04); out = 'Ответ собрал больше лайков, чем отзыв.'; } else { repAdd(-0.01); out = 'Шутку не поняли. Объяснять не стали.'; } }
-  rv.reply = rid; syncReviewRating(); taskProg('reviews', 1); HOOK.struct();
+  rv.reply = rid; taskProg('reviews', 1); HOOK.struct();
   return out;
 }
 function unansweredBad(){ return (S.reviews||[]).filter(r=>!r.reply && r.stars<=3).length; }
@@ -2278,24 +2236,23 @@ const LEVELS = {
   2:['Латте в меню', 'Можно поднять улучшения до 5 уровня'],
   3:['Второй бариста', 'Доставка через агрегатор'],
   4:['Раф в меню', 'Четвёртый кандидат в списке'],
-  5:['Второй кассир', 'Карта лояльности', 'Поставщик «Премиум»', 'Реклама у блогера'],
-  6:['Третий бариста', 'Кухня: разогрев', 'Обучение сотрудников дешевле на 20%'],
-  7:['Фильтр-кофе', 'Легенды среди кандидатов чаще'],
-  8:['Второй зал', 'Второй официант', 'Реклама на радио'],
-  9:['Четвёртый бариста'],
-  10:['Третий кассир', 'Кухня: горячий цех и повар', 'Банка для чаевых побольше'],
+  5:['Карта лояльности', 'Поставщик «Премиум»', 'Реклама у блогера'],
+  6:['Кухня: разогрев', 'Обучение сотрудников дешевле на 20%'],
+  7:['Фильтр-кофе', 'Второй кассир', 'Легенды среди кандидатов чаще'],
+  8:['Второй зал', 'Второй официант и мойщица', 'Реклама на радио'],
+  9:['Третий бариста'],
+  10:['Кухня: горячий цех и повар', 'Банка для чаевых побольше'],
   11:['Матча в меню'],
-  12:['Путь кофейни закрепляется', 'Пятый бариста', 'Вторая мойщица'],
-  14:['Склад +25%', 'Второй повар при готовой кухне'],
-  15:['Четвёртый кассир'],
+  12:['Путь кофейни закрепляется', 'Четвёртый бариста'],
+  14:['Склад +25%', 'Третий кассир'],
   16:['Кухня: полная, с бизнес-ланчами', 'Веранда'],
   18:['Свой поставщик зерна: закупки −5%'],
   20:['Табличка «Лучшая кофейня района»'],
   26:['Лаунж']
 };
-function levelPerks(L){ return (LEVELS[L] || []).concat(['Улучшения до '+Math.min(MAXL, 3+L)+' уровня', 'Новые возможности для развития кофейни']); }
+function levelPerks(L){ return (LEVELS[L] || []).concat(['Улучшения до '+Math.min(MAXL, 3+L)+' уровня', 'Гостей +1% за известность']); }
 function onLevel(L){
-  const bonus = Math.min(10000, 500 * L); income(bonus);
+  const bonus = 5000 * L; income(bonus);
   HOOK.modal({kind:'level', lvl:L, perks:levelPerks(L), bonus});
 }
 
@@ -2685,7 +2642,7 @@ function goldenCheck(f){
   const ok = (f.guests||0) >= 40 && angry <= 2 && dirt < 0.2 && tasks;
   if(!ok){ if((S.goldStreak||0) > 0 && !HOOK.quiet) HOOK.toast('Золотая серия прервалась'); S.goldStreak = 0; return; }
   S.goldStreak = (S.goldStreak||0) + 1; S.c.golden = (S.c.golden||0) + 1;
-  const bonus = Math.round((f.rev||0)*0.05/100)*100; income(bonus); repAdd(0.1);
+  const bonus = Math.round((f.rev||0)*0.2/100)*100; income(bonus); repAdd(0.1);
   if(S.goldStreak >= 3){ S.goldStreak = 0; S.c.weekStars = (S.c.weekStars||0) + 1; addMod('traffic', 1.3, 48, 'Кофейня недели района: гостей +30%'); if(HOOK.star) HOOK.star();
     HOOK.modal({kind:'note', title:'Кофейня недели района', text:'Три золотые смены подряд. Район говорит только о вас: двое суток гостей на 30% больше, а в канале игры выйдет пост с вашим названием.', chips:[['+'+fmtR(bonus), true]]}); }
   else HOOK.modal({kind:'note', title:'Золотая смена', text:'Ни одного скандала, чистый зал, все задания сделаны. Премия от района и рейтинг вверх. Подряд: '+S.goldStreak+' из 3.', chips:[['+'+fmtR(bonus), true], ['Рейтинг +0,1', true]]});
@@ -2771,7 +2728,7 @@ function replyReview3(id, rid){
   if(rid==='fun'){ meter('soul', 1); if(chance(bad ? 0.45 : 0.6)){ repAdd(0.04); if(bad && chance(0.5)){ rv.stars = Math.min(5, rv.stars + 1); out = 'Автор посмеялся и добавил звезду'; } else out = 'Ответ собрал лайков больше, чем отзыв'; rv.after = pick(['Автор: «Ладно, это смешно»','Автор поставил лайк','Под ответом 40 лайков']); } else { repAdd(-0.02); out = 'Юмор не оценили'; rv.after = 'Автор: «Очень смешно. Нет»'; } }
   else if(rid==='thanks'){ repAdd(bad ? 0.03 : 0.02); meter('soul', 1); if(bad){ spend(400, 'other', 'Кофе за наш счёт автору отзыва'); if(chance(0.55)){ rv.stars = 4; out = 'Автор пришёл на кофе и исправил отзыв на 4 звезды'; rv.after = 'Автор: «Исправился. Кофе был норм»'; } else { out = 'Кофе выпил, отзыв не исправил'; rv.after = 'Автор: «Кофе спасибо, отзыв оставлю»'; } } else { out = 'Автору приятно'; rv.after = 'Автор: «Вам спасибо!»'; } }
   else { repAdd(0.01); out = 'Ответ засчитан. Скучно, но надёжно'; }
-  syncReviewRating(); taskProg('reviews', 1); HOOK.struct(); return out;
+  taskProg('reviews', 1); HOOK.struct(); return out;
 }
 
 /* ---------- 40 абсурдных сцен: свои варианты, последствия — из твистов ---------- */
@@ -2846,8 +2803,6 @@ DUMB_LINES.push('А что вкусного? А из невкусного что
    касса утром + поступления − расходы = касса сейчас. */
 const IN_N = {sales:'Продажи', tips:'Чаевые', tasks:'Задания и бонусы', events:'События', level:'Бонус за уровень', stafffine:'Штрафы с персонала', refunds:'Возвраты', sublet:'Субаренда', cashover:'Излишек в кассе', ref:'Агентское вознаграждение', admin:'Поступления от администрации', donate:'Переводы от инвестора', promo:'Гранты и промокоды', pass:'Пропуск сезона', season:'Награды сезона', friends:'Подарки друзей', misc:'Прочие поступления'};
 const OUT_N = {supply:'Закупки', wages:'Зарплаты', rent:'Аренда', util:'Коммуналка', tax:'Налог УСН 5%', repairs:'Ремонт и ТО', fines:'Штрафы', invest:'Улучшения, найм, залы', decor:'Интерьер и траты', cashdiff:'Недостача кассы', promoback:'Отзыв вложений', other:'Прочие расходы'};
-IN_N.capitalback = 'Возврат вложений';
-IN_N.transfer = 'Продажа сотрудников';
 let MONEY_CTX = null, INCOME_DEF = null, SALE_NEXT = false;
 function ledgerOf(f){ if(!f.L) f.L = {in:{}, out:{}, inW:{}, outW:{}}; return f.L; }
 function ledgerNote(d){
@@ -2891,11 +2846,12 @@ blankFin = function(){ const f = _blankFin14(); f.L = {in:{}, out:{}, inW:{}, ou
 function finIn(f){ return sumObj((f.L||{}).in); }
 function finOut(f){ return sumObj((f.L||{}).out); }
 // прибыль для турнира и отчёта: только работа кофейни, без переводов, промокодов и вложений
-const NON_OP_IN = ['ref','admin','donate','promo','pass','season','friends','misc','capitalback','transfer','level','tasks','events','cashover'];
+const NON_OP_IN = ['ref','admin','donate','promo','pass','season','friends','misc'];
 function opProfit(f){ const L = f.L || {in:{}, out:{}}; let p = 0; for(const k in L.in) if(!NON_OP_IN.includes(k)) p += L.in[k]; for(const k in L.out) if(k!=='invest' && k!=='decor' && k!=='promoback') p -= L.out[k]; return p; }
 
 /* ---------- баланс ---------- */
-// Единая кривая опыта объявлена в cafeXpNeed.
+const _xpNeed14 = xpNeed;
+xpNeed = function(){ const L = S.level; return Math.round(_xpNeed14() * (L > 8 ? 1 + 0.12*(L-8) : 1)); };
 ROOMS[1].need = {t:'Уровень 8 и рейтинг 3,5', f:S=>S.level>=8 && S.rep>=3.5};
 
 /* ---------- посуда: чашки кончаются, если всё на мойке ---------- */
@@ -3115,16 +3071,7 @@ function szArchive(z){ S.szHist = (S.szHist||[]).concat([{id:z.id, sp:z.sp, tier
 function szTier(z){ z = z || S.sz; return z ? Math.min(SZ_TIERS, Math.floor(z.sp / SZ_TIER)) : 0; }
 function szAdd(v, why){ if(!S) return; const z = szState(); const t0 = szTier(z); z.sp += v; const t1 = szTier(z); if(t1 > t0){ HOOK.toast('Сезон: ступень '+t1+'. Забери награду во вкладке «Сезон»'); HOOK.sfx('level'); HOOK.struct(); } }
 function passOwned(id){ id = id || sezId(); return ((S.ent && S.ent.passes) || []).some(p=>p.season===id); }
-function dayBase(){
-  const history=(S.fin.hist||[]).slice(0,7);
-  if(sezInfo().id<='2026-11'){
-    const avg=history.length?history.reduce((a,f)=>a+(f.rev||0),0)/history.length:0;
-    return Math.max(50000,Math.round(avg*0.3/1000)*1000);
-  }
-  const avg=history.length?history.reduce((a,f)=>a+Math.max(0,opProfit(f)),0)/history.length:5000;
-  return clamp(Math.round(avg/1000)*1000,5000,25000);
-}
-
+function dayBase(){ const h = (S.fin.hist||[]).slice(0,7).map(f=>f.rev||0); const avg = h.length ? h.reduce((a,b)=>a+b,0)/h.length : 0; return Math.max(50000, Math.round(avg*0.3/1000)*1000); }
 function szReward(track, n){ // n: 1..30
   const info = sezInfo();
   if(track==='p'){
@@ -3148,7 +3095,7 @@ function szClaim(track, n, silent){
   if(z.claimed[track].includes(n)) return 'Уже забрано';
   const rw = szReward(track, n); z.claimed[track].push(n); const info = sezInfo();
   if(rw.k==='money') income(rw.v, track==='p' ? 'pass' : 'season', track==='p' ? 'Пропуск сезона: '+rw.t.toLowerCase() : 'Сезон: '+rw.t.toLowerCase());
-  else if(rw.k==='xp') addXp(rw.v, 'reward');
+  else if(rw.k==='xp') addXp(rw.v);
   else if(rw.k==='mod') addMod('traffic', n===20 ? 1.2 : 1.15, 24, rw.t+': гостей +'+(n===20?20:15)+'%');
   else if(rw.k==='staff'){ const st = makePrizeStaff(rw.v); if(typeof syncScene==='function') syncScene('main'); if(!silent) HOOK.toast(st.name+' вышел'+he(st,'','а')+' на смену'); }
   else if(rw.k==='item') addDecor(info.item);
@@ -3164,7 +3111,6 @@ function szClaim(track, n, silent){
 function szClaimAll(track){ const z = szState(); let n = 0; for(let i=1;i<=szTier(z);i++){ if(!z.claimed[track].includes(i) && !szClaim(track, i, true)) n++; } return n; }
 function szLegend(info){
   const s = makeStaff('Бариста', {quirk:'none', sex:info.leg.sex}); s.name = info.leg.name; s.prize = true; s.szLeg = info.id; s.lvl = 24; s.rank = 2; s.shifts = 150; s.mood = 95; hire(s, 'main', 'white');
-  rememberSeasonStaff(s, 'legend:'+info.id);
   if(typeof syncScene==='function') syncScene('main');
   S.pending.push({at:absNow()+DAY_MIN, ev:'szleg_1', data:{sid:s.id}}, {at:absNow()+3*DAY_MIN, ev:'szleg_2', data:{sid:s.id}}, {at:absNow()+6*DAY_MIN, ev:'szleg_3', data:{sid:s.id}});
 }
@@ -3190,7 +3136,7 @@ dessertP = function(L){ const p = _dessertP14(L); if(!p) return p; return Math.m
 const _itemPrice14 = itemPrice;
 itemPrice = function(m, roomId){ let p = _itemPrice14(m, roomId); if(S.staff.some(s=>s.szLeg && s.room===roomId && s.today==='work')) p = Math.round(p*1.08/10)*10; return p; };
 const _staffSpeed14 = staffSpeed;
-staffSpeed = function(s){ let f = _staffSpeed14(s); if(s.role==='Бариста'){ if(S.goldMachine) f *= 1.03; if(S.szPet) f *= 1.03; } if(hasDecor('vinyl')) f *= 1.02; return f; };
+staffSpeed = function(s){ let f = _staffSpeed14(s); if(s.role==='Бариста'){ if(S.goldMachine) f *= 1.03; if(S.szPet && passOwned()) f *= 1.03; } if(hasDecor('vinyl')) f *= 1.02; return f; };
 function passDaily(){ if(passOwned()) income(Math.round(dayBase()*0.07/100)*100, 'pass', 'Дивиденды инвестора по пропуску сезона'); }
 
 /* ---------- продажи: касса, залы, очки сезона ---------- */
@@ -3212,11 +3158,10 @@ closeDay = function(){
   passDaily();
   successPrice(f);
   tensionDecay();
-  const z = szState();
+  const z = szState(); z.profit = (z.profit||0) + opProfit(f);
   if((f.guests||0) > 20 && (S.c.angry - (S.c._angryDay||0)) <= 0) szAdd(15, 'clean');
   if(S.tasks && S.tasks.every(t=>t.done)) szAdd(20, 'tasks');
   INCOME_DEF = 'tasks'; try{ _closeDay14(); } finally { INCOME_DEF = null; }
-  z.profit = (z.profit||0) + opProfit(f);
   if(S.fin.today.open == null) S.fin.today.open = S.money;
 };
 const _midnight14 = midnight;
@@ -3257,7 +3202,7 @@ function promoApply(rw, code){
   else if(rw.kind==='days'){ const v = cashPackV(rw.amount); income(v, 'promo', legend); rw.amount = v; msg = legend+': +'+fmtR(v); }
   else if(rw.kind==='legend'){ const st = makePrizeStaff(Math.max(5, Math.min(50, rw.amount||20))); st.promo = code; if(typeof syncScene==='function') syncScene('main'); msg = st.name+' выходит на смену по промокоду'; }
   else if(rw.kind==='boost'){ S.promoBoost = {code, mul:1 + (rw.amount||20)/100, until:rw.ends_at || Date.now()+3*86400000}; msg = 'Гостей +'+(rw.amount||20)+'% до '+new Date(S.promoBoost.until).toLocaleDateString('ru-RU'); }
-  else if(rw.kind==='xp'){ addXp(rw.amount||500, 'reward'); msg = 'Опыт +'+(rw.amount||500); }
+  else if(rw.kind==='xp'){ addXp(rw.amount||500); msg = 'Опыт +'+(rw.amount||500); }
   else if(rw.kind==='style'){ S.promoStyles = S.promoStyles || {}; S.promoStyles[rw.style] = rw.ends_at || Date.now()+7*86400000; msg = 'Интерьер открыт до '+new Date(S.promoStyles[rw.style]).toLocaleDateString('ru-RU'); }
   S.promos[code] = {kind:rw.kind, amount:rw.amount, at:Date.now(), ends:rw.ends_at||null};
   HOOK.struct(); return msg;
@@ -3282,10 +3227,13 @@ let REP_OFF = false, REP_CAUSE = null;
 const REP_N = {angry:'Злые гости', slip:'Падения на мокром полу', reviews:'Отзывы', events:'События', rush:'Запары', rivals:'Конкуренты', decor:'Интерьер и траты', staff:'Команда', other:'Другое'};
 function repAdd(v){
   if(!v || !S) return;
-  // События влияют на следующее впечатление от обслуживания, не рисуют звёзды.
-  S.serviceBias = clamp((Number(S.serviceBias)||0)+v,-0.4,0.4);
+  if(v < 0 && REP_OFF) return;                 // пока игрока нет, рейтинг не падает
+  if(v < 0 && S.rep < 2) v *= 0.5;             // дно: ниже 2,0 падает вдвое медленнее
+  if(v < 0 && S.rep < 1.5) v *= 0.6;
+  S.rep = clamp(S.rep + v, 1, 5);
+  const c = REP_CAUSE || INCOME_DEF_REP() || 'other';
+  const f = S.fin && S.fin.today; if(f){ f.repLog = f.repLog || {}; f.repLog[c] = (f.repLog[c]||0) + v; }
 }
-
 function INCOME_DEF_REP(){ return INCOME_DEF==='events' ? 'events' : INCOME_DEF==='tasks' ? 'rush' : null; }
 function withRep(cause, fn){ return function(){ const prev = REP_CAUSE; REP_CAUSE = cause; try{ return fn.apply(this, arguments); } finally { REP_CAUSE = prev; } }; }
 simulateOffline = (function(fn){ return function(){ const prev = REP_OFF; REP_OFF = true; try{ return fn.apply(this, arguments); } finally { REP_OFF = prev; } }; })(simulateOffline);
@@ -3294,24 +3242,18 @@ spendAction = withRep('decor', spendAction);
 decorDaily = withRep('decor', decorDaily);
 // отзыв зависит от того, как обслужили сегодня, а не только от старого рейтинга
 function reviewTick(){
-  if(!S.isOpen) return;
-  const f=S.fin.today, fresh=Math.max(0,(f.guests||0)-(f.reviewedGuests||0));
-  f.reviewedGuests=f.guests||0;
-  if(!fresh || (f.reviewCount||0)>=6) return;
-  const angry=Math.max(0,S.c.angry-(S.c._angryDay||0));
-  const rate=angry/Math.max(1,(f.guests||0)+angry);
-  const q=4.2-rate*5-dirtLevel('main')*1.2+(Number(S.serviceBias)||0)+Math.min(0.3,room('main').upg.machine*0.025);
-  for(let i=0;i<fresh && (f.reviewCount||0)<6;i++){
-    if(!chance(0.06)) continue;
-    const stars=clamp(Math.round(q+R(-0.8,0.8)),1,5);
-    const rv={id:S.uid++,day:S.day,stars,author:pick(REV_AUTH),text:pick(REV_TXT[stars]),reply:null};
-    S.reviews=S.reviews||[]; S.reviews.unshift(rv); syncReviewRating(); S.reviews=S.reviews.slice(0,25);
-    f.reviewCount=(f.reviewCount||0)+1;
-    if(stars<=2) HOOK.toast('Новый отзыв на картах: '+stars+' из 5');
-  }
-  HOOK.struct();
+  if(!S.isOpen || !chance(1/16)) return;
+  const f = S.fin.today, guests = Math.max(12, f.guests||0), angry = Math.max(0, S.c.angry - (S.c._angryDay||0));
+  const angryRate = angry / (guests + angry);
+  let q = 4.4 - angryRate*6 - dirtLevel('main')*1.4 - (S.rush && S.rush.until > absNow() ? 0.15 : 0) - (S.meters.chaos > 60 ? 0.4 : 0) + 0.04*(room('main').upg.decor||0) + 0.03*(room('main').upg.menu||0);
+  q = q*0.75 + S.rep*0.25;
+  const stars = clamp(Math.round(q + R(-0.9, 0.9)), 1, 5);
+  S.reviews = S.reviews || [];
+  S.reviews.unshift({id:S.uid++, day:S.day, stars, author:pick(REV_AUTH), text:pick(REV_TXT[stars]), reply:null});
+  S.reviews = S.reviews.slice(0, 25);
+  REP_CAUSE = 'reviews'; repAdd((stars - 3) * 0.02); REP_CAUSE = null;
+  if(stars <= 2) HOOK.toast('Новый отзыв на картах: '+stars+' из 5'); HOOK.struct();
 }
-
 const _closeDayR = closeDay;
 closeDay = function(){ const prev = REP_CAUSE; REP_CAUSE = 'reviews'; try{ return _closeDayR.apply(this, arguments); } finally { REP_CAUSE = prev; } };
 // подсказки в улучшениях
@@ -3336,9 +3278,9 @@ function rushTick16(){
     else if(served >= 3 || angry > 0){ REP_CAUSE = 'rush'; repAdd(-0.02); REP_CAUSE = null; HOOK.toast('Запару не вытянули: обслужили '+served+', ушли злыми '+angry+(walk?', не дождались '+walk:'')); HOOK.sfx('bad'); }
     S.rush = null; HOOK.struct();
   }
-  if(!S.rush && S.isOpen && S.closedUntil <= absNow() && rushEligible() && chance(0.12)){
+  if(!S.rush && S.isOpen && S.closedUntil <= absNow() && chance(0.35)){
     const hh = S.gm/60, night = hh >= 23 || hh < 6;
-    S.rush = {until:absNow()+RI(10,20), mul:R(1.4,1.9), why:pick(night ? NIGHT_WHY : RUSH_WHY), angry0:S.c.angry, g0:S.c.guests, walk:0, burst:true};
+    S.rush = {until:absNow()+RI(10,20), mul:(night ? R(2.2,3) : R(2.5,3.5)) * (1 + 0.025*S.level), why:pick(night ? NIGHT_WHY : RUSH_WHY), angry0:S.c.angry, g0:S.c.guests, walk:0, burst:true};
     HOOK.toast('Запара! '+S.rush.why); HOOK.sfx('alert'); HOOK.struct();
   }
 }
@@ -3374,9 +3316,9 @@ function invUse(uid){
   const i = (S.inv||[]).findIndex(x=>x.uid===uid); if(i < 0) return 'Нет такого';
   const it = S.inv[i];
   if(it.k==='money') income(it.v, it.track==='p' ? 'pass' : 'season', it.track==='p' ? 'Пропуск сезона: '+it.t.toLowerCase() : 'Сезон: '+it.t.toLowerCase());
-  else if(it.k==='xp') addXp(it.v, 'reward');
+  else if(it.k==='xp') addXp(it.v);
   else if(it.k==='mod') addMod('traffic', it.boost || 1.15, 24, it.t+': гостей +'+Math.round(((it.boost||1.15)-1)*100)+'%');
-  else if(it.k==='staff'){ const st = makePrizeStaff(it.v || 12); if(it.sz) rememberSeasonStaff(st, 'staff:'+it.sz+':'+it.track+':'+it.n); if(typeof syncScene==='function') syncScene('main'); HOOK.toast(st.name+' вышел'+he(st,'','а')+' на смену'); }
+  else if(it.k==='staff'){ const st = makePrizeStaff(it.v || 12); if(typeof syncScene==='function') syncScene('main'); HOOK.toast(st.name+' вышел'+he(st,'','а')+' на смену'); }
   else if(it.k==='item'){ addDecor(it.item); }
   S.inv.splice(i, 1); HOOK.sfx('level'); HOOK.struct(); return null;
 }
@@ -3436,7 +3378,7 @@ function szApplyUnlock(rw, info, silent){
   else if(rw.k==='pet') S.szPet = true;
   else if(rw.k==='legend'){ if(!S.staff.some(s=>s.szLeg===info.id)) szLegend(info); }
   else if(rw.k==='drink') S.szDrink = info.id;
-  else if(rw.k==='goldm'){ S.goldMachine = true; S.seasonRewardAssets = S.seasonRewardAssets || {}; S.seasonRewardAssets.goldMachine = true; }
+  else if(rw.k==='goldm') S.goldMachine = true;
   else if(rw.k==='neon') S.neonSign = info.id;
   else if(rw.k==='courier') S.szCourier = info.id;
   else if(rw.k==='badge'){ S.szBadge = info.id; badgeAdd('owner_'+info.id, 'Владелец сезона «'+info.n+'»', 'Значок пропуска сезона'); }
@@ -3458,7 +3400,6 @@ const _invUse16 = invUse;
 invUse = function(uid){
   const i = (S.inv||[]).findIndex(x=>x.uid===uid); if(i < 0) return 'Нет такого';
   const it = S.inv[i];
-  if(it.rewardKey) return useSeasonStaffReward(it);
   if(it.k==='supply'){ S.stock.hoz = (stockQty('hoz')||0) + 20; if(!Array.isArray(S.stock.milk)) S.stock.milk = []; S.stock.milk.push({q:Math.round(stockCap('milk')*0.8), exp:S.day + STOCK.milk.perish + 2}); S.inv.splice(i, 1); HOOK.sfx('buy'); HOOK.struct(); return null; }
   if(it.k==='mod' && it.modk){ addMod(it.modk, it.boost || 1.1, 24, it.t+': чек +'+Math.round(((it.boost||1.1)-1)*100)+'%'); S.inv.splice(i, 1); HOOK.sfx('level'); HOOK.struct(); return null; }
   return _invUse16(uid);
@@ -3663,7 +3604,7 @@ function goldenCheck(f){
   const ok = (f.guests||0) >= 40 && angry <= 2 && dirt < 0.35 && tasks;
   if(!ok){ if((S.goldStreak||0) > 0 && !HOOK.quiet) HOOK.toast('Золотая серия прервалась'); S.goldStreak = 0; return; }
   S.goldStreak = (S.goldStreak||0) + 1; S.c.golden = (S.c.golden||0) + 1;
-  const bonus = Math.round((f.rev||0)*0.05/100)*100; income(bonus, 'tasks', 'Премия за золотую смену'); REP_CAUSE = 'events'; repAdd(0.1); REP_CAUSE = null;
+  const bonus = Math.round((f.rev||0)*0.2/100)*100; income(bonus, 'tasks', 'Премия за золотую смену'); REP_CAUSE = 'events'; repAdd(0.1); REP_CAUSE = null;
   if(S.goldStreak >= 3){ S.goldStreak = 0; S.c.weekStars = (S.c.weekStars||0) + 1; addMod('traffic', 1.3, 48, 'Кофейня недели района: гостей +30%'); if(HOOK.star) HOOK.star();
     HOOK.modal({kind:'note', title:'Кофейня недели района', text:'Три золотые смены подряд. Район говорит только о вас: двое суток гостей на 30% больше, а в канале игры выйдет пост с вашим названием.', chips:[['+'+fmtR(bonus), true]]}); }
   else HOOK.modal({kind:'note', title:'Золотая смена', text:'Не больше двух злых гостей, бардак ни разу не выше 35%, все задания сделаны. Премия от района и рейтинг вверх. Подряд: '+S.goldStreak+' из 3.', chips:[['+'+fmtR(bonus), true]]});
@@ -3671,18 +3612,10 @@ function goldenCheck(f){
 goldenCheck = withIncome('tasks', goldenCheck);
 
 /* ---------- продажа сети: сезонное и купленное переезжает с владельцем ---------- */
-const CARRY_KEYS = ['sz','szHist','inv','badgeList','badgeOn','badges','szStyles','szPet','szDrink','szBadge','neonSign','szCourier','passSeen','promos','promoStyles','interior','ent','remind','ref','goalCups','goalMs','goalPrize','verSeen','seasonRewardAssets','seasonStaffRewards','marketVersion'];
+const CARRY_KEYS = ['sz','szHist','inv','badgeList','badgeOn','badges','szStyles','szPet','szDrink','szBadge','goldMachine','neonSign','szCourier','vip','passSeen','promos','promoStyles','interior','ent','remind','ref','spends','goalCups','goalMs','goalPrize','verSeen'];
 const _sellFr18 = sellFranchise;
-sellFranchise = function(cityId, receipt){
-  collectSeasonRewards();
-  const oldUid = S.uid, oldLook={signFrame:S.c.signFrame,frameGift:S.c.frameGift}, keep = {}; CARRY_KEYS.forEach(k=>{ if(S[k] !== undefined) keep[k] = JSON.parse(JSON.stringify(S[k])); });
-  const decor = (S.decor && S.decor.items || []).filter(x=>{ const d = decorDef(x.id); return d && d.season; });
-  const sh = _sellFr18(cityId, receipt); if(!sh) return sh;
-  Object.assign(S, keep); for(const k of Object.keys(oldLook)) if(oldLook[k]!==undefined) S.c[k]=JSON.parse(JSON.stringify(oldLook[k])); S.decor = {items:JSON.parse(JSON.stringify(decor))}; S.owned = []; S.spends = {};
-  S.goldMachine = !!(S.seasonRewardAssets && S.seasonRewardAssets.goldMachine);
-  S.uid = Math.max(S.uid, oldUid, ...(S.inv||[]).map(it=>(Number(it.uid)||0)+1));
-  restoreSeasonRewardTickets(); return sh;
-};
+sellFranchise = function(cityId){ const keep = {}; CARRY_KEYS.forEach(k=>{ if(S[k] !== undefined) keep[k] = S[k]; }); const decor = (S.decor && S.decor.items || []).filter(x=>{ const d = decorDef(x.id); return d && d.season; });
+  const sh = _sellFr18(cityId); if(!sh) return sh; Object.assign(S, keep); S.decor = {items:decor}; if(S.spends){ delete S.spends.buyout; } S.owned = []; return sh; };
 
 /* ---------- миллион стаканов: общая цель района ---------- */
 const GOAL = {target:1000000, until:Date.parse('2026-12-01T00:00:00+03:00'), ms:[250000, 500000, 750000]};
@@ -5373,9 +5306,9 @@ function spawnStander(id){
   r.crowd.push({spr:p.spr, h:(p.kid ? SPR_KID : SPR_H-4), x:DOOR[0], y:DOOR[1]+R(-6,6), tx, ty, state:'in', wait:0, t:Math.random()*10, flip:false, walk:true});
 }
 function messTick(id, r, dt){
-  r.mess = r.mess || []; r.messT = (r.messT==null ? R(25,50) : r.messT) - dt*Math.min(1,r.guests.length/3);
+  r.mess = r.mess || []; r.messT = (r.messT==null ? R(25,50) : r.messT) - dt;
   if(r.messT <= 0){ r.messT = R(30, 70) / (1 + r.guests.length/12) * (1 + 0.1*room(id).upg.clean); if(r.mess.length < 5){ const t = pick(TABLES) || {x:120, y:300}; const onTable = chance(0.4) && TABLES.length; r.mess.push({kind: onTable ? 'cups' : pick(['spill','crumbs','shards']), x: onTable ? t.x+R(-8,8) : R(20, 236), y: onTable ? t.y-4 : R(244, H-12), t:0}); } }
-  if(r.mess.length >= 3) meter('chaos', 0.001*dt*r.mess.length);
+  if(r.mess.length >= 3) meter('chaos', 0.02*dt*r.mess.length);
 }
 function resizeCanvas(){ const box = cv.parentElement; const w = (box && box.clientWidth) || cv.clientWidth || 340; const hh = (box && box.clientHeight) || w*1.6; const dpr = Math.min((typeof LOWFX!=='undefined' && LOWFX) ? 1.25 : 2, window.devicePixelRatio||1);
   const css = Math.max(w/W, hh/560); const nh = clamp(Math.round(hh/css), 340, 560); if(nh !== H){ H = nh; layoutSlots(); }
@@ -5397,7 +5330,7 @@ function leaveMess(id, g){ const r = rt(id); r.dirty = r.dirty || {}; if(g.seat=
 function cleanDirty(id, key){ const r = rt(id); const n = (r.dirty||{})[key]||0; if(!n) return 0; delete r.dirty[key]; S.dishes = S.dishes || {}; const to = id==='hall2' ? 'main' : id; S.dishes[to] = (S.dishes[to]||0) + n; return n; }
 function updateDirt(id, r){
   const dt = Object.keys(r.dirty||{}).length, d = dishCount(id), m = (r.mess||[]).length;
-  S.dirtL = S.dirtL || {}; if(S.isOpen) S.dirtMaxDay = Math.max(S.dirtMaxDay||0, S.dirtL[id]||0); S.dirtL[id] = clamp((m*0.07 + d*0.013 + dt*0.06) * (S.level <= 2 ? 0.7 : 1), 0, 1);
+  S.dirtL = S.dirtL || {}; if(S.isOpen) S.dirtMaxDay = Math.max(S.dirtMaxDay||0, S.dirtL[id]||0); S.dirtL[id] = clamp((m*0.07 + d*0.013 + dt*0.06 + Math.max(0, S.meters.chaos-40)*0.004) * (S.level <= 2 ? 0.7 : 1), 0, 1);
 }
 
 /* ---------- автоматика уборки по уровню улучшения ---------- */
@@ -5666,11 +5599,11 @@ function spawnGuest(id, reg, company){
   if(reg){ const def = REGULARS.find(x=>x.id===reg.id); reg.spr = REG_SPR[reg.id] != null ? REG_SPR[reg.id] : (reg.spr != null ? reg.spr : pick(POOL.guest)); g = {spr:reg.spr, h:SPR_H, reg:reg.id, name:def.n}; }
   else { const p = pickGuestSprite(); g = {spr:p.spr, h:p.kid?SPR_KID:SPR_H}; markSeen('g', p.spr); }
   Object.assign(g, {x:DOOR[0], y:DOOR[1]+R(-6,6), state:'toQueue', prog:0, flip:false, t:Math.random()*10, walk:true, pet:null, wait:0,
-    patience: (90 + room(id).upg.decor*3) * dirtPatience(id) * pathPatience() * focusMul('patience') * (S.path==='soul'?1.15:1) * (workingStaff(id).some(s=>s.quirk==='talker')?1.2:1) * (workingStaff(id).some(s=>s.quirk==='bore')?0.85:1)});
+    patience: (55 + room(id).upg.decor*2.5) * dirtPatience(id) * pathPatience() * focusMul('patience') * (S.path==='soul'?1.15:1) * (workingStaff(id).some(s=>s.quirk==='talker')?1.2:1) * (workingStaff(id).some(s=>s.quirk==='bore')?0.85:1)});
   if(!reg && chance(0.12)){ const p = pickPet(); g.pet = {spr:p, h:petH(p), x:g.x+14, y:g.y+4, flip:false, t:0}; markSeen('p', p); }
   if(!reg && id==='main' && S.day >= 3 && S.shopperDay !== S.day && chance(0.01)){ g.secret = true; S.shopperDay = S.day; }
   g.gid = ++GID; if(!reg && !g.secret){ const kr = Math.random(); g.kind = g.h===SPR_KID ? 'norm' : kr < 0.22 ? 'slow' : kr < 0.37 ? 'fast' : 'norm'; if(g.kind==='slow' && chance(0.12)){ g.dumb = true; g.q = pickLine(DUMB_LINES, 'dumb'); } } else g.kind = 'norm';
-
+  if(!reg && !company && S.level >= 4 && chance(0.06) && r.queue.length < 4){ const n = RI(2,3); for(let i=0;i<n;i++) setTimeout(()=>spawnGuest(id, null, true), 300 + i*350); }
   g.orders = 0;
   r.guests.push(g); r.queue.push(g);
   if(id===S.active) sfx('door');
@@ -5692,27 +5625,21 @@ function simRoom(id, dt){
   if(open){
     if(id===S.active && S.rush && S.rush.burst && S.rush.until > absNow()){ S.rush.burst = false; rushBurst(id); }
     r.spawnT -= dt;
-    if(r.spawnT <= 0){
-      if(st.lambda>0){ const h=S.gm/60; const regular=S.regs.find(rg=>{ const def=REGULARS.find(x=>x.id===rg.id); return !rg.gone && r.regDay[rg.id]!==S.day && id==='main' && def && h>=def.hour[0] && h<def.hour[1]; });
-        if(regular && chance(0.3)){r.regDay[regular.id]=S.day;spawnGuest(id,regular);}else spawnGuest(id);
-      }
-      r.spawnT=arrivalWait(st.lambda);
-    }
+    if(r.spawnT <= 0){ if(st.lambda > 0) spawnGuest(id); r.spawnT = clamp(-Math.log(1-Math.random()) / Math.max(st.lambda, 0.002), 0.6, 90); }
     crowdTick(id, st, dt); corpTick(id, r); messTick(id, r, dt); cleanTick(id, r, dt); if(id===S.active){ waveTick(id, r, dt); rushKazus(dt); }
     // очередь на улице заходит, когда внутри освобождается место
     if(r.outside > 0 && r.queue.length < 6){ r.outside--; r.outsideWait.shift(); spawnGuest(id); }
     for(let i=r.outsideWait.length-1;i>=0;i--){ r.outsideWait[i] += dt; if(r.outsideWait[i] > 70){ r.outsideWait.splice(i,1); r.outside--; walkAway(id, 'outside'); } }
     // курьеры доставки
-    if(st.lambdaD > 0){ r.courierT -= dt; if(r.courierT <= 0){ r.courierT = arrivalWait(st.lambdaD); spawnCourier(id); } }
-    // Постоянные гости входят в тот же поток, их личность выбирается выше.
+    if(st.lambdaD > 0){ r.courierT -= dt; if(r.courierT <= 0){ r.courierT = clamp(-Math.log(1-Math.random()) / st.lambdaD, 4, 200); spawnCourier(id); } }
+    // постоянные гости
+    const h = S.gm/60;
+    for(const rg of S.regs){ if(rg.gone || r.regDay[rg.id]===S.day || id!=='main') continue; const def = REGULARS.find(x=>x.id===rg.id); if(h>=def.hour[0] && h<def.hour[1] && chance(dt/240)){ r.regDay[rg.id] = S.day; spawnGuest(id, rg); if(rg.loyal>=80 && chance(S.path==='soul'?0.7:0.45)) setTimeout(()=>spawnGuest(id), 1500); } }
   }
-  ownerHousekeeping(id,r,st,dt); updateDirt(id, r); loadTick(id, r, dt); if(id===S.active) WALK_MUL = dirtWalk(id);
+  updateDirt(id, r); loadTick(id, r, dt); if(id===S.active) WALK_MUL = dirtWalk(id);
   r.queue.forEach((g,i)=>{ g.qx = QUEUE_X + i*24; });
   const head = r.queue[0];
-  const aloneOwner=!st.staff.some(s=>!s.isYou && (s.role==='Кассир'||s.role==='Бариста')) ? st.staff.find(s=>s.isYou) : null;
-  const ownerBusy=aloneOwner && r.jobs.some(j=>j.by===aloneOwner.id && !j.ready);
-  const ownerOrdering=aloneOwner && !ownerBusy && head && head.state==='queue' && Math.hypot(head.x-QUEUE_X,head.y-QUEUE_Y)<2;
-  if(open && !ownerBusy && head && head.state==='queue' && Math.hypot(head.x-QUEUE_X, head.y-QUEUE_Y) < 2 && st.orderT < Infinity){
+  if(head && head.state==='queue' && Math.hypot(head.x-QUEUE_X, head.y-QUEUE_Y) < 2 && st.orderT < Infinity){
     head.prog += dt / (head.dumb ? DUMB_T : st.orderT * KIND_F[head.kind||'norm']);
     if(head.dumb && !head.asked && id===S.active){ head.asked = true; bubble2(0, 0, head.q, 4200, head); }
     if(head.kind==='fast' && !head.said && id===S.active && chance(0.35)){ head.said = true; bubble2(0, 0, pickLine(FAST_LINES, 'fast'), 2400, head); }
@@ -5721,12 +5648,12 @@ function simRoom(id, dt){
   }
   for(const g of r.queue){ if(g.state==='queue' || g.state==='toQueue'){ g.wait += dt; g.waitMax = Math.max(g.waitMax||0, g.wait); if(g.wait > g.patience) { guestLeaves(id, g, 'wait'); } } }
   // приготовление
-  const baristas = st.prepWorkers.filter(s=>!s.distract).sort((a,b)=>staffPrio(b)-staffPrio(a));
+  const baristas = workingStaff(id).filter(s=>s.role==='Бариста').sort((a,b)=>staffPrio(b)-staffPrio(a));
   for(const b of baristas){ const p = r.staff[b.id]; if(p) p.prog = 0; }
   const cooks = workingStaff(id).filter(s=>s.role==='Повар' && !s.distract && !(s.breakUntil > Date.now()));
   const hasCook = cooks.length > 0 && id==='main';
   for(const j of r.jobs){ if(j.by && !baristas.some(b=>b.id===j.by && !b.distract) && !cooks.some(c=>c.id===j.by)) j.by = null; }
-  for(const b of baristas){ if(b.distract || (ownerOrdering && b.isYou)) continue; if(!r.jobs.some(j=>j.by===b.id)){ const j = r.jobs.find(j=>!j.by && !j.ready && !(j.food && hasCook)); if(j){ j.by = b.id; if(!j.snd){ j.snd = 1; if(id===S.active) prepSound(j.milk); } } } }
+  for(const b of baristas){ if(b.distract) continue; if(!r.jobs.some(j=>j.by===b.id)){ const j = r.jobs.find(j=>!j.by && !j.ready && !(j.food && hasCook)); if(j){ j.by = b.id; if(!j.snd){ j.snd = 1; if(id===S.active) prepSound(j.milk); } } } }
   if(hasCook) for(const c of cooks){ if(!r.jobs.some(j=>j.by===c.id)){ const j = r.jobs.find(j=>!j.by && j.food && !j.ready); if(j){ j.by = c.id; j.cook = true; } } }
   for(const j of r.jobs.slice()){
     let sp;
@@ -5734,7 +5661,7 @@ function simRoom(id, dt){
     if(j.by){ const b = S.staff.find(s=>s.id===j.by); sp = staffSpeed(b) * (j.cook ? 1 + 0.2*((S.kitchen||{}).tier||0) : 1); if(r.staff[j.by]) r.staff[j.by].prog = j.p; }
     else if(!baristas.length && r.jobs.indexOf(j)===0) sp = 0.25; else continue;
     if(rm.broken.machine && j.coffee) sp = 0;
-    j.p += dt * sp * (j.cook ? 1 : machinePower(rm.upg.machine)) / 12;
+    j.p += dt * sp * (j.cook ? 1 : (1+0.15*rm.upg.machine)) / 5;
     if(j.p >= 1){ if(j.cook){ j.ready = true; if(r.staff[j.by]) r.staff[j.by].prog = 0; j.by = null; j.hand = 0; } else finishJob(id, j); }
   }
   const waiters = workingStaff(id).filter(s=>s.role==='Официант' && !s.distract);
@@ -6177,7 +6104,7 @@ function ambientTick(){
 }
 
 /* ---------- сохранение ---------- */
-function snapshot(){ S.savedAt = Date.now(); S.sound = soundOn; const copy = Object.assign({}, S, {gAcc}); return JSON.stringify(copy, (k,v)=> k==='distract' ? undefined : v); }
+function snapshot(){ S.savedAt = Date.now(); S.sound = soundOn; const copy = Object.assign({}, S); return JSON.stringify(copy, (k,v)=> k==='distract' ? undefined : v); }
 function save(){ if(!S) return; try{ localStorage.setItem(KEY, snapshot()); }catch(e){} }
 function cloudOK(){ return tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'); }
 function saveCloud(){ if(!S || !cloudOK()) return; const js = snapshot(); const parts = []; for(let i=0;i<js.length;i+=3900) parts.push(js.slice(i,i+3900)); if(parts.length > 200) return;
@@ -6192,7 +6119,7 @@ let trackT = 0, trackStart = true;
 function cashPack(days){ const h = (S && S.fin && S.fin.hist || []).slice(0,7).map(f=>f.rev||0); const avg = h.length ? h.reduce((a,b)=>a+b,0)/h.length : 0; return Math.round(Math.max({1:300000,3:1000000,8:3000000,20:8000000}[days] || 300000*days, avg*days)/1000)*1000; }
 function track(force){
   if(!S || !tg || !tg.initData) return;
-  const body = JSON.stringify({initData: tg.initData, stats:{marketVersion:S.marketVersion||0,roster:S.staff.filter(s=>!s.isYou).map(mkPack),cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + profitOf(S.fin.today)), best:Math.round(S.c.maxDayRev||0), snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + profitOf(S.fin.today)), best:Math.round(S.c.maxDayRev||0), snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
@@ -6233,15 +6160,13 @@ function showBanned(on){ let b = $('#banned');
 /* ---------- офлайн ---------- */
 function catchUp(){
   const gap = Date.now() - (S.savedAt||Date.now());
-  if(gap < 1000) return;
+  if(gap < 90000) return;
   const before = {money:S.money, day:S.day, staff:S.staff.length, angry:S.c.angry, reviews:(S.reviews||[]).length, inc:S.c.absurd + Object.keys(S.evLast||{}).length};
   const r = simulateOffline(gap);
   for(const id in RT){ RT[id].guests = []; RT[id].queue = []; RT[id].pickup = []; RT[id].jobs = []; RT[id].seats = RT[id].seats.map(()=>null); }
   const subHint = ownerSub() ? 0 : Math.max(0, Math.round(r.money>0 ? r.money*(0.8/0.6-1) + (gap>12*3600000 ? r.money*0.5 : 0) : 0));
-  if(gap >= 90000) queueModal({kind:'away', mins:r.mins, money:r.money, guests:r.guests, days:S.day-before.day, gone:before.staff - S.staff.length, angry:S.c.angry-before.angry, reviews:Math.max(0,(S.reviews||[]).length-before.reviews), events:r.expired||0, capped: gap > (ownerSub()?24:12)*3600*1000, subHint: subHint > 5000 ? subHint : 0});
+  queueModal({kind:'away', mins:r.mins, money:r.money, guests:r.guests, days:S.day-before.day, gone:before.staff - S.staff.length, angry:S.c.angry-before.angry, reviews:Math.max(0,(S.reviews||[]).length-before.reviews), events:r.expired||0, capped: gap > (ownerSub()?24:12)*3600*1000, subHint: subHint > 5000 ? subHint : 0});
   quietModals.splice(0).forEach(m=>queueModal(m));
-  // Следующий возврат в приложение не должен повторно считать уже обработанный период.
-  save();
 }
 
 /* ---------- UI ---------- */
@@ -6260,13 +6185,13 @@ function renderStart(){
   const ref = startParam();
   const w = el(`<div class="start">
     <div class="logo">Brew Crew</div>
-    <div class="note kraft"><p>Ты снял пустое помещение на первом этаже. Голые стены, розетка и запах чужого ремонта. Денег — ${fmt(START_CAPITAL)} ₽. Дальше всё сам.</p>${ref?'<p class="gift">Тебя позвал друг: после подтверждения приглашения сервером придёт бонус 100 000 ₽.</p>':''}</div>
+    <div class="note kraft"><p>Ты снял пустое помещение на первом этаже. Голые стены, розетка и запах чужого ремонта. Денег — ${fmt(START_CAPITAL)} ₽. Дальше всё сам.</p>${ref?'<p class="gift">Тебя позвал друг: +100 000 ₽ к стартовому капиталу.</p>':''}</div>
     <div class="h chalk">Как назовёшь</div>
     <div class="namegen"><div class="bigname" id="bn"></div><button class="btn ghost" id="dice">Другое</button></div>
     <input class="field" id="own" maxlength="28" placeholder="Или впиши своё" autocomplete="off">
     <div class="d" id="nmst" style="min-height:16px"></div>
     <button class="btn big" id="go">Дальше: обставить зал</button>
-    <div class="empty" style="font-size:12px">Кофейня работает с 8:00 до 20:00, в том числе когда игра закрыта. Только для 18+. <a href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a></div>
+    <div class="empty" style="font-size:12px">Кофейня работает круглосуточно, даже когда игра закрыта. Только для 18+. <a href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a></div>
   </div>`);
   app.appendChild(w);
   const bn = w.querySelector('#bn'), st = w.querySelector('#nmst'); let checkT = 0;
@@ -6280,14 +6205,14 @@ function renderStart(){
 }
 function renderBuild(name, cityId, ref){
   const app = $('#app'); app.innerHTML = ''; app.className = 'startapp';
-  const budget = START_CAPITAL;
-  const choice = {machine:0, register:0, storage:0, tables:0, decor:1, showcase:0, sign:1};
+  const budget = START_CAPITAL + (ref ? 100000 : 0);
+  const choice = {}; BUILD.forEach(b=>choice[b.id] = 1);
   const w = el(`<div class="start build"><div class="h chalk big">Обставить зал</div><div class="receipt" id="rc"></div><div id="bl"></div><button class="btn big" id="open">Открыть двери</button><button class="btn ghost" id="back">Назад</button></div>`);
   app.appendChild(w);
-  const total = () => buildCost(choice);
+  const total = () => BUILD.reduce((a,b)=>a+b.opts[choice[b.id]].price, 0);
   const draw = () => {
     const t = total(), left = budget - t;
-    w.querySelector('#rc').innerHTML = `<div class="rrow"><span>Бюджет</span><b>${fmt(budget)}</b></div><div class="rrow"><span>Оборудование и ремонт</span><b>−${fmt(t - START_FEES)}</b></div><div class="rrow"><span>Открытие и оформление</span><b>−${fmt(START_FEES)}</b></div><div class="rrow tot"><span>Останется на команду и закупки</span><b class="${left<120000?'neg':''}">${fmt(left)}</b></div>${left<120000?'<div class="rnote">Мало. Нужно хотя бы 120 000 ₽ на первые зарплаты и аренду.</div>':''}`;
+    w.querySelector('#rc').innerHTML = `<div class="rrow"><span>Бюджет</span><b>${fmt(budget)}</b></div><div class="rrow"><span>Оборудование и ремонт</span><b>−${fmt(t)}</b></div><div class="rrow tot"><span>Останется на команду и закупки</span><b class="${left<120000?'neg':''}">${fmt(left)}</b></div>${left<120000?'<div class="rnote">Мало. Нужно хотя бы 120 000 ₽ на первые зарплаты и аренду.</div>':''}`;
     const bl = w.querySelector('#bl'); bl.innerHTML = '';
     BUILD.forEach(b=>{
       const card = el(`<div class="buildrow"><div class="bt">${b.n}</div><div class="bopts"></div></div>`);
@@ -6300,7 +6225,6 @@ function renderBuild(name, cityId, ref){
   draw();
   w.querySelector('#back').onclick = () => renderStart();
   w.querySelector('#open').onclick = () => { unlockAudio();
-    if(budget - total() < 120000) return;
     S = newState(name, cityId); if(ref){ S.ref = ref; }
     applyBuild(choice); initState();
     for(const k of ['beans','cups','syrup','tea','milk','desserts']){ if(k==='desserts' && !isUnlocked('dessert')) continue; const want = stockCap(k)*0.6 - stockQty(k); if(want>0){ if(STOCK[k].perish) S.stock[k].push({q:Math.round(want), exp:S.day+STOCK[k].perish}); else S.stock[k] += Math.round(want); } } S.interior = {}; S.promo = {day:null, rec:[]}; S.onb = {};
@@ -6417,14 +6341,14 @@ function upgMetric(u, id){
   const rm = room(id);
   const at = L => { const was = rm.upg[u.id]; rm.upg[u.id] = L; let v;
     const st = stats(id), h0 = S.gm;
-    if(u.id==='machine') v = Math.round(st.through*REAL_PER_GMIN/1000*60);
-    else if(u.id==='register') v = Math.round(st.through*REAL_PER_GMIN/1000*60);
-    else if(['sign','decor','pets','tables'].includes(u.id)){ let sum = 0; const wasOpen=S.isOpen; S.isOpen=true; for(let hh=S.hours.open; hh<S.hours.close; hh++){ S.gm = hh*60+30; sum += stats(id).lambda/rushMul()*REAL_PER_GMIN/1000*60; } S.gm = h0; S.isOpen=wasOpen; v = Math.round(sum); }
+    if(u.id==='machine') v = Math.round(st.prepCap*14*60);
+    else if(u.id==='register') v = Math.round((st.orderCap||0)*14*60);
+    else if(['sign','decor','pets','tables'].includes(u.id)){ let sum = 0; for(let hh=0; hh<24; hh++){ S.gm = hh*60+30; sum += stats(id).lambda/rushMul()*14*60; } S.gm = h0; v = Math.round(sum/ (S.isOpen?1:1)); }
     else if(u.id==='menu') v = Math.round(estCheck(id));
     else if(u.id==='storage') v = Math.round(100*(1+0.25*L));
     rm.upg[u.id] = was; return v; };
   const L = rm.upg[u.id]; const a = at(L), b = L<MAXL ? at(L+1) : null; if(a==null) return '';
-  const unit = {machine:'заказов/игр. ч с этой командой', register:'заказов/игр. ч с этой командой', sign:'потенциальных гостей за смену', decor:'потенциальных гостей за смену', pets:'потенциальных гостей за смену', tables:'потенциальных гостей за смену', menu:'₽ средний чек', storage:'% склада'}[u.id];
+  const unit = {machine:'напитков в час', register:'заказов в час', sign:'гостей в день', decor:'гостей в день', pets:'гостей в день', tables:'гостей в день', menu:'₽ средний чек', storage:'% склада'}[u.id];
   return `<div class="metric"><b class="num">${fmt(a)}</b>${b!=null?` → <b class="num g">${fmt(b)}</b>`:''} ${unit}</div>`;
 }
 function kitchenCard(p){
@@ -6443,7 +6367,7 @@ function renderUpgrades(p, id){
   if(id==='main') kitchenCard(p);
   UPG.filter(u=>id!=='hall2' || ['tables','decor','clean','safety'].includes(u.id)).forEach(u=>{
     const L = rm.upg[u.id], max = L >= MAXL, c = upCost(u, L, id), capped = !max && L >= upgCap();
-    const wall = false;
+    const wall = !max && (L+1)%5===0;
     const card = el(`<div class="card up"><div><div class="t">${u.n} (${L})${wall?' <span class="tag warn">порог</span>':''}</div>${upgMetric(u, id)}<div class="eff">${esc(u.eff(L))}</div>${max?'':'<div class="eff">Дальше: <b>'+esc(u.eff(L+1))+'</b></div>'}</div>
       <div class="col">${max?'<span class="tag">Максимум</span>':capped?'<span class="tag warn">Нужен ур. '+(L-2)+'</span>':btnHtml(fmt(c)+' ₽', c, false)+btnHtml('Макс', c, false, 'ghost')}</div></div>`);
     const bs = card.querySelectorAll('button');
@@ -6455,7 +6379,6 @@ function renderUpgrades(p, id){
   p.appendChild(el(`<div class="empty" style="font-size:12px">Напитков и заказов в час — сколько команда успевает в игровой час. Если гостей в час пик или в запару больше, выстраивается очередь до улицы.</div>`));
 }
 function renderSettings(p){
-  p.appendChild(el(`<div class="card"><div class="t">Игровое время</div><div class="d">1 реальная минута = ${60000/REAL_PER_GMIN} игровых. Игровые сутки длятся ${DAY_MIN*REAL_PER_GMIN/3600000} реальных часов. Рабочий день — 08:00–20:00. При закрытии оплачиваются смена и аренда; налог — в полночь.</div></div>`));
   const vol = (k, n) => { const row = el(`<label class="vol"><span>${n}</span><input type="range" min="0" max="100" value="${Math.round(prefs[k]*100)}" id="vol_${k}"></label>`); row.querySelector('input').oninput = e => { prefs[k] = e.target.value/100; savePrefs(); }; return row; };
   const snd = el(`<div class="card"><div class="row"><span class="t">Звук</span><span class="sp"></span><button class="btn ${soundOn?'':'ghost'}" id="sndT">${soundOn?'Включён':'Выключен'}</button></div></div>`);
   snd.appendChild(vol('master','Громкость'));
@@ -6625,9 +6548,9 @@ function renderTeam(p, id){
   const cov = el(`<div class="card"><div class="t">Кто выходит на неделе</div><div class="cov"><span></span>${WEEKDAYS.map((d,i)=>`<b class="${i===weekday()?'today':''}">${d}</b>`).join('')}${roles.map(r=>{ const c = coverage(id, r); return `<span>${r}</span>`+c.map(v=>`<i class="${v===0?'zero':v===1?'one':''}">${v}</i>`).join(''); }).join('')}</div><div class="d">Ноль — в этот день на точке никого. Поменять график можно в карточке сотрудника.</div></div>`);
   { const holes = scheduleHoles(id); const bal = el(`<div class="card"><div class="row wrap"><span class="t">График</span><span class="sp"></span><button class="btn ghost">Выровнять график</button></div>${holes.length ? `<div class="d" style="color:var(--bad)">${holes.slice(0,3).map(h=>WEEKDAYS[h.wd]+': '+h.role.toLowerCase()+' '+h.c+' из '+h.n).join(' · ')}. Людей мало, будет жопа</div>` : '<div class="d">Выходные распределены ровно</div>'}</div>`); bal.querySelector('button').onclick = () => { const n = balanceSchedule(id); toast(n ? 'Выходные перекроены: '+n+' человек получили новый график. Ворчат, но ровно' : 'И так ровно. Больше не трогай'); sfx('tap'); save(); renderPanel(); }; p.appendChild(bal); }
   const you = list.find(s=>s.isYou);
-  if(you){ const on = youNeeded(id); p.appendChild(el(`<div class="card staff badge-card you"><div class="lanyard"></div><div class="spr" style="${sprStyle(staffSpr(you),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row wrap"><span class="t">Ты</span><span class="tag">Владелец</span><span class="stamp ${on?'red':'green'}">${on?'ЗА СТОЙКОЙ':'ОТДЫХАЕШЬ'}</span></div><div class="d">${on?'Пока в команде нет бариста или кассира, ты работаешь сам: медленнее, но бесплатно, а между заказами поддерживаешь порядок. Тапай по гостю у кассы, по кофемашине и по гостям у выдачи, чтобы ускорить работу.':'Команда за стойкой, ты помогаешь с порядком. Если бариста или кассир не выйдет, ты подменишь его.'}</div></div></div>`)); }
+  if(you){ const on = youNeeded(id); p.appendChild(el(`<div class="card staff badge-card you"><div class="lanyard"></div><div class="spr" style="${sprStyle(staffSpr(you),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row wrap"><span class="t">Ты</span><span class="tag">Владелец</span><span class="stamp ${on?'red':'green'}">${on?'ЗА СТОЙКОЙ':'ОТДЫХАЕШЬ'}</span></div><div class="d">${on?'Пока в команде нет бариста или кассира, ты работаешь сам: медленнее, но бесплатно. Тапай по гостю у кассы, по кофемашине и по гостям у выдачи, чтобы ускорить работу.':'Команда справляется без тебя. Если бариста или кассир не выйдет, ты снова встанешь за стойку.'}</div></div></div>`)); }
   const crew = list.filter(s=>!s.isYou);
-  if(!crew.length) p.appendChild(el(`<div class="empty">Команды нет. Ты один, как кофемашина в пятницу вечером. Нанимай, когда растёт очередь: свободные сотрудники тоже получают зарплату.</div>`));
+  if(!crew.length) p.appendChild(el(`<div class="empty">Команды нет. Ты один, как кофемашина в пятницу вечером. Ниже кандидаты: начни с бариста и кассира.</div>`));
   crew.forEach(s=>{
     const [cls, txt] = staffStatus(s);
     const stamp = (s.legendId || s.prize) ? '<span class="stamp gold">ЛЕГЕНДА</span>' : s.today==='absent' ? '<span class="stamp red">ПРОГУЛ</span>' : s.notice ? '<span class="stamp red">УХОДИТ</span>' : '';
@@ -6715,8 +6638,8 @@ function renderStock(p, id){
   p.appendChild(el(`<div class="h">Техника · ${esc(roomDef(id).n)}</div>`));
   const rm = room(id);
   const eq = el(`<div class="card"><div class="eq">${Object.keys(EQ).map(k=>`<span>${EQ[k].n}</span>${bar(rm.eq[k], rm.broken[k]?'var(--bad)':rm.eq[k]<40?'var(--bad)':rm.eq[k]<70?'var(--caramel)':'var(--good)')}<b class="num">${rm.broken[k]?'сломано':Math.round(rm.eq[k])+'%'}</b>`).join('')}</div>
-    <div class="d">Ниже 40% техника начинает ломаться. Профилактика исправной техники дешевле ремонта. Базовый износ холодильника — 10 пунктов за игровые сутки; сервисный договор уменьшает износ вдвое.</div>
-    <div class="row wrap">${btnHtml('Профилактика: '+fmt(serviceCost(rm))+' ₽', serviceCost(rm), serviceCost(rm)<=0)}${S.serviceContract?'<span class="tag g">Сервисный договор</span>':btnHtml('Сервисный договор 90 000 ₽', 90000, false, 'ghost')}</div></div>`);
+    <div class="d">Ниже 40% техника начинает ломаться. Обслуживание дешевле ремонта.</div>
+    <div class="row wrap">${btnHtml('Обслужить всё: '+fmt(serviceCost(rm))+' ₽', serviceCost(rm), serviceCost(rm)<=0)}${S.serviceContract?'<span class="tag g">Сервисный договор</span>':btnHtml('Сервисный договор 90 000 ₽', 90000, false, 'ghost')}</div></div>`);
   const eb = eq.querySelectorAll('button');
   if(eb[0]) eb[0].onclick = () => { if(doService(rm)){ toast('Техника обслужена'); sfx('buy'); save(); renderPanel(); } };
   if(eb[1]) eb[1].onclick = () => { if(S.money<90000) return; spend(90000,'other','Сервисный контракт на технику'); S.serviceContract = true; toast('Износ техники вдвое медленнее'); save(); renderPanel(); };
@@ -6727,7 +6650,7 @@ function renderStock(p, id){
 
 /* ---------- деньги ---------- */
 const FIN_ROWS = [['rev','Выручка',1],['invest','Улучшения и найм',-1],['acq','Эквайринг 2%',-1],['comm','Комиссия доставки',-1],['supply','Закупки',-1],['wages','Зарплаты',-1],['rent','Аренда',-1],['util','Коммуналка',-1],['tax','Налог УСН',-1],['repairs','Ремонт и ТО',-1],['fines','Штрафы',-1],['other','Прочее',-1]];
-function cashFlow(f){ if(f.L && f.L.in && f.L.out)return Object.values(f.L.in).reduce((a,b)=>a+b,0)-Object.values(f.L.out).reduce((a,b)=>a+b,0); return f.rev - f.acq - (f.comm||0) - f.supply - f.wages - f.rent - f.util - f.tax - f.repairs - f.fines - f.other - (f.invest||0) - (f.loan||0); }
+function cashFlow(f){ return f.rev - f.acq - (f.comm||0) - f.supply - f.wages - f.rent - f.util - f.tax - f.repairs - f.fines - f.other - (f.invest||0); }
 function tipsCard(p){
   const j = (S.tips||{}).jar||0, cap = tipJarCap();
   const c = el(`<div class="card"><div class="row"><span class="t">Банка для чаевых</span><span class="sp"></span><span class="tag num">${fmt(j)} из ${fmt(cap)} ₽</span></div>${bar(j/cap*100,'var(--caramel)')}<div class="d">Стоит на стойке, её видно в зале. Раздать команде или забрать себе.</div><div class="row"><button class="btn ghost" ${j?'':'disabled'}>Открыть банку</button></div></div>`);
@@ -6761,7 +6684,7 @@ function renderFin(p){
   p.appendChild(finDetail());
   p.appendChild(el(`<div class="card"><div class="row"><span class="t">Налог УСН 6%</span><span class="sp"></span><span class="tag num">${fmt(S.fin.taxAcc)} ₽</span></div><div class="d">Уплата через ${Math.max(0,S.fin.taxDueDay - S.day)} игр. дн. (раз в игровой месяц). Деньги на налог лучше не тратить.</div>${S.fin.noCheck>0?`<div class="d" style="color:var(--bad)">Продано без чеков: ${fmt(S.fin.noCheck)} ₽. Налоговая может прийти.</div>`:''}</div>`));
   const rentDay = S.rooms.reduce((a,r)=>a+roomDef(r.id).rent*city().rent*modMul('rent'),0);
-  p.appendChild(el(`<div class="card"><div class="t">Постоянные расходы в день</div><div class="d">Аренда ${fmt(rentDay)} ₽ · коммуналка ≈${fmt(S.rooms.reduce((a,r)=>a+roomDailyCosts(r.id).util,0))} ₽ · зарплаты сегодняшней смены ≈${fmt(S.staff.filter(s=>s.today==='work'||s.today==='sub').reduce((a,s)=>a+(s.today==='sub'?s.subPay:shiftPay(s)),0))} ₽</div></div>`));
+  p.appendChild(el(`<div class="card"><div class="t">Постоянные расходы в день</div><div class="d">Аренда ${fmt(rentDay)} ₽ · коммуналка ≈${fmt(S.rooms.reduce((a,r)=>a+(350+45*hoursOpen())*roomMult(r.id),0))} ₽ · зарплаты сегодняшней смены ≈${fmt(S.staff.filter(s=>s.today==='work'||s.today==='sub').reduce((a,s)=>a+(s.today==='sub'?s.subPay:shiftPay(s)),0))} ₽</div></div>`));
   if(S.debt.stage>0 || S.debt.loan>0 || S.money<0){
     const d = el(`<div class="card" style="border-color:var(--bad)"><div class="t">Долги</div><div class="d">Дней в минусе подряд: ${S.debt.daysNeg}. ${['','Поставщики работают только по предоплате.','Звонят коллекторы.','Арендодатель забрал зал.'][S.debt.stage]||''} После 14 дней в минусе — банкротство.</div>${S.debt.loan>0?`<div class="d">Долг «серьёзным людям»: ${fmt(S.debt.loan)} ₽, каждый день 4% платежа.</div><div class="row">${btnHtml('Погасить долг', S.debt.loan, false)}</div>`:''}</div>`);
     const lb = d.querySelector('button'); if(lb) lb.onclick = () => { if(S.money < S.debt.loan) return; spend(S.debt.loan,'other','Погашение долга'); S.debt.loan = 0; toast('Долг погашен. Люди в кожанках больше не заходят'); save(); renderPanel(); };
@@ -6853,7 +6776,7 @@ function renderMore(p){
   }
   else if(sub==='fr'){
     const need = franchiseNeed(), e = S.c.earnedRun||0, sh = franchiseShares();
-    p.appendChild(el(`<div class="card"><div class="t">Опыт владельца: ${S.shares}</div><div class="d">Свободный опыт добавляет к ценам меню 0,1% за очко, максимум 10%. Сейчас бонус ${Math.round((shareMult()-1)*1000)/10}%. Опыт дают достижения и продажа сети. Его можно потратить на постоянные бонусы ниже; уже купленные уровни сохранятся.</div></div>`));
+    p.appendChild(el(`<div class="card"><div class="t">Опыт владельца: ${S.shares}</div><div class="d">Это твой опыт как хозяина. Каждое очко навсегда даёт +3% к доходу во всех будущих кофейнях. Сейчас доход ×${shareMult().toFixed(2).replace('.',',')}. Опыт дают достижения и продажа сети. Его можно потратить на вечные бонусы ниже.</div></div>`));
     const fr = el(`<div class="card"><div class="t">Продать сеть и начать заново</div><div class="d">Когда сеть заработает ${fmt(need)} ₽, её можно продать. Залы, команда и деньги уйдут покупателю, а ты получишь опыт и начнёшь заново в новом помещении с новым сюжетом.</div>
       <div class="mood">Заработано ${bar(e/need*100,'var(--caramel)')}<span class="num">${fmt(e)}</span></div>
       <div class="d">За продажу сейчас: <b>${sh}</b> опыта. Продано сетей: ${S.franchises}.</div>
@@ -6999,7 +6922,7 @@ function showModal(){
   else if(m.kind==='intro'){
     box.classList.add('kraftbox');
     box.append(el(`<div class="eyebrow">День первый</div>`), el(`<h2>Двери открыты</h2>`), el(`<p>Команды пока нет, так что ты сам стоишь на кассе и сам варишь кофе. Медленно, но бесплатно.</p>`),
-      el(`<ol class="introl"><li><b>Нанимай, когда команда не справляется.</b> Очереди и загрузка подскажут, когда нужен бариста или кассир. Лишний персонал тоже получает зарплату. Зал → Команда.</li><li><b>Выбери позицию дня.</b> Зал → Меню. Её берут втрое чаще.</li><li><b>Тапай по гостям</b> у кассы и на выдаче, и по кофемашине, чтобы работать быстрее.</li><li><b>Три задания каждый день</b> — во вкладке «Дела». Там же события.</li></ol>`), btn('Поехали', ()=>{ closeModal(); openSheet('hall','team'); }));
+      el(`<ol class="introl"><li><b>Найми бариста и кассира.</b> Зал → Команда. Новые кандидаты каждые 5 минут.</li><li><b>Выбери позицию дня.</b> Зал → Меню. Её берут втрое чаще.</li><li><b>Тапай по гостям</b> у кассы и на выдаче, и по кофемашине, чтобы работать быстрее.</li><li><b>Три задания каждый день</b> — во вкладке «Дела». Там же события.</li></ol>`), btn('Поехали', ()=>{ closeModal(); openSheet('hall','team'); }));
   }
   else if(m.kind==='streak'){ box.append(el(`<div class="eyebrow">С возвращением</div>`), el(`<h2>${m.n} ${m.n===1?'день':m.n<5?'дня':'дней'} подряд</h2>`), el(`<p>Команда рада тебя видеть. Бонус за серию: +${fmt(m.bonus)} ₽.</p>`), btn('К делу', closeModal)); }
   else if(m.kind==='note'){ box.append(el(`<div class="eyebrow">${m.text?'Новости':'Последствия'}</div>`), el(`<h2>${esc(m.title)}</h2>`)); if(m.text) box.append(el(`<p>${esc(m.text)}</p>`)); box.append(chipsEl(m.chips), btn('Понятно', closeModal)); }
@@ -7055,11 +6978,11 @@ function showModal(){
   }
   else if(m.kind==='franchise'){
     const sh = franchiseShares();
-    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} опыта?</h2>`), el(`<p>Деньги, склад, обычная команда, оборудование, улучшения, помещения, долги, репутация и сюжет кофейни начнутся заново. Временные усиления и события закончатся. Выручка, рекорды и очки кофейни в топе обнулятся. Ожидаемые выплаты за трансферы старой сети также уйдут с ней.</p>`), el(`<p>Останутся достижения, гостевая книга, опыт владельца, постоянные бонусы, косметика, покупки за Stars и награды пропуска. Сотрудники из наград будут ждать в инвентаре: каждого можно пригласить один раз в новую кофейню. Уже полученные награды повторно не выдаются.</p>`));
+    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} опыта?</h2>`), el(`<p>Залы, команда, деньги и улучшения уйдут новому владельцу. Останутся опыт владельца, вечные бонусы, достижения и гостевая книга. Новое помещение будет ждать сразу после продажи.</p>`));
     const opts = el(`<div class="opts"></div>`);
     const nm = el(`<div class="d" style="margin:6px 0 4px">Новая кофейня — новое название. Старая уйдёт из рейтинга сезона.</div>`);
     const inp = el(`<input class="field" maxlength="28" placeholder="Название новой кофейни" value="${esc(randomName())}" style="width:100%;margin-bottom:8px">`);
-    const b = el(`<button class="opt"><b>Продать и переехать в Помещение №${(S.franchises||0)+2}</b></button>`); b.onclick = async () => { b.disabled = true; try{ await confirmFranchise(inp.value); } finally { b.disabled = false; } }; opts.append(nm, inp, b);
+    const b = el(`<button class="opt"><b>Продать и переехать в Помещение №${(S.franchises||0)+2}</b></button>`); b.onclick = () => { const nn = inp.value.trim().slice(0,28); if(nn.length < 2){ toast('Придумай название'); return; } if(nn.toLowerCase()===String(S.name).toLowerCase()){ toast('Нужно новое название'); return; } sellFranchise('spb', nn); for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; save(); renderGame(); toast('«'+nn+'», '+placeName()); try{ track(true); }catch(e){} }; opts.append(nm, inp, b);
     box.append(opts, btn('Пока нет', closeModal, 'ghost'));
   }
   else if(m.kind==='menu'){
@@ -7121,11 +7044,11 @@ function checkPatience(s){ if(s.pat > 0) return; s.pat = 40; s.mood = clamp(s.mo
 /* ---------- главный цикл ---------- */
 let lastT = performance.now(), hudT = 0, saveT = 0, cloudT = 0, achT = 0, ambT = 0, entT = 0;
 function frame(t){
-  const elapsed = Math.max(0, (t - lastT)/1000), dt = Math.min(0.1, elapsed); lastT = t;
+  const dt = Math.min(0.1, (t - lastT)/1000); lastT = t;
   hideBoot();
   try{
-  if(S && !document.hidden && $('#sMoney')){
-    gAcc += elapsed*1000 / REAL_PER_GMIN; const whole = Math.floor(gAcc); if(whole){ gAcc -= whole; const wasOpen = S.isOpen, d0 = S.day; advanceGameMinutes(whole); if(wasOpen !== S.isOpen || d0 !== S.day){ for(const r of S.rooms) syncScene(r.id); structDirty = true; } if(d0 !== S.day && S.fin.hist[0] && !document.hidden) queueModal({kind:'receipt', f:S.fin.hist[0]}); }
+  if(S && $('#sMoney')){
+    gAcc += dt*1000 / REAL_PER_GMIN; const whole = Math.floor(gAcc); if(whole){ gAcc -= whole; const wasOpen = S.isOpen, d0 = S.day; advanceGameMinutes(whole); if(wasOpen !== S.isOpen || d0 !== S.day){ for(const r of S.rooms) syncScene(r.id); structDirty = true; } if(d0 !== S.day && S.fin.hist[0] && !document.hidden) queueModal({kind:'receipt', f:S.fin.hist[0]}); }
     const id = S.active;
     if(!room(id)){ S.active = 'main'; }
     syncSceneLight(S.active);
@@ -7135,7 +7058,6 @@ function frame(t){
     maybeDistract(); bubblesTick(dt);
     if(Date.now() > (S.candsAt||0)){ refreshCands(); structDirty = true; }
     scheduleEvents(Date.now());
-    equipmentTick(elapsed);
     ambT += dt; if(ambT > 0.5){ ambT = 0; ambientTick(); }
     if(S.closedUntil > absNow()) S.incidents.forEach(i=>{ i.at += dt*1000; }); else for(const inc of S.incidents.slice()) if(Date.now() - inc.at > 20*60000) expireIncident(inc);
     draw();
@@ -7179,7 +7101,7 @@ window.addEventListener('pagehide', ()=>{ if(S){ save(); saveCloud(); } });
 /* ---------- запуск ---------- */
 try{ if(tg){ tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#17120e'); tg.setBackgroundColor && tg.setBackgroundColor('#17120e'); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } }catch(e){}
 function boot(data){
-  if(data && data.v===3){ try{ S = data; gAcc = Number.isFinite(data.gAcc) ? clamp(data.gAcc, 0, 0.999999) : 0; migrate(); soundOn = S.sound!==false; S.staff.forEach(s=>{ s.distract = null; }); renderGame(); catchUp(); if(!ageOk()) ageGate(()=>{}); }catch(e){ console.error(e); renderBroken(e); } }
+  if(data && data.v===3){ try{ S = data; migrate(); soundOn = S.sound!==false; S.staff.forEach(s=>{ s.distract = null; }); renderGame(); catchUp(); if(!ageOk()) ageGate(()=>{}); }catch(e){ console.error(e); renderBroken(e); } }
   else { S = null; renderStart(); }
 }
 function hardReset(){ try{ localStorage.removeItem(KEY); }catch(e){} if(cloudOK()){ try{ tg.CloudStorage.setItem('bc3_n','0'); }catch(e){} } S = null; modals = []; sheet = null; const mr = $('#modalRoot'); if(mr) mr.innerHTML=''; const sr = $('#sheetRoot'); if(sr) sr.innerHTML=''; for(const k in RT) delete RT[k]; renderStart(); }
@@ -7187,7 +7109,7 @@ function renderBroken(e){ S = null; const app = $('#app'); app.className = 'star
   const w = el(`<div class="start"><div class="logo">Brew Crew</div><div class="note kraft"><p>Старое сохранение не открылось в новой версии. Можно начать заново: пустое помещение, новый бюджет.</p></div><button class="btn big">Начать заново</button></div>`);
   w.querySelector('button').onclick = hardReset; app.appendChild(w); }
 function migrate(){
-  migrateEconomy();
+  S.hours = {open:0, close:24};
   if(!S.story){ S.story = storyInit(); startSeason(1); }
   S.interior = S.interior || {};
   S.q = S.q || {wear:1, term:1, fridge:1};
@@ -7372,7 +7294,7 @@ function renderGuests(p){ renderReviews(p); p.appendChild(el(`<div class="h chal
 function renderOwner(p){
   const need = xpNeed(); const next = [];
   for(let L=S.level+1; L<=S.level+30 && next.length<4; L++) if(LEVELS[L]) next.push([L, LEVELS[L]]);
-  p.appendChild(el(`<div class="card chalkboard"><div class="t chalk">Уровень ${S.level}</div><div class="mood">До следующего ${bar(S.xp/need*100,'var(--caramel)')}<span class="num">${Math.round(S.xp)}/${need}</span></div><div class="d">Опыт дают продажи и полезные дела. За дела — до 60 XP за игровой день. Первые 180 XP от продаж и дел идут полностью, далее — 20%. Награды считаются отдельно. Уровень открывает возможности, гостей приводят вывеска и рекомендации.</div>${next.map(([L,a])=>`<div class="lvlrow"><b>${L}</b><span>${a.map(esc).join(' · ')}</span></div>`).join('')}</div>`));
+  p.appendChild(el(`<div class="card chalkboard"><div class="t chalk">Уровень ${S.level}</div><div class="mood">До следующего ${bar(S.xp/need*100,'var(--caramel)')}<span class="num">${Math.round(S.xp)}/${need}</span></div><div class="d">Опыт дают продажи и решённые события. Каждый уровень — бонус деньгами и +1% гостей.</div>${next.map(([L,a])=>`<div class="lvlrow"><b>${L}</b><span>${a.map(esc).join(' · ')}</span></div>`).join('')}</div>`));
   sub = 'fr'; renderMore(p); sub = 'ach'; renderMore(p); }
 /* --- друзья и приглашения --- */
 const FR = {loaded:0, friends:[], inviter:null, unclaimed:0, id:null};
@@ -7413,8 +7335,8 @@ function renderDistrict(p){
 /* --- турнир района --- */
 const TOUR_MS = 5*3600000;
 const TOUR = (()=>{ try{ const t = JSON.parse(localStorage.getItem('bc_tour')||'null'); if(t && t.week) return Object.assign({tried:0}, t); }catch(e){} return {at:0, top:[], profits:[], total:0, week:null, tried:0}; })();
-function loadTour(force){ if(!force && TOUR.week===tourWeek() && Date.now() - TOUR.at < TOUR_MS) return; if(Date.now() - TOUR.tried < 60000) return; TOUR.tried = Date.now(); const run = S && S.franchises;
-  fetch('/api/tour').then(r=>r.json()).then(r=>{ if((S && S.franchises) !== run) return; if(r && r.ok){ Object.assign(TOUR, {at:r.at||Date.now(), top:r.top||[], profits:r.profits||[], total:r.total||0, week:r.week}); try{ localStorage.setItem('bc_tour', JSON.stringify({at:TOUR.at, top:TOUR.top, profits:TOUR.profits, total:TOUR.total, week:TOUR.week})); }catch(e){} structDirty = true; } }).catch(()=>{}); }
+function loadTour(force){ if(!force && TOUR.week===tourWeek() && Date.now() - TOUR.at < TOUR_MS) return; if(Date.now() - TOUR.tried < 60000) return; TOUR.tried = Date.now();
+  fetch('/api/tour').then(r=>r.json()).then(r=>{ if(r && r.ok){ Object.assign(TOUR, {at:r.at||Date.now(), top:r.top||[], profits:r.profits||[], total:r.total||0, week:r.week}); try{ localStorage.setItem('bc_tour', JSON.stringify({at:TOUR.at, top:TOUR.top, profits:TOUR.profits, total:TOUR.total, week:TOUR.week})); }catch(e){} structDirty = true; } }).catch(()=>{}); }
 function renderTour(p){
   loadTour();
   const cur = TOUR.week===tourWeek();
@@ -7545,9 +7467,19 @@ function drawKitchen_old(now, r){
 
 /* ================= v7: толпа в запару, злой гость крупно, реплики, персонажи событий ================= */
 function rushBurst(id){
+  const r = rt(id); const n = r.seats.length;
+  let k = 0;
+  for(let i=0;i<n;i++){ if(r.seats[i]) continue; const res = sellOne(id); if(res.fail) break;
+    const p = pickGuestSprite(); const g = {spr:p.spr, h:p.kid?SPR_KID:SPR_H, kidG:p.kid, x:DOOR[0]+R(-4,4), y:DOOR[1]+R(-8,8), state:'toSeat', seat:i, prog:0, flip:false, t:Math.random()*10, walk:true, wait:0, burst:true};
+    r.seats[i] = g; setTimeout(()=>{ r.guests.push(g); }, k*350); k++; }
+  const q = 7 + Math.min(6, Math.round(n/2));
+  for(let i=0;i<q;i++) setTimeout(()=>spawnGuest(id), (k+i)*300);
+  const crowd = 22 + Math.min(20, S.level) + RI(0,8);
+  for(let i=0;i<crowd;i++) setTimeout(()=>spawnStander(id), (k+q)*300 + i*120);
+  r.outside = Math.min(99, r.outside + 10 + RI(0,15)); for(let i=r.outsideWait.length;i<r.outside;i++) r.outsideWait.push(R(-40,0));
+  sfx('door'); setTimeout(()=>sfx('babble', 10, 220, 0.03), 400);
   bubble2(W-70, DOOR[1]-66, S.rush.why+'!', 3500);
 }
-
 /* --- злой гость на весь экран --- */
 const ANGRY_TXT = {
   wait:['Стоял в очереди так долго, что успел поменять работу.', 'Ждал раф 20 минут. За это время успел развестись по Госуслугам.', 'Очередь двигалась медленнее моей карьеры.', 'Пока ждал, у меня выросла борода. У жены тоже.'],
@@ -7562,10 +7494,10 @@ function angryZoom(g, why){
   if(now - angryAt < 2*60000 || document.hidden || !atlasReady || HOOK.quiet || g.spr==null) return;
   angryAt = now;
   const txt = pick(ANGRY_TXT[why] || ANGRY_TXT.wait);
-  // Реакция гостя визуальная; оценка учитывается общей моделью отзывов, без дубля.
+  S.reviews = S.reviews || []; S.reviews.unshift({id:S.uid++, day:S.day, stars:1, author:pick(REV_AUTH), text:txt, reply:null}); S.reviews = S.reviews.slice(0,25); repAdd(-0.04);
   const m = META[g.spr]; const c = document.createElement('canvas'); const hh = Math.round(m[4]*0.55); c.width = m[3]; c.height = hh;
   const cx = c.getContext('2d'); cx.drawImage(atlas, m[1], m[2], m[3], hh, 0, 0, m[3], hh);
-  const ov = el(`<div class="angry" aria-hidden="true"><div class="aface"></div><div class="steam l"></div><div class="steam r"></div><div class="arev"><div class="astars">★<i>★★★★</i></div><div class="atxt"></div><div class="aauth">гость ушёл недовольным</div></div></div>`);
+  const ov = el(`<div class="angry" aria-hidden="true"><div class="aface"></div><div class="steam l"></div><div class="steam r"></div><div class="arev"><div class="astars">★<i>★★★★</i></div><div class="atxt"></div><div class="aauth">новый отзыв на картах</div></div></div>`);
   c.className = 'aimg'; ov.querySelector('.aface').appendChild(c); ov.querySelector('.atxt').textContent = '«'+txt+'»';
   document.body.appendChild(ov); sfx('bad'); try{ if(AU) SND.babble(6, 120, 0.05); }catch(e){}
   const sc = $('#scene'); if(sc){ sc.classList.remove('shake'); void sc.offsetWidth; sc.classList.add('shake'); }
@@ -7700,9 +7632,15 @@ function spawnStander_old(id){
   r.crowd.push({spr:p.spr, h:(p.kid?30:42)*(far?0.85:1), x:DOOR[0], y:DOOR[1]+R(-6,6), tx, ty, state:'in', wait:0, t:Math.random()*10, flip:false, walk:true});
 }
 function crowdTick(id, st, dt){
-  // Старые декоративные толпы не создают продажи параллельно очереди.
+  const r = rt(id); if(!r.crowd || !r.crowd.length) return;
+  r.crowdAcc = (r.crowdAcc||0) + st.through * dt * 0.55;
+  for(const c of r.crowd){ c.t += dt;
+    if(c.state==='in'){ if(moveTo(c, c.tx, c.ty, 50, dt)) c.state = 'stand'; }
+    else if(c.state==='stand'){ c.wait += dt; c.walk = false; if(c.wait > 80){ c.state = 'leave'; c.angry = true; S.c.angry++; repAdd(-0.003); if(id===S.active) angryZoom(c, 'wait'); const f = S.fin.today; f.lost = f.lost || {}; f.lost.wait = (f.lost.wait||0)+1; } }
+    else if(c.state==='leave'){ if(moveTo(c, DOOR[0]+12, DOOR[1], 58, dt)) c.gone = true; } }
+  while(r.crowdAcc >= 1){ r.crowdAcc -= 1; const c = r.crowd.find(x=>x.state==='stand'); if(!c) break; const res = sellOne(id); if(res.fail){ c.state = 'leave'; break; } c.state = 'leave'; if(id===S.active && chance(0.3)){ flyMoney(c.x, c.y - c.h - 4, res.amount); sfx('coin'); } }
+  r.crowd = r.crowd.filter(c=>!c.gone);
 }
-
 function corpTick(id, r){
   if(!S.corp || id!=='main') return;
   const inWork = r.jobs.filter(j=>j.corp).length;
@@ -7715,9 +7653,9 @@ function corpDone(){
 }
 const MESS = ['spill','cups','crumbs','shards'];
 function messTick_old(id, r, dt){
-  r.mess = r.mess || []; r.messT = (r.messT==null ? R(25,50) : r.messT) - dt*Math.min(1,r.guests.length/3);
+  r.mess = r.mess || []; r.messT = (r.messT==null ? R(25,50) : r.messT) - dt;
   if(r.messT <= 0){ r.messT = R(30, 70) / (1 + r.guests.length/12) * (1 + 0.1*room(id).upg.clean); if(r.mess.length < 5){ const sl = pick(TABLE_SLOTS.slice(0, r.seats.length)) || [180, 240]; const onTable = chance(0.4); r.mess.push({kind: onTable ? 'cups' : pick(['spill','crumbs','shards']), x: onTable ? sl[0]+R(-6,6) : R(30, 330), y: onTable ? sl[1]-9 : R(175, H-30), t:0}); } }
-  if(r.mess.length >= 3) meter('chaos', 0.001*dt*r.mess.length);
+  if(r.mess.length >= 3) meter('chaos', 0.02*dt*r.mess.length);
 }
 function drawMess(m, now){
   ctx.save(); ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(40,25,15,.55)';
@@ -7734,9 +7672,14 @@ function shrinkSurprise(){ if(surpriseDay === S.day) return; const k = Object.ke
 /* ================= v9: мини-наплывы и казусы в запару ================= */
 const WAVE_WHY = ['Наплыв!', 'Электричка пришла', 'Перерыв в офисе', 'Кончилась пара', 'Автобус остановился'];
 function waveTick(id, r, dt){
-  // Наплыв отражается обычным потоком rushMul, отдельных бесплатных гостей нет.
+  r.waveT = (r.waveT==null ? R(60, 120) : r.waveT) - dt;
+  if(r.waveT > 0) return; r.waveT = R(100, 180);
+  if(!S.isOpen || S.closedUntil > absNow()) return;
+  const hh = S.gm/60, night = hh >= 23 || hh < 6;
+  const n = RI(night ? 3 : 4, night ? 5 : 7) + Math.floor(S.level/(night ? 6 : 4));
+  for(let i=0;i<n;i++) setTimeout(()=>spawnGuest(id), i*400);
+  bubble2(W-70, DOOR[1]-66, pick(WAVE_WHY), 2200);
 }
-
 let rzT = null;
 function rushKazus(dt){
   if(!S.rush || S.rush.until <= absNow()){ rzT = null; return; }
@@ -7976,7 +7919,7 @@ sceneUpgradeProps = function(st, u, items, now, r){
   for(const it of decorOwned()){ const d = decorDef(it.id); if(!d) continue; const slot = d.slot; const pos = d.season ? (slot==='floor' ? [262 - 34*sz.floor++, -64] : [58 + 22*sz.counter++, 0]) : DECOR_POS[slot][used[slot]++]; if(!pos) continue;
     const x = pos[0], y = slot==='floor' ? H - 8 + pos[1] : BAR_TOP + 3;
     items.push({y: slot==='floor' ? y : BAR_TOP + 1, f:()=>drawDecor(it, x, y, now)}); }
-  if(S.szPet){ const spr = POOL.cat && POOL.cat[3 % POOL.cat.length]; if(spr!=null) items.push({y:BAR_TOP+1, f:()=>{ drawSprite(spr, 176, BAR_TOP + 4, 24, false, 0); if(Math.sin(now*0.7) > 0.8){ RR(182, BAR_TOP-6, 5, 6, 1, '#f3e8d3'); rect(182, BAR_TOP-6, 5, 1.5, '#7a4a2a'); } }}); }
+  if(S.szPet && passOwned()){ const spr = POOL.cat && POOL.cat[3 % POOL.cat.length]; if(spr!=null) items.push({y:BAR_TOP+1, f:()=>{ drawSprite(spr, 176, BAR_TOP + 4, 24, false, 0); if(Math.sin(now*0.7) > 0.8){ RR(182, BAR_TOP-6, 5, 6, 1, '#f3e8d3'); rect(182, BAR_TOP-6, 5, 1.5, '#7a4a2a'); } }}); }
 };
 const _machine14 = sceneMachine;
 sceneMachine = function(st, L, now, busy){ const mx = _machine14(st, L, now, busy); if(S && S.goldMachine){ const tier = L<1?0:L<5?1:L<10?2:L<15?3:L<20?4:5; const x = 52, base = BACK_Y - 2; const w = [40,48,56,62,66,70][tier], h = [24,30,34,38,40,42][tier];
@@ -8007,8 +7950,8 @@ renderSheet = function(){
 };
 function rwText(rw){ return rw.k==='money' ? rw.t+': +'+fmt(rw.v)+' ₽' : rw.k==='xp' ? 'Опыт +'+rw.v : rw.k==='staff' ? rw.t : rw.t; }
 const SZ_SNAP = (()=>{ try{ const t = JSON.parse(localStorage.getItem('bc_sz')||'null'); if(t && t.season) return Object.assign({tried:0}, t); }catch(e){} return {at:0, top:[], sps:[], total:0, season:null, tried:0}; })();
-function loadSzTop(){ if(SZ_SNAP.season===sezId() && Date.now() - SZ_SNAP.at < TOUR_MS) return; if(Date.now() - SZ_SNAP.tried < 60000) return; SZ_SNAP.tried = Date.now(); const run = S && S.franchises;
-  fetch('/api/season').then(r=>r.json()).then(r=>{ if((S && S.franchises) !== run) return; if(r && r.ok){ Object.assign(SZ_SNAP, {at:r.at||Date.now(), top:r.top||[], sps:r.sps||[], total:r.total||0, season:r.season}); try{ localStorage.setItem('bc_sz', JSON.stringify({at:SZ_SNAP.at, top:SZ_SNAP.top, sps:SZ_SNAP.sps, total:SZ_SNAP.total, season:SZ_SNAP.season})); }catch(e){} structDirty = true; } }).catch(()=>{}); }
+function loadSzTop(){ if(SZ_SNAP.season===sezId() && Date.now() - SZ_SNAP.at < TOUR_MS) return; if(Date.now() - SZ_SNAP.tried < 60000) return; SZ_SNAP.tried = Date.now();
+  fetch('/api/season').then(r=>r.json()).then(r=>{ if(r && r.ok){ Object.assign(SZ_SNAP, {at:r.at||Date.now(), top:r.top||[], sps:r.sps||[], total:r.total||0, season:r.season}); try{ localStorage.setItem('bc_sz', JSON.stringify({at:SZ_SNAP.at, top:SZ_SNAP.top, sps:SZ_SNAP.sps, total:SZ_SNAP.total, season:SZ_SNAP.season})); }catch(e){} structDirty = true; } }).catch(()=>{}); }
 function renderSeason(p){
   const z = szState(), info = sezInfo(), tier = szTier(z), own = passOwned();
   const end = new Date(Date.parse(sezId().slice(0,7)+'-01T00:00:00+03:00')); end.setUTCMonth(end.getUTCMonth()+1); const left = Math.max(0, Math.ceil((end - Date.now())/86400000));
@@ -8106,8 +8049,6 @@ function renderFin(p){
   const c = t.cash || {};
   p.appendChild(el(`<div class="card"><div class="t">Касса и наличные</div><div class="d">Пересчёт в конце дня. Сегодня пока: фальшивок ${c.fakeN||0}${c.fake?' (−'+fmt(c.fake)+' ₽)':''}, ошибок со сдачей ${c.errN||0}${c.err?' (−'+fmt(c.err)+' ₽)':''}${c.over?', излишек +'+fmt(c.over)+' ₽':''}${c.caught?', детектор поймал '+c.caught:''}.</div><div class="d">${detectorL()?'Детектор банкнот стоит (касса 4 ур. и выше).':'Детектора банкнот нет: он появится с 4 уровня улучшения «Касса».'} ${(room('main').upg.safety||0)>=6?'Камеры ловят воров.':'Камеры появятся с 6 уровня «Безопасности».'}</div></div>`));
   p.appendChild(el(`<div class="card"><div class="t">Налог УСН 5%</div><div class="d">Начисляется с выручки и списывается каждый день в полночь. Сейчас накоплено ${fmt(S.fin.taxAcc)} ₽.${S.fin.noCheck>0?' Продано без чеков: '+fmt(S.fin.noCheck)+' ₽ — налоговая может прийти.':''}</div></div>`));
-  const costs = closingCosts(), rows = [['Зарплаты смены', costs.wages], ['Отчисление смене с выручки', costs.turnoverWages], ['Аренда', costs.rent], ['Аренда с оборота', costs.turnoverRent], ['Коммуналка и расходы на гостей', costs.util], ['Питание команды', costs.meals], ['Платёж по кредиту', costs.loan]];
-  p.appendChild(el(`<div class="card"><div class="t">Что спишется при закрытии смены</div>${rows.filter(x=>x[1]>0).map(([n,v])=>`<div class="zl"><span>${n}</span><i></i><b class="num">−${fmt(v)} ₽</b></div>`).join('')}<div class="zl"><b>Итого по текущим показателям</b><i></i><b class="num">−${fmt(costs.total)} ₽</b></div><div class="d">Смена закрывается в 00:00 игрового времени. В полночь отдельно спишется накопленный налог: сейчас ${fmt(Math.round(S.fin.taxAcc))} ₽. Если включён автозаказ, поставщик также спишет стоимость заказанных продуктов. События и недостача в кассе могут добавить расходы. Процентная аренда учитывает большую из текущей и средней выручки арендованных залов за семь дней. За выкупленные помещения она не берётся.</div></div>`));
   if(S.debt.stage>0 || S.debt.loan>0 || S.money<0){
     const d = el(`<div class="card" style="border-color:var(--bad)"><div class="t">Долги</div><div class="d">Дней в минусе подряд: ${S.debt.daysNeg}. ${['','Поставщики работают только по предоплате.','Звонят коллекторы.','Арендодатель забрал зал.'][S.debt.stage]||''} После 14 дней в минусе — банкротство.</div>${S.debt.loan>0?`<div class="d">Долг «серьёзным людям»: ${fmt(S.debt.loan)} ₽, каждый день 4% платежа.</div><div class="row">${btnHtml('Погасить долг', S.debt.loan, false)}</div>`:''}</div>`);
     const lb = d.querySelector('button'); if(lb) lb.onclick = () => { if(S.money < S.debt.loan) return; spend(S.debt.loan,'other','Погашение долга'); S.debt.loan = 0; toast('Долг погашен. Люди в кожанках больше не заходят'); save(); renderPanel(); };
@@ -8277,13 +8218,12 @@ attention = function(){
 };
 
 /* ---------- связь с сервером: трекинг и команды ---------- */
-function track(force, responseRequired){
-  if(S && S.marketPending && !responseRequired) return;
+function track(force){
   if(!S || !tg || !tg.initData) return;
   const z = szState();
-  const body = JSON.stringify({initData: tg.initData, stats:{marketVersion:S.marketVersion||0,roster:S.staff.filter(s=>!s.isYou).map(mkPack),cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
-  try{ if(force && !responseRequired && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else return fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(r=>{ onTrack(r); return r; }).catch(()=>null); }catch(e){}
+  try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
 const ADMIN_LEG = ['Возврат НДС, о котором ты забыл','Зачисление от инвестора','Наследство двоюродной тёти','Перевод от шейхов: «на развитие кофе»','Компенсация от поставщика за кислое молоко'];
 function onTrack(r){
@@ -8303,7 +8243,7 @@ function onTrack(r){
     else if(o.op==='msg'){ queueModal({kind:'adminmsg', text:tx}); }
     else if(o.op==='staff'){ const st = makePrizeStaff(Math.max(5, Math.min(50, a||20))); toast('В команду '+he(st,'пришёл','пришла')+' '+st.name+', уровень '+st.lvl+'. '+tx); sfx('level'); syncScene('main'); }
     else if(o.op==='rename'){ S.name = String(tx||S.name).slice(0,28); toast('Название кофейни изменено: «'+S.name+'»'); setTimeout(renderGame, 50); }
-    else if(o.op==='fpraise'){ S.reviews = S.reviews||[]; S.reviews.unshift({id:S.uid++, day:S.day, stars:5, author:tx||'Друг', text:'Зашёл к другу. Кофе отличный, бариста живой, кот наглый. Пять звёзд.', reply:null}); syncReviewRating(); toast((tx||'Друг')+' оставил отзыв на пять звёзд'); }
+    else if(o.op==='fpraise'){ S.reviews = S.reviews||[]; S.reviews.unshift({id:S.uid++, day:S.day, stars:5, author:tx||'Друг', text:'Зашёл к другу. Кофе отличный, бариста живой, кот наглый. Пять звёзд.', reply:null}); repAdd(0.05); toast((tx||'Друг')+' оставил отзыв на пять звёзд'); }
     else if(o.op==='fgift'){ income(a, 'friends', (tx||'Друг')+' оставил чаевые'); toast((tx||'Друг')+' оставил чаевые '+fmt(a)+' ₽'); sfx('coin'); }
     else if(o.op==='fprank'){ pushIncident('f_prank', {sname:tx||'Друг'}); }
     else if(o.op==='level'){ S.level = Math.max(1, Math.min(60, a||1)); S.xp = 0; toast('Администрация выдала уровень '+S.level); sfx('level'); setTimeout(renderGame, 50); }
@@ -8347,9 +8287,9 @@ function repCard(p){
   const t = S.fin.today, y = S.fin.hist[0] || {};
   const rows = L => Object.keys(L||{}).filter(k=>Math.abs(L[k]) >= 0.005).sort((a,b)=>L[a]-L[b]).map(k=>`<div class="zl"><span>${esc(REP_N[k]||k)}</span><i></i><b class="num" style="color:${L[k]<0?'var(--bad)':'var(--good)'}">${L[k]>0?'+':'−'}${Math.abs(L[k]).toFixed(2).replace('.',',')}</b></div>`).join('');
   const today = rows(t.repLog), yday = rows(y.repLog);
-  p.appendChild(el(`<div class="card chalkboard rep15"><div class="t chalk">Рейтинг ${S.rep.toFixed(2).replace('.',',')} · отзывов ${S.rating ? S.rating.reviews : 0}</div>
-    <div class="d">Известность района: ${Math.round(S.awareness||0)}/100. Работаем 08:00–20:00. Оценка зависит от качества обслуживания: ожидания, чистоты и оборудования. Учтены все полученные оценки; последние отзывы доступны ниже. Пока оценок мало, используется сглаживание от стартовых 3 звёзд.</div>
-    <div class="d">Звёзды меняются только по отзывам после обслуживания. События влияют на впечатление гостей, ответы могут изменить конкретную оценку.</div>
+  p.appendChild(el(`<div class="card chalkboard rep15"><div class="t chalk">Рейтинг ${S.rep.toFixed(2).replace('.',',')}</div>
+    <div class="d">Опускают: гости, ушедшие злыми из очереди, грязь, мокрый пол без таблички, плохие отзывы без ответа, проваленные запары. Поднимают: быстрая очередь, чистота, ответы на отзывы, выдержанные запары, хорошие решения в событиях, интерьер и меню.</div>
+    <div class="d">Ниже 2,0 рейтинг падает вдвое медленнее. Пока тебя нет в игре, он не падает.</div>
     ${today?`<div class="h2">Сегодня</div>${today}`:''}${yday?`<div class="h2">Вчера</div>${yday}`:''}${!today && !yday?'<div class="d">Сегодня рейтинг пока не менялся.</div>':''}</div>`));
 }
 // быстрый старт для новичков
@@ -8608,7 +8548,7 @@ waveTick = function(id, r, dt){ if(id==='hall2') return; return _waveTick18(id, 
 const _messTick18 = messTick;
 messTick = function(id, r, dt){
   if(id!=='hall2') return _messTick18(id, r, dt);
-  r.mess = r.mess || []; r.messT = (r.messT==null ? R(40,80) : r.messT) - dt*Math.min(1,r.guests.length/3);
+  r.mess = r.mess || []; r.messT = (r.messT==null ? R(40,80) : r.messT) - dt;
   if(r.messT <= 0){ const sitting = r.guests.filter(g=>g.state==='sit').length; r.messT = R(50, 110) / (1 + sitting/10) * (1 + 0.1*room(id).upg.clean);
     if(sitting && r.mess.length < 4) r.mess.push({kind:pick(['spill','crumbs','crumbs','shards']), x:R(20, 280), y:R(200, H-14), t:0}); }
 };
@@ -9132,13 +9072,8 @@ function buyoutFix(){ S.spends = S.spends || {}; if(S.spends.buyout && !(S.owned
 
 /* ---------- задание на отзывы: отзывов хватает ---------- */
 function unanswered(){ return (S.reviews||[]).filter(r=>!r.reply).length; }
-function reviewsTaskFix(){
-  for(const t of S.tasks||[]) if(t.kind==='reviews' && !t.done && !t.prog && unanswered()<t.goal){
-    t.kind='serve'; t.goal=Math.max(10,Math.round(((S.fin.hist[0]||{}).guests||30)*0.8));
-    t.label='Обслужить '+t.goal+' гостей'; t.hint=TASK_HINT.serve;
-  }
-}
-
+function addReview(){ const f = S.fin.hist[0] || {}; const stars = clamp(Math.round(S.rep + R(-1, 1)), 1, 5); S.reviews = S.reviews || []; S.reviews.unshift({id:S.uid++, day:S.day, stars, author:pick(REV_AUTH), text:pick(REV_TXT[stars]), reply:null}); S.reviews = S.reviews.slice(0, 25); }
+function reviewsTaskFix(){ for(const t of (S.tasks||[])){ if(t.kind!=='reviews' || t.done || t.failed) continue; const need = t.goal - t.prog; let u = unanswered(), k = 0; while(u < need && k < 5){ addReview(); u++; k++; } } }
 const _newTasks20 = newTasks;
 newTasks = function(){ _newTasks20(); try{ reviewsTaskFix(); }catch(e){} };
 
@@ -9184,7 +9119,7 @@ const _onTrack20 = onTrack;
 onTrack = function(r){
   try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const o of r.ops){
     if(o.op==='grant'){ const t = applyGrant(String(o.text||'')); if(t){ toast(t); sfx('level'); } }
-    else if(o.op==='xp'){ const a = Math.max(0, Math.round(Number(o.amount)||0)); if(a){ addXp(a, 'reward'); toast('Подарок: опыт +'+fmt(a)); sfx('level'); } } }
+    else if(o.op==='xp'){ const a = Math.max(0, Math.round(Number(o.amount)||0)); if(a){ addXp(a); toast('Подарок: опыт +'+fmt(a)); sfx('level'); } } }
     if(r && r.ops && r.ops.some(o=>o.op==='grant' || o.op==='xp')){ save(); structDirty = true; renderHud(); } }catch(e){ console.error(e); }
   return _onTrack20(r);
 };
@@ -9232,7 +9167,7 @@ renderUpgrades = function(p, id){
 /* ---------- выдачи из админки: всё, что можно ---------- */
 const _applyGrant22 = applyGrant;
 applyGrant = function(k){
-  if(k==='rep'){ S.awareness=clamp((S.awareness||0)+15,0,100); return 'Сарафанное радио: известность +15'; }
+  if(k==='rep'){ S.rep = Math.min(5, S.rep + 0.5); return 'Подарок: рейтинг +0,5'; }
   if(k==='stock'){ for(const id in STOCK){ const st = STOCK[id]; const need = Math.max(0, stockCap(id) - stockQty(id)); if(need <= 0) continue; if(st.perish){ if(!Array.isArray(S.stock[id])) S.stock[id] = []; S.stock[id].push({q:need, exp:S.day + st.perish}); } else S.stock[id] = (S.stock[id]||0) + need; } return 'Подарок: склад заполнен до отказа'; }
   if(k==='upg5'){ for(const u of UPG){ const r = room('main'); r.upg[u.id] = Math.min(MAXL, (r.upg[u.id]||0) + 5); } syncScene('main'); return 'Подарок: все улучшения основного зала +5'; }
   if(k==='h2upg5'){ const r = room('hall2'); if(!r) return 'Сначала нужна зона отдыха'; for(const id of ['tables','decor','clean','safety']) r.upg[id] = Math.min(MAXL, (r.upg[id]||0) + 5); layoutH2(); syncScene('hall2'); return 'Подарок: улучшения зоны отдыха +5'; }
@@ -9730,25 +9665,26 @@ renderTeam = function(p, id){
 };
 
 /* ---------- трансферное окно ---------- */
-const MK_KEYS = ['id','name','role','room','today','lvl','rank','quirk','sex','spr','legendId','prize','xp','shifts','seasonRewardKey','szLeg'];
+const MK_KEYS = ['name','role','lvl','rank','quirk','sex','spr','legendId','prize','xp','shifts'];
 function mkPack(s){ const o = {}; for(const k of MK_KEYS) if(s[k] != null) o[k] = s[k]; return o; }
 function mkUnpack(o){ const s = makeStaff(o.role, {quirk:o.quirk||'none'}); for(const k of MK_KEYS) if(o[k] != null) s[k] = o[k]; s.mood = 70; s.fatigue = 0; s.interviewed = true; s.claim = false; s.transfer = true; return s; }
 function mkValue(s){ return Math.max(20000, Math.round(shiftPay(s) * (6 + s.lvl*2 + (s.rank||0)*6 + (s.legendId||s.prize ? 40 : 0)) / 1000) * 1000); }
 let MARKET = {list:[], mine:[], at:0, busy:false};
-async function mkApi(body){ if(!(tg && tg.initData)) return {ok:false, error:'Открой игру из Telegram'}; try{ const r = await fetch('/api/market', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData:tg.initData}, body))}); return Object.assign({httpStatus:r.status}, await r.json()); }catch(e){ return {ok:false, error:'Нет связи',uncertain:true}; } }
-async function mkLoad(force){ if(MARKET.busy || (!force && Date.now() - MARKET.at < 60000)) return; MARKET.busy = true; try{ const r = await mkApi({op:'get',version:S.marketVersion||0}); if(r && r.ok){ for(const receipt of r.operations||[]) if(!await applyMarketReceipt(receipt)) return; MARKET.list = r.list||[]; MARKET.mine = r.mine||[]; MARKET.at = Date.now(); structDirty = true; if(sheet) renderPanel(); } } finally{ MARKET.busy = false; } }
+async function mkApi(body){ if(!(tg && tg.initData)) return {ok:false, error:'Открой игру из Telegram'}; try{ const r = await fetch('/api/market', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData:tg.initData}, body))}); return await r.json(); }catch(e){ return {ok:false, error:'Нет связи'}; } }
+async function mkLoad(force){ if(MARKET.busy || (!force && Date.now() - MARKET.at < 60000)) return; MARKET.busy = true; const r = await mkApi({op:'get'}); MARKET.busy = false; if(r && r.ok){ MARKET.list = r.list||[]; MARKET.mine = r.mine||[]; MARKET.at = Date.now(); structDirty = true; if(sheet) renderPanel(); } }
 function marketSection(id){
   mkLoad();
   const box = el(`<div><div class="h chalk">Трансферное окно</div><div class="empty" style="font-size:12px">Сотрудники других игроков. Покупаешь — человек переходит к тебе со своим уровнем и характером. Своего можно выставить из его карточки.</div></div>`);
   for(const it of MARKET.mine){ const c = el(`<div class="card"><div class="row wrap"><span class="t">${esc(it.staff.name)}</span><span class="tag">${esc(it.staff.role)}</span><span class="tag num">ур. ${it.staff.lvl}</span><span class="sp"></span><span class="tag ${it.status==='sold'?'g':''}">${it.status==='sold'?'Продан':'Выставлен'}</span></div><div class="d">${it.status==='sold'?'Купил'+'а кофейня «'+esc(it.buyer_cafe||'?')+'». Деньги придут при следующем отчёте.':'Цена '+fmt(it.price)+' ₽. Пока ждёт покупателя.'}</div>${it.status==='open'?'<div class="row"><button class="btn ghost">Снять с продажи и вернуть</button></div>':''}</div>`);
-    const b = c.querySelector('button'); if(b) b.onclick = async () => { b.disabled = true; await marketMutate('cancel',{id:it.id}); mkLoad(true); };
+    const b = c.querySelector('button'); if(b) b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'cancel', id:it.id}); if(r && r.ok && r.staff){ const s = mkUnpack(r.staff); hire(s, 'main', 'white'); syncScene('main'); toast(s.name+' '+he(s,'вернулся','вернулась')+' в команду'); save(); } else toast((r && r.error) || 'Не получилось'); mkLoad(true); };
     box.appendChild(c); }
   const others = MARKET.list.slice(0, 12);
   if(!others.length) box.appendChild(el(`<div class="empty">${MARKET.at ? 'Пока никто никого не продаёт.' : 'Загружаем…'}</div>`));
-  for(const it of others){ const s = it.staff, targetRoom=id==='hall2' && !HALL2_ROLES.includes(s.role)?'main':id; const cnt = staffIn(targetRoom).filter(x=>x.role===s.role && !x.isYou).length, full = cnt >= staffCap(s.role);
+  for(const it of others){ const s = it.staff; const cnt = staffIn(id).filter(x=>x.role===s.role && !x.isYou).length, full = cnt >= staffCap(s.role);
     const q = s.quirk && s.quirk!=='none' && QUIRKS[s.quirk] ? qN(s) : 'без странностей';
     const c = el(`<div class="card staff"><div class="spr" style="${sprStyle(s.spr, 48)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${esc(s.role)}</span><span class="tag num">ур. ${s.lvl}</span>${s.legendId||s.prize?'<span class="tag gold">Легенда</span>':''}</div><div class="d">${esc(q)} · из «${esc(it.seller_cafe||'?')}»</div><div class="row">${full?'<span class="tag">Мест на эту роль нет</span>':btnHtml('Купить · '+fmt(it.price)+' ₽', it.price, S.money < it.price)}</div></div></div>`);
-    const b = c.querySelector('button[data-cost]'); if(b) b.onclick = async () => { if(S.money < it.price){ toast('Не хватает денег'); return; } b.disabled = true; await marketMutate('buy',{id:it.id,room:targetRoom}); mkLoad(true); };
+    const b = c.querySelector('button[data-cost]'); if(b) b.onclick = async () => { if(S.money < it.price){ toast('Не хватает денег'); return; } b.disabled = true; const r = await mkApi({op:'buy', id:it.id});
+      if(r && r.ok && r.staff){ spend(it.price, 'invest', 'Трансфер: '+r.staff.name); const ns = mkUnpack(r.staff); hire(ns, id, 'white'); syncScene(id); sfx('buy'); toast(ns.name+' '+he(ns,'перешёл','перешла')+' к тебе из «'+(it.seller_cafe||'?')+'»'); save(); } else toast((r && r.error) || 'Уже купили'); mkLoad(true); };
     box.appendChild(c); }
   return box;
 }
@@ -9757,18 +9693,17 @@ const _staffModal25 = staffModal;
 staffModal = function(box, m, btn){
   _staffModal25(box, m, btn);
   const s = S.staff.find(x=>x.id===m.sid); if(!s || s.isYou || s.today==='sub') return;
-  if(s.seasonRewardKey || s.szLeg){ box.appendChild(el('<div class="d">Это награда сезона. Она останется в коллекции при продаже сети, но выставить её на трансфер нельзя.</div>')); return; }
   const v = mkValue(s);
   const wrap = el(`<div class="card" style="margin-top:8px"><div class="t">Трансферное окно</div><div class="d">Выставить ${esc(s.name)} на продажу другим игрокам. Пока висит объявление, сотрудник уходит из команды. Снять можно в любой момент — вернётся. Комиссия площадки 10%.</div><div class="row wrap mk-p"></div></div>`);
   const row = wrap.querySelector('.mk-p');
   [[0.7,'Дёшево'],[1,'Норма'],[1.5,'Дорого']].forEach(([k, n])=>{ const price = Math.round(v*k/1000)*1000; const b = el(`<button class="btn ghost">${n} · ${fmt(price)} ₽</button>`);
-    b.onclick = async () => { b.disabled = true; if(await marketMutate('list',{staffId:s.id,price})) closeModal(); b.disabled = false; mkLoad(true); };
+    b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'list', staff:mkPack(s), price, cafe:S.name}); if(r && r.ok){ removeStaff(s.id); syncScene(s.room||'main'); toast(s.name+' '+he(s,'выставлен','выставлена')+' за '+fmt(price)+' ₽'); save(); closeModal(); mkLoad(true); } else { b.disabled = false; toast((r && r.error) || 'Не получилось'); } };
     row.appendChild(b); });
   box.appendChild(wrap);
 };
 // деньги за проданного приходят через отчёт
 const _onTrack25 = onTrack;
-onTrack = function(r){ try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const o of r.ops){ if(o.op==='trsold'){ const a = Math.max(0, Math.round(Number(o.amount)||0)); if(a){ income(a, 'transfer', 'Трансфер: '+(o.text||'сотрудник')); toast('Продан на трансфере: '+(o.text||'сотрудник')+' · +'+fmt(a)+' ₽'); sfx('coin'); } } } }catch(e){ console.error(e); } return _onTrack25(r); };
+onTrack = function(r){ try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const o of r.ops){ if(o.op==='trsold'){ const a = Math.max(0, Math.round(Number(o.amount)||0)); if(a){ income(a, 'events', 'Трансфер: '+(o.text||'сотрудник')); toast('Продан на трансфере: '+(o.text||'сотрудник')+' · +'+fmt(a)+' ₽'); sfx('coin'); } } } }catch(e){ console.error(e); } return _onTrack25(r); };
 
 /* ---------- календарь смен ---------- */
 function mskDayStr(t){ return new Date((t||Date.now()) + 3*3600000).toISOString().slice(0, 10); }
@@ -9779,7 +9714,7 @@ function streakReward(n){
   if(n % 14 === 0) return {t:'Две недели подряд', d:'Значок «Две недели на смене» и сутки +10% гостей.', fx:()=>{ badgeAdd('streak14', 'Две недели на смене', 'Календарь смен'); addMod('traffic', 1.1, 24, 'Две недели подряд: гостей +10%'); }};
   if(n % 7 === 0) return {t:'Неделя подряд', d:'В резюме сегодня — кандидат высокого уровня.', fx:()=>{ const c = makeStaff(pick(['Бариста','Кассир','Официант']), {quirk:'none'}); c.lvl = Math.max(6, Math.min(14, S.level)); c.interviewed = true; c.cv = null; S.cands.unshift(c); }};
   if(n % 3 === 0) return {t:'Третий день подряд', d:'Хозтовары и молоко на складе до полного.', fx:()=>{ for(const k of ['hoz','milk']){ if(!STOCK[k]) continue; const need = Math.max(0, stockCap(k) - stockQty(k)); if(!need) continue; if(STOCK[k].perish){ if(!Array.isArray(S.stock[k])) S.stock[k] = []; S.stock[k].push({q:need, exp:S.day + STOCK[k].perish}); } else S.stock[k] = (S.stock[k]||0) + need; } }};
-  const v = Math.min(5000,Math.round(Math.max(500,Math.min(20000,dayBase())*0.04)*(1+0.1*Math.min(n,10))/100)*100);
+  const v = Math.max(20000, Math.round(Math.max(100000, dayBase()) * (0.15 + Math.min(0.35, n*0.02)) / 1000) * 1000);
   return {t:'День '+n, d:'+'+fmt(v)+' ₽ на кассу.', fx:()=>income(v, 'events', 'Календарь смен, день '+n)};
 }
 function streakCheck(){
@@ -9860,7 +9795,7 @@ const DECOR_GONE_N = {sofa:'Диван', piano:'Пианино', photo:'Фото
 function decorGoneFix(){ if(!S || !S.decor || !S.decor.items) return; const gone = S.decor.items.filter(x=>DECOR_GONE.includes(x.id)); if(!gone.length) return;
   S.decor.items = S.decor.items.filter(x=>!DECOR_GONE.includes(x.id)); if(S.decorLoc) for(const k of DECOR_GONE) delete S.decorLoc[k];
   let sum = 0; for(const x of gone) sum += DECOR_GONE_PRICE[x.id] || 0;
-  if(sum > 0){ income(sum, 'capitalback', 'Возврат за убранный интерьер'); }
+  if(sum > 0){ income(sum, 'other', 'Возврат за убранный интерьер'); }
   queueModal({kind:'note', title:'Интерьер обновили', text:'Из игры убрали: '+gone.map(x=>DECOR_GONE_N[x.id]).join(', ')+'. Деньги за них вернули на счёт: '+fmt(sum)+' ₽.'});
   HOOK.struct(); }
 
@@ -9876,7 +9811,7 @@ szAdd = function(v, why){ if(!S) return; const z = szState();
 
 /* продажа сети: рейтинг сезона считается заново для нового помещения */
 const _sellFr25 = sellFranchise;
-sellFranchise = function(cityId, receipt){ const sh = _sellFr25('spb', receipt); if(sh && S.sz) S.sz.rbase = S.sz.sp; return sh; };
+sellFranchise = function(cityId){ const sh = _sellFr25('spb'); if(sh && S.sz) S.sz.rbase = S.sz.sp; return sh; };
 
 const _migrate25b = migrate;
 migrate = function(){ const r = _migrate25b.apply(this, arguments); try{ decorGoneFix(); }catch(e){} return r; };
@@ -9975,7 +9910,7 @@ const SIGN_FRAMES = {
 };
 const FRAME_SHOP = ['gold','neon','marble','ice'];
 function frameOwned(k){ return !!(S && S.ent && (S.ent.frames||[]).includes('frame_'+k)) || !!(S && S.c && (S.c.frameGift||[]).includes(k)); }
-function frameOwnedId(){ if(!S || !S.c) return undefined; let k = S.c.signFrame; if(k === undefined){ k = Object.keys(SIGN_FRAMES).find(frameOwned); } return k && SIGN_FRAMES[k] && frameOwned(k) ? k : undefined; }
+function frameOwnedId(){ if(!S || !S.c) return undefined; let k = S.c.signFrame; if(k === undefined){ k = FRAME_SHOP.find(frameOwned); } return k && FRAME_SHOP.includes(k) && frameOwned(k) ? k : undefined; }
 function signFrameId(u){ const k = frameOwnedId(); if(k) return k; return u.sign>=10 ? 'chalk' : 'wood'; }
 sceneSign = function(st, u, now){
   if(u.sign<1) return;
@@ -10004,7 +9939,7 @@ sceneLamps = function(st, u, now){
 /* выбор рамки в настройках */
 const _renderMore26 = renderSettings;
 renderSettings = function(p){ _renderMore26.apply(this, arguments); try{
-  const shopCard = p.querySelector('#shop'); if(!shopCard) return; const own = Object.keys(SIGN_FRAMES).filter(frameOwned); if(!own.length) return;
+  const shopCard = p.querySelector('#shop'); if(!shopCard) return; const own = FRAME_SHOP.filter(frameOwned); if(!own.length) return;
   const cur = frameOwnedId() || '';
   const c = el(`<div class="card"><div class="t">Рамка вывески</div><div class="subnav">${[['','Обычная'], ...own.map(k=>[k, SIGN_FRAMES[k].n])].map(([k,n])=>`<button class="chipbtn" data-f="${k}" aria-pressed="${k===cur}">${n}</button>`).join('')}</div><div class="d">Видна над меню и в рейтингах сезона и недели.</div></div>`);
   c.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ S.c.signFrame = b.dataset.f || null; save(); structDirty = true; toast(b.dataset.f ? 'Рамка «'+SIGN_FRAMES[b.dataset.f].n+'»' : 'Обычная вывеска'); try{ track(true); }catch(e){} });
@@ -10033,7 +9968,6 @@ renderUpgrades = function(p, id){ _renderUpgrades26(p, id);
     if(dh){ let n = dh.nextElementSibling; while(n && !(n.classList.contains('h') && n.textContent.trim()==='Куда ещё потратить')){ const nx = n.nextElementSibling; n.remove(); n = nx; } dh.remove(); }
     cutSection(p, 'Магазин'); cutSection(p, 'Уже стоит'); cutCard(p, t=>t==='Наборы' || t==='Интерьер' || t==='Как меняется зона отдыха');
     if(id==='main' || !id){ const last = p.querySelector('.h.chalk:last-of-type'); _salesCards26(p); }
-    const oldSub = sub; sub = 'fr'; try{ renderMore(p); } finally { sub = oldSub; }
     const fr = [...p.querySelectorAll('.card')].find(c=>{ const t = c.querySelector('.t'); return t && t.textContent.trim().startsWith('Продать сеть'); });
     if(fr){ p.appendChild(el(`<div class="h chalk">Франшиза</div>`)); p.appendChild(fr); }
   }catch(e){ console.error(e); } };
@@ -10043,7 +9977,7 @@ function decorRefund26(){ if(!S || !S.decor || !S.decor.items || S.c.decorRefund
   const paid = S.decor.items.filter(x=>{ const d = decorDef(x.id); return d && d.price > 0; });
   S.decor.items = S.decor.items.filter(x=>{ const d = decorDef(x.id); return !(d && d.price > 0); });
   let sum = 0; for(const x of paid){ const d = decorDef(x.id); sum += d.price; }
-  if(sum > 0){ income(sum, 'capitalback', 'Возврат за интерьер'); queueModal({kind:'note', title:'Интерьер убрали из игры', text:'Купленные предметы забрали, деньги вернули на счёт: '+fmt(sum)+' ₽.'}); }
+  if(sum > 0){ income(sum, 'other', 'Возврат за интерьер'); queueModal({kind:'note', title:'Интерьер убрали из игры', text:'Купленные предметы забрали, деньги вернули на счёт: '+fmt(sum)+' ₽.'}); }
   HOOK.struct(); }
 DECOR_SETS.length = 0;
 const _migrate26 = migrate;
@@ -10062,32 +9996,29 @@ openDay = function(){ const r = _openDay26.apply(this, arguments); try{ if(!HOOK
 
 /* продажа сети: новое название и чистый рейтинг */
 const _sellFr26 = sellFranchise;
-sellFranchise = function(cityId, newName, receipt){ const sh = _sellFr26(cityId, receipt); if(sh){ if(newName) S.name = newName; S.c.soldAt = receipt ? receipt.soldAt : Date.now(); if(S.sz){ S.sz.rbase = S.sz.sp; S.sz.acc = 0; S.sz.profit = 0; } } return sh; };
+sellFranchise = function(cityId, newName){ const sh = _sellFr26(cityId); if(sh){ if(newName) S.name = newName; S.c.soldAt = Date.now(); if(S.sz) S.sz.rbase = S.sz.sp; } return sh; };
 const _renderSheet26 = renderSheet;
 renderSheet = function(){ _renderSheet26.apply(this, arguments); try{ if(sheet==='hall'){ const p = $('#panel'); const fr = p && [...p.querySelectorAll('.card')].find(c=>{ const t = c.querySelector('.t'); return t && t.textContent.trim().startsWith('Продать сеть'); }); if(fr && fr !== p.lastElementChild){ p.appendChild(el(`<div class="h chalk">Франшиза</div>`)); p.appendChild(fr); } } if(sheet==='hall' && hallTab==='tasks'){ const p = $('#panel'); if(p){ cutCard(p, t=>t==='Похвастаться' || t.startsWith('Планёрка')); cutSection(p, 'Реклама'); cutSection(p, 'Продажи'); } } }catch(e){} };
 
 /* ===== баланс: игра сложнее, прибыль не гарантирована ===== */
-const WD_TRAFFIC = [0.9, 0.95, 1, 1, 1.1, 1.2, 1.1];
+const WD_TRAFFIC = [0.75, 0.85, 0.95, 1, 1.1, 1.2, 1.1];
 function balRamp(){ return Math.max(0, Math.min(1, ((S && S.level || 1) - 4) / 8)); }
-function wageIndex(){ return 1; }
+function wageIndex(){ return 1 + 0.1 * Math.max(0, (S.level||1) - 4); }
 function avgRev7(){ const h = (S.fin && S.fin.hist || []).slice(0, 7); if(!h.length) return 0; return h.reduce((a,f)=>a+(f.rev||0),0) / h.length; }
 const _modMul26 = modMul;
 modMul = function(k){ let m = _modMul26(k);
   if(k==='traffic' && S) m *= WD_TRAFFIC[weekday()] || 1;
-  // Поставщик и реальные события определяют цену; уровень не добавляет инфляцию.
+  if(k==='supply' && S) m *= 1 + 0.5 * balRamp();
   return m; };
 const _shiftPay26 = shiftPay;
 shiftPay = function(s){ return Math.round(_shiftPay26(s) * wageIndex() / 10) * 10; };
 const _closeDay26 = closeDay;
-closeDay = function(){
-  if(!S || !S.isOpen || S.closedDay === S.day) return;
-  S.closedDay = S.day;
-  try{ if(S.fin && S.fin.today){ const f = S.fin.today, r = balRamp();
+closeDay = function(){ try{ if(S && S.fin && S.fin.today){ const f = S.fin.today, r = balRamp();
     if(r > 0){
-      const rs = turnoverRent(f); if(rs > 0) spend(rs, 'rent', 'Аренда: '+(18*r).toLocaleString('ru-RU')+'% с оборота');
-      const ts = turnoverStaffPay(f); if(ts > 0) spend(ts, 'wages', 'Процент смене: '+(10*r).toLocaleString('ru-RU')+'% выручки');
+      const rs = Math.round(0.18 * r * Math.max(avgRev7(), f.rev||0) * modMul('rent')); if(rs > 0) spend(rs, 'rent', 'Аренда: '+Math.round(18*r)+'% с оборота');
+      const ts = Math.round(0.10 * r * (f.rev||0)); if(ts > 0 && S.staff.some(x=>!x.isYou)) spend(ts, 'wages', 'Процент смене: '+Math.round(10*r)+'% выручки');
     }
-    const ut = Math.round((f.guests||0) * 3); if(ut > 0) spend(ut, 'util', 'Вода и свет за гостей');
+    const ut = Math.round((f.guests||0) * 10); if(ut > 0) spend(ut, 'util', 'Вода и свет за гостей');
   } }catch(e){} return _closeDay26.apply(this, arguments); };
 
 /* ===== верх: вариант 1 (название сверху, часы и касса ниже, две плашки + «ещё») ===== */
@@ -10108,7 +10039,7 @@ renderHud = function(){ _renderHud26.apply(this, arguments); try{ if(!S) return;
 const D_DRINKS = ['Эспрессо','Американо','Капучино','Латте','Раф','Флэт уайт'], D_SIZES = ['S','M','L'], D_MILKS = ['Обычное','Овсяное','Кокосовое','Без лактозы'], D_ADDS = ['Без сахара','Карамель','Ваниль','Лаванда'], D_NOMILK = ['Эспрессо','Американо'];
 let DUEL = {data:null, at:0, busy:false};
 async function duelApi(body){ if(!(tg && tg.initData)) return {ok:false, error:'Открой игру из Telegram'}; try{ const r = await fetch('/api/duel', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData:tg.initData}, body))}); return await r.json(); }catch(e){ return {ok:false, error:'Нет связи'}; } }
-async function duelLoad(force){ if(DUEL.busy || (!force && Date.now() - DUEL.at < 150000)) return DUEL.data; DUEL.busy = true; const current=S; const r = await duelApi({op:'list'}); DUEL.busy = false; if(S!==current){DUEL.at=0;return duelLoad(true);}
+async function duelLoad(force){ if(DUEL.busy || (!force && Date.now() - DUEL.at < 150000)) return DUEL.data; DUEL.busy = true; const r = await duelApi({op:'list'}); DUEL.busy = false;
   if(r && r.ok){ DUEL.data = r; DUEL.at = Date.now(); duelNotice(); structDirty = true; try{ if(sheet) renderSheet(); renderHud(); }catch(e){} } return DUEL.data; }
 setTimeout(()=>duelLoad(true), 4000);
 setInterval(()=>{ if(!document.hidden) duelLoad(); }, 60000);
@@ -10138,15 +10069,9 @@ function duelCard(){ const d = DUEL.data; const c = el(`<div class="card duelc">
   (d.inc||[]).forEach(x=>{ const r = el(`<div class="drow inc"><div><b>«${esc(x.cafe)}»</b> ${x.rematch?'хочет реванш':'вызывает'}<br><span>${x.stake?'ставка '+fmt(x.stake)+' ₽':'на интерес'} · ещё ${Math.max(1,Math.ceil((x.until-Date.now())/3600000))} ч</span></div><div class="db"><button class="dbtn go">Принять</button><button class="dbtn">Нет</button></div></div>`);
     r.querySelector('.go').onclick = () => duelAccept(x); r.querySelectorAll('.dbtn')[1].onclick = async () => { const res = await duelApi({op:'decline', id:x.id}); toast(res.ok ? 'Отказались. Ставка вернётся сопернику' : res.error); duelLoad(true); }; c.appendChild(r); });
   (d.sent||[]).forEach(x=>c.appendChild(el(`<div class="drow"><div>Ждём ответа <b>«${esc(x.cafe)}»</b><br><span>твои очки ${x.score} из 50 · ${x.stake?'ставка '+fmt(x.stake)+' ₽':'на интерес'} · ещё ${Math.max(1,Math.ceil((x.until-Date.now())/3600000))} ч</span></div></div>`)));
-  for(const x of d.sent||[]){const cancel=el('<button class="btn ghost">Отозвать вызов «'+esc(x.cafe||'?')+'»</button>');cancel.onclick=async()=>{const r=await duelApi({op:'cancel',id:x.id});toast(r.ok?'Вызов отозван, ставка вернётся с отчётом':r.error);duelLoad(true);};c.appendChild(cancel);}
   const row = el(`<div class="row" style="margin-top:8px"><button class="btn" ${d.left?'':'disabled'}>Вызвать на дуэль</button></div>`);
   row.children[0].onclick = () => queueModal({kind:'duelpick'});
   c.appendChild(row);
-  for(const x of d.playing||[]){
-    const resume=el(`<div class="drow"><div>Незавершённая дуэль с «${esc(x.vs||'?')}»</div><div class="db"><button class="dbtn go">Продолжить</button>${x.role==='a'?'<button class="dbtn cancel">Отозвать</button>':''}</div></div>`);
-    resume.querySelector('.go').onclick=async()=>{if(marketBusy||franchiseBusy)return;if(!await recoverMarket()){toast('Сначала восстанови ставку');return;}openSheet(null);duelPlay(x);};
-    const cancel=resume.querySelector('.cancel');if(cancel)cancel.onclick=async()=>{const r=await duelApi({op:'cancel',id:x.id});toast(r.ok?'Вызов отозван, ставка вернётся с отчётом':r.error);duelLoad(true);};c.appendChild(resume);
-  }
   if((d.done||[]).length){ c.appendChild(el(`<div class="dl">Последние дуэли</div>`)); d.done.slice(0,5).forEach(x=>{ const r = el(`<div class="drow ${x.res}"><div>${x.res==='win'?'Победа':x.res==='lose'?'Поражение':'Ничья'} · <b>«${esc(x.vs)}»</b><br><span>${x.my} : ${x.their}${x.stake?' · ставка '+fmt(x.stake)+' ₽':''}</span></div>${x.canRematch?'<div class="db"><button class="dbtn go">Реванш</button></div>':''}</div>`);
     const rb = r.querySelector('.go'); if(rb) rb.onclick = () => queueModal({kind:'duelnew', pid:x.opp, cafe:x.vs, rematch:1}); c.appendChild(r); }); }
   if((d.top||[]).length){ c.appendChild(el(`<div class="dl">Лучшие дуэлянты</div>`)); c.appendChild(el(`<div class="dtop">${d.top.slice(0,5).map((t,i)=>`<div class="${t.fr ? 'fr fr-'+esc(t.fr) : ''}"><b>${i+1}</b> «${esc(t.cafe||'?')}» <span>${t.r} · ${t.w}–${t.l}</span></div>`).join('')}</div>`)); }
@@ -10173,15 +10098,15 @@ MODAL15.duelnew = (box, m, btn) => {
   box.append(el(`<div class="d" style="margin:4px 0">Ставка, не больше четверти твоего счёта${m.max!=null?' и половины счёта соперника':''}:</div>`), ch);
   const go = btn('Начать дуэль', async () => {
     if(stake && S.money < stake){ toast('Не хватает денег'); return; }
-    go.disabled = true; const r = await duelTransact({op:'new', pid:m.pid, stake, rematch:m.rematch?1:0}); go.disabled = false;
+    go.disabled = true; const r = await duelApi({op:'new', pid:m.pid, stake, rematch:m.rematch?1:0}); go.disabled = false;
     if(!r.ok){ toast(r.error||'Не получилось'); return; }
-
+    if(r.stake){ spend(r.stake, 'other', 'Ставка в дуэли с «'+(r.vs||'?')+'»'); save(); }
     closeModal(); duelPlay({id:r.id, guests:r.guests, vs:r.vs, stake:r.stake, role:'a'}); });
   box.append(go, btn('Отмена', closeModal, 'ghost')); };
 
 async function duelAccept(x){ if(x.stake && S.money < x.stake){ toast('Не хватает денег на ставку'); return; }
-  const r = await duelTransact({op:'accept', id:x.id}); if(!r.ok){ toast(r.error||'Не получилось'); duelLoad(true); return; }
-
+  const r = await duelApi({op:'accept', id:x.id}); if(!r.ok){ toast(r.error||'Не получилось'); duelLoad(true); return; }
+  if(r.stake){ spend(r.stake, 'other', 'Ставка в дуэли с «'+(r.vs||'?')+'»'); save(); }
   openSheet(null); duelPlay({id:r.id, guests:r.guests, vs:r.vs, stake:r.stake, role:'b'}); }
 
 /* итог для вызывающего */
@@ -10459,12 +10384,12 @@ function bankDue(){ const b = bank29(); if(!b || S.day < b.due) return;
   S.bankBan29 = S.day + 14; repAdd(-0.2); S.staff.forEach(s=>{ if(!s.isYou) s.mood = clamp((s.mood||50) - 10, 0, 100); });
   HOOK.modal({kind:'note', title:'Пришли коллекторы', text:'Денег на возврат не хватило. Банк списал всё и увёл кассу в минус на '+fmt(Math.max(0, b.back - had))+' ₽. Двое в кожанках посидели у кассы и распугали гостей. Две недели ни один банк не даст кредит. Если касса будет в минусе 14 дней подряд, кофейня обанкротится.', chips:[['−'+fmt(b.back)+' ₽', false], ['Рейтинг −0,2', false], ['Настроение команды −10', false]]}); }
 const _closeDay29 = closeDay;
-closeDay = function(){ if(!S||!S.isOpen||S.closedDay===S.day)return; bankDue(); return _closeDay29.apply(this,arguments); };
+closeDay = function(){ const r = _closeDay29.apply(this, arguments); try{ bankDue(); }catch(e){ console.error(e); } return r; };
 function bankCard(){ const b = bank29(), c = el(`<div class="card bank29"><div class="t">Банк</div></div>`);
   if(b){ const left = Math.max(0, b.due - S.day);
-    c.appendChild(el(`<div class="d">${esc(b.n)}: взял ${fmt(b.sum)} ₽, вернуть <b>${fmt(b.back)} ₽</b>. ${left > 0 ? 'Спишут через '+left+' '+plural29(left, 'день','дня','дней')+'.' : 'Спишут сегодня после закрытия смены.'} Если денег не хватит, банк спишет всё в минус и пришлёт коллекторов.</div>`));
+    c.appendChild(el(`<div class="d">${esc(b.n)}: взял ${fmt(b.sum)} ₽, вернуть <b>${fmt(b.back)} ₽</b>. ${left > 1 ? 'Спишут через '+left+' '+plural29(left, 'день','дня','дней')+'.' : 'Спишут сегодня после закрытия смены.'} Если денег не хватит, банк спишет всё в минус и пришлёт коллекторов.</div>`));
     const row = el(`<div class="row"><button class="btn num" ${S.money >= b.back ? '' : 'disabled'}>Вернуть ${fmt(b.back)} ₽</button></div>`); row.querySelector('button').onclick = bankRepay; c.appendChild(row); return c; }
-  c.appendChild(el(`<div class="d">Деньги сразу, возврат по указанным условиям через ${BANK29_DAYS} дней. Один кредит за раз. Не вернёшь — коллекторы, касса в минусе и две недели без кредитов.</div>`));
+  c.appendChild(el(`<div class="d">Деньги сразу, вернуть втрое больше через ${BANK29_DAYS} дней. Один кредит за раз. Не вернёшь — коллекторы, касса в минусе и две недели без кредитов.</div>`));
   if(S.bankBan29 && S.day < S.bankBan29) c.appendChild(el(`<div class="d" style="color:var(--bad)">Банки отказывают ещё ${S.bankBan29 - S.day} ${plural29(S.bankBan29 - S.day, 'день','дня','дней')}.</div>`));
   BANK29.forEach(o=>{ const lock = S.level < o.lvl;
     const r = el(`<div class="bk29r"><div><b>${esc(o.n)}</b><span>${lock ? 'с '+o.lvl+' уровня' : 'вернуть '+fmt(o.back)+' ₽ через '+BANK29_DAYS+' дн.'}</span></div><button class="btn num" ${lock?'disabled':''}>+${fmt(o.sum)} ₽</button></div>`);
@@ -10626,6 +10551,17 @@ pickLine = function(pool, key){ if(key === 'g' && S && chance(0.3)){ const c = [
     if(c.length) return _pickLine29(c, 'gctx'); }
   return _pickLine29(pool, key); };
 
+/* ===== v30: откат 9.0 — возвращаем сохранения к прежней экономике ===== */
+function rollback90(){ if(!S || S.economyVersion !== 2) return;
+  const L = Math.max(1, Number(S.level)||1);
+  const newNeed = Math.round(L<=12 ? (L===1?45:L===2?90:105*Math.pow(1.22,L-1)*(1+0.05*Math.max(0,L-4))) : 105*Math.pow(1.22,11)*1.4*Math.pow(L/12,1.65));
+  const frac = Math.min(0.999, Math.max(0, (Number(S.xp)||0) / Math.max(1, newNeed)));
+  S.xp = Math.round(frac * xpNeed());
+  S.hours = {open:0, close:24}; S.isOpen = true;
+  S.economyVersion = 'r9'; }
+const _migrate30 = migrate;
+migrate = function(){ const r = _migrate30.apply(this, arguments); try{ rollback90(); }catch(e){ console.error(e); } return r; };
+
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
@@ -10661,291 +10597,16 @@ function liteUp(p){
   p.querySelectorAll('.empty').forEach(e=>{ if(e.getAttribute('style') && /font-size:12px/.test(e.getAttribute('style'))) e.remove(); });
 }
 const _renderSheetLite = renderSheet;
-renderSheet = function(){ _renderSheetLite.apply(this, arguments); try{ const p = $('#panel'); if(!p) return; liteShort(p); if(sheet==='up') liteUp(p); else if(sheet==='hall' && hallTab==='team') liteTeam(p); else p.querySelectorAll('.empty').forEach(e=>{ if(e.getAttribute('style') && /font-size:12px/.test(e.getAttribute('style'))) e.remove(); }); moveFranchiseLast(p); }catch(e){ console.error(e); } };
+renderSheet = function(){ _renderSheetLite.apply(this, arguments); try{ const p = $('#panel'); if(!p) return; liteShort(p); if(sheet==='up') liteUp(p); else if(sheet==='hall' && hallTab==='team') liteTeam(p); else p.querySelectorAll('.empty').forEach(e=>{ if(e.getAttribute('style') && /font-size:12px/.test(e.getAttribute('style'))) e.remove(); }); }catch(e){ console.error(e); } };
 // одно уведомление за раз
 const _toastLite = toast;
 toast = function(msg){ document.querySelectorAll('.toast').forEach(t=>t.remove()); const t = el(`<div class="toast" role="status">${esc(msg)}</div>`); document.body.appendChild(t); setTimeout(()=>t.remove(), 2400); };
 
-function rememberSeasonStaff(s, key){
-  s.seasonRewardKey = key;
-  S.seasonStaffRewards = S.seasonStaffRewards || {};
-  if(!S.seasonStaffRewards[key]){
-    const template = {};
-    for(const k of ['name','role','sex','spr','quirk','legendId','szLeg','prize','lvl','rank']) if(s[k] != null) template[k] = s[k];
-    if(s.szLeg){ template.lvl = 24; template.rank = 2; }
-    S.seasonStaffRewards[key] = template;
-  }
-  S.seasonStaffUsed = S.seasonStaffUsed || {}; S.seasonStaffUsed[key] = true;
-}
-function collectSeasonRewards(){
-  for(const s of S.staff) if(!s.transfer && (s.seasonRewardKey || s.szLeg)) rememberSeasonStaff(s, s.seasonRewardKey || 'legend:'+s.szLeg);
-  S.seasonRewardAssets = S.seasonRewardAssets || {};
-  const z = S.sz, paid = z && z.claimed && z.claimed.p || [];
-  if(paid.includes(20) || (S.goldMachine && !(S.spends && S.spends.goldm))) S.seasonRewardAssets.goldMachine = true;
-  S.seasonStaffRewards = S.seasonStaffRewards || {};
-  if(z && paid.includes(10) && !S.seasonStaffRewards['legend:'+z.id]){
-    const info = sezInfo(z.id);
-    rememberSeasonStaff({name:info.leg.name, role:'Бариста', sex:info.leg.sex, szLeg:z.id, lvl:24, rank:2, prize:true, quirk:'none'}, 'legend:'+z.id);
-  }
-  // В старых сохранениях источник сотрудника не записывался. Восстанавливаем
-  // право на награду по истории ступеней, не выдавая повторно деньги или опыт.
-  if(z && z.claimed) for(const track of ['f','p']) for(const n of z.claimed[track] || []){
-    if(!((track==='f' && (n===10 || n===35)) || (track==='p' && n===45))) continue;
-    const key = 'staff:'+z.id+':'+track+':'+n;
-    if(S.seasonStaffRewards[key] || (S.inv||[]).some(it=>it.k==='staff' && it.sz===z.id && it.track===track && it.n===n)) continue;
-    const rw = szReward(track, n);
-    rememberSeasonStaff({name:rw.t, role:'Бариста', lvl:rw.v, rank:rw.v>=18?2:1, prize:true, quirk:'none', legendId:0}, key);
-  }
-}
-function restoreSeasonRewardTickets(){
-  S.seasonStaffUsed = {};
-  S.inv = (S.inv||[]).filter(it=>!it.rewardKey);
-  for(const key of Object.keys(S.seasonStaffRewards||{})){
-    if(S.inv.some(it=>it.sz && 'staff:'+it.sz+':'+it.track+':'+it.n === key)) continue;
-    const s = S.seasonStaffRewards[key];
-    invAdd({k:'staff', rewardKey:key, t:s.name, d:'Сотрудник из коллекции наград. Можно пригласить один раз в эту кофейню; на трансфер не выставляется.', src:'Сохранённая награда сезона'});
-  }
-}
-function useSeasonStaffReward(it){
-  const template = S.seasonStaffRewards && S.seasonStaffRewards[it.rewardKey];
-  if(!template) return 'Награда не найдена в коллекции';
-  S.seasonStaffUsed = S.seasonStaffUsed || {};
-  if(S.seasonStaffUsed[it.rewardKey] || S.staff.some(s=>s.seasonRewardKey===it.rewardKey)) return 'Эта награда уже приглашена в текущую кофейню';
-  if(S.staff.filter(s=>!s.isYou && s.room==='main' && s.role===template.role).length >= staffCap(template.role)) return 'Сначала освободи место на эту должность';
-  if(template.legendId && S.staff.some(s=>s.legendId===template.legendId)) return 'Эта легенда уже работает в команде';
-  const s = makeStaff(template.role, {quirk:template.quirk||'none', sex:template.sex});
-  Object.assign(s, JSON.parse(JSON.stringify(template)), {seasonRewardKey:it.rewardKey, mood:95, fatigue:0, shifts:120, xp:0});
-  hire(s, 'main', 'white'); S.seasonStaffUsed[it.rewardKey] = true;
-  S.inv = S.inv.filter(x=>x.uid!==it.uid);
-  syncScene('main'); HOOK.struct(); return null;
-}
-function moveFranchiseLast(p){
-  const cards = [...p.querySelectorAll(':scope > .card')].filter(c=>{ const t = c.querySelector('.t'); return t && t.textContent.trim().startsWith('Продать сеть'); });
-  if(!cards.length) return;
-  cards.slice(1).forEach(c=>c.remove());
-  [...p.children].filter(c=>c.classList.contains('h') && c.textContent.trim()==='Франшиза').forEach(c=>c.remove());
-  p.append(el('<div class="h chalk">Франшиза</div>'), cards[0]);
-}
-let marketBusy = false;
-async function applyMarketReceipt(receipt){
-  if(!S || !receipt || !receipt.ok || receipt.franchises !== S.franchises || !Number.isSafeInteger(receipt.version)) return false;
-  if(receipt.version > (S.marketVersion||0)){
-    if(receipt.version !== (S.marketVersion||0)+1) return false;
-    if(receipt.op==='list') removeStaff(receipt.staff.id);
-    else if(receipt.op==='buy' || receipt.op==='cancel'){
-      if(receipt.op==='buy') spend(receipt.price, 'invest', 'Трансфер: '+receipt.staff.name);
-      if(!S.staff.some(s=>s.id===receipt.staff.id)){ const staff = mkUnpack(receipt.staff); hire(staff, receipt.room || 'main', 'white'); }
-    } else if(receipt.op==='duel_stake'){ if(receipt.price)spend(receipt.price,'invest','Ставка в дуэли с «'+(receipt.vs||'?')+'»'); } else return false;
-    S.marketVersion = receipt.version;
-    if(S.marketPending && S.marketPending.operationId===receipt.operationId) delete S.marketPending;
-    save(); _cloudGate = 0; saveCloud(); syncScene(S.active||'main'); structDirty = true;
-  }
-  const ack = await mkApi({op:'ack',operationId:receipt.operationId});
-  return !!(ack && ack.ok);
-}
-async function duelTransact(fields){
-  if(marketBusy||franchiseBusy||!S)return {ok:false,error:'Дождись завершения текущей операции'};
-  marketBusy=true;const current=S;
-  try{
-    if(!await recoverMarket())return {ok:false,error:'Не удалось восстановить операции. Попробуй ещё раз'};
-    let synced=await track(true,true);
-    if(synced && synced.error==='market_sync_required' && await recoverMarket())synced=await track(true,true);
-    if(synced && synced.ok && synced.ops && synced.ops.length)synced=await track(true,true);
-    if(S!==current || !synced || !synced.ok)return {ok:false,error:'Не удалось синхронизировать ставку'};
-    const result=await duelApi({...fields,operationId:crypto.randomUUID(),franchises:S.franchises,version:S.marketVersion||0});
-    if(S!==current)return {ok:false,error:'Кофейня уже сменилась'};
-    if(result.ok && result.receipt && await applyMarketReceipt(result.receipt))return result;
-    await recoverMarket();duelLoad(true);
-    return {ok:false,error:result.ok?'Ставка сохранена. Продолжить можно в разделе дуэлей':result.error||'Ответ потерян. Проверь раздел дуэлей'};
-  }finally{marketBusy=false;}
-}
-let marketRecovery = null;
-function recoverMarket(){
-  if(!marketRecovery) marketRecovery = recoverMarketOnce().finally(()=>{marketRecovery=null;});
-  return marketRecovery;
-}
-async function recoverMarketOnce(){
-  if(!S || !tg || !tg.initData) return false;
-  const current = S;
-  if(S.marketPending){
-    const response = await mkApi(S.marketPending);
-    if(S!==current) return false;
-    if(response.ok){ if(!await applyMarketReceipt(response)) return false; }
-    else if(response.uncertain || response.httpStatus>=500) return false;
-    else { delete S.marketPending; save(); }
-  }
-  const response = await mkApi({op:'get',version:S.marketVersion||0});
-  if(S!==current || !response.ok) return false;
-  for(const receipt of response.operations||[]) if(!await applyMarketReceipt(receipt)) return false;
-  return (S.marketVersion||0)===response.version;
-}
-async function marketMutate(op, fields){
-  if(marketBusy || franchiseBusy || !S) return false;
-  marketBusy = true; const current = S;
-  try{
-    if(S.marketPending){ const recovered = await recoverMarket(); toast(recovered?'Предыдущий трансфер восстановлен. Можно продолжать':'Нет связи. Незавершённый трансфер сохранён'); return recovered; }
-    let synced = await track(true,true);
-    if(synced && synced.error==='market_sync_required' && await recoverMarket()) synced = await track(true,true);
-    if(synced && synced.ok && synced.ops && synced.ops.length) synced = await track(true,true);
-    if(S!==current || !synced || !synced.ok){ toast('Не удалось синхронизировать рынок'); return false; }
-    S.marketPending = Object.assign({op,operationId:crypto.randomUUID(),franchises:S.franchises,version:S.marketVersion||0}, fields);
-    save();
-    const response = await mkApi(S.marketPending);
-    if(S!==current) return false;
-    if(response.ok){ const done = await applyMarketReceipt(response); toast(done?'Трансфер завершён':'Трансфер сохранён. Подтверждение повторится при подключении'); return done; }
-    if(!response.uncertain && response.httpStatus<500){ delete S.marketPending; save(); }
-    toast(response.error||'Нет связи. Повтори для восстановления'); return false;
-  } finally{ marketBusy = false; }
-}
-let franchiseBusy = false;
-async function confirmFranchise(value){
-  if(franchiseBusy || !S) return false;
-  if(marketBusy){ toast('Дождись завершения трансфера'); return false; }
-  const name = String(value||'').trim().replace(/\s+/g,' ').slice(0,28), current = S;
-  if(name.length < 2 || name.toLowerCase().replace(/ё/g,'е') === S.name.trim().toLowerCase().replace(/ё/g,'е')){ toast('Нужно новое название, минимум две буквы'); return false; }
-  if(!tg || !tg.initData){ toast('Для продажи открой игру в Telegram и подключись к интернету'); return false; }
-  franchiseBusy = true;
-  try{
-    if(S.marketPending && !await recoverMarket()){ toast('Сначала восстанови незавершённый трансфер'); return false; }
-    let synced = await track(true, true);
-    if(synced && synced.error==='market_sync_required' && await recoverMarket()) synced = await track(true,true);
-    if(S !== current) return false;
-    if(!synced || (!synced.ok && !(synced.error==='stale_run' && synced.franchises===current.franchises+1))){ toast('Не удалось синхронизировать игру. Продажа не выполнена'); return false; }
-    if(synced.ok && (!await recoverMarket() || S!==current)){ toast('Сначала заверши синхронизацию трансферов'); return false; }
-    const receipt = await apiPost('/api/franchise', {name, franchises:current.franchises});
-    if(S !== current) return false;
-    if(!receipt || !receipt.ok){ toast(receipt && receipt.error || 'Нет связи. Попробуй продать ещё раз'); return false; }
-    if(receipt.franchises !== current.franchises+1 || !Number.isSafeInteger(receipt.shares) || receipt.shares <= 0) return false;
-    if(!sellFranchise('spb', receipt.name, receipt)) return false;
-    DUEL.data=null;DUEL.at=0;
-    for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML='';
-    Object.assign(SZ_SNAP, {at:0, tried:0, top:[], sps:[], total:0, season:null});
-    Object.assign(TOUR, {at:0, tried:0, top:[], profits:[], total:0, week:null});
-    try{ localStorage.removeItem('bc_sz'); localStorage.removeItem('bc_tour'); }catch(e){}
-    save(); _cloudGate = 0; saveCloud(); renderGame(); toast('«'+S.name+'», '+placeName()+'. Рейтинг кофейни и место в топе начнутся заново');
-    await track(true, true); loadSzTop(); return true;
-  }catch(e){ toast('Не получилось связаться с сервером. Попробуй ещё раз'); return false; }
-  finally{ franchiseBusy = false; }
-}
-function roomDailyCosts(id){
-  return {rent:Math.round(roomDef(id).rent * city().rent * modMul('rent')), util:Math.round((500 + 25*hoursOpen()) * roomMult(id))};
-}
-function turnoverStaffPay(f){ return 0; }
-
-function closingCosts(){
-  const f = S.fin.today, costs = {wages:0, turnoverWages:turnoverStaffPay(f), rent:0, turnoverRent:turnoverRent(f), util:Math.round((f.guests||0)*3), meals:0, loan:(S.debt.loan>0?Math.round(S.debt.loan*0.04):0)+(S.bank29 && S.day>=S.bank29.due?S.bank29.back:0)};
-  for(const s of S.staff){ if(s.isYou) continue; if(['work','sub','training'].includes(s.today)) costs.wages += s.today==='sub' ? s.subPay : shiftPay(s); if(S.staffMeal && ['work','sub'].includes(s.today)) costs.meals += 250; }
-  for(const r of S.rooms){ const c = roomDailyCosts(r.id); costs.rent += c.rent; costs.util += c.util; }
-  costs.total = costs.wages + costs.turnoverWages + costs.rent + costs.turnoverRent + costs.util + costs.meals + costs.loan;
-  return costs;
-}
-function leasedRevenue(f){
-  const leased = new Set(S.rooms.filter(r=>roomDef(r.id).rent > 0).map(r=>r.id));
-  const total = Math.max(0, f.rev||0), byRoom = f.byRoom || {};
-  let assigned = 0, revenue = 0;
-  for(const id in byRoom){ const v = Math.max(0, byRoom[id]||0); assigned += v; if(leased.has(id)) revenue += v; }
-  if(leased.has('main')) revenue += Math.max(0, total - assigned);
-  return Math.min(total, revenue);
-}
-function turnoverRent(f){
-  // Фиксированная аренда уже учтена: роста ставки от уровня и прошлой выручки нет.
-  return 0;
-}
-// Сервер отдаёт неподтверждённые операции по возрастанию id (не больше 20).
-// Сохраняем отметку вместе с наградой до отправки подтверждения серверу.
-let staleRunNotice = false;
-function applyTrackOnce(r, apply){
-  if(r && r.ok && S && Number.isSafeInteger(r.franchises) && r.franchises!==S.franchises) return apply(Object.assign({},r,{ops:[]}));
-  if(r && r.error==='market_sync_required' && S && !marketBusy && !franchiseBusy) recoverMarket().catch(()=>{});
-  if(r && r.error==='stale_run' && S && !franchiseBusy && !staleRunNotice){ staleRunNotice = true; queueModal({kind:'note', title:'Сохранение старой сети', text:'Эта сеть уже продана или на сервере другая версия. Открой актуальное сохранение с устройства, где продал сеть. Старые данные не будут отправлены в рейтинг.'}); }
-  if(!r || !r.ok || !S || !Array.isArray(r.ops)) return apply(r);
-  const last = S.opsAppliedThrough || 0, ids = new Set();
-  const ops = r.ops.filter(o=>{
-    if(!Number.isSafeInteger(o.id) || o.id <= last || ids.has(o.id)) return false;
-    ids.add(o.id); return true;
-  }).sort((a,b)=>a.id-b.id);
-  if(ops.length) S.opsAppliedThrough = ops[ops.length-1].id;
-  const result = apply(Object.assign({}, r, {ops}));
-  const retry = r.ops.filter(o=>Number.isSafeInteger(o.id) && o.id > 0 && o.id <= last).map(o=>o.id).slice(0,20);
-  if(retry.length) apiPost('/api/ack', {ids:retry}).catch(()=>{});
-  return result;
-}
-const _onTrackOnce = onTrack;
-onTrack = r => applyTrackOnce(r, _onTrackOnce);
-
-/* ---------- экономика v2: спрос, окупаемость и отзывы ---------- */
-function machinePower(L){ return 1 + 0.25*L + 0.015*L*L; }
-function cafeXpNeed(L){
-  return Math.round(L<=12 ? (L===1?45:L===2?90:105*Math.pow(1.22,L-1)*(1+0.05*Math.max(0,L-4))) : 105*Math.pow(1.22,11)*1.4*Math.pow(L/12,1.65));
-}
-function arrivalWait(lambda){
-  // При нулевом спросе только проверяем, не открылась ли кофейня.
-  return lambda>0 ? Math.max(0.1,-Math.log(1-Math.random())/lambda) : 60;
-}
-function awarenessMul(){ return 0.55 + 0.012*clamp(Number(S.awareness)||0,0,100); }
-function ownerHousekeeping(id,r,st,dt){
-  if(id!=='main' || !S.isOpen || S.youAwayUntil>Date.now() || hozEmpty()) return;
-  const you=S.staff.find(s=>s.isYou);
-  if(!you || you.away || you.breakUntil>Date.now()) return;
-  if(st.staff.some(s=>s.isYou) && (r.queue.length || r.jobs.length)) return;
-  r.ownerCleanT=(r.ownerCleanT||0)+dt;
-  if(r.ownerCleanT<12) return;
-  r.ownerCleanT=0;
-  const key=Object.keys(r.dirty||{})[0];
-  if(key){cleanDirty(id,key);hozUse(id,0.01);}
-  else if((r.mess||[]).length){r.mess.shift();meter('chaos',-0.5);hozUse(id,0.02);}
-  else if(dishCount(id)>0){S.dishes[id]=Math.max(0,dishCount(id)-2);hozUse(id,0.01);}
-}
-function updateAwareness(f){
-  const guests = Math.max(0,f.guests||0), lost = Math.max(0,S.c.angry-(S.c._angryDay||0));
-  const satisfied = guests/Math.max(1,guests+lost);
-  const gain = Math.min(5,guests*0.05)*satisfied*(S.rep>=3?1:0.5);
-  S.awareness = clamp((Number(S.awareness)||0) + gain - (guests ? 0 : 0.5),0,100);
-  S.serviceBias = (Number(S.serviceBias)||0)*0.8;
-}
-function rushEligible(){
-  const h = S.gm/60;
-  return h>=8 && h<19 && hourCurve(h)>=1.4 && (Number(S.awareness)||0)>=25 && stats('main').lambda*1200>=6;
-}
-function ensureRating(){
-  if(!S.rating || !Number.isFinite(S.rating.sum) || !(S.rating.count>=10)){
-    const prior=Math.max(10,(S.reviews||[]).length);
-    S.rating = {sum:clamp(Number(S.rep)||3,1,5)*prior,count:prior,reviews:(S.reviews||[]).length};
-    for(const rv of S.reviews||[]) rv.ratedStars=rv.stars;
-  }
-}
-function syncReviewRating(){
-  ensureRating(); const before=S.rep;
-  for(const rv of S.reviews||[]){
-    if(rv.ratedStars==null){ S.rating.sum+=rv.stars; S.rating.count++; S.rating.reviews++; }
-    else S.rating.sum+=rv.stars-rv.ratedStars;
-    rv.ratedStars=rv.stars;
-  }
-  S.rep = clamp(S.rating.sum/S.rating.count,1,5);
-  if(S.fin && S.fin.today){ const f=S.fin.today; f.repLog=f.repLog||{}; f.repLog.reviews=(f.repLog.reviews||0)+(S.rep-before); }
-}
-function migrateEconomy(){
-  if(S.economyVersion===2) return;
-  const L=Math.max(1,Number(S.level)||1);
-  const oldNeed=Math.round(Math.round(130*Math.pow(1.42,L-1))*(L>8?1+0.12*(L-8):1));
-  S.xp=Math.min(cafeXpNeed(L)-1,Math.round(clamp((Number(S.xp)||0)/oldNeed,0,0.999)*cafeXpNeed(L)));
-  S.awareness=clamp(10+Math.sqrt(Math.max(0,S.c && S.c.guests||0))*0.8,10,80);
-  S.hours={open:8,close:20};
-  S.isOpen=S.gm>=480 && S.gm<1200;
-  S.serviceBias=0; if(S.flags) S.flags.expired=0; ensureRating(); S.economyVersion=2;
-  // Только старый стартовый подарок; оплаченные усиления и все коллекции остаются.
-  S.mods=(S.mods||[]).filter(m=>m.label!=='Новая кофейня: гостей +30%');
-  if(S.fin && S.fin.today) S.fin.today.reviewedGuests=S.fin.today.guests||0;
-}
-
 /* ---------- запуск: в самом конце, когда всё объявлено ---------- */
-const initialLocalSave = loadLocal();
-const initialLocalSaveAt = initialLocalSave && initialLocalSave.savedAt || 0;
-boot(initialLocalSave);
+boot(loadLocal());
 loadConfig();
 if(S){ streakCheck(); refreshEntitlements(); loadFriends(); setTimeout(()=>track(), 1500); }
-if(S && S.marketPending) recoverMarket().catch(()=>{});
-loadCloud(cloud=>{ if(cloud && cloud.v===3 && (!S || (cloud.savedAt||0) > initialLocalSaveAt + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
+loadCloud(cloud=>{ if(cloud && cloud.v===3 && (!S || (cloud.savedAt||0) > (S.savedAt||0) + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
 document.addEventListener('pointerdown', unlockAudio, {once:true});
 requestAnimationFrame(frame);
 

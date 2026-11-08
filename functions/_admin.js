@@ -401,10 +401,6 @@ export async function ackOps(env, id, ids) {
   if (wiped && wiped.n) await env.DB.batch([
     env.DB.prepare('DELETE FROM players WHERE tg_id = ?1').bind(id),
     env.DB.prepare('DELETE FROM days WHERE tg_id = ?1').bind(id),
-    env.DB.prepare('DELETE FROM reminders WHERE tg_id = ?1').bind(id),
-    env.DB.prepare("DELETE FROM market WHERE seller=?1 AND status='open'").bind(id),
-    env.DB.prepare('DELETE FROM market_operations WHERE tg_id=?1').bind(id),
-    env.DB.prepare('DELETE FROM market_accounts WHERE tg_id=?1').bind(id),
-    env.DB.prepare('UPDATE admin_ops SET applied_at=?2 WHERE tg_id=?1 AND applied_at IS NULL').bind(id,Date.now())
+    env.DB.prepare('DELETE FROM reminders WHERE tg_id = ?1').bind(id)
   ]);
 }
