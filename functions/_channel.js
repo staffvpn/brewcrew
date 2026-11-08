@@ -98,6 +98,8 @@ export async function channelTick(env, origin) {
     if (await pollTick(env, origin)) return;
     // рассылка игрокам о новой версии: коротко и со ссылкой на пост
     if (await bcastVersion(env, origin)) return;
+    // сводка дня: три самые крупные дуэли, только если ставки большие
+    if (await duelDigest(env, origin)) return;
     // цель района: посты на рубежах и итог
     await goalTick(env, origin);
   } catch (e) { /* канал не должен ломать игру */ }
@@ -232,4 +234,19 @@ async function lizaTick(env, origin) {
   for (const r of rows) { try { await tgApi(env, 'sendMessage', { chat_id: r.tg_id, text: '<b>Елизавета из «кофеРУинер» вышла в район</b>\n\nСкоро она зайдёт и к тебе с котом на плече и напишет обзор твоей кофейни. У каждого он свой.', parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Открыть кофейню', url: app }], [{ text: 'Канал кофеРУинер', url: 'https://t.me/eve_channel777' }]] } }); } catch {} }
   await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info) VALUES (?1, ?2, 1, ?3)').bind(k, Date.now() - 3 * 60000, String(rows[rows.length - 1].tg_id)).run();
   return false;
+}
+
+// раз в день в 21:00 по Москве: три самые крупные дуэли за день, только если ставки по-настоящему большие
+const DIGEST_MIN_STAKE = 200000;
+async function duelDigest(env, origin) {
+  const msk = new Date(Date.now() + 3 * 3600000); if (msk.getUTCHours() < 21) return false;
+  const day = msk.toISOString().slice(0, 10), key = 'duels_' + day; if (await posted(env, key)) return false;
+  const from = Date.parse(day + 'T00:00:00+03:00');
+  const rows = (await env.DB.prepare("SELECT a_cafe, b_cafe, a, b, stake, a_score, b_score, winner FROM duel WHERE status = 'done' AND winner > 0 AND done_at >= ?1 AND stake >= ?2 ORDER BY stake DESC, ABS(a_score - b_score) DESC LIMIT 3").bind(from, DIGEST_MIN_STAKE).all()).results || [];
+  if (!rows.length) { await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info) VALUES (?1, ?2, 0, ?3)').bind(key, 0, 'none').run(); return false; }
+  const fm = n => Math.round(n).toLocaleString('ru-RU').replace(/,/g, ' ');
+  const lines = rows.map((d, i) => { const aw = d.winner === d.a; const w = aw ? d.a_cafe : d.b_cafe, l = aw ? d.b_cafe : d.a_cafe, ws = Math.max(d.a_score, d.b_score), ls = Math.min(d.a_score, d.b_score);
+    return `${i + 1}. «${esc(w)}» обыграла «${esc(l)}» ${ws} на ${ls} и забрала ${fm(d.stake * 2 * 0.9)} ₽`; });
+  const html = ['<b>Дуэли дня: самые крупные ставки</b>', '', ...lines, '', 'Игра «Помнить заказ»: пять гостей, заказ по памяти. Вызвать соперника можно в «Зал → Дела».'].join('\n');
+  const ok = await post(env, origin, 'events.jpg', html); await mark(env, key, ok); return true;
 }

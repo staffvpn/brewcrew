@@ -120,3 +120,11 @@ test('external rewards cannot inflate operating profit or the profit leaderboard
  const profit=c.opProfit({L:{in:{sales:10000,tips:500,events:1500000,tasks:1000,level:5000,cashover:500,transfer:50000},out:{supply:3000,wages:2000,invest:100000}}});
  assert.equal(profit,5500);
 });
+
+test('owned legacy Stars frames stay usable after their removal from the shop',()=>{
+ const s={c:{signFrame:'gold'},ent:{frames:['frame_gold']}};
+ const c=load(['frameOwned','frameOwnedId'],{S:s,SIGN_FRAMES:{wood:{},gold:{},fire:{}},FRAME_SHOP:['fire']});
+ assert.equal(c.frameOwnedId(),'gold');delete s.c.signFrame;assert.equal(c.frameOwnedId(),'gold');
+ s.c.signFrame=null;assert.equal(c.frameOwnedId(),undefined);
+ s.ent.frames.push('frame_fire');s.c.signFrame='fire';assert.equal(c.frameOwnedId(),'fire');
+});

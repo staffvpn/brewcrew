@@ -1,5 +1,5 @@
 {
-  "sourceHash": "ac670fdff8f02303b3e2c70b53a1ff6efd78cd947e2fb26494eded7a1f8bcd05",
+  "sourceHash": "5ef5a54501bc0553c6819dcfe8132312f1fc6a26e13d0bd1d299b575d092a57d",
   "gameDayRealHours": 8,
   "initialCashAfterBuild": 120000,
   "rows": [
@@ -267,13 +267,13 @@
       "seed": 1,
       "day12": 21,
       "dayMachine5": 17,
-      "firstSaleEligible": 72,
+      "firstSaleEligible": 71,
       "firstNegative": null,
-      "endCash": 8158308,
+      "endCash": 8138056,
       "endLevel": 20,
-      "grossRevenue": 13405110,
-      "invested": 1712980,
-      "reconciliation": 4.069879651069641e-07
+      "grossRevenue": 13550550,
+      "invested": 1702060,
+      "reconciliation": 7.105991244316101e-07
     },
     {
       "mode": "active",
@@ -284,13 +284,13 @@
       "seed": 2,
       "day12": 22,
       "dayMachine5": 22,
-      "firstSaleEligible": 71,
+      "firstSaleEligible": 73,
       "firstNegative": null,
-      "endCash": 8289619,
+      "endCash": 7107491,
       "endLevel": 20,
-      "grossRevenue": 13359070,
-      "invested": 1680220,
-      "reconciliation": 1.993030309677124e-07
+      "grossRevenue": 12665000,
+      "invested": 1702060,
+      "reconciliation": 5.522742867469788e-07
     },
     {
       "mode": "active",
@@ -301,13 +301,13 @@
       "seed": 3,
       "day12": 20,
       "dayMachine5": 17,
-      "firstSaleEligible": 65,
+      "firstSaleEligible": 64,
       "firstNegative": null,
-      "endCash": 13993688,
+      "endCash": 14131234,
       "endLevel": 20,
-      "grossRevenue": 14622260,
-      "invested": 1691140,
-      "reconciliation": 1.210719347000122e-07
+      "grossRevenue": 14518970,
+      "invested": 1680220,
+      "reconciliation": 7.078051567077637e-08
     },
     {
       "mode": "offline",
