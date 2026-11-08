@@ -12,7 +12,7 @@ const ago = ts => { if (!ts) return 'никогда'; const m = Math.round((Date
 const short = ts => { if (!ts) return '—'; const m = Math.round((Date.now() - ts) / 60000); if (m < 3) return 'в игре'; if (m < 60) return m + ' мин'; const h = Math.round(m / 60); if (h < 48) return h + ' ч'; return Math.round(h / 24) + ' дн'; };
 const when = ts => new Date(ts).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 const OPN = { refgift: 'Реферальный бонус', level: 'Уровень', cash: 'Покупка денег', give: 'Начислено', take: 'Списано', set: 'Баланс', wipe: 'Удаление', ent: 'Покупки обновлены', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименование', staff: 'Легенда в команду', grant: 'Выдано', xp: 'Опыт', sp: 'Очки сезона', badge: 'Значок', trsold: 'Трансфер' };
-const STYLES = [['int_soviet', 'Столовая №1'], ['int_loft', 'Заводской лофт'], ['int_scandi', 'Фика'], ['int_neon', 'Не спим']];
+const STYLES = [['int_soviet', 'Столовая №1'], ['int_loft', 'Заводской лофт'], ['int_scandi', 'Фика'], ['int_neon', 'Не спим'], ['frame_fire', 'Рамка «Огонь»'], ['frame_bulbs', 'Рамка «Огни кинотеатра»'], ['frame_spark', 'Рамка «Золотые искры»'], ['frame_aurora', 'Рамка «Северное сияние»'], ['frame_cat', 'Рамка «Кот на вывеске»']];
 const COVERS = [['updates.jpg', 'Обновления'], ['events.jpg', 'События'], ['banner.jpg', 'Баннер'], ['hall.jpg', 'Новый зал']];
 const PAGE = 10;
 const MONEY_LEGS = ['Зачисление от инвестора', 'Отправили шейхи', 'Возврат НДС', 'Наследство двоюродной тёти', 'Компенсация от поставщика'];
@@ -99,7 +99,7 @@ async function vCard(env, id, note) {
     env.DB.prepare('SELECT COALESCE(SUM(stars),0) s, COUNT(*) n FROM purchases WHERE tg_id = ?1 AND refunded = 0 AND stars > 0').bind(id).first(),
     env.DB.prepare('SELECT COUNT(*) n, COALESCE(SUM(ref_paid),0) paid, COALESCE(SUM(CASE WHEN level >= 3 THEN 1 ELSE 0 END),0) act FROM players WHERE referrer = ?1').bind(id).first(),
     env.DB.prepare("SELECT MAX(expires_at) e FROM purchases WHERE tg_id = ?1 AND item = 'sub_owner' AND refunded = 0").bind(id).first(),
-    env.DB.prepare("SELECT item FROM purchases WHERE tg_id = ?1 AND item LIKE 'int_%' AND refunded = 0").bind(id).all()
+    env.DB.prepare("SELECT item FROM purchases WHERE tg_id = ?1 AND (item LIKE 'int_%' OR item LIKE 'frame_%') AND refunded = 0").bind(id).all()
   ]);
   const pd = pend.results || []; let expected = p.money;
   for (const o of pd) { if (o.op === 'give' || o.op === 'refgift') expected += o.amount; if (o.op === 'take') expected -= o.amount; if (o.op === 'set') expected = o.amount; }
@@ -182,8 +182,8 @@ const vMoney = id => ({ text: '<b>Деньги игрока</b>\n\nКнопки 
   [B('Начислить свою', `p:mc:${id}:give`), B('Списать свою', `p:mc:${id}:take`), B('Поставить ровно', `p:mc:${id}:set`)],
   [B('‹ Карточка', 'p:u:' + id), ...HOME]] });
 async function vStyles(env, id) {
-  const owned = ((await env.DB.prepare("SELECT item FROM purchases WHERE tg_id = ?1 AND item LIKE 'int_%' AND refunded = 0").bind(id).all()).results || []).map(r => r.item);
-  return { text: '<b>Стили и подписка</b>\n\nВыданное появится у игрока при входе. Стиль включается в Настройках игры.', kb: [
+  const owned = ((await env.DB.prepare("SELECT item FROM purchases WHERE tg_id = ?1 AND (item LIKE 'int_%' OR item LIKE 'frame_%') AND refunded = 0").bind(id).all()).results || []).map(r => r.item);
+  return { text: '<b>Стили, рамки и подписка</b>\n\nВыданное появится у игрока при входе. Стиль и рамка включаются в Настройках игры.', kb: [
     ...STYLES.map(([k, n]) => [B(owned.includes(k) ? n + ' · уже есть' : 'Выдать «' + n + '»', owned.includes(k) ? 'p:ust:' + id : `p:gi:${id}:${k}`)]),
     [B('Подписка «Владелец» +30 дней', `p:gs:${id}`)],
     [B('Пропуск текущего сезона', `p:gp:${id}`)],
@@ -195,7 +195,7 @@ function vGive(id, note) {
   return { text: '<b>Выдать игроку</b>\n\nВсё применится при входе игрока в игру. Деньги — в разделе «Деньги».' + (note ? '\n\n<b>' + note + '</b>' : ''), kb: [
     ...Object.entries(GRANTS).reduce((rows, [k, n], i) => { if (i % 2 === 0) rows.push([]); rows[rows.length - 1].push(B(n, `p:gr:${id}:${k}`)); return rows; }, []),
     [B('Очки сезона', 'p:usp:' + id), B('Значок', 'p:ubd:' + id)],
-    [B('Стили, подписка', 'p:ust:' + id), B('Деньги', 'p:um:' + id)],
+    [B('Стили, рамки, подписка', 'p:ust:' + id), B('Деньги', 'p:um:' + id)],
     [B('Пропуск сезона', 'p:gp:' + id)],
     [B('Опыт', 'p:uxp:' + id), B('Уровень', 'p:ulvl:' + id)],
     [B('Легенда 10 ур.', `p:gl:${id}:10`), B('20 ур.', `p:gl:${id}:20`), B('30 ур.', `p:gl:${id}:30`)],

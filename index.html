@@ -661,14 +661,14 @@ input,textarea,select{font-size:16px!important}
 .rname{font-size:10px;padding:1px 6px}
 
 .trow.fr{border:1.5px solid;border-radius:5px;padding:3px 5px;margin:3px 0;border-bottom-style:solid}
-.trow.fr-gold{border-color:#d9a93c;background:linear-gradient(90deg,rgba(217,169,60,.22),rgba(217,169,60,.05));box-shadow:0 0 6px rgba(255,207,90,.35)}
-.trow.fr-gold span{color:#ffd978}
-.trow.fr-neon{border-color:#e89ac0;background:rgba(29,24,48,.6);box-shadow:0 0 7px rgba(232,154,192,.55)}
-.trow.fr-neon span{color:#ffe0ee;text-shadow:0 0 4px #e89ac0}
-.trow.fr-marble{border-color:#b8b0a4;background:linear-gradient(120deg,#f1ede6,#e2ddd4 60%,#f1ede6);color:#3a3430}
-.trow.fr-marble span,.trow.fr-marble b,.trow.fr-marble i{color:#3a3430}
-.trow.fr-ice{border-color:#8fd0dc;background:linear-gradient(90deg,rgba(191,239,255,.25),rgba(191,239,255,.06));box-shadow:0 0 6px rgba(143,208,220,.45)}
-.trow.fr-ice span{color:#dff6ff}
+.fr-gold{border-color:#d9a93c;background:linear-gradient(90deg,rgba(217,169,60,.22),rgba(217,169,60,.05));box-shadow:0 0 6px rgba(255,207,90,.35)}
+.fr-gold span{color:#ffd978}
+.fr-neon{border-color:#e89ac0;background:rgba(29,24,48,.6);box-shadow:0 0 7px rgba(232,154,192,.55)}
+.fr-neon span{color:#ffe0ee;text-shadow:0 0 4px #e89ac0}
+.fr-marble{border-color:#b8b0a4;background:linear-gradient(120deg,#f1ede6,#e2ddd4 60%,#f1ede6);color:#3a3430}
+.fr-marble span,.fr-marble b,.fr-marble i{color:#3a3430}
+.fr-ice{border-color:#8fd0dc;background:linear-gradient(90deg,rgba(191,239,255,.25),rgba(191,239,255,.06));box-shadow:0 0 6px rgba(143,208,220,.45)}
+.fr-ice span{color:#dff6ff}
 /* верх, вариант 1 */
 .top{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;grid-template-areas:"name name" "clk reg"!important;gap:6px 8px!important;align-items:stretch!important}
 .top .topL{display:contents!important}
@@ -735,6 +735,50 @@ input,textarea,select{font-size:16px!important}
 /* правка из репозитория: безопасные зоны сверху и снизу */
 #app{padding-top:max(8px,env(safe-area-inset-top,0px));padding-bottom:max(8px,env(safe-area-inset-bottom,0px))}
 .top .meta{font-size:12px}
+.pillrow #pills{overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}
+.pillrow #pills::-webkit-scrollbar{display:none}
+.pillrow #pills>*{flex:0 0 auto!important;max-width:none}
+#pmore{display:none!important}
+/* анимированные рамки в рейтингах */
+.trow.fr,.drow.fr{position:relative}
+.fr-fire{border:2px solid #ff8a2a;background:linear-gradient(90deg,rgba(255,110,30,.25),rgba(255,190,60,.08));animation:frFire .9s steps(3) infinite}
+.fr-fire span{color:#ffd27a;text-shadow:0 0 6px #ff7a1a}
+@keyframes frFire{0%{box-shadow:0 0 6px #ff5a00,inset 0 0 6px rgba(255,120,0,.4)}50%{box-shadow:0 0 12px #ffb000,inset 0 0 10px rgba(255,160,0,.5)}100%{box-shadow:0 0 8px #ff3d00,inset 0 0 6px rgba(255,90,0,.4)}}
+.fr-bulbs{border:2px solid transparent;background:#2b1f2a padding-box}
+.fr-bulbs:before{content:"";position:absolute;inset:-4px;border:4px dotted #ffe08a;animation:frBulbs .5s steps(2) infinite;pointer-events:none}
+.fr-bulbs span{color:#ffe7a8}
+@keyframes frBulbs{0%{border-color:#ffe08a}50%{border-color:#c8322b}}
+.fr-spark{border:2px solid #d9a93c;background:linear-gradient(110deg,rgba(217,169,60,.18) 0%,rgba(217,169,60,.18) 40%,rgba(255,240,180,.55) 50%,rgba(217,169,60,.18) 60%,rgba(217,169,60,.18) 100%);background-size:250% 100%;animation:frShine 2.2s linear infinite;box-shadow:0 0 8px rgba(255,207,90,.4)}
+.fr-spark span{color:#ffdf8a}
+@keyframes frShine{0%{background-position:120% 0}100%{background-position:-120% 0}}
+.fr-aurora{border:2px solid transparent;background:linear-gradient(#1b2530,#1b2530) padding-box,linear-gradient(90deg,#4cf2c2,#6a8cff,#d27cff,#4cf2c2) border-box;background-size:100% 100%,300% 100%;animation:frAur 4s linear infinite;box-shadow:0 0 10px rgba(110,200,255,.35)}
+.fr-aurora span{color:#c9f7ff}
+@keyframes frAur{0%{background-position:0 0,0 0}100%{background-position:0 0,300% 0}}
+.fr-cat{border:2px solid #e89ac0;background:rgba(232,154,192,.12)}
+.fr-cat span{color:#ffe0ee}
+.fr-cat:after{content:"";position:absolute;top:-10px;width:12px;height:8px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' shape-rendering='crispEdges'%3E%3Cpath fill='%23ffe0ee' d='M2 0h1v1H2zM7 0h1v1H7zM2 1h2v1H2zM6 1h2v1H6zM2 2h6v1H2zM1 3h2v1H1zM4 3h2v1H4zM7 3h2v1H7zM11 3h1v1h-1zM1 4h8v1H1zM10 4h1v1h-1zM2 5h9v1H2zM2 6h8v1H2zM2 7h1v1H2zM4 7h1v1H4zM7 7h1v1H7zM9 7h1v1H9z'/%3E%3C/svg%3E") no-repeat;background-size:contain;animation:frWalk 6s linear infinite}
+@keyframes frWalk{0%{left:6px;transform:scaleX(1)}45%{left:calc(100% - 20px);transform:scaleX(1)}50%{left:calc(100% - 20px);transform:scaleX(-1)}95%{left:6px;transform:scaleX(-1)}100%{left:6px;transform:scaleX(1)}}
+.dpick .drow.fr{border:2px solid;margin:3px 0;padding:8px}
+/* магазин */
+.shopv .dhud{align-items:center}.shopv .dhud .sp{flex:1}
+.shopv .dx{background:transparent;border:2px solid #4d3727;color:#f4ead8;font:700 12px var(--body);padding:4px 10px;cursor:pointer}
+.stabs{display:flex;gap:5px;padding:10px 10px 0;overflow-x:auto;scrollbar-width:none}.stabs::-webkit-scrollbar{display:none}
+.stabs button{flex:none;padding:8px 12px;font:800 13px var(--body);background:#1a1612;color:#f4ead8;border:2px solid #4d3727;cursor:pointer}
+.stabs button[aria-pressed="true"]{background:#f0b84a;color:#2a1d15;border-color:#f0b84a}
+.sbody{padding:0 10px 14px}.sdesc{font-size:13px;color:#a8977f;padding:10px 2px 8px;line-height:1.4}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scard{background:#1a1612;border:2px solid #4d3727;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.scard.own{border-color:#3d6b40}
+.scard .sn{font-weight:800;font-size:14px;line-height:1.2}.scard .sd{font-size:11.5px;color:#a8977f;line-height:1.35;flex:1}
+.scard .sbtn button{width:100%;padding:9px 4px;font:800 14px var(--mono);background:#f0b84a;color:#2a1d15;border:none;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),2px 2px 0 #0a0705;cursor:pointer}
+.scard .sbtn button[disabled]{opacity:.45}.scard .sown{display:block;text-align:center;font:800 13px var(--body);color:#6fbf73;padding:9px 0}
+.sprev{height:64px;display:flex;align-items:center;justify-content:center;border:1px solid #3d2f22;overflow:hidden;position:relative}
+.sprev.frame{background:#1e2b26;padding:0 6px}.sprev.frame .trow{width:100%;display:grid;grid-template-columns:14px 1fr auto;gap:4px;font-size:12px;padding:5px 6px;color:#e8efe9}
+.sprev.frame .trow b,.sprev.frame .trow i{font:700 11px var(--mono);font-style:normal;color:#9db3a8}.sprev.frame .trow span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sprev.style i{position:absolute;left:12%;right:12%;bottom:18%;height:22%}
+.sprev.pass{background:linear-gradient(135deg,#3a2414,#6b3e1f);flex-direction:column}.sprev.pass b{font:800 24px var(--mono);color:#f0b84a}.sprev.pass span{font:600 10px var(--mono);color:#e8d9c0;text-transform:uppercase}
+.sprev.sub{background:#22303a;flex-direction:column}.sprev.sub b{font:800 22px var(--mono);color:#9fd0ff}.sprev.sub span{font:600 10px var(--mono);color:#c9dbe8}
+.sprev.cash{background:#23331f}.sprev.cash b{font:800 30px var(--mono);color:#9fd47a}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -9983,7 +10027,7 @@ function duelCard(){ const d = DUEL.data; const c = el(`<div class="card duelc">
   c.appendChild(row);
   if((d.done||[]).length){ c.appendChild(el(`<div class="dl">Последние дуэли</div>`)); d.done.slice(0,5).forEach(x=>{ const r = el(`<div class="drow ${x.res}"><div>${x.res==='win'?'Победа':x.res==='lose'?'Поражение':'Ничья'} · <b>«${esc(x.vs)}»</b><br><span>${x.my} : ${x.their}${x.stake?' · ставка '+fmt(x.stake)+' ₽':''}</span></div>${x.canRematch?'<div class="db"><button class="dbtn go">Реванш</button></div>':''}</div>`);
     const rb = r.querySelector('.go'); if(rb) rb.onclick = () => queueModal({kind:'duelnew', pid:x.opp, cafe:x.vs, rematch:1}); c.appendChild(r); }); }
-  if((d.top||[]).length){ c.appendChild(el(`<div class="dl">Лучшие дуэлянты</div>`)); c.appendChild(el(`<div class="dtop">${d.top.slice(0,5).map((t,i)=>`<div><b>${i+1}</b> «${esc(t.cafe||'?')}» <span>${t.r} · ${t.w}–${t.l}</span></div>`).join('')}</div>`)); }
+  if((d.top||[]).length){ c.appendChild(el(`<div class="dl">Лучшие дуэлянты</div>`)); c.appendChild(el(`<div class="dtop">${d.top.slice(0,5).map((t,i)=>`<div class="${t.fr ? 'fr fr-'+esc(t.fr) : ''}"><b>${i+1}</b> «${esc(t.cafe||'?')}» <span>${t.r} · ${t.w}–${t.l}</span></div>`).join('')}</div>`)); }
   return c; }
 const _renderTasks27 = renderTasks;
 renderTasks = function(p){ _renderTasks27.apply(this, arguments); try{ const c = duelCard(); const first = p.querySelector('.card'); if(first && first.nextSibling) p.insertBefore(c, first.nextSibling); else p.appendChild(c); }catch(e){ console.error(e); } };
@@ -9992,7 +10036,7 @@ renderTasks = function(p){ _renderTasks27.apply(this, arguments); try{ const c =
 MODAL15.duelpick = (box, m, btn) => { const d = DUEL.data;
   box.append(el(`<div class="eyebrow">Дуэль</div>`), el(`<h2>Кого вызываем?</h2>`), el(`<p>Все, кто заходил за последние 3 дня. Сначала кофейни близкого уровня.</p>`));
   const list = el(`<div class="dpick"></div>`);
-  (d && d.targets || []).forEach(t=>{ const r = el(`<button class="drow pick"><div><b>«${esc(t.cafe||'?')}»</b><br><span>ур. ${t.lvl} · рейтинг ${t.r}</span></div><span class="arr">Вызвать</span></button>`); r.onclick = () => { closeModal(); queueModal({kind:'duelnew', pid:t.pid, cafe:t.cafe, max:t.max}, true); }; list.appendChild(r); });
+  (d && d.targets || []).forEach(t=>{ const r = el(`<button class="drow pick ${t.fr ? 'fr fr-'+esc(t.fr) : ''}"><div><b>«${esc(t.cafe||'?')}»</b><br><span>ур. ${t.lvl} · рейтинг ${t.r}</span></div><span class="arr">Вызвать</span></button>`); r.onclick = () => { closeModal(); queueModal({kind:'duelnew', pid:t.pid, cafe:t.cafe, max:t.max}, true); }; list.appendChild(r); });
   if(!(d && d.targets||[]).length) list.appendChild(el(`<p>Пока некого: за 3 дня никто не заходил.</p>`));
   box.append(list, btn('Закрыть', closeModal, 'ghost')); };
 
@@ -10068,6 +10112,119 @@ function duelPlay(g){
   function closeBtn(){ const b = el(`<div class="dbtns"><button class="dbig">Закрыть</button></div>`); b.children[0].onclick = () => { dead = true; cancelAnimationFrame(raf); ov.remove(); structDirty = true; try{ track(true); }catch(e){} }; return b; }
   show();
 }
+
+/* ===== 13:43: биржа отдельной вкладкой, без плашки загрузки, без подсобки, плашки скроллом ===== */
+const _mkSection27 = marketSection;
+marketSection = function(){ return document.createElement('div'); };
+mkValue = function(s){ const base = typeof _shiftPay26 === 'function' ? _shiftPay26(s) : shiftPay(s); return Math.max(20000, Math.round(base * (6 + s.lvl*2 + (s.rank||0)*6 + (s.legendId||s.prize ? 40 : 0)) / 1000) * 1000); };
+HALL_TABS.splice(HALL_TABS.findIndex(t=>t[0]==='team')+1, 0, ['market','Биржа']); TAB_N.market = 'Биржа';
+function mkSellSection(){ const box = el(`<div><div class="h chalk">Продать своего</div><div class="empty" style="font-size:12px">Объявление видят все игроки. Пока висит, человек не работает. Снять можно в любой момент. Деньги минус 10% придут после продажи.</div></div>`);
+  const list = S.staff.filter(s=>!s.isYou && s.today!=='sub');
+  if(!list.length) box.appendChild(el(`<div class="empty">Некого продавать.</div>`));
+  list.forEach(s=>{ const v = mkValue(s); const c = el(`<div class="card staff"><div class="spr" style="${sprStyle(s.spr, 44)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:5px;min-width:0"><div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${esc(s.role)}</span><span class="tag num">ур. ${s.lvl}</span></div><div class="row wrap mk-p"></div></div></div>`);
+    const row = c.querySelector('.mk-p');
+    [[0.7,'Дёшево'],[1,'Норма'],[1.3,'Дорого']].forEach(([k, n])=>{ const price = Math.round(v*k/1000)*1000; const b = el(`<button class="btn ghost" style="padding:6px 8px;font-size:12px">${n} · ${fmt(price)} ₽</button>`);
+      b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'list', staff:mkPack(s), price, cafe:S.name}); if(r && r.ok){ removeStaff(s.id); syncScene(s.room||'main'); toast(s.name+' '+he(s,'выставлен','выставлена')+' за '+fmt(price)+' ₽'); save(); mkLoad(true); renderSheet(); } else { b.disabled = false; toast((r && r.error) || 'Не получилось'); } };
+      row.appendChild(b); });
+    box.appendChild(c); });
+  return box; }
+const _renderSheet27 = renderSheet;
+renderSheet = function(){ _renderSheet27.apply(this, arguments); try{ if(sheet === 'hall' && hallTab === 'market'){ const p = $('#panel'); if(!p) return; const st = p.scrollTop; p.innerHTML = '';
+  const buy = _mkSection27(S.active||'main'); const h = buy.querySelector('.h'); if(h) h.textContent = 'Купить у других'; p.appendChild(buy); p.appendChild(mkSellSection()); p.scrollTop = st; refreshAfford(); } }catch(e){ console.error(e); } };
+/* плашка «Аншлаг · Бар · Зал» больше не нужна; плашки листаются вбок */
+const _renderHud27b = renderHud;
+renderHud = function(){ _renderHud27b.apply(this, arguments); try{ const pe = $('#pills'); if(!pe) return; pe.querySelectorAll('.pill.load').forEach(x=>{ if(/Бар \d+%/.test(x.textContent)) x.remove(); }); }catch(e){} };
+hud1Pills = function(){ const more = $('#pmore'); if(more) more.style.display = 'none'; const pe = $('#pills'); if(pe) pe.querySelectorAll('.px').forEach(x=>x.classList.remove('px')); };
+/* без двери в подсобку */
+const _kitchenFront27 = sceneKitchenFront;
+sceneKitchenFront = function(st, now){ const k = S.kitchen || {tier:0}; if(!k.tier && !k.build) return; return _kitchenFront27.apply(this, arguments); };
+
+/* ===== анимированные рамки ===== */
+Object.assign(SIGN_FRAMES, {
+  fire:   {n:'Огонь', bg:'#2a1208', edge:'#ff7a1a', ink:'#ffd27a', glow:'#ff6a00', anim:'fire'},
+  bulbs:  {n:'Огни кинотеатра', bg:'#2b1f2a', edge:'#5a3a4a', ink:'#ffe7a8', anim:'bulbs'},
+  spark:  {n:'Золотые искры', bg:'#2a1d12', edge:'#d9a93c', ink:'#ffd978', glow:'#ffcf5a', anim:'spark'},
+  aurora: {n:'Северное сияние', bg:'#121a24', edge:'#6a8cff', ink:'#e6fbff', anim:'aurora'},
+  cat:    {n:'Кот на вывеске', bg:'#1d1830', edge:'#e89ac0', ink:'#ffe0ee', glow:'#e89ac0', anim:'cat'}
+});
+FRAME_SHOP.length = 0; FRAME_SHOP.push('fire','bulbs','spark','aurora','cat');
+const FX_P = [];
+const CAT_PX = ['..x....x....','..xx..xx....','..xxxxxx....','.xx.xx.xx..x','.xxxxxxxx.x.','..xxxxxxxxx.','..xxxxxxxx..','..x.x..x.x..'];
+function catPix(x, y, side, bob, col){ ctx.save(); ctx.translate(x, y); ctx.rotate([0, Math.PI/2, Math.PI, -Math.PI/2][side]); ctx.fillStyle = col; const s = 0.75;
+  CAT_PX.forEach((r,yy)=>{ for(let xx=0;xx<r.length;xx++) if(r[xx]==='x') ctx.fillRect(-4.5 + xx*s, -6 - bob + yy*s, s, s); }); ctx.restore(); }
+function perimPt(x0, y0, w, h, t){ const L = 2*(w+h); let d = (((t % 1) + 1) % 1) * L;
+  if(d < w) return [x0+d, y0, 0]; d -= w; if(d < h) return [x0+w, y0+d, 1]; d -= h; if(d < w) return [x0+w-d, y0+h, 2]; d -= w; return [x0, y0+h-d, 3]; }
+const _sceneSign27 = sceneSign;
+sceneSign = function(st, u, now){
+  if(u.sign < 1) return; const id = signFrameId(u), F = SIGN_FRAMES[id];
+  if(!F || !F.anim) return _sceneSign27.apply(this, arguments);
+  const cx = 150, name = S.name.toUpperCase(), t = performance.now()/1000;
+  let fs = 8.5; ctx.font = `800 ${fs}px "Golos Text",sans-serif`; while(ctx.measureText(name).width > 132 && fs > 5){ fs -= 0.5; ctx.font = `800 ${fs}px "Golos Text",sans-serif`; }
+  const tw = Math.max(64, ctx.measureText(name).width + 18), x0 = Math.round(cx - tw/2), y0 = 3, h = 15;
+  ctx.save();
+  rect(x0+10, 0, 1, 3, '#3a2a1e'); rect(x0+tw-11, 0, 1, 3, '#3a2a1e');
+  let edge = F.edge;
+  if(F.anim === 'aurora'){ const g = ctx.createLinearGradient(x0, 0, x0+tw, 0), h0 = (t*40) % 360; for(let i=0;i<=4;i++) g.addColorStop(i/4, `hsl(${(h0+i*70)%360},90%,62%)`); edge = g; ctx.shadowColor = `hsl(${(h0+90)%360},90%,60%)`; ctx.shadowBlur = 6; }
+  else if(F.glow){ ctx.shadowColor = F.glow; ctx.shadowBlur = 5; }
+  RR(x0, y0, tw, h, 2, edge); ctx.shadowBlur = 0; RR(x0+1.5, y0+1.5, tw-3, h-3, 1.5, F.bg);
+  if(F.anim === 'spark'){ const sx = x0 + ((t*0.6) % 1.4 - 0.2) * tw; ctx.save(); ctx.beginPath(); ctx.rect(x0+1.5, y0+1.5, tw-3, h-3); ctx.clip(); const g = ctx.createLinearGradient(sx-10, 0, sx+10, 0); g.addColorStop(0,'rgba(255,255,220,0)'); g.addColorStop(0.5,'rgba(255,255,220,.6)'); g.addColorStop(1,'rgba(255,255,220,0)'); ctx.fillStyle = g; ctx.fillRect(sx-10, y0, 20, h); ctx.restore(); }
+  ctx.textAlign = 'center'; ctx.fillStyle = F.ink; if(F.glow){ ctx.shadowColor = F.glow; ctx.shadowBlur = 4; } ctx.fillText(name, cx, y0 + 10.6); ctx.shadowBlur = 0; ctx.textAlign = 'left';
+  // эффекты
+  const dt = (typeof DRAW_DT !== 'undefined' ? DRAW_DT : 1/30);
+  if(F.anim === 'fire'){ if(Math.random() < 0.9) FX_P.push({k:'f', x:x0 + Math.random()*tw, y:y0 - 0.5, vy:-8 - Math.random()*9, life:0.4 + Math.random()*0.35, a:0}); if(Math.random() < 0.35){ const sd = Math.random() < 0.5; FX_P.push({k:'f', x:sd ? x0 : x0+tw-1, y:y0 + Math.random()*h, vy:-6 - Math.random()*6, life:0.35, a:0}); } }
+  if(F.anim === 'spark' && Math.random() < 0.12) FX_P.push({k:'c', x:x0 + 5 + Math.random()*(tw-10), y:y0 + h, vy:6 + Math.random()*6, life:1.6, a:0});
+  for(let i = FX_P.length - 1; i >= 0; i--){ const q = FX_P[i]; q.a += dt; if(q.a >= q.life || (q.k==='f' && F.anim!=='fire') || (q.k==='c' && F.anim!=='spark')){ FX_P.splice(i, 1); continue; }
+    if(q.k === 'f'){ const k = q.a/q.life; ctx.fillStyle = k < 0.3 ? '#fff2a0' : k < 0.6 ? '#ffb02a' : '#e5420f'; const s = k < 0.5 ? 1.6 : 1.1; ctx.fillRect(q.x + Math.sin(q.a*20 + q.x)*0.8, q.y + q.vy*q.a, s, s); }
+    else { const y = q.y + q.vy*q.a + 8*q.a*q.a; const w = Math.abs(Math.cos(q.a*8))*1.6 + 0.6; ctx.fillStyle = '#ffd24a'; ctx.fillRect(q.x - w/2, y, w, 1.6); } }
+  if(FX_P.length > 120) FX_P.splice(0, FX_P.length - 120);
+  if(F.anim === 'bulbs'){ const N = Math.round((tw+h)/5); for(let i=0;i<N;i++){ const [x,y] = perimPt(x0, y0, tw, h, i/N); const on = (i + Math.floor(t*8)) % 3 === 0; ctx.fillStyle = on ? '#fff3b0' : '#7a5a2a'; if(on){ ctx.shadowColor = '#ffd75a'; ctx.shadowBlur = 4; } ctx.fillRect(x-1, y-1, 2, 2); ctx.shadowBlur = 0; } }
+  if(F.anim === 'spark' && Math.floor(t*6) % 4 === 0){ const [x,y] = perimPt(x0, y0, tw, h, (t*0.37) % 1); ctx.fillStyle = '#fffbe0'; ctx.fillRect(x-0.5, y-2, 1, 4); ctx.fillRect(x-2, y-0.5, 4, 1); }
+  if(F.anim === 'cat'){ const cyc = (t/9) % 1; let x, y, side, sit = false; if(cyc < 0.7){ [x, y, side] = perimPt(x0, y0, tw, h, cyc/0.7); } else { x = x0 + tw*0.72; y = y0; side = 0; sit = true; } catPix(x, y, side, sit ? 0 : (Math.floor(t*8) % 2)*0.6, '#3a2a2e'); }
+  ctx.restore();
+};
+
+/* ===== магазин за звёзды: отдельное окно с вкладками ===== */
+let SHOP_TAB = 'frames';
+function shopItems(){ const sub = ownerSub();
+  return {
+    frames: {n:'Рамки', d:'Анимированная рамка навсегда: вывеска над меню, рейтинг сезона и дуэли.', list: FRAME_SHOP.map(k=>({id:'frame_'+k, n:SIGN_FRAMES[k].n, stars:1000, owned:frameOwned(k), prev:'frame', k}))},
+    pass: {n:'Пропуск', d:'Награды сезона: декор, деньги, значки и редкие гости.', list: [
+      {id:'pass', n:'Пропуск сезона', d:'Открывает платную дорожку наград до конца сезона.', stars:200, owned:passOwned(), prev:'pass'},
+      {id:'pass15', n:'Пропуск +15 ступеней', d:'То же плюс сразу 15 ступеней вперёд.', stars:500, owned:passOwned(), prev:'pass15'}]},
+    styles: {n:'Стили зала', d:'Свой вид основного зала. Включается в настройках.', list: ['int_soviet','int_loft','int_scandi','int_neon'].map(k=>({id:k, n:INTERIORS[k].n, d:(INTERIOR_FX[k]||{}).d||'', stars:{int_soviet:50,int_loft:75,int_scandi:100,int_neon:150}[k], owned:hasInterior(k), prev:'style', k}))},
+    help: {n:'Помощь', d:'Когда совсем туго.', list: [
+      {id:'sub_owner', n:'Подписка «Владелец»', d: sub ? 'Активна до '+new Date(S.ent.sub).toLocaleDateString('ru-RU') : 'Кофейня без тебя работает до 24 часов, офлайн-доход 80%. 30 дней.', stars:150, owned:!!sub, prev:'sub'},
+      {id:'cash_s', n:'Конверт от инвестора', d:'+'+fmt(cashPack(1))+' ₽, около дня выручки.', stars:25, prev:'cash1'},
+      {id:'cash_m', n:'Мама дала в долг', d:'+'+fmt(cashPack(3))+' ₽, около трёх дней выручки.', stars:60, prev:'cash2'}]}
+  }; }
+function shopPrev(it){
+  if(it.prev === 'frame') return `<div class="sprev frame"><div class="trow fr fr-${it.k}"><b>1</b><span>«${esc(S.name)}»</span><i>★</i></div></div>`;
+  if(it.prev === 'style'){ const t = INTERIORS[it.k].theme; return `<div class="sprev style" style="background:linear-gradient(${t.wall} 0 55%, ${t.trim} 55% 60%, ${t.fa} 60% 80%, ${t.fb} 80%)"><i style="background:${t.counter};border-top:3px solid ${t.ctop}"></i></div>`; }
+  if(it.prev === 'pass' || it.prev === 'pass15') return `<div class="sprev pass"><b>${it.prev==='pass15'?'+15':'★'}</b><span>сезон</span></div>`;
+  if(it.prev === 'sub') return `<div class="sprev sub"><b>24 ч</b><span>без тебя</span></div>`;
+  return `<div class="sprev cash"><b>₽</b></div>`; }
+function openShop(tab){ if(tab) SHOP_TAB = tab; const can = !!(tg && tg.initData && tg.openInvoice);
+  const ov = el(`<div class="dveil shopv"><div class="dbox"><div class="dhud"><span>Магазин</span><span class="sp"></span><button class="dx">Закрыть</button></div><div class="stabs"></div><div class="sbody"></div></div></div>`);
+  document.body.appendChild(ov); ov.querySelector('.dx').onclick = () => ov.remove(); ov.addEventListener('click', e=>{ if(e.target === ov) ov.remove(); });
+  function draw(){ const all = shopItems(); const tabs = ov.querySelector('.stabs'); tabs.innerHTML = '';
+    Object.keys(all).forEach(k=>{ const b = el(`<button aria-pressed="${k===SHOP_TAB}">${all[k].n}</button>`); b.onclick = () => { SHOP_TAB = k; draw(); }; tabs.appendChild(b); });
+    const g = all[SHOP_TAB] || all.frames; const body = ov.querySelector('.sbody'); body.innerHTML = '';
+    body.appendChild(el(`<div class="sdesc">${esc(g.d)}</div>`));
+    const grid = el(`<div class="sgrid"></div>`);
+    g.list.forEach(it=>{ const c = el(`<div class="scard ${it.owned?'own':''}">${shopPrev(it)}<div class="sn">${esc(it.n)}</div>${it.d?`<div class="sd">${esc(it.d)}</div>`:''}<div class="sbtn">${it.owned && !it.id.startsWith('cash') ? '<span class="sown">Есть</span>' : `<button ${can?'':'disabled'}>${fmt(it.stars)} ★</button>`}</div></div>`);
+      const b = c.querySelector('button'); if(b) b.onclick = () => buyStars(it.id); grid.appendChild(c); });
+    body.appendChild(grid);
+    if(!can) body.appendChild(el(`<div class="sdesc">Покупки работают, когда игра открыта в Telegram.</div>`)); }
+  draw(); }
+const _renderSettings27 = renderSettings;
+renderSettings = function(p){ _renderSettings27.apply(this, arguments); try{
+  const shopCard = p.querySelector('#shop'); const old = shopCard ? shopCard.closest('.card') : null;
+  const c = el(`<div class="card shopc"><div class="row"><span class="t">Магазин</span><span class="sp"></span><button class="btn">Открыть</button></div><div class="d">Анимированные рамки, пропуск сезона, стили зала и помощь деньгами.</div></div>`);
+  c.querySelector('button').onclick = () => openShop();
+  if(old) old.remove(); const firstCard = p.querySelector('.card'); if(firstCard) firstCard.parentNode.insertBefore(c, firstCard); else p.appendChild(c);
+  const fc = [...p.querySelectorAll('.card')].find(x=>{ const t = x.querySelector('.t'); return t && t.textContent === 'Рамка вывески'; }); if(fc) c.after(fc);
+  if(S.ent && S.ent.tips) c.appendChild(el(`<div class="d" style="color:var(--good)">Спасибо за поддержку: ${S.ent.tips} ★.</div>`));
+  }catch(e){ console.error(e); } };
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
