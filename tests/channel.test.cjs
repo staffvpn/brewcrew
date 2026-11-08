@@ -61,3 +61,35 @@ test('an uncertain Telegram response is not retried as a duplicate photo',async(
  global.fetch=async url=>{if(String(url).endsWith('/getMe'))return{json:async()=>({ok:true,result:{username:'test_bot'}})};calls++;throw Error('response lost');};
  try{const env={...f.env,CHANNEL_ID:'@test_channel'};await assert.rejects(()=>publishVersion(env,'https://brewcrew.pages.dev'));assert.equal(await publishVersion(env,'https://brewcrew.pages.dev'),null);assert.equal(calls,1);assert.equal(f.sql.prepare('SELECT info FROM posts').get().info,'sending');}finally{global.fetch=original;f.sql.close();}
 });
+
+test('caption correction edits the existing photo once and retains its message identity',async()=>{
+ const {database}=require('./helpers/d1.cjs');const f=database();
+ f.sql.exec('CREATE TABLE posts(key TEXT PRIMARY KEY,at INTEGER,ok INTEGER,info TEXT,msg_id INTEGER,caption TEXT)');
+ f.sql.prepare('INSERT INTO posts VALUES(?,?,?,?,?,?)').run('ver_9.0',123,1,'published',50,'Old wording');
+ const {syncVersionCaption,versionCaption}=await import('../functions/_channel.js');
+ const original=global.fetch,calls=[];global.fetch=async(url,options)=>{assert.ok(url.endsWith('/editMessageCaption'));calls.push(JSON.parse(options.body));return{json:async()=>({ok:true})};};
+ try{
+  const env={...f.env,CHANNEL_ID:'@test_channel'};
+  assert.equal(await syncVersionCaption(env,'https://preview.brewcrew.pages.dev'),false);assert.equal(calls.length,0);
+  assert.equal(await syncVersionCaption(env,'https://brewcrew.pages.dev'),true);
+  assert.equal(await syncVersionCaption(env,'https://brewcrew.pages.dev'),false);
+  assert.equal(calls.length,1);assert.equal(calls[0].message_id,50);assert.equal(calls[0].caption,versionCaption());
+  const row=f.sql.prepare('SELECT * FROM posts').get();assert.equal(row.msg_id,50);assert.equal(row.at,123);assert.equal(row.ok,1);assert.equal(row.caption,versionCaption());
+ }finally{global.fetch=original;f.sql.close();}
+});
+
+test('caption correction never creates missing posts and recovers a lost edit response',async()=>{
+ const {database}=require('./helpers/d1.cjs');const f=database();
+ f.sql.exec('CREATE TABLE posts(key TEXT PRIMARY KEY,at INTEGER,ok INTEGER,info TEXT,msg_id INTEGER,caption TEXT)');
+ const {syncVersionCaption,versionCaption}=await import('../functions/_channel.js');const env={...f.env,CHANNEL_ID:'@test_channel'};
+ const original=global.fetch;let calls=0;global.fetch=async(url)=>{assert.ok(url.endsWith('/editMessageCaption'));calls++;return{json:async()=>({ok:false,description:'Bad Request: message is not modified'})};};
+ try{
+  assert.equal(await syncVersionCaption(env,'https://brewcrew.pages.dev'),false);assert.equal(calls,0);
+  f.sql.prepare('INSERT INTO posts VALUES(?,?,?,?,?,?)').run('ver_9.0',123,1,'published',50,'Old wording');
+  assert.equal(await syncVersionCaption(env,'https://brewcrew.pages.dev'),true);
+  assert.equal(f.sql.prepare('SELECT caption FROM posts').get().caption,versionCaption());
+  f.sql.prepare("UPDATE posts SET caption='Old wording'").run();global.fetch=async()=>({json:async()=>({ok:false,description:'Forbidden: bot was kicked'})});
+  assert.equal(await syncVersionCaption(env,'https://brewcrew.pages.dev'),false);
+  assert.equal(f.sql.prepare('SELECT caption FROM posts').get().caption,'Old wording');
+ }finally{global.fetch=original;f.sql.close();}
+});
