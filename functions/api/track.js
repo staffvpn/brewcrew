@@ -4,6 +4,7 @@ import { promoWatch } from '../_promo.js';
 import { opsFor } from '../_admin.js';
 import { channelTick, tourWeek, post as channelPost, worldInfo } from '../_channel.js';
 import { goalTrack, goalInfo } from '../_goal.js';
+import { marketRoster } from '../_market.js';
 
 const num = (v, max = 1e15) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(n, max)) : 0; };
 const str = (v, len = 40) => (typeof v === 'string' ? v.slice(0, len) : null);
@@ -18,24 +19,31 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const franchises = Math.round(num(s.franchises, 1e4));
   const previous = await env.DB.prepare('SELECT franchises FROM players WHERE tg_id = ?1').bind(user.id).first();
   if (franchises !== Number(previous && previous.franchises || 0)) return json({ ok: false, error: 'stale_run', franchises: Number(previous && previous.franchises || 0) }, 409);
+  const marketVersion = Math.round(num(s.marketVersion, 1e9));
+  const market = await env.DB.prepare('SELECT version FROM market_accounts WHERE tg_id = ?1').bind(user.id).first();
+  if (market && market.version !== marketVersion) return json({ ok:false, error:'market_sync_required', version:market.version },409);
   const now = Date.now();
   const dt = Math.round(num(s.dt, 120));
   const referrer = null, refId = parseRef(s.ref);
   const tracked = await env.DB.batch([
+    env.DB.prepare(`INSERT INTO market_accounts(tg_id,franchises,version,roster,updated_at) VALUES(?1,?2,?3,?4,?5)
+      ON CONFLICT(tg_id) DO UPDATE SET roster=?4,updated_at=?5 WHERE market_accounts.version=?3 AND market_accounts.franchises=?2`)
+      .bind(user.id,franchises,marketVersion,JSON.stringify(marketRoster(s.roster)),now),
     env.DB.prepare(`INSERT INTO players (tg_id, username, first_name, lang, created_at, last_seen, sessions, cafe, city, level, money, earned, rooms, franchises, bankrupt, play_seconds, referrer)
       VALUES (?1, ?2, ?3, ?4, ?5, ?5, 1, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?16)
       ON CONFLICT(tg_id) DO UPDATE SET username = ?2, first_name = ?3, lang = ?4, last_seen = ?5,
         sessions = sessions + (CASE WHEN ?15 = 1 THEN 1 ELSE 0 END), cafe = ?6, city = ?7, level = ?8, money = ?9, earned = ?10,
         rooms = ?11, franchises = ?12, bankrupt = ?13, play_seconds = play_seconds + ?14,
         best_day = MAX(COALESCE(best_day,0), ?17), snap = COALESCE(?18, snap), badge_name = ?19
-      WHERE COALESCE(players.franchises, 0) = ?12`)
+      WHERE COALESCE(players.franchises, 0) = ?12 AND EXISTS(SELECT 1 FROM market_accounts WHERE tg_id=?1 AND version=?20 AND franchises=?12)`)
       .bind(user.id, str(user.username), str(user.first_name), str(user.language_code, 8), now,
         str(s.cafe), str(s.city, 20), Math.round(num(s.level, 1e6)), num(s.money), num(s.earned), Math.round(num(s.rooms, 100)),
         Math.round(num(s.franchises, 1e4)), Math.round(num(s.bankrupt, 1e4)), dt, s.start ? 1 : 0, referrer,
-        Math.min(num(s.best), 5e9), s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null, typeof s.bdn === 'string' ? s.bdn.slice(0, 40) : null),
+        Math.min(num(s.best), 5e9), s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null, typeof s.bdn === 'string' ? s.bdn.slice(0, 40) : null,marketVersion),
     env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id)
   ]);
-  if (!(tracked[0].meta && tracked[0].meta.changes)) return json({ ok: false, error: 'stale_run' }, 409);
+  if (!(tracked[0].meta && tracked[0].meta.changes)) return json({ ok:false,error:'market_sync_required' },409);
+  if (!(tracked[1].meta && tracked[1].meta.changes)) return json({ ok: false, error: 'stale_run' }, 409);
   // рефералы: привязка нового игрока и награда пригласившему за 3 уровень
   try { if (refId) await bindReferrer(env, user, refId, 'app'); await payReferrer(env, user.id); } catch {}
   // «Кофейня недели района» — пост в канал, раз в неделю на игрока
@@ -75,5 +83,5 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const me = await env.DB.prepare('SELECT banned FROM players WHERE tg_id = ?1').bind(user.id).first();
   let ops = [];
   try { ops = await opsFor(env, user.id); } catch {}
-  return json({ ok: true, banned: Boolean(me && me.banned), ops, goal, world });
+  return json({ ok: true, franchises, banned: Boolean(me && me.banned), ops, goal, world });
 }

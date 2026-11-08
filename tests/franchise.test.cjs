@@ -1,37 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { createHmac } = require('node:crypto');
-const { DatabaseSync } = require('node:sqlite');
 
-const token = 'local-test-token';
-function initData(id = 12345) {
-  const params = new URLSearchParams({ auth_date: String(Math.floor(Date.now()/1000)), user: JSON.stringify({ id, first_name: 'Test' }) });
-  const check = [...params].sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}=${v}`).join('\n');
-  const secret = createHmac('sha256', 'WebAppData').update(token).digest();
-  params.set('hash', createHmac('sha256', secret).update(check).digest('hex'));
-  return params.toString();
-}
-function database() {
-  const sql = new DatabaseSync(':memory:');
-  sql.exec(`CREATE TABLE players (tg_id INTEGER PRIMARY KEY, franchises INTEGER, cafe TEXT, earned REAL, created_at INTEGER, level INTEGER, money REAL, rooms INTEGER, best_day REAL, snap TEXT, username TEXT, first_name TEXT, lang TEXT, last_seen INTEGER, sessions INTEGER DEFAULT 0, city TEXT, bankrupt INTEGER, play_seconds INTEGER DEFAULT 0, referrer INTEGER, badge_name TEXT, banned INTEGER DEFAULT 0);
-    CREATE TABLE season (season TEXT, tg_id INTEGER, sp INTEGER, cafe TEXT, city TEXT, first_name TEXT, badge INTEGER, updated_at INTEGER, PRIMARY KEY (season, tg_id));
-    CREATE TABLE tour (week TEXT, tg_id INTEGER, profit REAL);
-    CREATE TABLE cache (key TEXT PRIMARY KEY, val TEXT, at INTEGER);
-    CREATE TABLE days (day TEXT, tg_id INTEGER, PRIMARY KEY (day, tg_id));`);
-  sql.exec("INSERT INTO players (tg_id, franchises, cafe, earned, created_at, level, money, rooms, best_day, snap) VALUES (12345, 0, 'Старая кофейня', 30000000, 1, 12, 1000000, 2, 500000, '{}')");
-  const wrap = (text, args = []) => ({
-    bind: (...values) => wrap(text, values),
-    first: async () => sql.prepare(text).get(...args) || null,
-    all: async () => ({ results: sql.prepare(text).all(...args) }),
-    run: async () => { const r = sql.prepare(text).run(...args); return { meta: { changes: Number(r.changes) } }; }
-  });
-  const DB = { prepare: text => wrap(text), batch: async statements => {
-    sql.exec('BEGIN');
-    try { const results = []; for (const s of statements) results.push(await s.run()); sql.exec('COMMIT'); return results; }
-    catch (e) { sql.exec('ROLLBACK'); throw e; }
-  } };
-  return { sql, env: { DB, BOT_TOKEN: token } };
-}
+const {database,initData,token}=require('./helpers/d1.cjs');
 async function sell(env, fields = {}) {
   const { onRequestPost } = await import('../functions/api/franchise.js');
   const request = new Request('https://test.invalid/api/franchise', { method: 'POST', body: JSON.stringify({ initData: initData(), franchises: 0, name: 'Новая кофейня', ...fields }) });
@@ -93,7 +63,7 @@ test('sale rejects insufficient revenue, reused names, bad auth and skipped vers
   assert.equal((await sell(env, { initData: 'invalid' })).status, 401);
   assert.equal((await sell(env, { name: ' старая КОФЕЙНЯ ' })).status, 400);
   assert.equal((await sell(env, { franchises: 2 })).status, 409);
-  sql.exec('UPDATE players SET earned=29999999');
+  sql.exec('UPDATE players SET earned=9999999');
   assert.equal((await sell(env)).status, 409);
   assert.equal(sql.prepare('SELECT franchises FROM players').get().franchises, 0);
   sql.close();
@@ -103,7 +73,7 @@ test('a failed sale transaction leaves the old cafe and version intact', async (
   sql.exec('DROP TABLE tour');
   await assert.rejects(() => sell(env));
   const row = sql.prepare('SELECT cafe, franchises, earned FROM players').get();
-  assert.equal(row.cafe, 'Старая кофейня'); assert.equal(row.franchises, 0); assert.equal(row.earned, 30000000);
+  assert.equal(row.cafe, 'Старая кофейня'); assert.equal(row.franchises, 0); assert.equal(row.earned, 10000000);
   assert.equal(sql.prepare('SELECT COUNT(*) n FROM cache').get().n, 0);
   sql.close();
 });
@@ -127,4 +97,10 @@ test('seasonal collection employees cannot be listed on the transfer market', as
   const response = await onRequestPost({ request, env });
   assert.equal((await response.json()).ok, false);
   sql.close();
+});
+test('uncollected transfer proceeds leave with the old network, personal grants remain pending',async()=>{
+  const{sql,env}=database();sql.exec("INSERT INTO admin_ops(tg_id,op,amount) VALUES(12345,'trsold',90000),(12345,'give',1000)");
+  assert.equal((await sell(env)).status,200);
+  assert.ok(sql.prepare("SELECT applied_at FROM admin_ops WHERE op='trsold'").get().applied_at);
+  assert.equal(sql.prepare("SELECT applied_at FROM admin_ops WHERE op='give'").get().applied_at,null);sql.close();
 });

@@ -6,7 +6,8 @@ const vm = require('node:vm');
 
 const html = readFileSync(resolve(__dirname, '../index.html'), 'utf8');
 function source(name) {
-  const start = html.indexOf(`\nfunction ${name}(`);
+  let start = html.indexOf(`\nfunction ${name}(`);
+  if(start === -1) start = html.indexOf(`\nasync function ${name}(`);
   assert.notEqual(start, -1, `Missing function: ${name}`);
   for (let end = html.indexOf('}', start); end !== -1; end = html.indexOf('}', end + 1)) {
     const candidate = html.slice(start, end + 1);
@@ -67,6 +68,7 @@ test('expiry removes all perishable stock, preserves fresh batches and counts lo
 
 function equipment() {
   return load(['equipmentFailureChance', 'equipmentTick'], {
+    FRIDGE_WEAR_PER_DAY:10, DAY_MIN:1440, REAL_PER_GMIN:20000,
     S: { isOpen: true, closedUntil: 0, serviceContract: false, q: { fridge: 1 }, rooms: [{ id: 'main', eq: { machine: 100, terminal: 100, kkt: 100, fridge: 100 }, broken: {} }] },
     clamp: (n, a, b) => Math.max(a, Math.min(n, b)),
     absNow: () => 100,
@@ -78,10 +80,10 @@ test('equal elapsed time gives equal wear at 30, 60, 120 Hz and in offline-sized
   for (const hz of [30, 60, 120]) {
     const c = equipment();
     for (let i = 0; i < hz * 60; i++) c.equipmentTick(1 / hz);
-    assert.ok(Math.abs(c.S.rooms[0].eq.fridge - 97.84) < 1e-8);
+    assert.ok(Math.abs(c.S.rooms[0].eq.fridge - 99.97916666666667) < 1e-8);
   }
   const c = equipment(); c.equipmentTick(60);
-  assert.ok(Math.abs(c.S.rooms[0].eq.fridge - 97.84) < 1e-8);
+  assert.ok(Math.abs(c.S.rooms[0].eq.fridge - 99.97916666666667) < 1e-8);
 });
 test('failure probability compounds by elapsed time instead of frame count', () => {
   const c = equipment(), p = c.equipmentFailureChance(20, 1 / 60);
@@ -93,7 +95,7 @@ test('failure probability compounds by elapsed time instead of frame count', () 
 test('wear respects service, quality, closure and broken equipment', () => {
   const c = equipment(), r = c.S.rooms[0];
   c.S.serviceContract = true; c.S.q.fridge = 2; c.equipmentTick(60);
-  assert.ok(Math.abs(r.eq.fridge - 97.84) < 1e-8);
+  assert.ok(Math.abs(r.eq.fridge - 99.97916666666667) < 1e-8);
   const before = r.eq.fridge;
   c.S.isOpen = false; c.equipmentTick(60); assert.equal(r.eq.fridge, before);
   c.S.isOpen = true; c.S.closedUntil = 200; c.equipmentTick(60); assert.equal(r.eq.fridge, before);
@@ -109,7 +111,7 @@ test('offline step can trigger a worn machine failure and stops wearing a broken
   c.breakdown = (id, key) => { failures.push(key); r.broken[key] = true; };
   c.equipmentTick(60);
   assert.deepEqual(failures, ['machine', 'fridge']);
-  assert.ok(Math.abs(r.eq.fridge - 19.964) < 1e-8);
+  assert.ok(Math.abs(r.eq.fridge - 19.99965277777778) < 1e-8);
 });
 
 test('server operations are applied once, survive reload and retry acknowledgements', () => {
@@ -298,4 +300,48 @@ test('legacy claimed staff rewards become collection rights without duplicating 
   assert.equal(c.S.seasonStaffRewards['staff:2026-11:f:35'], undefined);
   assert.equal(c.S.inv.length, 1);
   assert.equal(c.S.staff.length, 0);
+});
+
+test('one game day wears a normal fridge by ten points regardless of frame rate', () => {
+  const c=equipment();c.equipmentTick(8*3600);
+  assert.ok(Math.abs(c.S.rooms[0].eq.fridge-90)<1e-7);
+});
+test('repair charges once, clears the pending breakdown and requires available funds', () => {
+  const r={broken:{machine:true},eq:{machine:20}};
+  const c=load(['repairEquipment'],{S:{active:'main',money:30000,incidents:[{id:'break_machine',room:'main'}]},EQ:{machine:{fix:22000,n:'Кофемашина'}},room:()=>r,chance:()=>true});
+  c.canSpend=cost=>c.S.money>=cost;c.spend=cost=>{c.S.money-=cost;};
+  assert.equal(c.repairEquipment('main','machine','full',[]),true);
+  assert.equal(c.S.money,8000);assert.equal(c.S.incidents.length,0);assert.equal(r.eq.machine,100);
+  assert.equal(c.repairEquipment('main','machine','full',[]),false);assert.equal(c.S.money,8000);
+  r.broken.machine=true;assert.equal(c.repairEquipment('main','machine','full',[]),false);assert.equal(c.S.money,8000);
+});
+test('ignored equipment breakdown never orders a paid repair automatically', () => {
+  const incident={id:'break_fridge',room:'main'};
+  const c=load(['expireIncident'],{S:{incidents:[incident]},EQ:{fridge:{fix:15000}},evDef:()=>({cat:'break',o:[{}]}),HOOK:{toast(){},struct(){}},resolveIncident:()=>assert.fail('Unexpected automatic repair')});
+  c.expireIncident(incident);assert.equal(c.S.incidents.length,0);
+});
+test('preventive maintenance excludes broken equipment and cannot masquerade as a repair', () => {
+  const r={eq:{machine:80,fridge:50},broken:{fridge:true}};let charged=0;
+  const c=load(['serviceCost','doService'],{EQ:{machine:{fix:22000},fridge:{fix:15000}},canSpend:()=>true,spend:v=>{charged+=v;}});
+  assert.equal(c.serviceCost(r),1500);assert.equal(c.doService(r),true);assert.equal(charged,1500);
+  assert.equal(r.eq.machine,100);assert.equal(r.eq.fridge,50);assert.equal(r.broken.fridge,true);
+});
+test('client and server agree on every tested franchise threshold', async()=>{
+  const{franchiseThreshold}=await import('../functions/_economy.js');
+  const c=load(['franchiseNeed'],{S:{franchises:0}});
+  for(let n=0;n<8;n++){c.S.franchises=n;assert.equal(c.franchiseNeed(),franchiseThreshold(n));}
+  assert.equal(franchiseThreshold(0),10000000);assert.equal(franchiseThreshold(1),30000000);
+});
+test('pending seller proceeds are synchronized before a new market purchase', async()=>{
+  let tracks=0;
+  const c=load(['marketMutate'],{S:{money:120000,franchises:0},marketBusy:false,franchiseBusy:false,crypto:{randomUUID:()=> 'purchase-test-uuid'},save(){},toast(){}});
+  c.track=async()=>{tracks++;if(tracks===1){c.S.money+=45000;return{ok:true,ops:[{op:'trsold',amount:45000}]};}return{ok:true,ops:[]};};
+  c.mkApi=async()=>{assert.equal(tracks,2);assert.equal(c.S.money,165000);return{ok:true};};
+  c.applyMarketReceipt=async()=>true;
+  assert.equal(await c.marketMutate('buy',{id:1}),true);assert.equal(c.marketBusy,false);
+});
+test('a delayed old-network response cannot credit money after a franchise reset',()=>{
+  const c=load(['applyTrackOnce'],{S:{franchises:1,money:1000000}});
+  c.applyTrackOnce({ok:true,franchises:0,ops:[{id:1,op:'trsold',amount:90000}]},r=>assert.equal(r.ops.length,0));
+  assert.equal(c.S.money,1000000);assert.equal(c.S.opsAppliedThrough,undefined);
 });

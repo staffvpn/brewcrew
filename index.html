@@ -1462,6 +1462,7 @@ const EQ = {machine:{n:'Кофемашина', fix:22000, x:'Кофемашин�
   terminal:{n:'Терминал', fix:9000, x:'Терминал завис на надписи «Оплата…» и больше не включается. Только наличные.'},
   kkt:{n:'Онлайн-касса', fix:12000, x:'Онлайн-касса не пробивает чеки. Работать без чека — риск штрафа от налоговой.'},
   fridge:{n:'Холодильник', fix:15000, x:'Холодильник потёк и греется. Молоко и десерты долго не проживут.'}};
+const FRIDGE_WEAR_PER_DAY = 10;
 function breakdown(roomId, k){
   const rm = room(roomId); if(rm.broken[k]) return;
   rm.broken[k] = true; S.c.breakdowns++;
@@ -1694,6 +1695,7 @@ function expireIncident(inc){
   if(!inc) return;
   const d = evDef(inc);
   S.incidents = S.incidents.filter(x=>x!==inc);
+  if(inc.id.startsWith('break_') && EQ[inc.id.slice(6)]){ HOOK.toast('Техника требует ремонта. Оплата — после твоего решения'); HOOK.struct(); return; }
   // если долго не решали: проверки и кадры решаются по умолчанию, остальное — мелкий штраф к рейтингу и бардак
   if(d && d.o){
     if(d.cat==='story'){ let k = d.o.length-1; while(k>0 && d.o[k].req && !d.o[k].req(S, inc)) k--; resolveIncident(inc, k, true); }
@@ -1727,10 +1729,7 @@ function applyFx(fx, inc){
   if(fx.goose){ S.flags.goose = 1; S.c.geese++; }
   if(fx.fights){ S.c.fights += fx.fights; }
   if(fx.loyal){ const rg = S.regs.find(x=>x.id===fx.loyal[0]); if(rg){ rg.loyal = clamp(rg.loyal + fx.loyal[1], 0, 100); const nm = (REGULARS.find(x=>x.id===rg.id)||{}).n; chips.push([nm+': лояльность '+(fx.loyal[1]>0?'+':'')+fx.loyal[1], fx.loyal[1]>0]); if(rg.loyal<=10 && !rg.gone){ rg.gone = true; chips.push([nm+' ушёл навсегда', false]); } } }
-  if(fx.repair){ const [k, how] = fx.repair; const rm = room(inc && inc.room || S.active);
-    if(how==='full'){ spend(EQ[k].fix, 'repairs'); rm.broken[k] = false; rm.eq[k] = 100; }
-    if(how==='cheap'){ spend(Math.round(EQ[k].fix/3), 'repairs'); if(chance(0.55)){ rm.broken[k] = false; rm.eq[k] = 60; chips.push(['Заработало', true]); } else { chips.push(['Сломалось снова, нужен сервис', false]); } }
-    if(how==='none'){ if(k==='kkt') rm.noCheck = true; } }
+  if(fx.repair){ const [k, how] = fx.repair; repairEquipment(inc && inc.room || S.active, k, how, chips); }
   if(fx.inspect){ const r = inspectionResult(fx.inspect, fx.mode); const c2 = applyFx(r.fx, inc); return {chips:c2.chips.concat(r.txt? [] : []), out:r.txt}; }
   if(fx.gamble){ const g = chance(0.5) ? fx.gamble[0] : fx.gamble[1]; const c2 = applyFx(Object.assign({}, g, {out:undefined}), inc); return {chips:chips.concat(c2.chips), out:g.out}; }
   if(fx.loan){ income(fx.loan); S.debt.loan += fx.loan*1.3; chips.push(['Долг «серьёзным людям»: '+fmtR(S.debt.loan), false]); }
@@ -1797,7 +1796,7 @@ function scheduleEvents(nowReal){
   }
   if(nowReal >= S.nextAbsurd){ S.nextAbsurd = nowReal + R(14, 22)*60000; const a = makeAbsurd(); pushIncident('absurd', a); }
 }
-// Сохраняем прежний темп при 60 кадрах/с, но считаем износ и риск по времени.
+// Пассивный износ считается за игровые сутки, риск поломок — по прошедшему времени.
 function equipmentFailureChance(condition, seconds){
   const p = clamp((40 - condition)/400/60, 0, 1);
   return -Math.expm1(60 * seconds * Math.log1p(-p));
@@ -1812,17 +1811,28 @@ function equipmentTick(seconds){
         if(!r.broken[k] && r.eq[k] < 40 && chance(equipmentFailureChance(r.eq[k], dt))) breakdown(r.id, k);
       }
       if(!r.broken.fridge){
-        r.eq.fridge = Math.max(0, r.eq.fridge - 0.0006 * 60 * dt * (S.serviceContract?0.5:1) * (r.id==='main' && S.q ? S.q.fridge : 1));
+        r.eq.fridge = Math.max(0, r.eq.fridge - FRIDGE_WEAR_PER_DAY * dt / (DAY_MIN*REAL_PER_GMIN/1000) * (S.serviceContract?0.5:1) * (r.id==='main' && S.q ? S.q.fridge : 1));
         if(r.eq.fridge < 40 && chance(equipmentFailureChance(r.eq.fridge, dt))) breakdown(r.id, 'fridge');
       }
     }
   }
 }
-function serviceCost(r){ let c = 0; for(const k of Object.keys(EQ)) c += (100 - r.eq[k]) * EQ[k].fix / 300; return Math.round(c/100)*100; }
-function doService(r){ const c = serviceCost(r); if(!canSpend(c)) return false; spend(c, 'repairs'); for(const k of Object.keys(EQ)) r.eq[k] = 100; return true; }
+function serviceCost(r){ let c = 0; for(const k of Object.keys(EQ)) if(!r.broken[k]) c += (100 - r.eq[k]) * EQ[k].fix / 300; return Math.round(c/100)*100; }
+function doService(r){ const c = serviceCost(r); if(c<=0 || !canSpend(c)) return false; spend(c, 'repairs','Профилактика техники'); for(const k of Object.keys(EQ)) if(!r.broken[k]) r.eq[k] = 100; return true; }
+function repairEquipment(roomId, k, how, chips){
+  const rm = room(roomId); if(!rm || !EQ[k] || !rm.broken[k]) return false;
+  if(how==='none'){ if(k==='kkt') rm.noCheck = true; return true; }
+  const cost = how==='full' ? EQ[k].fix : how==='cheap' ? Math.round(EQ[k].fix/3) : 0;
+  if(!cost || !canSpend(cost)){ chips.push(['На ремонт не хватает денег', false]); return false; }
+  spend(cost, 'repairs','Ремонт: '+EQ[k].n);
+  if(how==='full' || chance(0.55)){ rm.broken[k] = false; rm.eq[k] = how==='full'?100:60; if(k==='kkt') rm.noCheck = false; chips.push(['Заработало',true]);
+    S.incidents = S.incidents.filter(i=>!(i.id==='break_'+k && (i.room||S.active)===roomId)); }
+  else chips.push(['Сломалось снова, нужен сервис',false]);
+  return true;
+}
 
 /* ================= франшиза и достижения ================= */
-function franchiseNeed(){ return 30000000 * Math.pow(3, S.franchises); }
+function franchiseNeed(){ return 10000000 * Math.pow(3, S.franchises); }
 function franchiseShares(){ const e = S.c.earnedRun || 0; return e < franchiseNeed() ? 0 : Math.floor(10 * Math.sqrt(e / franchiseNeed())); }
 const PERKS = [
   {id:'capital', n:'Стартовый капитал', d:'+50 000 ₽ на старте за уровень, максимум +500 000 ₽', cost:L=>2+L*2, max:10},
@@ -2693,6 +2703,7 @@ DUMB_LINES.push('А что вкусного? А из невкусного что
 const IN_N = {sales:'Продажи', tips:'Чаевые', tasks:'Задания и бонусы', events:'События', level:'Бонус за уровень', stafffine:'Штрафы с персонала', refunds:'Возвраты', sublet:'Субаренда', cashover:'Излишек в кассе', ref:'Агентское вознаграждение', admin:'Поступления от администрации', donate:'Переводы от инвестора', promo:'Гранты и промокоды', pass:'Пропуск сезона', season:'Награды сезона', friends:'Подарки друзей', misc:'Прочие поступления'};
 const OUT_N = {supply:'Закупки', wages:'Зарплаты', rent:'Аренда', util:'Коммуналка', tax:'Налог УСН 5%', repairs:'Ремонт и ТО', fines:'Штрафы', invest:'Улучшения, найм, залы', decor:'Интерьер и траты', cashdiff:'Недостача кассы', promoback:'Отзыв вложений', other:'Прочие расходы'};
 IN_N.capitalback = 'Возврат вложений';
+IN_N.transfer = 'Продажа сотрудников';
 let MONEY_CTX = null, INCOME_DEF = null, SALE_NEXT = false;
 function ledgerOf(f){ if(!f.L) f.L = {in:{}, out:{}, inW:{}, outW:{}}; return f.L; }
 function ledgerNote(d){
@@ -2736,7 +2747,7 @@ blankFin = function(){ const f = _blankFin14(); f.L = {in:{}, out:{}, inW:{}, ou
 function finIn(f){ return sumObj((f.L||{}).in); }
 function finOut(f){ return sumObj((f.L||{}).out); }
 // прибыль для турнира и отчёта: только работа кофейни, без переводов, промокодов и вложений
-const NON_OP_IN = ['ref','admin','donate','promo','pass','season','friends','misc','capitalback'];
+const NON_OP_IN = ['ref','admin','donate','promo','pass','season','friends','misc','capitalback','transfer'];
 function opProfit(f){ const L = f.L || {in:{}, out:{}}; let p = 0; for(const k in L.in) if(!NON_OP_IN.includes(k)) p += L.in[k]; for(const k in L.out) if(k!=='invest' && k!=='decor' && k!=='promoback') p -= L.out[k]; return p; }
 
 /* ---------- баланс ---------- */
@@ -3505,7 +3516,7 @@ function goldenCheck(f){
 goldenCheck = withIncome('tasks', goldenCheck);
 
 /* ---------- продажа сети: сезонное и купленное переезжает с владельцем ---------- */
-const CARRY_KEYS = ['sz','szHist','inv','badgeList','badgeOn','badges','szStyles','szPet','szDrink','szBadge','neonSign','szCourier','passSeen','promos','promoStyles','interior','ent','remind','ref','goalCups','goalMs','goalPrize','verSeen','seasonRewardAssets','seasonStaffRewards'];
+const CARRY_KEYS = ['sz','szHist','inv','badgeList','badgeOn','badges','szStyles','szPet','szDrink','szBadge','neonSign','szCourier','passSeen','promos','promoStyles','interior','ent','remind','ref','goalCups','goalMs','goalPrize','verSeen','seasonRewardAssets','seasonStaffRewards','marketVersion'];
 const _sellFr18 = sellFranchise;
 sellFranchise = function(cityId, receipt){
   collectSeasonRewards();
@@ -6020,7 +6031,7 @@ let trackT = 0, trackStart = true;
 function cashPack(days){ const h = (S && S.fin && S.fin.hist || []).slice(0,7).map(f=>f.rev||0); const avg = h.length ? h.reduce((a,b)=>a+b,0)/h.length : 0; return Math.round(Math.max({1:300000,3:1000000,8:3000000,20:8000000}[days] || 300000*days, avg*days)/1000)*1000; }
 function track(force){
   if(!S || !tg || !tg.initData) return;
-  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + profitOf(S.fin.today)), best:Math.round(S.c.maxDayRev||0), snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{marketVersion:S.marketVersion||0,roster:S.staff.filter(s=>!s.isYou).map(mkPack),cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + profitOf(S.fin.today)), best:Math.round(S.c.maxDayRev||0), snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
@@ -6544,8 +6555,8 @@ function renderStock(p, id){
   p.appendChild(el(`<div class="h">Техника · ${esc(roomDef(id).n)}</div>`));
   const rm = room(id);
   const eq = el(`<div class="card"><div class="eq">${Object.keys(EQ).map(k=>`<span>${EQ[k].n}</span>${bar(rm.eq[k], rm.broken[k]?'var(--bad)':rm.eq[k]<40?'var(--bad)':rm.eq[k]<70?'var(--caramel)':'var(--good)')}<b class="num">${rm.broken[k]?'сломано':Math.round(rm.eq[k])+'%'}</b>`).join('')}</div>
-    <div class="d">Ниже 40% техника начинает ломаться. Обслуживание дешевле ремонта.</div>
-    <div class="row wrap">${btnHtml('Обслужить всё: '+fmt(serviceCost(rm))+' ₽', serviceCost(rm), serviceCost(rm)<=0)}${S.serviceContract?'<span class="tag g">Сервисный договор</span>':btnHtml('Сервисный договор 90 000 ₽', 90000, false, 'ghost')}</div></div>`);
+    <div class="d">Ниже 40% техника начинает ломаться. Профилактика исправной техники дешевле ремонта. Базовый износ холодильника — 10 пунктов за игровые сутки; сервисный договор уменьшает износ вдвое.</div>
+    <div class="row wrap">${btnHtml('Профилактика: '+fmt(serviceCost(rm))+' ₽', serviceCost(rm), serviceCost(rm)<=0)}${S.serviceContract?'<span class="tag g">Сервисный договор</span>':btnHtml('Сервисный договор 90 000 ₽', 90000, false, 'ghost')}</div></div>`);
   const eb = eq.querySelectorAll('button');
   if(eb[0]) eb[0].onclick = () => { if(doService(rm)){ toast('Техника обслужена'); sfx('buy'); save(); renderPanel(); } };
   if(eb[1]) eb[1].onclick = () => { if(S.money<90000) return; spend(90000,'other','Сервисный контракт на технику'); S.serviceContract = true; toast('Износ техники вдвое медленнее'); save(); renderPanel(); };
@@ -6828,7 +6839,7 @@ function showModal(){
   else if(m.kind==='intro'){
     box.classList.add('kraftbox');
     box.append(el(`<div class="eyebrow">День первый</div>`), el(`<h2>Двери открыты</h2>`), el(`<p>Команды пока нет, так что ты сам стоишь на кассе и сам варишь кофе. Медленно, но бесплатно.</p>`),
-      el(`<ol class="introl"><li><b>Найми бариста и кассира.</b> Зал → Команда. Новые кандидаты каждые 5 минут.</li><li><b>Выбери позицию дня.</b> Зал → Меню. Её берут втрое чаще.</li><li><b>Тапай по гостям</b> у кассы и на выдаче, и по кофемашине, чтобы работать быстрее.</li><li><b>Три задания каждый день</b> — во вкладке «Дела». Там же события.</li></ol>`), btn('Поехали', ()=>{ closeModal(); openSheet('hall','team'); }));
+      el(`<ol class="introl"><li><b>Нанимай, когда команда не справляется.</b> Очереди и загрузка подскажут, когда нужен бариста или кассир. Лишний персонал тоже получает зарплату. Зал → Команда.</li><li><b>Выбери позицию дня.</b> Зал → Меню. Её берут втрое чаще.</li><li><b>Тапай по гостям</b> у кассы и на выдаче, и по кофемашине, чтобы работать быстрее.</li><li><b>Три задания каждый день</b> — во вкладке «Дела». Там же события.</li></ol>`), btn('Поехали', ()=>{ closeModal(); openSheet('hall','team'); }));
   }
   else if(m.kind==='streak'){ box.append(el(`<div class="eyebrow">С возвращением</div>`), el(`<h2>${m.n} ${m.n===1?'день':m.n<5?'дня':'дней'} подряд</h2>`), el(`<p>Команда рада тебя видеть. Бонус за серию: +${fmt(m.bonus)} ₽.</p>`), btn('К делу', closeModal)); }
   else if(m.kind==='note'){ box.append(el(`<div class="eyebrow">${m.text?'Новости':'Последствия'}</div>`), el(`<h2>${esc(m.title)}</h2>`)); if(m.text) box.append(el(`<p>${esc(m.text)}</p>`)); box.append(chipsEl(m.chips), btn('Понятно', closeModal)); }
@@ -6884,7 +6895,7 @@ function showModal(){
   }
   else if(m.kind==='franchise'){
     const sh = franchiseShares();
-    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} опыта?</h2>`), el(`<p>Деньги, склад, обычная команда, оборудование, улучшения, помещения, долги, репутация и сюжет кофейни начнутся заново. Временные усиления и события закончатся. Выручка, рекорды и очки кофейни в топе обнулятся.</p>`), el(`<p>Останутся достижения, гостевая книга, опыт владельца, постоянные бонусы, косметика, покупки за Stars и награды пропуска. Сотрудники из наград будут ждать в инвентаре: каждого можно пригласить один раз в новую кофейню. Уже полученные награды повторно не выдаются.</p>`));
+    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} опыта?</h2>`), el(`<p>Деньги, склад, обычная команда, оборудование, улучшения, помещения, долги, репутация и сюжет кофейни начнутся заново. Временные усиления и события закончатся. Выручка, рекорды и очки кофейни в топе обнулятся. Ожидаемые выплаты за трансферы старой сети также уйдут с ней.</p>`), el(`<p>Останутся достижения, гостевая книга, опыт владельца, постоянные бонусы, косметика, покупки за Stars и награды пропуска. Сотрудники из наград будут ждать в инвентаре: каждого можно пригласить один раз в новую кофейню. Уже полученные награды повторно не выдаются.</p>`));
     const opts = el(`<div class="opts"></div>`);
     const nm = el(`<div class="d" style="margin:6px 0 4px">Новая кофейня — новое название. Старая уйдёт из рейтинга сезона.</div>`);
     const inp = el(`<input class="field" maxlength="28" placeholder="Название новой кофейни" value="${esc(randomName())}" style="width:100%;margin-bottom:8px">`);
@@ -8128,9 +8139,10 @@ attention = function(){
 
 /* ---------- связь с сервером: трекинг и команды ---------- */
 function track(force, responseRequired){
+  if(S && S.marketPending && !responseRequired) return;
   if(!S || !tg || !tg.initData) return;
   const z = szState();
-  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{marketVersion:S.marketVersion||0,roster:S.staff.filter(s=>!s.isYou).map(mkPack),cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && !responseRequired && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else return fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(r=>{ onTrack(r); return r; }).catch(()=>null); }catch(e){}
 }
@@ -9574,26 +9586,25 @@ renderTeam = function(p, id){
 };
 
 /* ---------- трансферное окно ---------- */
-const MK_KEYS = ['name','role','lvl','rank','quirk','sex','spr','legendId','prize','xp','shifts','seasonRewardKey','szLeg'];
+const MK_KEYS = ['id','name','role','room','today','lvl','rank','quirk','sex','spr','legendId','prize','xp','shifts','seasonRewardKey','szLeg'];
 function mkPack(s){ const o = {}; for(const k of MK_KEYS) if(s[k] != null) o[k] = s[k]; return o; }
 function mkUnpack(o){ const s = makeStaff(o.role, {quirk:o.quirk||'none'}); for(const k of MK_KEYS) if(o[k] != null) s[k] = o[k]; s.mood = 70; s.fatigue = 0; s.interviewed = true; s.claim = false; s.transfer = true; return s; }
 function mkValue(s){ return Math.max(20000, Math.round(shiftPay(s) * (6 + s.lvl*2 + (s.rank||0)*6 + (s.legendId||s.prize ? 40 : 0)) / 1000) * 1000); }
 let MARKET = {list:[], mine:[], at:0, busy:false};
-async function mkApi(body){ if(!(tg && tg.initData)) return {ok:false, error:'Открой игру из Telegram'}; try{ const r = await fetch('/api/market', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData:tg.initData}, body))}); return await r.json(); }catch(e){ return {ok:false, error:'Нет связи'}; } }
-async function mkLoad(force){ if(MARKET.busy || (!force && Date.now() - MARKET.at < 60000)) return; MARKET.busy = true; const r = await mkApi({op:'get'}); MARKET.busy = false; if(r && r.ok){ MARKET.list = r.list||[]; MARKET.mine = r.mine||[]; MARKET.at = Date.now(); structDirty = true; if(sheet) renderPanel(); } }
+async function mkApi(body){ if(!(tg && tg.initData)) return {ok:false, error:'Открой игру из Telegram'}; try{ const r = await fetch('/api/market', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData:tg.initData}, body))}); return Object.assign({httpStatus:r.status}, await r.json()); }catch(e){ return {ok:false, error:'Нет связи',uncertain:true}; } }
+async function mkLoad(force){ if(MARKET.busy || (!force && Date.now() - MARKET.at < 60000)) return; MARKET.busy = true; try{ const r = await mkApi({op:'get',version:S.marketVersion||0}); if(r && r.ok){ for(const receipt of r.operations||[]) if(!await applyMarketReceipt(receipt)) return; MARKET.list = r.list||[]; MARKET.mine = r.mine||[]; MARKET.at = Date.now(); structDirty = true; if(sheet) renderPanel(); } } finally{ MARKET.busy = false; } }
 function marketSection(id){
   mkLoad();
   const box = el(`<div><div class="h chalk">Трансферное окно</div><div class="empty" style="font-size:12px">Сотрудники других игроков. Покупаешь — человек переходит к тебе со своим уровнем и характером. Своего можно выставить из его карточки.</div></div>`);
   for(const it of MARKET.mine){ const c = el(`<div class="card"><div class="row wrap"><span class="t">${esc(it.staff.name)}</span><span class="tag">${esc(it.staff.role)}</span><span class="tag num">ур. ${it.staff.lvl}</span><span class="sp"></span><span class="tag ${it.status==='sold'?'g':''}">${it.status==='sold'?'Продан':'Выставлен'}</span></div><div class="d">${it.status==='sold'?'Купил'+'а кофейня «'+esc(it.buyer_cafe||'?')+'». Деньги придут при следующем отчёте.':'Цена '+fmt(it.price)+' ₽. Пока ждёт покупателя.'}</div>${it.status==='open'?'<div class="row"><button class="btn ghost">Снять с продажи и вернуть</button></div>':''}</div>`);
-    const b = c.querySelector('button'); if(b) b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'cancel', id:it.id}); if(r && r.ok && r.staff){ const s = mkUnpack(r.staff); hire(s, 'main', 'white'); syncScene('main'); toast(s.name+' '+he(s,'вернулся','вернулась')+' в команду'); save(); } else toast((r && r.error) || 'Не получилось'); mkLoad(true); };
+    const b = c.querySelector('button'); if(b) b.onclick = async () => { b.disabled = true; await marketMutate('cancel',{id:it.id}); mkLoad(true); };
     box.appendChild(c); }
   const others = MARKET.list.slice(0, 12);
   if(!others.length) box.appendChild(el(`<div class="empty">${MARKET.at ? 'Пока никто никого не продаёт.' : 'Загружаем…'}</div>`));
-  for(const it of others){ const s = it.staff; const cnt = staffIn(id).filter(x=>x.role===s.role && !x.isYou).length, full = cnt >= staffCap(s.role);
+  for(const it of others){ const s = it.staff, targetRoom=id==='hall2' && !HALL2_ROLES.includes(s.role)?'main':id; const cnt = staffIn(targetRoom).filter(x=>x.role===s.role && !x.isYou).length, full = cnt >= staffCap(s.role);
     const q = s.quirk && s.quirk!=='none' && QUIRKS[s.quirk] ? qN(s) : 'без странностей';
     const c = el(`<div class="card staff"><div class="spr" style="${sprStyle(s.spr, 48)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${esc(s.role)}</span><span class="tag num">ур. ${s.lvl}</span>${s.legendId||s.prize?'<span class="tag gold">Легенда</span>':''}</div><div class="d">${esc(q)} · из «${esc(it.seller_cafe||'?')}»</div><div class="row">${full?'<span class="tag">Мест на эту роль нет</span>':btnHtml('Купить · '+fmt(it.price)+' ₽', it.price, S.money < it.price)}</div></div></div>`);
-    const b = c.querySelector('button[data-cost]'); if(b) b.onclick = async () => { if(S.money < it.price){ toast('Не хватает денег'); return; } b.disabled = true; const r = await mkApi({op:'buy', id:it.id});
-      if(r && r.ok && r.staff){ spend(it.price, 'invest', 'Трансфер: '+r.staff.name); const ns = mkUnpack(r.staff); hire(ns, id, 'white'); syncScene(id); sfx('buy'); toast(ns.name+' '+he(ns,'перешёл','перешла')+' к тебе из «'+(it.seller_cafe||'?')+'»'); save(); } else toast((r && r.error) || 'Уже купили'); mkLoad(true); };
+    const b = c.querySelector('button[data-cost]'); if(b) b.onclick = async () => { if(S.money < it.price){ toast('Не хватает денег'); return; } b.disabled = true; await marketMutate('buy',{id:it.id,room:targetRoom}); mkLoad(true); };
     box.appendChild(c); }
   return box;
 }
@@ -9607,13 +9618,13 @@ staffModal = function(box, m, btn){
   const wrap = el(`<div class="card" style="margin-top:8px"><div class="t">Трансферное окно</div><div class="d">Выставить ${esc(s.name)} на продажу другим игрокам. Пока висит объявление, сотрудник уходит из команды. Снять можно в любой момент — вернётся. Комиссия площадки 10%.</div><div class="row wrap mk-p"></div></div>`);
   const row = wrap.querySelector('.mk-p');
   [[0.7,'Дёшево'],[1,'Норма'],[1.5,'Дорого']].forEach(([k, n])=>{ const price = Math.round(v*k/1000)*1000; const b = el(`<button class="btn ghost">${n} · ${fmt(price)} ₽</button>`);
-    b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'list', staff:mkPack(s), price, cafe:S.name}); if(r && r.ok){ removeStaff(s.id); syncScene(s.room||'main'); toast(s.name+' '+he(s,'выставлен','выставлена')+' за '+fmt(price)+' ₽'); save(); closeModal(); mkLoad(true); } else { b.disabled = false; toast((r && r.error) || 'Не получилось'); } };
+    b.onclick = async () => { b.disabled = true; if(await marketMutate('list',{staffId:s.id,price})) closeModal(); b.disabled = false; mkLoad(true); };
     row.appendChild(b); });
   box.appendChild(wrap);
 };
 // деньги за проданного приходят через отчёт
 const _onTrack25 = onTrack;
-onTrack = function(r){ try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const o of r.ops){ if(o.op==='trsold'){ const a = Math.max(0, Math.round(Number(o.amount)||0)); if(a){ income(a, 'events', 'Трансфер: '+(o.text||'сотрудник')); toast('Продан на трансфере: '+(o.text||'сотрудник')+' · +'+fmt(a)+' ₽'); sfx('coin'); } } } }catch(e){ console.error(e); } return _onTrack25(r); };
+onTrack = function(r){ try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const o of r.ops){ if(o.op==='trsold'){ const a = Math.max(0, Math.round(Number(o.amount)||0)); if(a){ income(a, 'transfer', 'Трансфер: '+(o.text||'сотрудник')); toast('Продан на трансфере: '+(o.text||'сотрудник')+' · +'+fmt(a)+' ₽'); sfx('coin'); } } } }catch(e){ console.error(e); } return _onTrack25(r); };
 
 /* ---------- календарь смен ---------- */
 function mskDayStr(t){ return new Date((t||Date.now()) + 3*3600000).toISOString().slice(0, 10); }
@@ -10048,17 +10059,76 @@ function moveFranchiseLast(p){
   [...p.children].filter(c=>c.classList.contains('h') && c.textContent.trim()==='Франшиза').forEach(c=>c.remove());
   p.append(el('<div class="h chalk">Франшиза</div>'), cards[0]);
 }
+let marketBusy = false;
+async function applyMarketReceipt(receipt){
+  if(!S || !receipt || !receipt.ok || receipt.franchises !== S.franchises || !Number.isSafeInteger(receipt.version)) return false;
+  if(receipt.version > (S.marketVersion||0)){
+    if(receipt.version !== (S.marketVersion||0)+1) return false;
+    if(receipt.op==='list') removeStaff(receipt.staff.id);
+    else if(receipt.op==='buy' || receipt.op==='cancel'){
+      if(receipt.op==='buy') spend(receipt.price, 'invest', 'Трансфер: '+receipt.staff.name);
+      if(!S.staff.some(s=>s.id===receipt.staff.id)){ const staff = mkUnpack(receipt.staff); hire(staff, receipt.room || 'main', 'white'); }
+    } else return false;
+    S.marketVersion = receipt.version;
+    if(S.marketPending && S.marketPending.operationId===receipt.operationId) delete S.marketPending;
+    save(); _cloudGate = 0; saveCloud(); syncScene(S.active||'main'); structDirty = true;
+  }
+  const ack = await mkApi({op:'ack',operationId:receipt.operationId});
+  return !!(ack && ack.ok);
+}
+let marketRecovery = null;
+function recoverMarket(){
+  if(!marketRecovery) marketRecovery = recoverMarketOnce().finally(()=>{marketRecovery=null;});
+  return marketRecovery;
+}
+async function recoverMarketOnce(){
+  if(!S || !tg || !tg.initData) return false;
+  const current = S;
+  if(S.marketPending){
+    const response = await mkApi(S.marketPending);
+    if(S!==current) return false;
+    if(response.ok){ if(!await applyMarketReceipt(response)) return false; }
+    else if(response.uncertain || response.httpStatus>=500) return false;
+    else { delete S.marketPending; save(); }
+  }
+  const response = await mkApi({op:'get',version:S.marketVersion||0});
+  if(S!==current || !response.ok) return false;
+  for(const receipt of response.operations||[]) if(!await applyMarketReceipt(receipt)) return false;
+  return (S.marketVersion||0)===response.version;
+}
+async function marketMutate(op, fields){
+  if(marketBusy || franchiseBusy || !S) return false;
+  marketBusy = true; const current = S;
+  try{
+    if(S.marketPending){ const recovered = await recoverMarket(); toast(recovered?'Предыдущий трансфер восстановлен. Можно продолжать':'Нет связи. Незавершённый трансфер сохранён'); return recovered; }
+    let synced = await track(true,true);
+    if(synced && synced.error==='market_sync_required' && await recoverMarket()) synced = await track(true,true);
+    if(synced && synced.ok && synced.ops && synced.ops.length) synced = await track(true,true);
+    if(S!==current || !synced || !synced.ok){ toast('Не удалось синхронизировать рынок'); return false; }
+    S.marketPending = Object.assign({op,operationId:crypto.randomUUID(),franchises:S.franchises,version:S.marketVersion||0}, fields);
+    save();
+    const response = await mkApi(S.marketPending);
+    if(S!==current) return false;
+    if(response.ok){ const done = await applyMarketReceipt(response); toast(done?'Трансфер завершён':'Трансфер сохранён. Подтверждение повторится при подключении'); return done; }
+    if(!response.uncertain && response.httpStatus<500){ delete S.marketPending; save(); }
+    toast(response.error||'Нет связи. Повтори для восстановления'); return false;
+  } finally{ marketBusy = false; }
+}
 let franchiseBusy = false;
 async function confirmFranchise(value){
   if(franchiseBusy || !S) return false;
+  if(marketBusy){ toast('Дождись завершения трансфера'); return false; }
   const name = String(value||'').trim().replace(/\s+/g,' ').slice(0,28), current = S;
   if(name.length < 2 || name.toLowerCase().replace(/ё/g,'е') === S.name.trim().toLowerCase().replace(/ё/g,'е')){ toast('Нужно новое название, минимум две буквы'); return false; }
   if(!tg || !tg.initData){ toast('Для продажи открой игру в Telegram и подключись к интернету'); return false; }
   franchiseBusy = true;
   try{
-    const synced = await track(true, true);
+    if(S.marketPending && !await recoverMarket()){ toast('Сначала восстанови незавершённый трансфер'); return false; }
+    let synced = await track(true, true);
+    if(synced && synced.error==='market_sync_required' && await recoverMarket()) synced = await track(true,true);
     if(S !== current) return false;
     if(!synced || (!synced.ok && !(synced.error==='stale_run' && synced.franchises===current.franchises+1))){ toast('Не удалось синхронизировать игру. Продажа не выполнена'); return false; }
+    if(synced.ok && (!await recoverMarket() || S!==current)){ toast('Сначала заверши синхронизацию трансферов'); return false; }
     const receipt = await apiPost('/api/franchise', {name, franchises:current.franchises});
     if(S !== current) return false;
     if(!receipt || !receipt.ok){ toast(receipt && receipt.error || 'Нет связи. Попробуй продать ещё раз'); return false; }
@@ -10104,6 +10174,8 @@ function turnoverRent(f){
 // Сохраняем отметку вместе с наградой до отправки подтверждения серверу.
 let staleRunNotice = false;
 function applyTrackOnce(r, apply){
+  if(r && r.ok && S && Number.isSafeInteger(r.franchises) && r.franchises!==S.franchises) return apply(Object.assign({},r,{ops:[]}));
+  if(r && r.error==='market_sync_required' && S && !marketBusy && !franchiseBusy) recoverMarket().catch(()=>{});
   if(r && r.error==='stale_run' && S && !franchiseBusy && !staleRunNotice){ staleRunNotice = true; queueModal({kind:'note', title:'Сохранение старой сети', text:'Эта сеть уже продана или на сервере другая версия. Открой актуальное сохранение с устройства, где продал сеть. Старые данные не будут отправлены в рейтинг.'}); }
   if(!r || !r.ok || !S || !Array.isArray(r.ops)) return apply(r);
   const last = S.opsAppliedThrough || 0, ids = new Set();
@@ -10126,6 +10198,7 @@ const initialLocalSaveAt = initialLocalSave && initialLocalSave.savedAt || 0;
 boot(initialLocalSave);
 loadConfig();
 if(S){ streakCheck(); refreshEntitlements(); loadFriends(); setTimeout(()=>track(), 1500); }
+if(S && S.marketPending) recoverMarket().catch(()=>{});
 loadCloud(cloud=>{ if(cloud && cloud.v===3 && (!S || (cloud.savedAt||0) > initialLocalSaveAt + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
 document.addEventListener('pointerdown', unlockAudio, {once:true});
 requestAnimationFrame(frame);
