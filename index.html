@@ -3065,7 +3065,7 @@ const SEZ_INFO = {
 };
 function sezInfo(id){ id = id || sezId(); if(SEZ_INFO[id]) return Object.assign({id}, SEZ_INFO[id]); const m = +id.slice(5,7); const winter = m===12 || m<=2;
   return {id, n:'Сезон «'+SEZ_MONTHS[m-1][0].toUpperCase()+SEZ_MONTHS[m-1].slice(1)+' смена»', d:'Новый месяц — новый сезон: свой рейтинг, свои награды.', drink:'Сезонный раф', item:'garland', style: winter ? 'int_winter' : 'int_autumn', leg:{name:'Сезонная легенда', sex:'m', bio:'Пришёл по объявлению «нужен бариста с душой». Душа на месте, остальное тоже.'}}; }
-const SZ_TIER = 160, SZ_TIERS = 50;
+const SZ_TIER = 160, SZ_TIERS = 100;
 function szState(){ const id = sezId(); if(!S.sz || S.sz.id !== id){ if(S.sz) szArchive(S.sz); S.sz = {id, sp:0, acc:0, claimed:{f:[], p:[]}, login:null, profit:0, v50:true}; HOOK.struct(); } return S.sz; }
 function szArchive(z){ S.szHist = (S.szHist||[]).concat([{id:z.id, sp:z.sp, tier:szTier(z)}]).slice(-12); }
 function szTier(z){ z = z || S.sz; return z ? Math.min(SZ_TIERS, Math.floor(z.sp / SZ_TIER)) : 0; }
@@ -10561,6 +10561,26 @@ function rollback90(){ if(!S || S.economyVersion !== 2) return;
   S.economyVersion = 'r9'; }
 const _migrate30 = migrate;
 migrate = function(){ const r = _migrate30.apply(this, arguments); try{ rollback90(); }catch(e){ console.error(e); } return r; };
+
+/* ===== v31: ещё 50 ступеней сезона (51–100). Без денег и без постоянной силы: опыт, временные усилители, значки ===== */
+const SZ31_GEMS = {60:'Платина', 70:'Изумруд', 80:'Сапфир', 90:'Рубин', 100:'Алмаз'};
+const _szReward31 = szReward;
+szReward = function(track, n){ if(n <= 50) return _szReward31(track, n);
+  const gem = SZ31_GEMS[n];
+  if(track === 'p'){
+    if(gem) return {k:'gem', t:'Значок «'+gem+' сезона»', d:'Рядом с названием кофейни. Только у владельцев пропуска', gem};
+    if(n % 5 === 0) return n % 10 === 5 ? {k:'mod', boost:1.2, t:'Аншлаг', d:'Гостей +20% на сутки'} : {k:'mod', boost:1.15, modk:'check', t:'Щедрый день', d:'Средний чек +15% на сутки'};
+    return {k:'xp', v:220 + n*6, t:'Опыт'};
+  }
+  if(n === 100) return {k:'gemf', t:'Значок «Сто ступеней»', d:'Прошёл весь сезон до конца'};
+  if(n % 10 === 5) return {k:'mod', boost:1.1, t:'Сарафанное радио', d:'Гостей +10% на сутки'};
+  return {k:'xp', v:140 + n*5, t:'Опыт'};
+};
+const _szApply31 = szApplyUnlock;
+szApplyUnlock = function(rw, info, silent){
+  if(rw.k === 'gem'){ badgeAdd('gem'+rw.gem+'_'+info.id, rw.gem+' сезона «'+info.n+'»', 'Пропуск сезона: ступень '+Object.keys(SZ31_GEMS).find(k=>SZ31_GEMS[k]===rw.gem)); return; }
+  if(rw.k === 'gemf'){ badgeAdd('sz100_'+info.id, 'Сто ступеней «'+info.n+'»', 'Дошёл до 100 ступени'); return; }
+  return _szApply31(rw, info, silent); };
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
