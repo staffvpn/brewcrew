@@ -121,3 +121,19 @@ test('synced reward and temporary employees count towards capacity but cannot be
   const{sql,env}=fixture(roster);
   assert.equal((await market(env,seller,{op:'list',operationId:'reward_list_0001',staffId:staff.id,price:100000})).status,409);sql.close();
 });
+
+test('a concurrent purchase retry cannot reuse the first receipt as a second write gate',async()=>{
+ const f=fixture(),listing=await listed(f.env),request={op:'buy',operationId:'race_purchase_1',id:listing.id};
+ const buyerBefore=f.sql.prepare('SELECT * FROM players WHERE tg_id=?').get(buyer),accountBefore=f.sql.prepare('SELECT * FROM market_accounts WHERE tg_id=?').get(buyer),listingBefore=f.sql.prepare('SELECT * FROM market WHERE id=?').get(listing.id);
+ const first=await market(f.env,buyer,request);assert.equal(first.body.ok,true);
+ const prepare=f.env.DB.prepare;let hide=true;
+ f.env.DB.prepare=q=>{const st=prepare(q),bind=st.bind;st.bind=(...args)=>{const bound=bind(...args);
+  if(q.startsWith('SELECT request, result FROM market_operations')&&hide){hide=false;bound.first=async()=>null;}
+  if(q.startsWith('SELECT franchises, cafe, money')&&args[0]===buyer)bound.first=async()=>buyerBefore;
+  if(q.startsWith('SELECT franchises, version, roster FROM market_accounts')&&args[0]===buyer)bound.first=async()=>accountBefore;
+  if(q==='SELECT * FROM market WHERE id = ?1')bound.first=async()=>listingBefore;
+  return bound;};return st;};
+ const second=await market(f.env,buyer,request);assert.deepEqual(second.body,first.body);
+ assert.equal(f.sql.prepare('SELECT money FROM players WHERE tg_id=?').get(buyer).money,400000);
+ assert.equal(f.sql.prepare("SELECT COUNT(*) n FROM admin_ops WHERE op='trsold'").get().n,1);f.sql.close();
+});

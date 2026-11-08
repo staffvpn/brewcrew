@@ -10082,7 +10082,7 @@ renderHud = function(){ _renderHud26.apply(this, arguments); try{ if(!S) return;
 const D_DRINKS = ['Эспрессо','Американо','Капучино','Латте','Раф','Флэт уайт'], D_SIZES = ['S','M','L'], D_MILKS = ['Обычное','Овсяное','Кокосовое','Без лактозы'], D_ADDS = ['Без сахара','Карамель','Ваниль','Лаванда'], D_NOMILK = ['Эспрессо','Американо'];
 let DUEL = {data:null, at:0, busy:false};
 async function duelApi(body){ if(!(tg && tg.initData)) return {ok:false, error:'Открой игру из Telegram'}; try{ const r = await fetch('/api/duel', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData:tg.initData}, body))}); return await r.json(); }catch(e){ return {ok:false, error:'Нет связи'}; } }
-async function duelLoad(force){ if(DUEL.busy || (!force && Date.now() - DUEL.at < 150000)) return DUEL.data; DUEL.busy = true; const r = await duelApi({op:'list'}); DUEL.busy = false;
+async function duelLoad(force){ if(DUEL.busy || (!force && Date.now() - DUEL.at < 150000)) return DUEL.data; DUEL.busy = true; const current=S; const r = await duelApi({op:'list'}); DUEL.busy = false; if(S!==current){DUEL.at=0;return duelLoad(true);}
   if(r && r.ok){ DUEL.data = r; DUEL.at = Date.now(); duelNotice(); structDirty = true; try{ if(sheet) renderSheet(); renderHud(); }catch(e){} } return DUEL.data; }
 setTimeout(()=>duelLoad(true), 4000);
 setInterval(()=>{ if(!document.hidden) duelLoad(); }, 60000);
@@ -10112,10 +10112,16 @@ function duelCard(){ const d = DUEL.data; const c = el(`<div class="card duelc">
   (d.inc||[]).forEach(x=>{ const r = el(`<div class="drow inc"><div><b>«${esc(x.cafe)}»</b> ${x.rematch?'хочет реванш':'вызывает'}<br><span>${x.stake?'ставка '+fmt(x.stake)+' ₽':'на интерес'} · ещё ${Math.max(1,Math.ceil((x.until-Date.now())/3600000))} ч</span></div><div class="db"><button class="dbtn go">Принять</button><button class="dbtn">Нет</button></div></div>`);
     r.querySelector('.go').onclick = () => duelAccept(x); r.querySelectorAll('.dbtn')[1].onclick = async () => { const res = await duelApi({op:'decline', id:x.id}); toast(res.ok ? 'Отказались. Ставка вернётся сопернику' : res.error); duelLoad(true); }; c.appendChild(r); });
   (d.sent||[]).forEach(x=>c.appendChild(el(`<div class="drow"><div>Ждём ответа <b>«${esc(x.cafe)}»</b><br><span>твои очки ${x.score} из 50 · ${x.stake?'ставка '+fmt(x.stake)+' ₽':'на интерес'} · ещё ${Math.max(1,Math.ceil((x.until-Date.now())/3600000))} ч</span></div></div>`)));
+  for(const x of d.sent||[]){const cancel=el('<button class="btn ghost">Отозвать вызов «'+esc(x.cafe||'?')+'»</button>');cancel.onclick=async()=>{const r=await duelApi({op:'cancel',id:x.id});toast(r.ok?'Вызов отозван, ставка вернётся с отчётом':r.error);duelLoad(true);};c.appendChild(cancel);}
   const row = el(`<div class="row" style="margin-top:8px"><button class="btn" ${d.left?'':'disabled'}>Вызвать на дуэль</button><button class="btn ghost">Ссылка другу</button></div>`);
   row.children[0].onclick = () => queueModal({kind:'duelpick'});
   row.children[1].onclick = () => { const u = duelLink(d.pid); if(!u){ toast('Открой игру из Telegram'); return; } const msg = 'Вызываю на дуэль «Помнить заказ» в Brew Crew. Кофейня «'+S.name+'». Посмотрим, кто лучше помнит заказы.'; if(tg && tg.openTelegramLink) tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(u)+'&text='+encodeURIComponent(msg)); else toast('Открой игру из Telegram'); };
   c.appendChild(row);
+  for(const x of d.playing||[]){
+    const resume=el(`<div class="drow"><div>Незавершённая дуэль с «${esc(x.vs||'?')}»</div><div class="db"><button class="dbtn go">Продолжить</button>${x.role==='a'?'<button class="dbtn cancel">Отозвать</button>':''}</div></div>`);
+    resume.querySelector('.go').onclick=async()=>{if(marketBusy||franchiseBusy)return;if(!await recoverMarket()){toast('Сначала восстанови ставку');return;}openSheet(null);duelPlay(x);};
+    const cancel=resume.querySelector('.cancel');if(cancel)cancel.onclick=async()=>{const r=await duelApi({op:'cancel',id:x.id});toast(r.ok?'Вызов отозван, ставка вернётся с отчётом':r.error);duelLoad(true);};c.appendChild(resume);
+  }
   if((d.done||[]).length){ c.appendChild(el(`<div class="dl">Последние дуэли</div>`)); d.done.slice(0,5).forEach(x=>{ const r = el(`<div class="drow ${x.res}"><div>${x.res==='win'?'Победа':x.res==='lose'?'Поражение':'Ничья'} · <b>«${esc(x.vs)}»</b><br><span>${x.my} : ${x.their}${x.stake?' · ставка '+fmt(x.stake)+' ₽':''}</span></div>${x.canRematch?'<div class="db"><button class="dbtn go">Реванш</button></div>':''}</div>`);
     const rb = r.querySelector('.go'); if(rb) rb.onclick = () => queueModal({kind:'duelnew', pid:x.opp, cafe:x.vs, rematch:1}); c.appendChild(r); }); }
   if((d.top||[]).length){ c.appendChild(el(`<div class="dl">Лучшие дуэлянты</div>`)); c.appendChild(el(`<div class="dtop">${d.top.slice(0,5).map((t,i)=>`<div class="${t.fr ? 'fr fr-'+esc(t.fr) : ''}"><b>${i+1}</b> «${esc(t.cafe||'?')}» <span>${t.r} · ${t.w}–${t.l}</span></div>`).join('')}</div>`)); }
@@ -10142,15 +10148,15 @@ MODAL15.duelnew = (box, m, btn) => {
   box.append(el(`<div class="d" style="margin:4px 0">Ставка, не больше 10% твоего счёта${m.max!=null?' и счёта соперника':''}:</div>`), ch);
   const go = btn('Начать дуэль', async () => {
     if(stake && S.money < stake){ toast('Не хватает денег'); return; }
-    go.disabled = true; const r = await duelApi({op:'new', pid:m.pid, stake, rematch:m.rematch?1:0}); go.disabled = false;
+    go.disabled = true; const r = await duelTransact({op:'new', pid:m.pid, stake, rematch:m.rematch?1:0}); go.disabled = false;
     if(!r.ok){ toast(r.error||'Не получилось'); return; }
-    if(r.stake){ spend(r.stake, 'other', 'Ставка в дуэли с «'+(r.vs||'?')+'»'); save(); }
+
     closeModal(); duelPlay({id:r.id, guests:r.guests, vs:r.vs, stake:r.stake, role:'a'}); });
   box.append(go, btn('Отмена', closeModal, 'ghost')); };
 
 async function duelAccept(x){ if(x.stake && S.money < x.stake){ toast('Не хватает денег на ставку'); return; }
-  const r = await duelApi({op:'accept', id:x.id}); if(!r.ok){ toast(r.error||'Не получилось'); duelLoad(true); return; }
-  if(r.stake){ spend(r.stake, 'other', 'Ставка в дуэли с «'+(r.vs||'?')+'»'); save(); }
+  const r = await duelTransact({op:'accept', id:x.id}); if(!r.ok){ toast(r.error||'Не получилось'); duelLoad(true); return; }
+
   openSheet(null); duelPlay({id:r.id, guests:r.guests, vs:r.vs, stake:r.stake, role:'b'}); }
 
 /* итог для вызывающего */
@@ -10564,13 +10570,29 @@ async function applyMarketReceipt(receipt){
     else if(receipt.op==='buy' || receipt.op==='cancel'){
       if(receipt.op==='buy') spend(receipt.price, 'invest', 'Трансфер: '+receipt.staff.name);
       if(!S.staff.some(s=>s.id===receipt.staff.id)){ const staff = mkUnpack(receipt.staff); hire(staff, receipt.room || 'main', 'white'); }
-    } else return false;
+    } else if(receipt.op==='duel_stake'){ if(receipt.price)spend(receipt.price,'invest','Ставка в дуэли с «'+(receipt.vs||'?')+'»'); } else return false;
     S.marketVersion = receipt.version;
     if(S.marketPending && S.marketPending.operationId===receipt.operationId) delete S.marketPending;
     save(); _cloudGate = 0; saveCloud(); syncScene(S.active||'main'); structDirty = true;
   }
   const ack = await mkApi({op:'ack',operationId:receipt.operationId});
   return !!(ack && ack.ok);
+}
+async function duelTransact(fields){
+  if(marketBusy||franchiseBusy||!S)return {ok:false,error:'Дождись завершения текущей операции'};
+  marketBusy=true;const current=S;
+  try{
+    if(!await recoverMarket())return {ok:false,error:'Не удалось восстановить операции. Попробуй ещё раз'};
+    let synced=await track(true,true);
+    if(synced && synced.error==='market_sync_required' && await recoverMarket())synced=await track(true,true);
+    if(synced && synced.ok && synced.ops && synced.ops.length)synced=await track(true,true);
+    if(S!==current || !synced || !synced.ok)return {ok:false,error:'Не удалось синхронизировать ставку'};
+    const result=await duelApi({...fields,operationId:crypto.randomUUID(),franchises:S.franchises,version:S.marketVersion||0});
+    if(S!==current)return {ok:false,error:'Кофейня уже сменилась'};
+    if(result.ok && result.receipt && await applyMarketReceipt(result.receipt))return result;
+    await recoverMarket();duelLoad(true);
+    return {ok:false,error:result.ok?'Ставка сохранена. Продолжить можно в разделе дуэлей':result.error||'Ответ потерян. Проверь раздел дуэлей'};
+  }finally{marketBusy=false;}
 }
 let marketRecovery = null;
 function recoverMarket(){
@@ -10630,6 +10652,7 @@ async function confirmFranchise(value){
     if(!receipt || !receipt.ok){ toast(receipt && receipt.error || 'Нет связи. Попробуй продать ещё раз'); return false; }
     if(receipt.franchises !== current.franchises+1 || !Number.isSafeInteger(receipt.shares) || receipt.shares <= 0) return false;
     if(!sellFranchise('spb', receipt.name, receipt)) return false;
+    DUEL.data=null;DUEL.at=0;
     for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML='';
     Object.assign(SZ_SNAP, {at:0, tried:0, top:[], sps:[], total:0, season:null});
     Object.assign(TOUR, {at:0, tried:0, top:[], profits:[], total:0, week:null});

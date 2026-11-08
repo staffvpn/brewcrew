@@ -60,7 +60,7 @@ export async function onRequestPost({ request, env }) {
       if(roster.filter(s=>s.role===staff.role && (s.room||'main')===staff.room).length>=marketRoleLimit(staff.role,Number(me.level)||1,Number(snap.kitchen)||0))return fail('Освободи место на эту должность перед трансфером');
       nextRoster.push(staff);
     }
-    const receipt={ok:true,operationId:body.operationId,op:body.op,franchises:run,version:version+1,id:listingId,staff,price,room:staff.room||'main'};
+    const receipt={ok:true,transactionId:crypto.randomUUID(),operationId:body.operationId,op:body.op,franchises:run,version:version+1,id:listingId,staff,price,room:staff.room||'main'};
     const result=JSON.stringify(receipt), gate='EXISTS (SELECT 1 FROM market_operations WHERE operation_id = ?1 AND result = ?2)';
     const conditions=body.op==='list'
       ? "AND (SELECT COUNT(*) FROM market WHERE seller = ?1 AND status = 'open') < 3 AND NOT EXISTS (SELECT 1 FROM market WHERE seller = ?1 AND seller_run = ?3 AND staff_id = ?6 AND status IN ('open','sold'))"

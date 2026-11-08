@@ -10,7 +10,7 @@ function initData(id = 12345) {
 }
 function database() {
   const sql = new DatabaseSync(':memory:');
-  sql.exec(`CREATE TABLE players (tg_id INTEGER PRIMARY KEY, franchises INTEGER, cafe TEXT, earned REAL, created_at INTEGER, level INTEGER, money REAL, rooms INTEGER, best_day REAL, snap TEXT, username TEXT, first_name TEXT, lang TEXT, last_seen INTEGER, sessions INTEGER DEFAULT 0, city TEXT, bankrupt INTEGER, play_seconds INTEGER DEFAULT 0, referrer INTEGER, badge_name TEXT, banned INTEGER DEFAULT 0);
+  sql.exec(`CREATE TABLE players (tg_id INTEGER PRIMARY KEY, franchises INTEGER, cafe TEXT, earned REAL, created_at INTEGER, level INTEGER, money REAL, rooms INTEGER, best_day REAL, snap TEXT, username TEXT, first_name TEXT, lang TEXT, last_seen INTEGER, sessions INTEGER DEFAULT 0, city TEXT, bankrupt INTEGER, play_seconds INTEGER DEFAULT 0, referrer INTEGER, badge_name TEXT, banned INTEGER DEFAULT 0,duel_r INTEGER DEFAULT 1000,duel_w INTEGER DEFAULT 0,duel_l INTEGER DEFAULT 0);
     CREATE TABLE season (season TEXT, tg_id INTEGER, sp INTEGER, cafe TEXT, city TEXT, first_name TEXT, badge INTEGER, updated_at INTEGER, PRIMARY KEY (season, tg_id));
     CREATE TABLE tour (week TEXT, tg_id INTEGER, profit REAL);
     CREATE TABLE cache (key TEXT PRIMARY KEY, val TEXT, at INTEGER);
@@ -19,6 +19,7 @@ function database() {
     CREATE TABLE admin_ops(id INTEGER PRIMARY KEY AUTOINCREMENT,tg_id INTEGER,op TEXT,amount REAL,text TEXT,created_at INTEGER,by_admin INTEGER,applied_at INTEGER);`);
   sql.exec("INSERT INTO players (tg_id, franchises, cafe, earned, created_at, level, money, rooms, best_day, snap) VALUES (12345, 0, 'Старая кофейня', 10000000, 1, 12, 1000000, 2, 500000, '{}')");
   sql.exec(require('node:fs').readFileSync(require('node:path').resolve(__dirname,'../../migrations/0001_market_transactions.sql'),'utf8'));
+  sql.exec(require('node:fs').readFileSync(require('node:path').resolve(__dirname,'../../migrations/0002_duel_transactions.sql'),'utf8'));
   const wrap = (text, args = []) => ({
     bind: (...values) => wrap(text, values),
     first: async () => sql.prepare(text).get(...args) || null,

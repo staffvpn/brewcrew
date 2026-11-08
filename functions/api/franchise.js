@@ -28,15 +28,22 @@ export async function onRequestPost({ request, env }) {
   if(open && open.n) return json({ok:false,error:'Сначала сними сотрудников с трансферного рынка'},409);
   const pending = await env.DB.prepare('SELECT COUNT(*) n FROM market_operations WHERE tg_id=?1 AND applied_at IS NULL').bind(user.id).first();
   if(pending && pending.n) return json({ok:false,error:'Сначала восстанови незавершённые трансферы'},409);
-  const now = Date.now(), receipt = { ok: true, franchises: expected + 1, shares: Math.floor(10 * Math.sqrt(earned / need)), name, soldAt: now };
+  const activeDuel=await env.DB.prepare("SELECT id FROM duel WHERE (a=?1 AND status IN ('a_play','open','b_play')) OR (b=?1 AND status='b_play') LIMIT 1").bind(user.id).first();
+  if(activeDuel)return json({ok:false,error:'Сначала заверши или отмени свою дуэль'},409);
+  const now = Date.now(), receipt = { ok: true, transactionId:crypto.randomUUID(), franchises: expected + 1, shares: Math.floor(10 * Math.sqrt(earned / need)), name, soldAt: now };
   const value = JSON.stringify(receipt);
   const gate = 'EXISTS (SELECT 1 FROM cache WHERE key = ?2 AND val = ?3)';
   // batch выполняется атомарно. Квитанция создаётся только после успешного изменения версии сети.
   const result = await env.DB.batch([
-    env.DB.prepare("UPDATE players SET franchises = ?2, cafe = ?3, level = 1, money = 0, earned = 0, rooms = 1, best_day = 0, snap = NULL WHERE tg_id = ?1 AND COALESCE(franchises, 0) = ?4 AND earned >= ?5 AND NOT EXISTS(SELECT 1 FROM market WHERE seller=?1 AND status='open') AND NOT EXISTS(SELECT 1 FROM market_operations WHERE tg_id=?1 AND applied_at IS NULL)").bind(user.id, expected + 1, name, expected, need),
+    env.DB.prepare("UPDATE players SET franchises = ?2, cafe = ?3, level = 1, money = 0, earned = 0, rooms = 1, best_day = 0, snap = NULL,duel_r=1000,duel_w=0,duel_l=0 WHERE tg_id = ?1 AND COALESCE(franchises, 0) = ?4 AND earned >= ?5 AND NOT EXISTS(SELECT 1 FROM market WHERE seller=?1 AND status='open') AND NOT EXISTS(SELECT 1 FROM market_operations WHERE tg_id=?1 AND applied_at IS NULL) AND NOT EXISTS(SELECT 1 FROM duel WHERE (a=?1 AND status IN ('a_play','open','b_play')) OR (b=?1 AND status='b_play'))").bind(user.id, expected + 1, name, expected, need),
     env.DB.prepare('INSERT OR IGNORE INTO cache (key, val, at) SELECT ?1, ?2, ?3 WHERE changes() > 0').bind(key, value, now),
     env.DB.prepare(`UPDATE market_accounts SET franchises=?4,roster='[]' WHERE tg_id=?1 AND EXISTS(SELECT 1 FROM cache WHERE key=?2 AND val=?3)`).bind(user.id,key,value,expected+1),
-    env.DB.prepare(`UPDATE admin_ops SET applied_at=?4 WHERE tg_id=?1 AND op='trsold' AND applied_at IS NULL AND EXISTS(SELECT 1 FROM cache WHERE key=?2 AND val=?3)`).bind(user.id,key,value,now),
+    env.DB.prepare(`UPDATE admin_ops SET applied_at=?4 WHERE tg_id=?1 AND op IN ('trsold','duelpay') AND applied_at IS NULL AND EXISTS(SELECT 1 FROM cache WHERE key=?2 AND val=?3)`).bind(user.id,key,value,now),
+    env.DB.prepare(`INSERT INTO admin_ops(tg_id,op,amount,text,created_at,by_admin)
+      SELECT d.a,'duelpay',d.stake,'Ставка вернулась: соперник продал сеть',?4,0 FROM duel d JOIN players p ON p.tg_id=d.a
+      WHERE d.b=?1 AND d.status IN ('a_play','open') AND d.stake>0 AND COALESCE(p.franchises,0)=d.a_run AND p.created_at=d.a_created AND EXISTS(SELECT 1 FROM cache WHERE key=?2 AND val=?3)`)
+      .bind(user.id,key,value,now),
+    env.DB.prepare(`UPDATE duel SET status='declined',done_at=?4 WHERE b=?1 AND status IN ('a_play','open') AND EXISTS(SELECT 1 FROM cache WHERE key=?2 AND val=?3)`).bind(user.id,key,value,now),
     env.DB.prepare(`DELETE FROM season WHERE tg_id = ?1 AND season = ?4 AND ${gate}`).bind(user.id, key, value, sezId(now)),
     env.DB.prepare(`DELETE FROM tour WHERE tg_id = ?1 AND week = ?4 AND ${gate}`).bind(user.id, key, value, tourWeek(now)),
     env.DB.prepare(`DELETE FROM cache WHERE key IN (?1, ?4) AND ${gate}`).bind('sz_' + sezId(now), key, value, 'top_' + tourWeek(now))
