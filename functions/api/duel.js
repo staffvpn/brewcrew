@@ -3,7 +3,7 @@ import { json, verifyInitData, tgApi, getBot, sezId, mskDay } from '../_lib.js';
 import { publicGuests, scoreDuel } from '../_duel.js';
 import { post } from '../_channel.js';
 
-const DAY = 86400000, PLAY_WIN = 30 * 60000, MIN_STAKE = 10000, LOUD_STAKE = 200000, FEE = 0.1;
+const DAY = 86400000, PLAY_WIN = 30 * 60000, MIN_STAKE = 25000, LOUD_STAKE = 200000, FEE = 0.1;
 const pidOf = id => (Number(id) * 3 + 7).toString(36);
 const idOf = pid => { const n = parseInt(String(pid || ''), 36); return Number.isFinite(n) && (n - 7) % 3 === 0 ? (n - 7) / 3 : 0; };
 const escH = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -18,7 +18,7 @@ export async function duelSweep(env, origin, now = Date.now()) {
   const late = (await env.DB.prepare("SELECT * FROM duel WHERE (status = 'a_play' AND created_at < ?1) OR (status = 'open' AND a_at < ?2) OR (status = 'b_play' AND b_start < ?1) LIMIT 20").bind(now - PLAY_WIN, now - DAY).all()).results || [];
   for (const d of late) {
     if (d.status === 'a_play') { const u = await env.DB.prepare("UPDATE duel SET status = 'cancelled', done_at = ?2 WHERE id = ?1 AND status = 'a_play'").bind(d.id, now).run(); if (u.meta.changes) await pay(env, d.a, d.stake, 'Ставка вернулась: дуэль не начата', now); }
-    else if (d.status === 'open') { const u = await env.DB.prepare("UPDATE duel SET status = 'expired', done_at = ?2 WHERE id = ?1 AND status = 'open'").bind(d.id, now).run(); if (u.meta.changes) { await pay(env, d.a, d.stake, 'Ставка вернулась: «' + (d.b_cafe || '?') + '» не ответили', now); await dm(env, d.a, `Вызов «${escH(d.b_cafe)}» сгорел: за сутки не ответили.${d.stake ? ' Ставка ' + fmt(d.stake) + ' ₽ вернулась.' : ''}`); } }
+    else if (d.status === 'open') { const u = await env.DB.prepare("UPDATE duel SET status = 'expired', done_at = ?2 WHERE id = ?1 AND status = 'open'").bind(d.id, now).run(); if (u.meta.changes) { await pay(env, d.a, d.stake, 'Ставка вернулась: «' + (d.b_cafe || '?') + '» струсили', now); await dm(env, d.a, `«${escH(d.b_cafe)}» струсили: за сутки так и не ответили на вызов. Вызов закрыт${d.stake ? ', ставка ' + fmt(d.stake) + ' ₽ вернулась' : ''}.`); await dm(env, d.b, `Вызов от «${escH(d.a_cafe)}» сгорел: ты не ответил за сутки. В районе уже шепчутся, что ты струсил.`); } }
     else if (d.status === 'b_play') await resolve(env, origin, d, 0, JSON.stringify({ total: 0, det: [], late: 1 }), now);
   }
 }
@@ -85,7 +85,7 @@ export async function onRequestPost({ request, env }) {
       const used = await env.DB.prepare("SELECT COUNT(*) n FROM duel WHERE a = ?1 AND created_at >= ?2 AND status != 'cancelled'").bind(me, dayStart).first();
       const myMoney = my ? my.money : 0;
       return json({ ok: true, pid: pidOf(me), me: my ? { r: my.duel_r || 1000, w: my.duel_w || 0, l: my.duel_l || 0 } : { r: 1000, w: 0, l: 0 }, left: Math.max(0, 3 - (used ? used.n : 0)),
-        targets: targets.map(t => ({ pid: pidOf(t.tg_id), cafe: t.cafe, lvl: t.level, r: t.duel_r || 1000, fr: frs[t.tg_id] || null, max: Math.max(0, Math.floor(Math.min(myMoney * 0.1, t.money) / 1000) * 1000) })),
+        targets: targets.map(t => ({ pid: pidOf(t.tg_id), cafe: t.cafe, lvl: t.level, r: t.duel_r || 1000, fr: frs[t.tg_id] || null, max: Math.max(0, Math.floor(Math.min(myMoney * 0.25, (t.money || 0) * 0.5) / 1000) * 1000) })),
         inc: inc.map(x => ({ id: x.id, cafe: x.a_cafe, stake: x.stake, until: x.a_at + DAY, rematch: x.rematch })),
         sent: sent.map(x => ({ id: x.id, cafe: x.b_cafe, stake: x.stake, until: x.a_at + DAY, score: x.a_score })),
         done: done.map(x => { const iamA = x.a === me; return { id: x.id, vs: iamA ? x.b_cafe : x.a_cafe, my: iamA ? x.a_score : x.b_score, their: iamA ? x.b_score : x.a_score, stake: x.stake, res: x.winner === me ? 'win' : x.winner ? 'lose' : 'draw', at: x.done_at, canRematch: x.winner && x.winner !== me && now - x.done_at < DAY, opp: pidOf(iamA ? x.b : x.a) }; }),
@@ -106,7 +106,7 @@ export async function onRequestPost({ request, env }) {
       if (pr.length) { const last = pr[0]; const canRe = rematch && last.status === 'done' && last.winner && last.winner !== me && !pr.some(x => x.rematch && x.a === me);
         if (!canRe) return json({ ok: false, error: 'Эту кофейню можно вызвать раз в сутки' }); }
       let stake = Math.max(0, Math.round(Number(body.stake) || 0));
-      if (stake) { const max = Math.floor(Math.min((mine.money || 0) * 0.1, them.money || 0) / 1000) * 1000; if (stake < MIN_STAKE) return json({ ok: false, error: 'Ставка от 10 000 ₽' }); if (stake > max) return json({ ok: false, error: 'Ставка не больше ' + fmt(max) + ' ₽' }); }
+      if (stake) { const max = Math.floor(Math.min((mine.money || 0) * 0.25, (them.money || 0) * 0.5) / 1000) * 1000; if (stake < MIN_STAKE) return json({ ok: false, error: 'Ставка от 25 000 ₽' }); if (stake > max) return json({ ok: false, error: 'Ставка не больше ' + fmt(max) + ' ₽' }); }
       const seed = Math.floor(Math.random() * 2147483647);
       const r = await env.DB.prepare("INSERT INTO duel (a, b, a_cafe, b_cafe, stake, seed, status, created_at, rematch) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'a_play', ?7, ?8) RETURNING id").bind(me, b, String(mine.cafe || '?').slice(0, 40), String(them.cafe || '?').slice(0, 40), stake, seed, now, rematch).first();
       return json({ ok: true, id: r.id, stake, vs: them.cafe, guests: publicGuests(seed) });

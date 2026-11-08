@@ -26,6 +26,15 @@ export async function onRequestPost({ request, env }) {
       const p = r => Object.assign({}, r, { staff: JSON.parse(r.staff) });
       return json({ ok: true, list: list.map(p), mine: mine.map(p) });
     }
+    if (body.op === 'prices') {
+      // за сколько уходили сотрудники за две недели: по роли и уровню (шаг 5 уровней)
+      const rows = (await env.DB.prepare("SELECT staff, price FROM market WHERE status = 'sold' AND sold_at > ?1").bind(now - 14 * 86400000).all()).results || [];
+      const g = {};
+      for (const r of rows) { let st; try { st = JSON.parse(r.staff); } catch { continue; } const band = Math.floor((st.lvl || 1) / 5);
+        for (const k of [st.role + '|' + band, st.role + '|*']) (g[k] = g[k] || []).push(r.price); }
+      const out = {}; for (const k in g) { const a = g[k].sort((x, y) => x - y); out[k] = { med: a[Math.floor(a.length / 2)], n: a.length, lo: a[0], hi: a[a.length - 1] }; }
+      return json({ ok: true, prices: out });
+    }
     if (body.op === 'list') {
       const s = cleanStaff(body.staff); if (!s) return json({ ok: false, error: 'Не тот сотрудник' });
       const price = Math.max(10000, Math.min(1e9, Math.round(Number(body.price) || 0)));
