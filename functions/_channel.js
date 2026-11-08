@@ -3,22 +3,23 @@
 import { tgApi, getBot, mskDay, ADMINS, sezId, SEZ_NAMES } from './_lib.js';
 import { GOAL, goalInfo } from './_goal.js';
 
-export const UNPOST = ['ver_8.5'];
-export const VERSION = '8.7.1';
-export const VERSION_TITLE = 'исправления и порядок';
-export const VERSION_IMG = 'events.jpg';
-export const VERSION_TAIL = 'Нашли что-то кривое — пишите в поддержку, поправим.';
-export const VERSION_SHORT = 'Исправили ошибки, навели порядок на стене над баром и сделали игру легче для телефона.';
+export const UNPOST = [];
+export const VERSION = "9.0";
+export const VERSION_TITLE = "первые гости и большое развитие";
+export const VERSION_IMG = "updates.jpg";
+export const VERSION_TAIL = "Перезапустите игру после обновления. Ошибку можно сообщить в поддержку.";
+export const VERSION_SHORT = "Более спокойный старт, понятные расходы, полезнее техника, новый баланс опыта и рейтинга.";
 export const CHANGELOG = [
-  'Мастер на час чинит сломанную технику, и уведомление о поломке пропадает',
-  'Посуду на диванах и столиках второго зала снова убирают тапом',
-  'Одинаковые бонусы к гостям больше не складываются, а продлеваются. У общего итога есть потолок',
-  'Пропуск сезона качается ровнее: у очков за игровой день есть предел',
-  'Сотрудницы и гостьи говорят в женском роде, техника ломается в правильном роде',
-  'Порядок над баром: название кофейни на своей табличке и не прячется за меню, лампы не режут доску, переключатель залов ушёл в угол',
-  'Елизавета во время обзора ходит по кофейне, пробует кофе и фотографирует',
-  'Игра меньше нагружает телефон',
-  'Убрали выбор города. Диван, пианино, фотозону, золотой унитаз и автомат с игрушками убрали из интерьера, деньги за них вернули'
+  "1 реальная минута = 3 игровым. Рабочий день 08:00–20:00, сутки в игре — 8 часов",
+  "Новый старт — 600 000 ₽ с резервом 120 000 ₽. Старые накопления остаются",
+  "На старте меньше гостей. Их приводят вывеска, качество и рекомендации, а не один уровень",
+  "Пересчитаны цены техники и обучения. Улучшения ощутимее, скрытые надбавки за уровень убраны",
+  "За продажи и дела первые 180 XP в день идут полностью, дальше — 20%. Награды не урезаны",
+  "Рейтинг зависит от отзывов. Владелец убирает между заказами",
+  "Трансферы восстанавливаются после обрыва связи без повторного списания",
+  "Ставки дуэлей — на сервере. Игру можно продолжить, вызов — отозвать",
+  "При продаже сети кофейня и её топ начинаются заново. Порог — 10 млн ₽ выручки",
+  "Награды пропуска, достижения, гостевая книга, косметика, покупки Stars и опыт владельца сохраняются"
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -41,16 +42,17 @@ async function posted(env, key) { return await env.DB.prepare('SELECT key, at, o
 let LASTPOST = null;
 async function mark(env, key, ok, info) { const lp = key === 'record' ? null : LASTPOST; await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5, ?6)').bind(key, Date.now(), ok ? 1 : 0, info ?? null, lp ? lp.id : null, lp ? lp.caption : null).run(); if (key !== 'record') LASTPOST = null; }
 
-export async function post(env, origin, img, html) {
+export async function post(env, origin, img, html, remember = true) {
   if (html.replace(/<[^>]+>/g, '').length > 1020) html = html.slice(0, 1000).replace(/\n[^\n]*$/, '');
   const bot = await getBot(env);
   const url = bot ? `https://t.me/${bot.username}${env.APP_SHORT ? '/' + env.APP_SHORT : ''}?${env.APP_SHORT ? 'startapp' : 'start'}=channel` : origin;
   const r = await tgApi(env, 'sendPhoto', { chat_id: env.CHANNEL_ID, photo: `${origin}/img/${img}`, caption: html, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Открыть кофейню', url }]] } });
-  LASTPOST = r && r.ok ? { id: r.result.message_id, caption: html } : null;
+  if(remember) LASTPOST = r && r.ok ? { id: r.result.message_id, caption: html } : null;
   return r && r.ok ? { id: r.result.message_id } : false;
 }
 
 export async function channelTick(env, origin) {
+  try{if(new URL(origin).origin!==new URL(env.APP_URL||'https://brewcrew.pages.dev').origin)return;}catch{return;}
   if (!env.CHANNEL_ID || !env.DB || !env.BOT_TOKEN) return;
   try {
     // не чаще одного поста в 3 минуты, чтобы не спамить
@@ -63,12 +65,8 @@ export async function channelTick(env, origin) {
     }
     // снятые посты: удаляем из канала один раз
     for (const k of UNPOST) { const p = await posted(env, k); if (p && p.msg_id) { await tgApi(env, 'deleteMessage', { chat_id: env.CHANNEL_ID, message_id: p.msg_id }); await env.DB.prepare('UPDATE posts SET msg_id = NULL, ok = 0, info = ?2 WHERE key = ?1').bind(k, 'deleted').run(); } }
-    const vkey = 'ver_' + VERSION;
-    if (!(await posted(env, vkey))) {
-      let intro = []; if (VERSION === '8') try { const st = await env.DB.prepare(`SELECT COUNT(*) n, COALESCE(SUM(earned),0) e FROM players WHERE sessions > 0 AND tg_id NOT IN (${ADMINS.join(',')})`).first(); const pl = (n, a, b, c) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? b : c; }; if (st && st.n) intro = [`В районе уже ${st.n} ${pl(st.n, 'кофейня', 'кофейни', 'кофеен')}, вместе они заработали ${fmt(st.e)} ₽. Вы играете больше, чем мы думали, поэтому вот большое обновление:`, '']; } catch {}
-      const ok = await post(env, origin, VERSION_IMG || 'updates.jpg', [`<b>Обновление ${VERSION}${VERSION_TITLE ? ': ' + VERSION_TITLE : ''}</b>`, '', ...intro, ...CHANGELOG.map(x => '— ' + esc(x)), ...(VERSION_TAIL ? ['', VERSION_TAIL] : [])].join('\n'));
-      await mark(env, vkey, ok); return;
-    }
+    const vp=await posted(env,'ver_'+VERSION);
+    if(!vp || (!vp.ok && vp.info==='failed')){await publishVersion(env,origin);return;}
     const h = holiday();
     if (h) {
       const hkey = 'hol_' + h.id + '_' + new Date().getUTCFullYear();
@@ -105,6 +103,21 @@ export async function channelTick(env, origin) {
   } catch (e) { /* канал не должен ломать игру */ }
 }
 
+export async function publishVersion(env,origin){
+  const key='ver_'+VERSION,now=Date.now();
+  let claim=await env.DB.prepare("INSERT OR IGNORE INTO posts(key,at,ok,info) VALUES(?1,?2,0,'sending')").bind(key,now).run();
+  if(!claim.meta?.changes){
+    claim=await env.DB.prepare("UPDATE posts SET at=?2,info='sending' WHERE key=?1 AND ok=0 AND info='failed' AND at<?3").bind(key,now,now-3*60000).run();
+    if(!claim.meta?.changes)return null;
+  }
+  const caption=[`<b>Обновление ${VERSION}: ${VERSION_TITLE}</b>`,'',...CHANGELOG.map(s=>'— '+esc(s)),'',VERSION_TAIL].join('\n');
+  // A network error leaves the claim in 'sending': check the channel before retrying.
+  const sent=await post(env,origin,VERSION_IMG,caption,false);
+  if(sent)await env.DB.prepare("UPDATE posts SET ok=1,info='published',msg_id=?2,caption=?3 WHERE key=?1").bind(key,sent.id,caption).run();
+  else await env.DB.prepare("UPDATE posts SET info='failed' WHERE key=?1").bind(key).run();
+  return sent;
+}
+
 export function postUrl(env, msgId) { const base = String(env.CHANNEL_URL || '').replace(/\/+$/, ''); return base && msgId && /t\.me\/[A-Za-z0-9_]+$/.test(base) ? base + '/' + msgId : (base || null); }
 export async function versionInfo(env) {
   let url = env.CHANNEL_URL || null;
@@ -113,7 +126,7 @@ export async function versionInfo(env) {
 }
 // раз в тик — до 25 сообщений в бот
 async function bcastVersion(env, origin) {
-  if (VERSION.split('.').length > 2) return false;
+  if (VERSION === '9.0' || VERSION.split('.').length > 2) return false;
   const key = 'bc_' + VERSION; const st = await posted(env, key);
   if (st && st.info === 'done') return false;
   const vp = await posted(env, 'ver_' + VERSION); if (!vp || !vp.ok) return false;
