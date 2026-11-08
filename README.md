@@ -10,3 +10,5 @@ Telegram Mini App: симулятор кофейни с реальной эко�
 - `wrangler.toml` — привязка базы D1 `brewcrew` как `DB`.
 
 Секреты задаются в Cloudflare Pages → Settings → Variables and Secrets: `BOT_TOKEN`, `WEBHOOK_SECRET`. В репозиторий их не кладём.
+
+Проверки экономики: `node --test tests/economy.test.cjs` (Node.js 18+, без установки зависимостей).

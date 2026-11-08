@@ -986,8 +986,8 @@ function deliver(){
   HOOK.toast('Приехала поставка'); HOOK.struct();
 }
 function spoilCheck(){
-  for(const k of ['milk','desserts','food']){
-    const arr = S.stock[k]; let lost = 0;
+  for(const k of Object.keys(STOCK).filter(k=>STOCK[k].perish)){
+    const arr = S.stock[k] || []; let lost = 0;
     const fridgeBad = S.rooms.some(r=>r.broken.fridge);
     for(const b of arr){ if(b.exp <= S.day || (fridgeBad && k!=='food' && chance(0.5))){ lost += b.q; b.q = 0; } }
     S.stock[k] = arr.filter(b=>b.q>0);
@@ -1795,8 +1795,27 @@ function scheduleEvents(nowReal){
     if(pool.length) pushIncident(pick(pool));
   }
   if(nowReal >= S.nextAbsurd){ S.nextAbsurd = nowReal + R(14, 22)*60000; const a = makeAbsurd(); pushIncident('absurd', a); }
-  // поломки техники по износу — раз в игровой час
-  for(const r of S.rooms){ for(const k of ['machine','terminal','kkt']){ if(!r.broken[k] && r.eq[k] < 40 && chance((40 - r.eq[k])/400/60)) breakdown(r.id, k); } if(!r.broken.fridge){ r.eq.fridge = Math.max(0, r.eq.fridge - 0.0006*(S.serviceContract?0.5:1)*(r.id==='main' && S.q ? S.q.fridge : 1)); if(r.eq.fridge<40 && chance((40-r.eq.fridge)/400/60)) breakdown(r.id,'fridge'); } }
+}
+// Сохраняем прежний темп при 60 кадрах/с, но считаем износ и риск по времени.
+function equipmentFailureChance(condition, seconds){
+  const p = clamp((40 - condition)/400/60, 0, 1);
+  return -Math.expm1(60 * seconds * Math.log1p(-p));
+}
+function equipmentTick(seconds){
+  if(!S.isOpen || S.closedUntil > absNow() || !Number.isFinite(seconds) || seconds <= 0) return;
+  // Офлайн использует те же правила; короткие шаги учитывают момент поломки.
+  while(seconds > 0){
+    const dt = Math.min(1, seconds); seconds -= dt;
+    for(const r of S.rooms){
+      for(const k of ['machine','terminal','kkt']){
+        if(!r.broken[k] && r.eq[k] < 40 && chance(equipmentFailureChance(r.eq[k], dt))) breakdown(r.id, k);
+      }
+      if(!r.broken.fridge){
+        r.eq.fridge = Math.max(0, r.eq.fridge - 0.0006 * 60 * dt * (S.serviceContract?0.5:1) * (r.id==='main' && S.q ? S.q.fridge : 1));
+        if(r.eq.fridge < 40 && chance(equipmentFailureChance(r.eq.fridge, dt))) breakdown(r.id, 'fridge');
+      }
+    }
+  }
 }
 function serviceCost(r){ let c = 0; for(const k of Object.keys(EQ)) c += (100 - r.eq[k]) * EQ[k].fix / 300; return Math.round(c/100)*100; }
 function doService(r){ const c = serviceCost(r); if(!canSpend(c)) return false; spend(c, 'repairs'); for(const k of Object.keys(EQ)) r.eq[k] = 100; return true; }
@@ -1855,13 +1874,15 @@ const BUILD = [
    {n:'Световой короб', price:60000, d:'Видно с улицы.', set:{sign:2}, q:{}},
    {n:'Неон и штендер', price:170000, d:'Заметно с другого конца квартала.', set:{sign:4}, q:{}}]}
 ];
+function buildCost(choice){
+  return START_FEES + BUILD.reduce((sum,b)=>sum + b.opts[choice[b.id] || 0].price, 0);
+}
 function applyBuild(choice){
-  const rm = room('main'); let total = 0; S.q = {wear:1, term:1, fridge:1};
-  for(const b of BUILD){ const o = b.opts[choice[b.id] || 0]; total += o.price;
+  const rm = room('main'), total = buildCost(choice); S.q = {wear:1, term:1, fridge:1};
+  for(const b of BUILD){ const o = b.opts[choice[b.id] || 0];
     for(const k in o.set) rm.upg[k] = Math.max(rm.upg[k], o.set[k]);
     if(o.q.wear) S.q.wear = o.q.wear; if(o.q.term) S.q.term = o.q.term; if(o.q.fridge) S.q.fridge = o.q.fridge;
     if(o.q.rep) S.rep = clamp(S.rep + o.q.rep, 1, 5); if(o.q.chaos) S.meters.chaos += o.q.chaos; }
-  total += START_FEES;
   S.money -= total; S.fin.today.invest = (S.fin.today.invest||0) + total; S.build = choice;
   return total;
 }
@@ -1976,6 +1997,7 @@ function simulateOffline(realMs){
         const dshare = st.lambdaD / Math.max(1e-6, st.lambda + st.lambdaD);
         for(let j=0;j<k;j++){ const res = sellOne(r.id, {delivery: chance(dshare)}); if(res.fail){ S.c.angry++; break; } } }
     }
+    equipmentTick(60);
     // нерешённые события решаются сами
     for(const inc of S.incidents.slice()) if(Date.now() - inc.at > 20*60000){ expireIncident(inc); expired++; }
   }
@@ -6073,10 +6095,10 @@ function renderBuild(name, cityId, ref){
   const choice = {}; BUILD.forEach(b=>choice[b.id] = 1);
   const w = el(`<div class="start build"><div class="h chalk big">Обставить зал</div><div class="receipt" id="rc"></div><div id="bl"></div><button class="btn big" id="open">Открыть двери</button><button class="btn ghost" id="back">Назад</button></div>`);
   app.appendChild(w);
-  const total = () => BUILD.reduce((a,b)=>a+b.opts[choice[b.id]].price, 0);
+  const total = () => buildCost(choice);
   const draw = () => {
     const t = total(), left = budget - t;
-    w.querySelector('#rc').innerHTML = `<div class="rrow"><span>Бюджет</span><b>${fmt(budget)}</b></div><div class="rrow"><span>Оборудование и ремонт</span><b>−${fmt(t)}</b></div><div class="rrow tot"><span>Останется на команду и закупки</span><b class="${left<120000?'neg':''}">${fmt(left)}</b></div>${left<120000?'<div class="rnote">Мало. Нужно хотя бы 120 000 ₽ на первые зарплаты и аренду.</div>':''}`;
+    w.querySelector('#rc').innerHTML = `<div class="rrow"><span>Бюджет</span><b>${fmt(budget)}</b></div><div class="rrow"><span>Оборудование и ремонт</span><b>−${fmt(t - START_FEES)}</b></div><div class="rrow"><span>Открытие и оформление</span><b>−${fmt(START_FEES)}</b></div><div class="rrow tot"><span>Останется на команду и закупки</span><b class="${left<120000?'neg':''}">${fmt(left)}</b></div>${left<120000?'<div class="rnote">Мало. Нужно хотя бы 120 000 ₽ на первые зарплаты и аренду.</div>':''}`;
     const bl = w.querySelector('#bl'); bl.innerHTML = '';
     BUILD.forEach(b=>{
       const card = el(`<div class="buildrow"><div class="bt">${b.n}</div><div class="bopts"></div></div>`);
@@ -6089,7 +6111,9 @@ function renderBuild(name, cityId, ref){
   draw();
   w.querySelector('#back').onclick = () => renderStart();
   w.querySelector('#open').onclick = () => { unlockAudio();
+    if(budget - total() < 120000) return;
     S = newState(name, cityId); if(ref){ S.ref = ref; }
+    S.money += budget - START_CAPITAL;
     applyBuild(choice); initState();
     for(const k of ['beans','cups','syrup','tea','milk','desserts']){ if(k==='desserts' && !isUnlocked('dessert')) continue; const want = stockCap(k)*0.6 - stockQty(k); if(want>0){ if(STOCK[k].perish) S.stock[k].push({q:Math.round(want), exp:S.day+STOCK[k].perish}); else S.stock[k] += Math.round(want); } } S.interior = {}; S.promo = {day:null, rec:[]}; S.onb = {};
     S.streak = {last:new Date(Date.now()+3*3600000).toISOString().slice(0,10), n:1};
@@ -6923,6 +6947,7 @@ function frame(t){
     maybeDistract(); bubblesTick(dt);
     if(Date.now() > (S.candsAt||0)){ refreshCands(); structDirty = true; }
     scheduleEvents(Date.now());
+    equipmentTick(dt);
     ambT += dt; if(ambT > 0.5){ ambT = 0; ambientTick(); }
     if(S.closedUntil > absNow()) S.incidents.forEach(i=>{ i.at += dt*1000; }); else for(const inc of S.incidents.slice()) if(Date.now() - inc.at > 20*60000) expireIncident(inc);
     draw();
