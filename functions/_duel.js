@@ -23,7 +23,7 @@ export function makeGuests(seed) {
   const plan = [[1, true, false], [2, false, false], [2, true, false], [2, true, true], [3, true, true]];
   const out = [];
   plan.forEach(([n, full, twist], gi) => {
-    const items = []; for (let k = 0; k < n; k++) { let it = item(full); if (gi === 0 && NOMILK.includes(it.d)) it = Object.assign(it, { d: 'Латте', m: pick(MILKS.slice(1)) }); items.push(it); }
+    const items = []; for (let k = 0; k < n; k++) { let it = item(full), tries = 0; while (items.some(x => x.d === it.d) && tries++ < 12) it = item(full); if (gi === 0 && NOMILK.includes(it.d)) it = Object.assign(it, { d: 'Латте', m: pick(MILKS.slice(1)) }); items.push(it); }
     let text = pick(FILLER) + ' ' + items.map(sayItem).join(', и ещё ') + '.';
     if (twist) { const j = Math.floor(r() * items.length); const old = items[j]; const ns = SIZES[(SIZES.indexOf(old.s) + 1 + Math.floor(r() * 2)) % 3];
       items[j] = Object.assign({}, old, { s: ns }); text += ' ' + pick(TWIST) + ' ' + DRW[old.d] + ' сделайте ' + SIZEW[ns] + '.'; }

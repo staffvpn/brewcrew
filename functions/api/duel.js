@@ -46,7 +46,7 @@ async function resolve(env, origin, d, bScore, bDet, now) {
   await dm(env, d.a, `Дуэль «Помнить заказ» закончилась.\n${line}\n${res}`);
   await dm(env, d.b, `Дуэль «Помнить заказ» закончилась.\n${line}\n${res}`);
   // громкий пост: большая ставка, победа над топ-3, разгром или выигранный реванш
-  if (win && env.CHANNEL_ID) {
+  if (false && win && env.CHANNEL_ID) { // мгновенные посты выключены: теперь сводка дня в 21:00
     let loud = '';
     if (d.stake >= LOUD_STAKE) loud = 'stake';
     else if (Math.abs(d.a_score - bScore) >= 20) loud = 'crush';
