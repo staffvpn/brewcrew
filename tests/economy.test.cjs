@@ -150,15 +150,15 @@ test('failed responses do not advance the operation checkpoint', () => {
   assert.equal(c.S.opsAppliedThrough, 10);
 });
 
-test('fully owned premises pay no turnover rent; leased premises keep the existing rate', () => {
+test('rent does not add a percentage of turnover, for owned or leased premises', () => {
   const c = load(['balRamp', 'leasedRevenue', 'turnoverRent'], {
     S: { level: 12, rooms: [{ id: 'main' }], fin: { hist: [{ rev: 1000000 }] } },
     roomDef: () => ({ rent: 0 }), modMul: () => 1
   });
   assert.equal(c.turnoverRent({ rev: 0 }), 0);
   c.roomDef = () => ({ rent: 8000 });
-  assert.equal(c.turnoverRent({ rev: 0 }), 180000);
-  assert.equal(c.turnoverRent({ rev: 2000000 }), 360000);
+  assert.equal(c.turnoverRent({ rev: 0 }), 0);
+  assert.equal(c.turnoverRent({ rev: 2000000 }), 0);
   c.S.level = 4;
   assert.equal(c.turnoverRent({ rev: 2000000 }), 0);
 });
@@ -168,7 +168,7 @@ test('owning the main cafe excludes its revenue from rent on the remaining lease
     S: { level: 12, rooms: [{ id: 'main' }, { id: 'hall2' }], fin: { hist: [] } },
     roomDef: id => ({ rent: id === 'main' ? 0 : 10000 }), modMul: () => 1
   });
-  assert.equal(c.turnoverRent({ rev: 1100000, byRoom: { main: 1000000, hall2: 100000 } }), 18000);
+  assert.equal(c.turnoverRent({ rev: 1100000, byRoom: { main: 1000000, hall2: 100000 } }), 0);
   assert.equal(c.turnoverRent({ rev: 1000000 }), 0);
 });
 
@@ -223,11 +223,11 @@ test('partial offline minutes obey 1:3 time ratio and preserve the remainder', (
   assert.equal(c.HOOK.quiet, false);
 });
 
-test('turnover pay is due only when a hired employee worked the shift', () => {
+test('employee pay does not secretly add a percentage of turnover', () => {
   const c = load(['balRamp', 'turnoverStaffPay'], { S: { level: 12, staff: [{ isYou: true, today: 'work' }, { today: 'off' }] } });
   assert.equal(c.turnoverStaffPay({ rev: 100000 }), 0);
   c.S.staff[1].today = 'work';
-  assert.equal(c.turnoverStaffPay({ rev: 100000 }), 10000);
+  assert.equal(c.turnoverStaffPay({ rev: 100000 }), 0);
 });
 
 test('owner price bonus and starting capital remain bounded', () => {
