@@ -22,7 +22,7 @@ body{background:var(--bg);color:var(--cream);font-family:var(--body);font-size:1
 button,input{font:inherit;color:inherit}
 button{cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--caramel);outline-offset:2px}
-#app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:7px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-top:max(8px,env(safe-area-inset-top,0px));padding-bottom:max(8px,env(safe-area-inset-bottom,0px))}
+#app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:7px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:8px}
 .num{font-variant-numeric:tabular-nums}
 .hud{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:end}
 .cafe{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--caramel);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -466,7 +466,7 @@ body{background:var(--bg) radial-gradient(120% 60% at 50% 0%, #2c1e15 0%, #1d141
 .sheet .card.chalkboard .opt .d{color:inherit;opacity:.8}
 .top .cafe{font-size:18px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .top .cafe small{font-size:10px}
-.top .meta{font-size:12px}
+.top .meta{font-size:11px}
 /* v9 */
 .modal.rzbox{box-shadow:0 0 0 4px #c8322b,6px 6px 0 4px rgba(0,0,0,.5);animation:rzshake .4s steps(3)}
 @keyframes rzshake{33%{transform:translate(-3px,1px)}66%{transform:translate(3px,-1px)}}
@@ -691,6 +691,50 @@ input,textarea,select{font-size:16px!important}
 .dock{gap:6px!important}
 .dockb{flex-direction:row!important;min-height:46px!important;gap:8px!important;font-size:14px!important}
 .dockb svg{width:20px!important;height:20px!important;flex:none}
+/* дуэли */
+.duelc .drow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px dashed rgba(0,0,0,.15);font-size:13px;line-height:1.35}
+.duelc .drow span,.dpick .drow span{color:var(--muted);font-size:12px}
+.duelc .drow.inc{background:rgba(232,165,72,.18);margin:6px -8px 0;padding:8px;border-top:none}
+.duelc .drow.win b{color:#3d7a40}.duelc .drow.lose b{color:#a33a2c}
+.duelc .db{display:flex;gap:6px;flex:none}
+.dbtn{padding:7px 10px;font:700 13px var(--body);background:var(--panel);color:var(--cream);border:2px solid var(--line);cursor:pointer}
+.dbtn.go{background:var(--caramel);color:#2a1d15;border-color:var(--caramel)}
+.duelc .dl,.dbox .dl{font:600 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 4px}
+.duelc .dtop div{display:flex;gap:8px;font-size:13px;padding:2px 0}.duelc .dtop span{margin-left:auto;color:var(--muted);font-family:var(--mono);font-size:12px}
+.dpick{max-height:50vh;overflow:auto;margin:6px 0 10px}
+.dpick .drow{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;background:transparent;border:none;border-top:1px dashed rgba(0,0,0,.15);padding:9px 2px;font:600 14px var(--body);color:inherit;cursor:pointer}
+.dpick .arr{color:#a33a2c!important;font-weight:800;font-size:13px!important}
+.chips.dst{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
+.dveil{position:fixed;inset:0;z-index:200;background:rgba(10,7,5,.85);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:calc(var(--safe-top,0px) + 10px) 10px 20px}
+.dbox{width:100%;max-width:420px;background:#2a1d15;border:3px solid #0d0a08;box-shadow:inset 0 0 0 2px #4d3727;color:#f4ead8}
+.dhud{display:flex;justify-content:space-between;gap:8px;font:700 12px var(--mono);padding:8px 10px;background:#1a1612;border-bottom:2px solid #4d3727}
+.dhud .t{color:#f0b84a;min-width:20px;text-align:right}
+.dscene{position:relative;height:178px;background:linear-gradient(#e8d9c0 0 66%,#b98c5a 66%);overflow:hidden}
+.dscene canvas{position:absolute;left:14px;bottom:6px;width:64px;height:128px}
+.dsay{position:absolute;left:92px;right:10px;top:16px;background:#fff;color:#2a1d15;border:3px solid #0d0a08;padding:9px 11px;font:700 15px/1.4 var(--body);box-shadow:3px 3px 0 rgba(0,0,0,.2);min-height:58px}
+.dsay.gone{background:#e9e1d3;color:#8a7d6b;font-weight:600;font-style:italic}
+.dtbar{position:absolute;left:92px;right:10px;top:5px;height:5px;background:rgba(0,0,0,.15)}.dtbar i{display:block;height:100%;background:#c8322b}
+.dnum{position:absolute;right:10px;bottom:6px;font:700 12px var(--mono);color:#5a4330}
+.dhint{font-size:13px;color:#a8977f;padding:10px 12px 14px}
+.dgrp{padding:8px 10px 0}.dgrp .l{font:600 11px var(--mono);color:#a8977f;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.dchips{display:flex;flex-wrap:wrap;gap:5px}
+.dchips button{padding:7px 9px;font:700 13px var(--body);background:#2a1d15;color:#f4ead8;border:2px solid #4d3727;cursor:pointer}
+.dchips button[aria-pressed="true"]{background:#f4ead8;color:#2a1d15;border-color:#f4ead8}
+.dchips button[disabled]{opacity:.3}
+.dcart{margin:10px 10px 0;background:#1a1612;border:2px solid #4d3727;padding:8px 10px;font-size:13px}
+.dcart .l{font:600 11px var(--mono);color:#a8977f;margin-bottom:4px}.dcart .emp{color:#a8977f}
+.dcart .it{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-top:1px dashed #3d2f22}.dcart .it span{color:#a8977f;cursor:pointer;text-align:right}
+.dbtns{display:flex;gap:8px;padding:12px 10px}
+.dbig{flex:1;padding:14px 8px;font:800 16px var(--body);background:#f0b84a;color:#2a1d15;border:none;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25),3px 3px 0 #0a0705;cursor:pointer}
+.dbig.ghost{background:#2a1d15;color:#f4ead8;border:2px solid #4d3727}.dbig[disabled]{opacity:.4}
+.dtop2{text-align:center;padding:16px 10px 6px}.dsc{font:700 38px var(--mono);color:#f0b84a}.dsc small{font-size:14px;color:#a8977f}
+.dmsg{font-weight:800;font-size:15px;margin-top:4px;line-height:1.4}.dmsg.win{color:#6fbf73}.dmsg.lose{color:#ff8a7a}
+.dres{margin:0 10px;padding:6px 0;border-top:1px dashed #3d2f22;font-size:12px}.dres .h{color:#a8977f;margin-bottom:2px}.dres .h b{color:#f0b84a}
+.dres .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:1px 0}.dres .ok{color:#6fbf73}.dres .no{color:#ff8a7a}
+.pill.duel{background:#c8322b!important;color:#fff!important}
+/* правка из репозитория: безопасные зоны сверху и снизу */
+#app{padding-top:max(8px,env(safe-area-inset-top,0px));padding-bottom:max(8px,env(safe-area-inset-bottom,0px))}
+.top .meta{font-size:12px}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -9899,6 +9943,132 @@ renderHud = function(){ _renderHud26.apply(this, arguments); try{ if(!S) return;
   const c = $('#clk'); if(c) c.innerHTML = '<b>'+WEEKDAYS[weekday()].slice(0,2)+' '+clockStr()+'</b>день '+S.day;
   const m = $('#sMoney'); if(m){ const t = fmt(S.money)+' ₽'; if(m.textContent !== t) m.textContent = t; m.classList.toggle('long', t.length > 12); m.classList.toggle('xlong', t.length > 15); }
   hud1Pills(); }catch(e){} };
+
+/* ===== Дуэли «Помнить заказ» ===== */
+const D_DRINKS = ['Эспрессо','Американо','Капучино','Латте','Раф','Флэт уайт'], D_SIZES = ['S','M','L'], D_MILKS = ['Обычное','Овсяное','Кокосовое','Без лактозы'], D_ADDS = ['Без сахара','Карамель','Ваниль','Лаванда'], D_NOMILK = ['Эспрессо','Американо'];
+let DUEL = {data:null, at:0, busy:false};
+async function duelApi(body){ if(!(tg && tg.initData)) return {ok:false, error:'Открой игру из Telegram'}; try{ const r = await fetch('/api/duel', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData:tg.initData}, body))}); return await r.json(); }catch(e){ return {ok:false, error:'Нет связи'}; } }
+async function duelLoad(force){ if(DUEL.busy || (!force && Date.now() - DUEL.at < 150000)) return DUEL.data; DUEL.busy = true; const r = await duelApi({op:'list'}); DUEL.busy = false;
+  if(r && r.ok){ DUEL.data = r; DUEL.at = Date.now(); duelNotice(); structDirty = true; try{ if(sheet) renderSheet(); renderHud(); }catch(e){} } return DUEL.data; }
+setTimeout(()=>duelLoad(true), 4000);
+setInterval(()=>{ if(!document.hidden) duelLoad(); }, 60000);
+function duelLink(pid){ if(!CFG || !CFG.bot) return ''; return CFG.app ? `https://t.me/${CFG.bot}/${CFG.app}?startapp=duel_${pid}` : `https://t.me/${CFG.bot}?start=duel_${pid}`; }
+function duelStartParam(){ try{ const p = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || ''; return p; }catch(e){ return ''; } }
+setTimeout(()=>{ const p = duelStartParam(); if(!S || !p) return; if(p === 'duel'){ openSheet('hall'); hallTab = 'tasks'; renderSheet(); } else if(/^duel_[0-9a-z]{2,16}$/.test(p)){ queueModal({kind:'duelnew', pid:p.slice(5), cafe:null}); } }, 5000);
+
+/* итоги, которые ещё не показывали */
+function duelNotice(){ const d = DUEL.data; if(!d || !S) return; S.c.duelSeen = S.c.duelSeen || [];
+  for(const x of (d.done||[])){ if(S.c.duelSeen.includes(x.id)) continue; S.c.duelSeen.push(x.id); if(Date.now() - x.at > 3*86400000) continue;
+    queueModal({kind:'duelres', x}); }
+  S.c.duelSeen = S.c.duelSeen.slice(-40); }
+
+/* деньги по дуэлям приходят через отчёт */
+const _onTrack27 = onTrack;
+onTrack = function(r){ try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const o of r.ops){ if(o.op==='duelpay'){ const a = Math.max(0, Math.round(Number(o.amount)||0)); if(a){ income(a, 'events', o.text||'Дуэль'); toast((o.text||'Дуэль')+' · +'+fmt(a)+' ₽'); sfx('coin'); } } } }catch(e){} return _onTrack27(r); };
+
+/* плашка вызова */
+const _renderHud27 = renderHud;
+renderHud = function(){ _renderHud27.apply(this, arguments); try{ const d = DUEL.data, pe = $('#pills'); if(!d || !pe || !(d.inc||[]).length || pe.querySelector('.pill.duel')) return;
+  const b = el(`<button class="pill duel hot">Вызов на дуэль · ${d.inc.length}</button>`); b.onclick = () => { openSheet('hall'); hallTab = 'tasks'; renderSheet(); }; pe.insertBefore(b, pe.firstChild); try{ hud1Pills(); }catch(e){} }catch(e){} };
+
+/* карточка в «Делах» */
+function duelCard(){ const d = DUEL.data; const c = el(`<div class="card duelc"><div class="t">Дуэли «Помнить заказ»</div></div>`);
+  if(!d){ c.appendChild(el(`<div class="d">Загружаем…</div>`)); duelLoad(true); return c; }
+  c.appendChild(el(`<div class="d">Пять гостей, каждый говорит заказ и отворачивается. Собираешь по памяти. Рейтинг ${d.me.r} · побед ${d.me.w} · поражений ${d.me.l} · вызовов сегодня: ${d.left} из 3.</div>`));
+  (d.inc||[]).forEach(x=>{ const r = el(`<div class="drow inc"><div><b>«${esc(x.cafe)}»</b> ${x.rematch?'хочет реванш':'вызывает'}<br><span>${x.stake?'ставка '+fmt(x.stake)+' ₽':'на интерес'} · ещё ${Math.max(1,Math.ceil((x.until-Date.now())/3600000))} ч</span></div><div class="db"><button class="dbtn go">Принять</button><button class="dbtn">Нет</button></div></div>`);
+    r.querySelector('.go').onclick = () => duelAccept(x); r.querySelectorAll('.dbtn')[1].onclick = async () => { const res = await duelApi({op:'decline', id:x.id}); toast(res.ok ? 'Отказались. Ставка вернётся сопернику' : res.error); duelLoad(true); }; c.appendChild(r); });
+  (d.sent||[]).forEach(x=>c.appendChild(el(`<div class="drow"><div>Ждём ответа <b>«${esc(x.cafe)}»</b><br><span>твои очки ${x.score} из 50 · ${x.stake?'ставка '+fmt(x.stake)+' ₽':'на интерес'} · ещё ${Math.max(1,Math.ceil((x.until-Date.now())/3600000))} ч</span></div></div>`)));
+  const row = el(`<div class="row" style="margin-top:8px"><button class="btn" ${d.left?'':'disabled'}>Вызвать на дуэль</button><button class="btn ghost">Ссылка другу</button></div>`);
+  row.children[0].onclick = () => queueModal({kind:'duelpick'});
+  row.children[1].onclick = () => { const u = duelLink(d.pid); if(!u){ toast('Открой игру из Telegram'); return; } const msg = 'Вызываю на дуэль «Помнить заказ» в Brew Crew. Кофейня «'+S.name+'». Посмотрим, кто лучше помнит заказы.'; if(tg && tg.openTelegramLink) tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(u)+'&text='+encodeURIComponent(msg)); else toast('Открой игру из Telegram'); };
+  c.appendChild(row);
+  if((d.done||[]).length){ c.appendChild(el(`<div class="dl">Последние дуэли</div>`)); d.done.slice(0,5).forEach(x=>{ const r = el(`<div class="drow ${x.res}"><div>${x.res==='win'?'Победа':x.res==='lose'?'Поражение':'Ничья'} · <b>«${esc(x.vs)}»</b><br><span>${x.my} : ${x.their}${x.stake?' · ставка '+fmt(x.stake)+' ₽':''}</span></div>${x.canRematch?'<div class="db"><button class="dbtn go">Реванш</button></div>':''}</div>`);
+    const rb = r.querySelector('.go'); if(rb) rb.onclick = () => queueModal({kind:'duelnew', pid:x.opp, cafe:x.vs, rematch:1}); c.appendChild(r); }); }
+  if((d.top||[]).length){ c.appendChild(el(`<div class="dl">Лучшие дуэлянты</div>`)); c.appendChild(el(`<div class="dtop">${d.top.slice(0,5).map((t,i)=>`<div><b>${i+1}</b> «${esc(t.cafe||'?')}» <span>${t.r} · ${t.w}–${t.l}</span></div>`).join('')}</div>`)); }
+  return c; }
+const _renderTasks27 = renderTasks;
+renderTasks = function(p){ _renderTasks27.apply(this, arguments); try{ const c = duelCard(); const first = p.querySelector('.card'); if(first && first.nextSibling) p.insertBefore(c, first.nextSibling); else p.appendChild(c); }catch(e){ console.error(e); } };
+
+/* выбор соперника */
+MODAL15.duelpick = (box, m, btn) => { const d = DUEL.data;
+  box.append(el(`<div class="eyebrow">Дуэль</div>`), el(`<h2>Кого вызываем?</h2>`), el(`<p>Кофейни из рейтинга сезона. У каждой видно дуэльный рейтинг.</p>`));
+  const list = el(`<div class="dpick"></div>`);
+  (d && d.targets || []).forEach(t=>{ const r = el(`<button class="drow pick"><div><b>«${esc(t.cafe||'?')}»</b><br><span>ур. ${t.lvl} · рейтинг ${t.r}</span></div><span class="arr">Вызвать</span></button>`); r.onclick = () => { closeModal(); queueModal({kind:'duelnew', pid:t.pid, cafe:t.cafe, max:t.max}, true); }; list.appendChild(r); });
+  if(!(d && d.targets||[]).length) list.appendChild(el(`<p>Пока некого: в рейтинге сезона нет активных кофеен.</p>`));
+  box.append(list, btn('Закрыть', closeModal, 'ghost')); };
+
+/* ставка и старт */
+MODAL15.duelnew = (box, m, btn) => {
+  const myMax = Math.floor((S.money||0) * 0.1 / 1000) * 1000, max = m.max != null ? Math.min(m.max, myMax) : myMax;
+  const opts = [0, 10000, 25000, 50000, 100000, 250000, 500000, 1000000].filter(v => v === 0 || v <= max); if(max >= 10000 && !opts.includes(max)) opts.push(max);
+  let stake = 0;
+  box.append(el(`<div class="eyebrow">${m.rematch?'Реванш':'Вызов на дуэль'}</div>`), el(`<h2>${m.cafe ? '«'+esc(m.cafe)+'»' : 'Дуэль по ссылке'}</h2>`),
+    el(`<p>Ты играешь сразу, соперник — когда ответит, у него сутки. Победитель забирает обе ставки минус 10%. Не ответят — ставка вернётся.</p>`));
+  const ch = el(`<div class="chips dst"></div>`); opts.forEach(v=>{ const b = el(`<button class="chipbtn" aria-pressed="${v===stake}">${v ? fmt(v)+' ₽' : 'Без ставки'}</button>`); b.onclick = () => { stake = v; ch.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed', x===b)); }; ch.appendChild(b); });
+  box.append(el(`<div class="d" style="margin:4px 0">Ставка, не больше 10% твоего счёта${m.max!=null?' и счёта соперника':''}:</div>`), ch);
+  const go = btn('Начать дуэль', async () => {
+    if(stake && S.money < stake){ toast('Не хватает денег'); return; }
+    go.disabled = true; const r = await duelApi({op:'new', pid:m.pid, stake, rematch:m.rematch?1:0}); go.disabled = false;
+    if(!r.ok){ toast(r.error||'Не получилось'); return; }
+    if(r.stake){ spend(r.stake, 'other', 'Ставка в дуэли с «'+(r.vs||'?')+'»'); save(); }
+    closeModal(); duelPlay({id:r.id, guests:r.guests, vs:r.vs, stake:r.stake, role:'a'}); });
+  box.append(go, btn('Отмена', closeModal, 'ghost')); };
+
+async function duelAccept(x){ if(x.stake && S.money < x.stake){ toast('Не хватает денег на ставку'); return; }
+  const r = await duelApi({op:'accept', id:x.id}); if(!r.ok){ toast(r.error||'Не получилось'); duelLoad(true); return; }
+  if(r.stake){ spend(r.stake, 'other', 'Ставка в дуэли с «'+(r.vs||'?')+'»'); save(); }
+  openSheet(null); duelPlay({id:r.id, guests:r.guests, vs:r.vs, stake:r.stake, role:'b'}); }
+
+/* итог для вызывающего */
+MODAL15.duelres = (box, m, btn) => { const x = m.x;
+  box.append(el(`<div class="eyebrow">Дуэль закончилась</div>`), el(`<h2>${x.res==='win'?'Победа':x.res==='lose'?'Поражение':'Ничья'}</h2>`),
+    el(`<p>«${esc(S.name)}» ${x.my} : ${x.their} «${esc(x.vs)}»${x.stake ? (x.res==='win' ? '. Выигрыш '+fmt(Math.round(x.stake*1.8))+' ₽ придёт со следующим отчётом.' : x.res==='draw' ? '. Ставка вернётся.' : '. Ставка ушла сопернику.') : '.'}</p>`));
+  if(x.canRematch) box.append(btn('Реванш', ()=>{ closeModal(); queueModal({kind:'duelnew', pid:x.opp, cafe:x.vs, rematch:1}, true); }));
+  box.append(btn('Понятно', closeModal, x.canRematch?'ghost':undefined)); };
+
+/* сама игра */
+function duelGuestSprite(cv, seed){ const c = cv.getContext('2d'); c.imageSmoothingEnabled = true; c.clearRect(0,0,cv.width,cv.height);
+  const pool = GUESTS.filter(i=>!RARITY || RARITY['g'+i]===0 || RARITY['g'+i]==null); const i = pool[Math.abs(seed) % pool.length]; const mm = META[i]; if(!mm || !atlasReady) return;
+  const hh = cv.height - 4, s = hh/mm[4], w = mm[3]*s; c.drawImage(atlas, mm[1], mm[2], mm[3], mm[4], (cv.width-w)/2, 2, w, hh); }
+function duelPlay(g){
+  const ov = el(`<div class="dveil"><div class="dbox"><div class="dhud"><span>Дуэль · «${esc(g.vs||'?')}»</span><span>гость <b id="dgi">1</b> из 5</span><span class="t" id="dtt"></span></div><div id="dbody"></div></div></div>`);
+  document.body.appendChild(ov);
+  const ans = [], ms = []; let gi = 0, dead = false, raf = 0;
+  const NAMEMILK = m => m && m!=='Обычное' ? m.toLowerCase()+' молоко' : '';
+  function scene(gu, gone){ const sc = el(`<div class="dscene"><canvas width="64" height="128"></canvas><div class="dtbar"><i style="width:100%"></i></div><div class="dsay ${gone?'gone':''}"></div><div class="dnum">заказ ${gi+1}</div></div>`); setTimeout(()=>duelGuestSprite(sc.querySelector('canvas'), gu.spr), 0); duelGuestSprite(sc.querySelector('canvas'), gu.spr); return sc; }
+  function show(){ if(dead) return; const gu = g.guests[gi]; $('#dgi').textContent = gi+1; const body = $('#dbody'); body.innerHTML = ''; const sc = scene(gu, false); body.appendChild(sc);
+    body.appendChild(el(`<div class="dhint">Запоминай. Скоро гость уткнётся в телефон, и собирать придётся по памяти.</div>`));
+    const say = sc.querySelector('.dsay'), words = gu.text.split(' '); let w = 0; const t0 = performance.now(), dur = gu.read*1000;
+    const typer = setInterval(()=>{ if(dead){ clearInterval(typer); return; } w++; say.textContent = words.slice(0,w).join(' '); if(w >= words.length) clearInterval(typer); }, 95);
+    const tick = now => { if(dead) return; const k = Math.max(0, 1 - (now - t0)/dur); sc.querySelector('.dtbar i').style.width = (k*100)+'%'; $('#dtt').textContent = Math.ceil(k*gu.read);
+      if(k <= 0){ clearInterval(typer); build(gu); return; } raf = requestAnimationFrame(tick); };
+    raf = requestAnimationFrame(tick); }
+  function build(gu){ const body = $('#dbody'); body.innerHTML = ''; const sc = scene(gu, true); sc.querySelector('.dsay').textContent = 'Гость уткнулся в телефон. Собирай по памяти.'; sc.querySelector('.dtbar').remove(); body.appendChild(sc); $('#dtt').textContent = '';
+    const t0 = Date.now(); const cur = {d:null, s:null, m:null, a:''}, cart = []; const wrap = el(`<div></div>`); body.appendChild(wrap);
+    const chips = (label, arr, key, dis) => { const gp = el(`<div class="dgrp"><div class="l">${label}</div><div class="dchips"></div></div>`); arr.forEach(v=>{ const b = el(`<button aria-pressed="${cur[key]===v}">${v}</button>`); if(dis) b.disabled = true; b.onclick = () => { cur[key] = cur[key]===v && key==='a' ? '' : v; if(key==='d' && D_NOMILK.includes(v)) cur.m = ''; draw(); }; gp.querySelector('.dchips').appendChild(b); }); return gp; };
+    function draw(){ wrap.innerHTML = ''; const nm = cur.d && D_NOMILK.includes(cur.d);
+      wrap.append(chips('Напиток', D_DRINKS, 'd'), chips('Размер', D_SIZES, 's'), chips('Молоко, не назвали — обычное', D_MILKS, 'm', nm), chips('Добавка, можно без', D_ADDS, 'a'));
+      const ct = el(`<div class="dcart"><div class="l">Заказ гостя · ${cart.length} из 3</div>${cart.length ? cart.map((it,i)=>`<div class="it"><b>${it.d} ${it.s}</b><span data-i="${i}">${[NAMEMILK(it.m), it.a ? it.a.toLowerCase() : ''].filter(Boolean).join(', ') || 'без добавок'} · убрать</span></div>`).join('') : '<div class="emp">пусто</div>'}</div>`);
+      ct.querySelectorAll('span[data-i]').forEach(sp=>sp.onclick=()=>{ cart.splice(+sp.dataset.i,1); draw(); }); wrap.appendChild(ct);
+      const ready = cur.d && cur.s && (D_NOMILK.includes(cur.d) || cur.m);
+      const bb = el(`<div class="dbtns"><button class="dbig ghost" ${ready && cart.length<3 ? '' : 'disabled'}>Добавить</button><button class="dbig" ${cart.length ? '' : 'disabled'}>Отдать заказ</button></div>`);
+      bb.children[0].onclick = () => { cart.push({d:cur.d, s:cur.s, m:D_NOMILK.includes(cur.d) ? '' : cur.m, a:cur.a}); cur.d = cur.s = cur.m = null; cur.a = ''; sfx('tap'); draw(); };
+      bb.children[1].onclick = () => { ans.push(cart.slice()); ms.push(Date.now() - t0); sfx('tap'); gi++; if(gi < 5) show(); else submit(); };
+      wrap.appendChild(bb); }
+    draw(); }
+  async function submit(){ const body = $('#dbody'); body.innerHTML = '<div class="dhint" style="padding:40px 16px;text-align:center">Считаем…</div>'; $('#dtt').textContent = '';
+    let r = null; for(let k=0;k<3 && !(r && r.ok);k++){ r = await duelApi({op:'submit', id:g.id, ans, ms}); if(!(r && r.ok)) await new Promise(res=>setTimeout(res, 1500)); }
+    body.innerHTML = '';
+    if(!r || !r.ok){ body.appendChild(el(`<div class="dhint" style="padding:30px 16px">${esc((r && r.error) || 'Нет связи')}. Ответ сохранится, если сервер его получил.</div>`)); body.appendChild(closeBtn()); return; }
+    const fmtIt = it => it ? `${it.d} ${it.s}${it.m && it.m!=='Обычное' ? ', '+it.m.toLowerCase() : ''}${it.a ? ', '+it.a.toLowerCase() : ''}` : '—';
+    const rows = (r.det||[]).map((x,i)=>`<div class="dres"><div class="h">Гость ${i+1} · <b>+${x.sc}</b></div>${x.want.map((w,k)=>`<div class="row2"><span>${fmtIt(w)}</span><span class="${x.got[k] && fmtIt(x.got[k])===fmtIt(w) ? 'ok' : 'no'}">${fmtIt(x.got[k])}</span></div>`).join('')}</div>`).join('');
+    let head;
+    if(g.role === 'a') head = `<div class="dsc">${r.score}<small> из 50</small></div><div class="dmsg">Результат сохранён. «${esc(g.vs)}» получит вызов и сыграет тех же гостей. Итог придёт в бот и сюда.</div>`;
+    else { try{ S.c.duelSeen = (S.c.duelSeen||[]).concat([g.id]).slice(-40); save(); }catch(e){} const t = r.win==='win' ? 'Победа' : r.win==='lose' ? 'Поражение' : 'Ничья'; head = `<div class="dsc">${r.score} : ${r.their}</div><div class="dmsg ${r.win}">${t}${g.stake ? (r.win==='win' ? ' · выигрыш '+fmt(r.prize)+' ₽ придёт со следующим отчётом' : r.win==='draw' ? ' · ставка вернётся' : ' · ставка ушла сопернику') : ''}</div>`; }
+    body.appendChild(el(`<div><div class="dtop2">${head}</div><div class="dl">Разбор: заказали / ты собрал</div>${rows}</div>`)); body.appendChild(closeBtn()); duelLoad(true); }
+  function closeBtn(){ const b = el(`<div class="dbtns"><button class="dbig">Закрыть</button></div>`); b.children[0].onclick = () => { dead = true; cancelAnimationFrame(raf); ov.remove(); structDirty = true; try{ track(true); }catch(e){} }; return b; }
+  show();
+}
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
