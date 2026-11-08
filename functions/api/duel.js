@@ -10,7 +10,7 @@ const escH = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '
 const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/,/g, ' ');
 
 async function appLink(env) { const bot = await getBot(env); return bot ? `https://t.me/${bot.username}${env.APP_SHORT ? '/' + env.APP_SHORT : ''}?${env.APP_SHORT ? 'startapp' : 'start'}=duel` : null; }
-async function dm(env, to, text) { try { const url = await appLink(env); await tgApi(env, 'sendMessage', { chat_id: to, text, parse_mode: 'HTML', reply_markup: url ? { inline_keyboard: [[{ text: 'Открыть дуэли', url }]] } : undefined }); } catch {} }
+async function dm(env, to, text) { try { await tgApi(env, 'sendMessage', { chat_id: to, text: text + '\n\nЗайди в игру: дуэли в «Зал → Дела».', parse_mode: 'HTML' }); } catch {} }
 async function pay(env, to, amount, text, now) { if (amount > 0) await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, 'duelpay', ?2, ?3, ?4, 0)").bind(to, Math.round(amount), text, now).run(); }
 
 // Просроченные вызовы: не сыграл вызывающий — отмена; не ответил соперник — сгорает; принял и не доиграл — ноль очков
