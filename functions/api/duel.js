@@ -74,7 +74,8 @@ export async function onRequestPost({ request, env }) {
       await duelSweep(env, origin, now);
       const my = await env.DB.prepare('SELECT cafe, money, duel_r, duel_w, duel_l FROM players WHERE tg_id = ?1').bind(me).first();
       const sz = sezId(now);
-      const targets = (await env.DB.prepare('SELECT p.tg_id, p.cafe, p.level, p.duel_r, p.money, s.sp FROM season s JOIN players p ON p.tg_id = s.tg_id WHERE s.season = ?1 AND p.banned = 0 AND p.tg_id != ?2 AND p.last_seen > ?3 ORDER BY s.sp DESC LIMIT 25').bind(sz, me, now - 7 * DAY).all()).results || [];
+      const myLvl = (await env.DB.prepare('SELECT level FROM players WHERE tg_id = ?1').bind(me).first() || {}).level || 1;
+      const targets = (await env.DB.prepare("SELECT tg_id, cafe, level, duel_r, money FROM players WHERE banned = 0 AND tg_id != ?1 AND last_seen > ?2 AND cafe IS NOT NULL AND cafe != '' ORDER BY ABS(level - ?3) ASC, level DESC, last_seen DESC LIMIT 60").bind(me, now - 3 * DAY, myLvl).all()).results || [];
       const inc = (await env.DB.prepare("SELECT id, a_cafe, stake, a_at, rematch FROM duel WHERE b = ?1 AND status = 'open' ORDER BY a_at DESC LIMIT 10").bind(me).all()).results || [];
       const sent = (await env.DB.prepare("SELECT id, b_cafe, stake, a_at, a_score FROM duel WHERE a = ?1 AND status = 'open' ORDER BY a_at DESC LIMIT 10").bind(me).all()).results || [];
       const done = (await env.DB.prepare("SELECT id, a, b, a_cafe, b_cafe, stake, a_score, b_score, winner, done_at, rematch FROM duel WHERE (a = ?1 OR b = ?1) AND status = 'done' ORDER BY done_at DESC LIMIT 10").bind(me).all()).results || [];

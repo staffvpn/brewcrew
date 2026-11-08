@@ -9991,10 +9991,10 @@ renderTasks = function(p){ _renderTasks27.apply(this, arguments); try{ const c =
 
 /* выбор соперника */
 MODAL15.duelpick = (box, m, btn) => { const d = DUEL.data;
-  box.append(el(`<div class="eyebrow">Дуэль</div>`), el(`<h2>Кого вызываем?</h2>`), el(`<p>Кофейни из рейтинга сезона. У каждой видно дуэльный рейтинг.</p>`));
+  box.append(el(`<div class="eyebrow">Дуэль</div>`), el(`<h2>Кого вызываем?</h2>`), el(`<p>Все, кто заходил за последние 3 дня. Сначала кофейни близкого уровня.</p>`));
   const list = el(`<div class="dpick"></div>`);
   (d && d.targets || []).forEach(t=>{ const r = el(`<button class="drow pick"><div><b>«${esc(t.cafe||'?')}»</b><br><span>ур. ${t.lvl} · рейтинг ${t.r}</span></div><span class="arr">Вызвать</span></button>`); r.onclick = () => { closeModal(); queueModal({kind:'duelnew', pid:t.pid, cafe:t.cafe, max:t.max}, true); }; list.appendChild(r); });
-  if(!(d && d.targets||[]).length) list.appendChild(el(`<p>Пока некого: в рейтинге сезона нет активных кофеен.</p>`));
+  if(!(d && d.targets||[]).length) list.appendChild(el(`<p>Пока некого: за 3 дня никто не заходил.</p>`));
   box.append(list, btn('Закрыть', closeModal, 'ghost')); };
 
 /* ставка и старт */
