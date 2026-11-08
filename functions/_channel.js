@@ -5,21 +5,20 @@ import { GOAL, goalInfo } from './_goal.js';
 
 export const UNPOST = [];
 export const VERSION = "9.0";
-export const VERSION_TITLE = "первые гости и большое развитие";
+export const VERSION_TITLE = "кофейня растёт по-новому";
 export const VERSION_IMG = "updates.jpg";
-export const VERSION_TAIL = "Перезапустите игру после обновления. Ошибку можно сообщить в поддержку.";
-export const VERSION_SHORT = "Более спокойный старт, понятные расходы, полезнее техника, новый баланс опыта и рейтинга.";
+export const VERSION_TAIL = "Ваш текущий прогресс сохранён. Перезапустите игру, чтобы увидеть изменения.";
+export const VERSION_SHORT = "Меньше суеты на старте, полезнее улучшения и больше времени на развитие кофейни.";
 export const CHANGELOG = [
-  "1 реальная минута = 3 игровым. Рабочий день 08:00–20:00, сутки в игре — 8 часов",
-  "Новый старт — 600 000 ₽ с резервом 120 000 ₽. Старые накопления остаются",
-  "На старте меньше гостей. Их приводят вывеска, качество и рекомендации, а не один уровень",
-  "Пересчитаны цены техники и обучения. Улучшения ощутимее, скрытые надбавки за уровень убраны",
-  "За продажи и дела первые 180 XP в день идут полностью, дальше — 20%. Награды не урезаны",
-  "Рейтинг зависит от отзывов. Владелец убирает между заказами",
-  "Трансферы восстанавливаются после обрыва связи без повторного списания",
-  "Ставки дуэлей — на сервере. Игру можно продолжить, вызов — отозвать",
-  "При продаже сети кофейня и её топ начинаются заново. Порог — 10 млн ₽ выручки",
-  "Награды пропуска, достижения, гостевая книга, косметика, покупки Stars и опыт владельца сохраняются"
+  "На старте гостей меньше. Привлекайте их вывеской, хорошим кофе и обслуживанием. Сам уровень больше не создаёт очередь.",
+  "Пересчитали цены техники и обучения. Хорошая кофемашина готовит быстрее и повышает цену кофе.",
+  "До 12-го уровня — примерно неделя активной игры. Награды пропуска сохраняются.",
+  "Новый старт — 600 000 ₽: 480 000 ₽ на базовое оснащение и 120 000 ₽ в запасе.",
+  "Уровень больше не повышает расходы. Платёж по кредиту виден в отчёте смены.",
+  "Защитили рынок и дуэли от повторных списаний при сбое связи. Прерванную дуэль можно продолжить.",
+  "Продать сеть можно от 10 млн ₽ выручки. Новая кофейня — с нуля: новое название, рейтинг и место в топе.",
+  "После продажи остаются достижения, коллекционные награды пропуска, гостевая книга, косметика, покупки Stars и опыт владельца.",
+  "1 реальная минута = 3 игровым. Смена — с 08:00 до 20:00, игровые сутки — 8 реальных часов."
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -110,12 +109,29 @@ export async function publishVersion(env,origin){
     claim=await env.DB.prepare("UPDATE posts SET at=?2,info='sending' WHERE key=?1 AND ok=0 AND info='failed' AND at<?3").bind(key,now,now-3*60000).run();
     if(!claim.meta?.changes)return null;
   }
-  const caption=[`<b>Обновление ${VERSION}: ${VERSION_TITLE}</b>`,'',...CHANGELOG.map(s=>'— '+esc(s)),'',VERSION_TAIL].join('\n');
+  const caption=versionCaption();
   // A network error leaves the claim in 'sending': check the channel before retrying.
   const sent=await post(env,origin,VERSION_IMG,caption,false);
   if(sent)await env.DB.prepare("UPDATE posts SET ok=1,info='published',msg_id=?2,caption=?3 WHERE key=?1").bind(key,sent.id,caption).run();
   else await env.DB.prepare("UPDATE posts SET info='failed' WHERE key=?1").bind(key).run();
   return sent;
+}
+
+// Correct the existing announcement when its player-facing wording changes.
+export function versionCaption(){
+ return [`<b>Обновление ${VERSION}: ${VERSION_TITLE}</b>`,'',...CHANGELOG.map(s=>'— '+esc(s)),'',VERSION_TAIL].join('\n');
+}
+export async function syncVersionCaption(env,origin){
+ if(new URL(origin).origin!==new URL(env.APP_URL||'https://brewcrew.pages.dev').origin)return false;
+ if(!env.DB||!env.BOT_TOKEN||!env.CHANNEL_ID)return false;
+ const key='ver_'+VERSION,caption=versionCaption();
+ const p=await env.DB.prepare('SELECT ok,msg_id,caption FROM posts WHERE key=?1').bind(key).first();
+ if(!p?.ok||!p.msg_id||p.caption===caption)return false;
+ const r=await tgApi(env,'editMessageCaption',{chat_id:env.CHANNEL_ID,message_id:p.msg_id,caption,parse_mode:'HTML'});
+ // Repeating a successful edit after a lost response is safe.
+ if(!r?.ok&&!/message is not modified/i.test(r?.description||''))return false;
+ await env.DB.prepare('UPDATE posts SET caption=?2 WHERE key=?1 AND msg_id=?3 AND ok=1').bind(key,caption,p.msg_id).run();
+ return true;
 }
 
 export function postUrl(env, msgId) { const base = String(env.CHANNEL_URL || '').replace(/\/+$/, ''); return base && msgId && /t\.me\/[A-Za-z0-9_]+$/.test(base) ? base + '/' + msgId : (base || null); }
