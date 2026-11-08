@@ -15,22 +15,27 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const user = await verifyInitData(body.initData, env.BOT_TOKEN);
   if (!user || !user.id) return json({ ok: false, error: 'bad initData' }, 401);
   const s = body.stats || {};
+  const franchises = Math.round(num(s.franchises, 1e4));
+  const previous = await env.DB.prepare('SELECT franchises FROM players WHERE tg_id = ?1').bind(user.id).first();
+  if (franchises !== Number(previous && previous.franchises || 0)) return json({ ok: false, error: 'stale_run', franchises: Number(previous && previous.franchises || 0) }, 409);
   const now = Date.now();
   const dt = Math.round(num(s.dt, 120));
   const referrer = null, refId = parseRef(s.ref);
-  await env.DB.batch([
+  const tracked = await env.DB.batch([
     env.DB.prepare(`INSERT INTO players (tg_id, username, first_name, lang, created_at, last_seen, sessions, cafe, city, level, money, earned, rooms, franchises, bankrupt, play_seconds, referrer)
       VALUES (?1, ?2, ?3, ?4, ?5, ?5, 1, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?16)
       ON CONFLICT(tg_id) DO UPDATE SET username = ?2, first_name = ?3, lang = ?4, last_seen = ?5,
         sessions = sessions + (CASE WHEN ?15 = 1 THEN 1 ELSE 0 END), cafe = ?6, city = ?7, level = ?8, money = ?9, earned = ?10,
         rooms = ?11, franchises = ?12, bankrupt = ?13, play_seconds = play_seconds + ?14,
-        best_day = MAX(COALESCE(best_day,0), ?17), snap = COALESCE(?18, snap), badge_name = ?19`)
+        best_day = MAX(COALESCE(best_day,0), ?17), snap = COALESCE(?18, snap), badge_name = ?19
+      WHERE COALESCE(players.franchises, 0) = ?12`)
       .bind(user.id, str(user.username), str(user.first_name), str(user.language_code, 8), now,
         str(s.cafe), str(s.city, 20), Math.round(num(s.level, 1e6)), num(s.money), num(s.earned), Math.round(num(s.rooms, 100)),
         Math.round(num(s.franchises, 1e4)), Math.round(num(s.bankrupt, 1e4)), dt, s.start ? 1 : 0, referrer,
         Math.min(num(s.best), 5e9), s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null, typeof s.bdn === 'string' ? s.bdn.slice(0, 40) : null),
     env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id)
   ]);
+  if (!(tracked[0].meta && tracked[0].meta.changes)) return json({ ok: false, error: 'stale_run' }, 409);
   // рефералы: привязка нового игрока и награда пригласившему за 3 уровень
   try { if (refId) await bindReferrer(env, user, refId, 'app'); await payReferrer(env, user.id); } catch {}
   // «Кофейня недели района» — пост в канал, раз в неделю на игрока
@@ -43,13 +48,12 @@ export async function onRequestPost({ request, env, waitUntil }) {
       await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5)').bind(key, now, okp ? 1 : 0, okp && okp.id ? okp.id : null, 'Кофейня недели: ' + name).run();
     }
   }
-  // продажа сети: старая кофейня уходит из рейтинга сезона
-  if (Number(s.sold) > 0) { try { const r = await env.DB.prepare('DELETE FROM season WHERE tg_id = ?1 AND season = ?2 AND updated_at < ?3').bind(user.id, sezId(now), Math.min(Number(s.sold), now)).run(); if (r && r.meta && r.meta.changes) await env.DB.prepare('DELETE FROM cache WHERE key = ?1').bind('sz_' + sezId(now)).run(); } catch {} }
   // сезон: очки за месяц
   if (!ADMINS.includes(user.id) && s.sz === sezId(now) && Number.isFinite(Number(s.sp))) {
-    await env.DB.prepare(`INSERT INTO season (season, tg_id, sp, cafe, city, first_name, badge, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+    await env.DB.prepare(`INSERT INTO season (season, tg_id, sp, cafe, city, first_name, badge, updated_at)
+      SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8 WHERE EXISTS (SELECT 1 FROM players WHERE tg_id = ?2 AND COALESCE(franchises, 0) = ?9)
       ON CONFLICT(season, tg_id) DO UPDATE SET sp = ?3, cafe = ?4, city = ?5, first_name = ?6, badge = ?7, updated_at = ?8
-      WHERE season.sp IS NOT ?3 OR season.badge IS NOT ?7 OR season.cafe IS NOT ?4`).bind(s.sz, user.id, Math.max(0, Math.min(1e7, Math.round(Number(s.sp)))), str(s.cafe), str(s.city, 20), str(user.first_name), s.bd ? 1 : 0, now).run();
+      WHERE season.sp IS NOT ?3 OR season.badge IS NOT ?7 OR season.cafe IS NOT ?4`).bind(s.sz, user.id, Math.max(0, Math.min(1e7, Math.round(Number(s.sp)))), str(s.cafe), str(s.city, 20), str(user.first_name), s.bd ? 1 : 0, now, franchises).run();
   }
   // трофей: первый владелец золотой кофемашины попадает в канал
   if (s.trophy && env.CHANNEL_ID) {
