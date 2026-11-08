@@ -4,21 +4,17 @@ import { tgApi, getBot, mskDay, ADMINS, sezId, SEZ_NAMES } from './_lib.js';
 import { GOAL, goalInfo } from './_goal.js';
 
 export const UNPOST = ['ver_8.5'];
-export const VERSION = '8.7.1';
-export const VERSION_TITLE = 'исправления и порядок';
-export const VERSION_IMG = 'events.jpg';
-export const VERSION_TAIL = 'Нашли что-то кривое — пишите в поддержку, поправим.';
-export const VERSION_SHORT = 'Исправили ошибки, навели порядок на стене над баром и сделали игру легче для телефона.';
+export const VERSION = '9.2';
+export const VERSION_TITLE = 'возвращаем прежнюю экономику';
+export const VERSION_IMG = 'updates.jpg';
+export const VERSION_TAIL = 'Дальше крупные изменения баланса будем проверять заранее, прежде чем выпускать для всех.';
+export const VERSION_SHORT = 'Обновление 9.0 оказалось неудачным. Экономика возвращена к прежней, всё из 9.1 остаётся.';
+export const VERSION_INTRO = 'Обновление 9.0 оказалось неудачным: после него гости почти перестали приходить, а расходы кофеен выросли. Это наша ошибка. Приносим извинения всем, кто сегодня потратил на игру время и нервы.';
 export const CHANGELOG = [
-  'Мастер на час чинит сломанную технику, и уведомление о поломке пропадает',
-  'Посуду на диванах и столиках второго зала снова убирают тапом',
-  'Одинаковые бонусы к гостям больше не складываются, а продлеваются. У общего итога есть потолок',
-  'Пропуск сезона качается ровнее: у очков за игровой день есть предел',
-  'Сотрудницы и гостьи говорят в женском роде, техника ломается в правильном роде',
-  'Порядок над баром: название кофейни на своей табличке и не прячется за меню, лампы не режут доску, переключатель залов ушёл в угол',
-  'Елизавета во время обзора ходит по кофейне, пробует кофе и фотографирует',
-  'Игра меньше нагружает телефон',
-  'Убрали выбор города. Диван, пианино, фотозону, золотой унитаз и автомат с игрушками убрали из интерьера, деньги за них вернули'
+  'Экономика возвращена к состоянию до 9.0: поток гостей, зарплаты, аренда и опыт снова прежние',
+  'Кофейни снова работают круглосуточно',
+  'Уровни, деньги, сотрудники и покупки сохранены',
+  'Всё из 9.1 остаётся: магазин, подарки, банк, дуэли и ноябрьский сюжет'
 ];
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
@@ -65,7 +61,7 @@ export async function channelTick(env, origin) {
     for (const k of UNPOST) { const p = await posted(env, k); if (p && p.msg_id) { await tgApi(env, 'deleteMessage', { chat_id: env.CHANNEL_ID, message_id: p.msg_id }); await env.DB.prepare('UPDATE posts SET msg_id = NULL, ok = 0, info = ?2 WHERE key = ?1').bind(k, 'deleted').run(); } }
     const vkey = 'ver_' + VERSION;
     if (!(await posted(env, vkey))) {
-      let intro = []; if (VERSION === '8') try { const st = await env.DB.prepare(`SELECT COUNT(*) n, COALESCE(SUM(earned),0) e FROM players WHERE sessions > 0 AND tg_id NOT IN (${ADMINS.join(',')})`).first(); const pl = (n, a, b, c) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? b : c; }; if (st && st.n) intro = [`В районе уже ${st.n} ${pl(st.n, 'кофейня', 'кофейни', 'кофеен')}, вместе они заработали ${fmt(st.e)} ₽. Вы играете больше, чем мы думали, поэтому вот большое обновление:`, '']; } catch {}
+      let intro = VERSION_INTRO ? [VERSION_INTRO, ''] : []; if (VERSION === '8') try { const st = await env.DB.prepare(`SELECT COUNT(*) n, COALESCE(SUM(earned),0) e FROM players WHERE sessions > 0 AND tg_id NOT IN (${ADMINS.join(',')})`).first(); const pl = (n, a, b, c) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? b : c; }; if (st && st.n) intro = [`В районе уже ${st.n} ${pl(st.n, 'кофейня', 'кофейни', 'кофеен')}, вместе они заработали ${fmt(st.e)} ₽. Вы играете больше, чем мы думали, поэтому вот большое обновление:`, '']; } catch {}
       const ok = await post(env, origin, VERSION_IMG || 'updates.jpg', [`<b>Обновление ${VERSION}${VERSION_TITLE ? ': ' + VERSION_TITLE : ''}</b>`, '', ...intro, ...CHANGELOG.map(x => '— ' + esc(x)), ...(VERSION_TAIL ? ['', VERSION_TAIL] : [])].join('\n'));
       await mark(env, vkey, ok); return;
     }
@@ -113,7 +109,7 @@ export async function versionInfo(env) {
 }
 // раз в тик — до 25 сообщений в бот
 async function bcastVersion(env, origin) {
-  if (VERSION.split('.').length > 2) return false;
+  if (VERSION === '9.2' || VERSION.split('.').length > 2) return false; // 9.2 — только пост в канале
   const key = 'bc_' + VERSION; const st = await posted(env, key);
   if (st && st.info === 'done') return false;
   const vp = await posted(env, 'ver_' + VERSION); if (!vp || !vp.ok) return false;
