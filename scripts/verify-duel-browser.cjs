@@ -24,21 +24,21 @@ try{
   await p.evaluate(()=>track(true,true));return p;
  }
  const a=await client(12345),b=await client(24680),pid=(24680*3+7).toString(36);
- const start=await a.evaluate(pid=>duelTransact({op:'new',pid,stake:10000,rematch:0}),pid);assert.equal(start.ok,false);
- await a.waitForFunction(()=>S.marketVersion===1);assert.equal(await a.evaluate(()=>S.money),110000);
- const row=f.sql.prepare('SELECT * FROM duel').get();assert.equal(f.sql.prepare('SELECT money FROM players WHERE tg_id=12345').get().money,110000);
+ const start=await a.evaluate(pid=>duelTransact({op:'new',pid,stake:25000,rematch:0}),pid);assert.equal(start.ok,false);
+ await a.waitForFunction(()=>S.marketVersion===1);assert.equal(await a.evaluate(()=>S.money),95000);
+ const row=f.sql.prepare('SELECT * FROM duel').get();assert.equal(f.sql.prepare('SELECT money FROM players WHERE tg_id=12345').get().money,95000);
  await a.reload();await a.waitForFunction(()=>S&&S.marketVersion===1);await a.evaluate(()=>duelLoad(true));
  assert.equal(await a.evaluate(()=>DUEL.data.playing[0].id),row.id);
  const{makeGuests}=await import('../functions/_duel.js');const ans=makeGuests(row.seed).map(g=>g.items),ms=ans.map(x=>x.length*2000);
  assert.equal((await a.evaluate(x=>duelApi({op:'submit',...x}),{id:row.id,ans,ms})).ok,true);
  const accepted=await b.evaluate(id=>duelTransact({op:'accept',id}),row.id);assert.equal(accepted.ok,false);
- await b.waitForFunction(()=>S.marketVersion===1);assert.equal(await b.evaluate(()=>S.money),110000);
+ await b.waitForFunction(()=>S.marketVersion===1);assert.equal(await b.evaluate(()=>S.money),95000);
  await b.reload();await b.waitForFunction(()=>S&&S.marketVersion===1);await b.evaluate(()=>duelLoad(true));assert.equal(await b.evaluate(()=>DUEL.data.playing[0].role),'b');
  const finish={op:'submit',id:row.id,ans:[[],[],[],[],[]],ms:[3000,6000,6000,6000,9000]};
  assert.equal((await b.evaluate(x=>duelApi(x),finish)).ok,true);assert.equal((await b.evaluate(x=>duelApi(x),finish)).ok,false);
- await a.evaluate(()=>track(true,true));assert.equal(await a.evaluate(()=>S.money),128000);await a.evaluate(()=>track(true,true));assert.equal(await a.evaluate(()=>S.money),128000);
+ await a.evaluate(()=>track(true,true));assert.equal(await a.evaluate(()=>S.money),140000);await a.evaluate(()=>track(true,true));assert.equal(await a.evaluate(()=>S.money),140000);
  assert.equal(f.sql.prepare("SELECT COUNT(*) n FROM admin_ops WHERE op='duelpay'").get().n,1);
- assert.equal(await b.evaluate(()=>S.money),110000);assert.deepEqual(errors,[]);
- console.log(JSON.stringify({lostCreationRecovered:true,lostAcceptanceRecovered:true,roundsResumable:true,winnerBalance:128000,opponentBalance:110000,payoutExactlyOnce:true,errors},null,2));
+ assert.equal(await b.evaluate(()=>S.money),95000);assert.deepEqual(errors,[]);
+ console.log(JSON.stringify({lostCreationRecovered:true,lostAcceptanceRecovered:true,roundsResumable:true,winnerBalance:140000,opponentBalance:95000,payoutExactlyOnce:true,errors},null,2));
 }finally{global.fetch=originalFetch;await browser.close();f.sql.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

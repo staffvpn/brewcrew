@@ -16,3 +16,14 @@ UPDATE duel SET
  a_created=COALESCE((SELECT created_at FROM players WHERE tg_id=duel.a),0),
  b_created=COALESCE((SELECT created_at FROM players WHERE tg_id=duel.b),0);
 CREATE INDEX IF NOT EXISTS duel_active_players ON duel(a,b,status);
+-- Preserve identities for rounds created by the previous deployment while 9.0 rolls out.
+CREATE TRIGGER IF NOT EXISTS duel_legacy_identity AFTER INSERT ON duel
+WHEN NEW.a_created=0 AND NEW.b_created=0
+BEGIN
+ UPDATE duel SET
+ a_run=COALESCE((SELECT franchises FROM players WHERE tg_id=NEW.a),0),
+ b_run=COALESCE((SELECT franchises FROM players WHERE tg_id=NEW.b),0),
+ a_created=COALESCE((SELECT created_at FROM players WHERE tg_id=NEW.a),0),
+ b_created=COALESCE((SELECT created_at FROM players WHERE tg_id=NEW.b),0)
+ WHERE id=NEW.id;
+END;

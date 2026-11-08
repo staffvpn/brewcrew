@@ -95,3 +95,9 @@ test('cancelling challenges cannot bypass the three-per-day limit',async()=>{
  }
  assert.equal((await call(f.env,a,{...create,operationId:'duel_quota_4',version:3})).body.ok,false);f.sql.close();
 });
+
+test('a legacy client creating a round during deployment gets the correct account identities',async()=>{
+ const f=fixture();f.sql.prepare("INSERT INTO duel(a,b,a_cafe,b_cafe,stake,seed,status,created_at) VALUES(?,?,'Старая','Вторая',50000,42,'a_play',?)").run(a,b,Date.now());
+ const d=f.sql.prepare('SELECT * FROM duel').get();assert.equal(d.a_created,1);assert.equal(d.b_created,2);
+ const{closeDuel}=await import('../functions/_duelmoney.js');assert.equal(await closeDuel(f.env,d,'cancelled','Возврат',Date.now()),true);assert.equal(f.sql.prepare('SELECT amount FROM admin_ops').get().amount,50000);f.sql.close();
+});

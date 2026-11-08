@@ -68,6 +68,24 @@ export const SHOP = {
   cash_xl: { title: 'Спонсор из Дубая', desc: 'Игровые деньги: примерно двадцать дней выручки, не меньше 8 000 000 ₽.', stars: 350, cash: 20 }
 };
 
+// Подарки: что можно подарить и есть ли это уже у получателя
+export const GIFTABLE = id => !!SHOP[id] && !SHOP[id].sub && id !== 'rename';
+export async function giftCheck(env, from, to, item) {
+  if (!GIFTABLE(item)) return { ok: false, error: 'Это нельзя подарить' };
+  if (!to || to === from) return { ok: false, error: 'Выбери другую кофейню' };
+  const p = await env.DB.prepare('SELECT tg_id, cafe, banned FROM players WHERE tg_id = ?1').bind(to).first();
+  if (!p || p.banned || !p.cafe) return { ok: false, error: 'Такой кофейни нет' };
+  const has = await giftOwned(env, to, item);
+  if (has) return { ok: false, error: 'У «' + p.cafe + '» это уже есть' };
+  return { ok: true, id: p.tg_id, cafe: p.cafe };
+}
+export async function giftOwned(env, to, item) {
+  if (SHOP[item] && SHOP[item].cash) return false;
+  const rows = (await env.DB.prepare('SELECT item, created_at FROM purchases WHERE tg_id = ?1 AND refunded = 0 AND (item = ?2 OR item IN (\'pass\',\'pass15\'))').bind(to, item).all()).results || [];
+  if (item === 'pass' || item === 'pass15') { const cur = sezId(); return rows.some(r => (r.item === 'pass' || r.item === 'pass15') && sezId(r.created_at) === cur); }
+  return rows.some(r => r.item === item);
+}
+
 // Отправка накопившихся напоминаний (вызывается из трекинга и вебхука — «ленивый крон»)
 export async function dispatchReminders(env, limit = 15) {
   if (!env.DB || !env.BOT_TOKEN) return 0;

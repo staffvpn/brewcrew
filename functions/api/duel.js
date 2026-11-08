@@ -3,7 +3,7 @@ import { json, verifyInitData, tgApi, getBot, sezId, mskDay } from '../_lib.js';
 import { publicGuests, scoreDuel } from '../_duel.js';
 import { stakeDuel, closeDuel, settleDuel, identityMatches } from '../_duelmoney.js';
 
-const DAY = 86400000, PLAY_WIN = 30 * 60000, MIN_STAKE = 10000, LOUD_STAKE = 200000, FEE = 0.1;
+const DAY = 86400000, PLAY_WIN = 30 * 60000, MIN_STAKE = 25000, LOUD_STAKE = 200000, FEE = 0.1;
 const pidOf = id => (Number(id) * 3 + 7).toString(36);
 const idOf = pid => { const n = parseInt(String(pid || ''), 36); return Number.isFinite(n) && (n - 7) % 3 === 0 ? (n - 7) / 3 : 0; };
 const escH = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -16,7 +16,7 @@ export async function duelSweep(env, origin, now = Date.now()) {
   const late = (await env.DB.prepare("SELECT * FROM duel WHERE (status = 'a_play' AND created_at < ?1) OR (status = 'open' AND a_at < ?2) OR (status = 'b_play' AND b_start < ?1) LIMIT 20").bind(now - PLAY_WIN, now - DAY).all()).results || [];
   for (const d of late) {
     if(d.status==='a_play')await closeDuel(env,d,'cancelled','Ставка вернулась: дуэль не начата',now);
-    else if(d.status==='open')await closeDuel(env,d,'expired','Ставка вернулась: соперник не ответил',now);
+    else if(d.status==='open' && await closeDuel(env,d,'expired','Ставка вернулась: соперник струсил',now)){await dm(env,d.a,`«${escH(d.b_cafe)}» не ответили за сутки. Вызов закрыт, ставка вернулась.`);await dm(env,d.b,`Вызов от «${escH(d.a_cafe)}» сгорел: ты не ответил за сутки.`);}
     else if (d.status === 'b_play') await resolve(env, origin, d, 0, JSON.stringify({ total: 0, det: [], late: 1 }), now);
   }
 }
@@ -53,7 +53,7 @@ export async function onRequestPost({ request, env }) {
       const used = await env.DB.prepare("SELECT COUNT(*) n FROM duel WHERE a = ?1 AND created_at >= ?2").bind(me, dayStart).first();
       const myMoney = my ? my.money : 0;
       return json({ ok: true, pid: pidOf(me), me: my ? { r: my.duel_r || 1000, w: my.duel_w || 0, l: my.duel_l || 0 } : { r: 1000, w: 0, l: 0 }, left: Math.max(0, 3 - (used ? used.n : 0)),
-        targets: targets.map(t => ({ pid: pidOf(t.tg_id), cafe: t.cafe, lvl: t.level, r: t.duel_r || 1000, fr: frs[t.tg_id] || null, max: Math.max(0, Math.floor(Math.min(myMoney * 0.1, t.money) / 1000) * 1000) })),
+        targets: targets.map(t => ({ pid: pidOf(t.tg_id), cafe: t.cafe, lvl: t.level, r: t.duel_r || 1000, fr: frs[t.tg_id] || null, max: Math.max(0, Math.floor(Math.min(myMoney * 0.25, (t.money||0)*0.5) / 1000) * 1000) })),
         playing, inc: inc.map(x => ({ id: x.id, cafe: x.a_cafe, stake: x.stake, until: x.a_at + DAY, rematch: x.rematch })),
         sent: sent.map(x => ({ id: x.id, cafe: x.b_cafe, stake: x.stake, until: x.a_at + DAY, score: x.a_score })),
         done: done.map(x => { const iamA = x.a === me; return { id: x.id, vs: iamA ? x.b_cafe : x.a_cafe, my: iamA ? x.a_score : x.b_score, their: iamA ? x.b_score : x.a_score, stake: x.stake, res: x.winner === me ? 'win' : x.winner ? 'lose' : 'draw', at: x.done_at, canRematch: x.winner && x.winner !== me && now - x.done_at < DAY, opp: pidOf(iamA ? x.b : x.a) }; }),
@@ -75,7 +75,7 @@ export async function onRequestPost({ request, env }) {
       if (pr.length) { const last = pr[0]; const canRe = rematch && last.status === 'done' && last.winner && last.winner !== me && !pr.some(x => x.rematch && x.a === me);
         if (!canRe) return ({ ok: false, error: 'Эту кофейню можно вызвать раз в сутки' }); }
       const stake=Number(body.stake);if(!Number.isSafeInteger(stake)||stake<0)return {ok:false,error:'Некорректная ставка'};
-      if (stake) { const max = Math.floor(Math.min((mine.money || 0) * 0.1, them.money || 0) / 1000) * 1000; if (stake < MIN_STAKE) return ({ ok: false, error: 'Ставка от 10 000 ₽' }); if (stake > max) return ({ ok: false, error: 'Ставка не больше ' + fmt(max) + ' ₽' }); }
+      if (stake) { const max = Math.floor(Math.min((mine.money || 0) * 0.25, (them.money || 0)*0.5) / 1000) * 1000; if (stake < MIN_STAKE) return ({ ok: false, error: 'Ставка от 25 000 ₽' }); if (stake > max) return ({ ok: false, error: 'Ставка не больше ' + fmt(max) + ' ₽' }); }
         return {ok:true,them,stake,dayStart};
       });
       return receipt.ok?json({...receipt,receipt}):json(receipt,409);

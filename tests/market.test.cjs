@@ -137,3 +137,9 @@ test('a concurrent purchase retry cannot reuse the first receipt as a second wri
  assert.equal(f.sql.prepare('SELECT money FROM players WHERE tg_id=?').get(buyer).money,400000);
  assert.equal(f.sql.prepare("SELECT COUNT(*) n FROM admin_ops WHERE op='trsold'").get().n,1);f.sql.close();
 });
+
+test('legacy listings created during deployment retain the current network number',()=>{
+ const f=fixture();f.sql.prepare('UPDATE players SET franchises=3 WHERE tg_id=?').run(seller);
+ f.sql.prepare("INSERT INTO market(seller,staff,price,status) VALUES(?, '{}',10000,'open')").run(seller);
+ assert.equal(f.sql.prepare('SELECT seller_run FROM market').get().seller_run,3);f.sql.close();
+});

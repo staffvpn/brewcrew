@@ -128,3 +128,14 @@ test('owned legacy Stars frames stay usable after their removal from the shop',(
  s.c.signFrame=null;assert.equal(c.frameOwnedId(),undefined);
  s.ent.frames.push('frame_fire');s.c.signFrame='fire';assert.equal(c.frameOwnedId(),'fire');
 });
+
+test('cash flow includes bank borrowing and repayment recorded in the ledger',()=>{
+ const c=load(['cashFlow']);
+ assert.equal(c.cashFlow({L:{in:{sales:10000,loan:500000},out:{loan:1250000,supply:2000}}}),-742000);
+});
+
+test('closing preview includes the exact bank payment only when it falls due',()=>{
+ const s={day:6,bank29:{due:7,back:1250000},debt:{loan:0},fin:{today:{guests:0}},staff:[],rooms:[]};
+ const c=load(['closingCosts'],{S:s,turnoverStaffPay:()=>0,turnoverRent:()=>0});
+ assert.equal(c.closingCosts().loan,0);s.day=7;assert.equal(c.closingCosts().loan,1250000);assert.equal(c.closingCosts().total,1250000);
+});

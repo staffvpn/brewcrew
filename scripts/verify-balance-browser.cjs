@@ -26,15 +26,20 @@ try{
  const employee=makeStaff('Бариста',{quirk:'none'});hire(employee,'main','white');syncScene('main');
  const prepIds=stats('main').prepWorkers.map(s=>s.id);
  S.isOpen=false;const q0=head.prog;simRoom('main',0.1);const closedOrderDelta=head.prog-q0;
+ S=JSON.parse(base);ledgerize(S);S.money=2000000;S.bank29={back:1250000,due:S.day,n:'Тестовый банк'};
+ const bankExpected=closingCosts().total,bankBefore=Object.values(S.fin.today.L.out).reduce((a,b)=>a+b,0);HOOK.quiet=true;closeDay();
+ const bank={expected:bankExpected,paid:Object.values(S.fin.hist[0].L.out).reduce((a,b)=>a+b,0)-bankBefore,reported:S.fin.hist[0].loan,carried:S.fin.today.loan||0};
+ const afterClose=S.money;closeDay();bank.repeatedCharge=afterClose-S.money;HOOK.quiet=false;
  S=JSON.parse(base);ledgerize(S);
  S.money=7654321;S.level=12;const oldNeed=Math.round(Math.round(130*1.42**11)*(1+0.12*4));S.xp=oldNeed/2;S.rep=4.6;delete S.rating;delete S.economyVersion;
  S.hours={open:0,close:24};room('main').upg.machine=19;
  S.inv=[{uid:55555,k:'money',v:123456,sz:sezId(),track:'p',n:50}];S.ent={sub:Date.now()+86400000,interiors:['int_loft'],passes:[]};S.sz.claimed={f:[5,10],p:[5,20,50]};S.szPet=true;S.goldMachine=true;
  S.streak={last:new Date(Date.now()+3*3600000).toISOString().slice(0,10),n:1};S.flags.expired=1;
  const assets=JSON.stringify({inv:S.inv,ent:S.ent,claims:S.sz.claimed,pet:S.szPet,gold:S.goldMachine});
- save();return{limits,opening,demand,highLevelDemand,shared,orderProgress,prepIds,youId:you.id,employeeId:employee.id,closedOrderDelta,assets};
+ save();return{bank,limits,opening,demand,highLevelDemand,shared,orderProgress,prepIds,youId:you.id,employeeId:employee.id,closedOrderDelta,assets};
  });
  const {marketRoleLimit}=await import('../functions/_market.js');for(const row of result.limits)assert.equal(row.limit,marketRoleLimit(row.role,row.level,2),row.role+' '+row.level);
+ assert.equal(result.bank.paid,result.bank.expected);assert.equal(result.bank.reported,1250000);assert.equal(result.bank.carried,0);assert.equal(result.bank.repeatedCharge,0);
  assert.equal(result.opening.cash,120000);assert.equal(result.opening.build,480000);assert.equal(result.opening.safety,1);assert.deepEqual(result.opening.hours,{open:8,close:20});
  assert.equal(result.demand,result.highLevelDemand);assert.equal(result.shared.head,0);assert.ok(Math.abs(result.shared.prep-result.shared.expected)<1e-9);assert.ok(result.orderProgress>0);
  assert.deepEqual(result.prepIds,[result.employeeId]);assert.equal(result.closedOrderDelta,0);
@@ -42,6 +47,6 @@ try{
  const migrated=await page.evaluate(()=>({money:S.money,level:S.level,rep:S.rep,xp:S.xp,need:xpNeed(),machine:room('main').upg.machine,hours:S.hours,expired:S.flags.expired,assets:JSON.stringify({inv:S.inv,ent:S.ent,claims:S.sz.claimed,pet:S.szPet,gold:S.goldMachine})}));
  assert.equal(migrated.money,7654321);assert.equal(migrated.level,12);assert.equal(migrated.rep,4.6);assert.equal(migrated.xp,Math.round(migrated.need/2));assert.equal(migrated.machine,19);assert.equal(migrated.expired,0);assert.equal(migrated.assets,result.assets);assert.deepEqual(migrated.hours,{open:8,close:20});
  await page.evaluate(()=>save());await page.reload();await page.waitForFunction(()=>S&&S.economyVersion===2);assert.equal(await page.evaluate(()=>S.money),7654321);assert.equal(await page.evaluate(()=>S.xp),migrated.xp);
- assert.deepEqual(errors,[]);console.log(JSON.stringify({startup:result.opening,queueCapacity:true,ownerCannotDoubleWork:true,noExtraBarista:true,noOrdersAfterClosing:true,migrationPreservesAssets:true,repeatReload:true,errors},null,2));
+ assert.deepEqual(errors,[]);console.log(JSON.stringify({startup:result.opening,queueCapacity:true,ownerCannotDoubleWork:true,noExtraBarista:true,noOrdersAfterClosing:true,bankPaymentReportedOnce:true,migrationPreservesAssets:true,repeatReload:true,errors},null,2));
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

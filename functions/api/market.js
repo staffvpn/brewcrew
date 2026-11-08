@@ -16,6 +16,15 @@ export async function onRequestPost({ request, env }) {
       await env.DB.prepare('UPDATE market_operations SET applied_at = ?3 WHERE operation_id = ?1 AND tg_id = ?2 AND applied_at IS NULL').bind(user.id+':'+body.operationId,user.id,now).run();
       return json({ok:true});
     }
+    if (body.op === 'prices') {
+      // за сколько уходили сотрудники за две недели: по роли и уровню (шаг 5 уровней)
+      const rows = (await env.DB.prepare("SELECT staff, price FROM market WHERE status = 'sold' AND sold_at > ?1").bind(now - 14 * 86400000).all()).results || [];
+      const g = {};
+      for (const r of rows) { let st; try { st = JSON.parse(r.staff); } catch { continue; } const band = Math.floor((st.lvl || 1) / 5);
+        for (const k of [st.role + '|' + band, st.role + '|*']) (g[k] = g[k] || []).push(r.price); }
+      const out = {}; for (const k in g) { const a = g[k].sort((x, y) => x - y); out[k] = { med: a[Math.floor(a.length / 2)], n: a.length, lo: a[0], hi: a[a.length - 1] }; }
+      return json({ ok: true, prices: out });
+    }
     const me=await env.DB.prepare('SELECT franchises, cafe, money, level, rooms, snap FROM players WHERE tg_id = ?1').bind(user.id).first();
     if (!me) return fail('Сначала синхронизируй игру');
     const account=await env.DB.prepare('SELECT franchises, version, roster FROM market_accounts WHERE tg_id = ?1').bind(user.id).first();
