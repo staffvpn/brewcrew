@@ -120,3 +120,11 @@ test('late seasonal write cannot restore a ranking after the sale has reset it',
   assert.equal(sql.prepare('SELECT cafe FROM players').get().cafe, 'Новая кофейня');
   sql.close();
 });
+test('seasonal collection employees cannot be listed on the transfer market', async () => {
+  const { sql, env } = database();
+  const { onRequestPost } = await import('../functions/api/market.js');
+  const request = new Request('https://test.invalid/api/market', { method: 'POST', body: JSON.stringify({ initData: initData(), op: 'list', price: 100000, staff: { name: 'Ноябрина', role: 'Бариста', seasonRewardKey: 'legend:2026-11' } }) });
+  const response = await onRequestPost({ request, env });
+  assert.equal((await response.json()).ok, false);
+  sql.close();
+});

@@ -3,7 +3,7 @@ import { json, verifyInitData } from '../_lib.js';
 
 const ROLES = ['Бариста', 'Кассир', 'Официант', 'Мойщица', 'Повар'];
 function cleanStaff(o) {
-  if (!o || typeof o !== 'object') return null;
+  if (!o || typeof o !== 'object' || o.seasonRewardKey || o.szLeg) return null;
   const s = {
     name: String(o.name || '').slice(0, 24), role: String(o.role || ''), lvl: Math.max(1, Math.min(60, Math.round(Number(o.lvl) || 1))),
     rank: Math.max(0, Math.min(3, Math.round(Number(o.rank) || 0))), quirk: String(o.quirk || 'none').slice(0, 16), sex: o.sex === 'f' ? 'f' : 'm',

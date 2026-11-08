@@ -227,3 +227,75 @@ test('turnover pay is due only when a hired employee worked the shift', () => {
   c.S.staff[1].today = 'work';
   assert.equal(c.turnoverStaffPay({ rev: 100000 }), 10000);
 });
+
+test('owner price bonus and starting capital remain bounded', () => {
+  const c = load(['shareMult', 'ownerCapital'], {
+    S: { shares: 1000000 }, START_CAPITAL: 1000000,
+    clamp: (n, a, b) => Math.max(a, Math.min(n, b))
+  });
+  assert.equal(c.shareMult(), 1.1);
+  c.S.shares = 10; assert.equal(c.shareMult(), 1.01);
+  c.S.shares = -10; assert.equal(c.shareMult(), 1);
+  assert.equal(c.ownerCapital({ capital: 1000 }), 1500000);
+  assert.equal(c.ownerCapital({ capital: -1 }), 1000000);
+});
+
+test('seasonal staff collection preserves the reward baseline, not cafe training', () => {
+  const c = load(['rememberSeasonStaff'], { S: {} });
+  const staff = { name: 'Ноябрина', role: 'Бариста', szLeg: '2026-11', lvl: 50, rank: 3, fatigue: 99 };
+  c.rememberSeasonStaff(staff, 'legend:2026-11');
+  assert.equal(c.S.seasonStaffRewards['legend:2026-11'].lvl, 24);
+  assert.equal(c.S.seasonStaffRewards['legend:2026-11'].rank, 2);
+  assert.equal(c.S.seasonStaffRewards['legend:2026-11'].fatigue, undefined);
+  assert.equal(c.S.seasonStaffUsed['legend:2026-11'], true);
+});
+
+test('seasonal gold is preserved but a gold machine bought with game money is not', () => {
+  const c = load(['collectSeasonRewards'], { S: { staff: [], goldMachine: true, spends: { goldm: 1 }, sz: { claimed: { p: [] } } } });
+  c.collectSeasonRewards(); assert.equal(c.S.seasonRewardAssets.goldMachine, undefined);
+  c.S.sz.claimed.p.push(20); c.collectSeasonRewards(); assert.equal(c.S.seasonRewardAssets.goldMachine, true);
+});
+
+test('staff reward tickets do not duplicate unclaimed or existing collection tickets', () => {
+  const c = load(['restoreSeasonRewardTickets'], {
+    S: { inv: [{ uid: 10, rewardKey: 'legend:2026-11' }, { uid: 11, k: 'staff', sz: '2026-11', track: 'p', n: 45 }], seasonStaffRewards: {
+      'legend:2026-11': { name: 'Ноябрина' }, 'staff:2026-11:p:45': { name: 'Легенда' }
+    } }
+  });
+  let uid = 100;
+  c.invAdd = item => c.S.inv.push({ ...item, uid: uid++ });
+  c.restoreSeasonRewardTickets(); c.restoreSeasonRewardTickets();
+  assert.equal(c.S.inv.length, 2);
+  assert.equal(c.S.inv.filter(x => x.rewardKey === 'legend:2026-11').length, 1);
+  assert.equal(c.S.inv.filter(x => x.rewardKey === 'staff:2026-11:p:45').length, 0);
+});
+
+test('a collection employee can be summoned only once per cafe, even after dismissal', () => {
+  const c = load(['useSeasonStaffReward'], {
+    S: { staff: [], inv: [{ uid: 1 }], seasonStaffRewards: { reward: { name: 'Ноябрина', role: 'Бариста', lvl: 24, rank: 2 } } },
+    staffCap: () => 1, makeStaff: () => ({ id: 'new' }), syncScene() {}, HOOK: { struct() {} }
+  });
+  c.hire = s => c.S.staff.push(s);
+  const ticket = { uid: 1, rewardKey: 'reward' };
+  assert.equal(c.useSeasonStaffReward(ticket), null);
+  assert.equal(c.S.staff.length, 1);
+  assert.equal(c.S.staff[0].lvl, 24);
+  c.S.staff = [];
+  assert.match(c.useSeasonStaffReward(ticket), /уже приглашена/);
+  assert.equal(c.S.staff.length, 0);
+});
+
+test('legacy claimed staff rewards become collection rights without duplicating unopened vouchers', () => {
+  const c = load(['rememberSeasonStaff', 'collectSeasonRewards'], {
+    S: { staff: [], sz: { id: '2026-11', claimed: { p: [10, 45], f: [10, 35] } }, inv: [{ k: 'staff', sz: '2026-11', track: 'f', n: 35 }] },
+    sezInfo: () => ({ leg: { name: 'Ноябрина', sex: 'f' } }),
+    szReward: (track, n) => ({ t: 'Легенда', v: track === 'p' ? 25 : n === 10 ? 12 : 16 })
+  });
+  c.collectSeasonRewards(); c.collectSeasonRewards();
+  assert.equal(Object.keys(c.S.seasonStaffRewards).length, 3);
+  assert.equal(c.S.seasonStaffRewards['legend:2026-11'].lvl, 24);
+  assert.equal(c.S.seasonStaffRewards['staff:2026-11:p:45'].lvl, 25);
+  assert.equal(c.S.seasonStaffRewards['staff:2026-11:f:35'], undefined);
+  assert.equal(c.S.inv.length, 1);
+  assert.equal(c.S.staff.length, 0);
+});
