@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Карточка кофейни</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#1d1812;--card:#2a2219;--ink:#f6ead8;--mute:#b8a88f;--acc:#e0a04a;--ok:#7fc27a;--bad:#e07a6a}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f4ecdf;--card:#fffaf1;--ink:#2a2219;--mute:#7a6a55;--acc:#b8731c;--ok:#3d8c3a;--bad:#b44a3a}}
+:root[data-theme="light"]{--bg:#f4ecdf;--card:#fffaf1;--ink:#2a2219;--mute:#7a6a55;--acc:#b8731c;--ok:#3d8c3a;--bad:#b44a3a}
+:root[data-theme="dark"]{--bg:#1d1812;--card:#2a2219;--ink:#f6ead8;--mute:#b8a88f;--acc:#e0a04a;--ok:#7fc27a;--bad:#e07a6a}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:15px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{width:100%;max-width:360px;background:var(--card);border-radius:18px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.name{font-size:20px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lvl{font-size:12px;color:var(--acc);font-weight:700;white-space:nowrap}
+.money{margin:14px 0 4px;font-size:28px;font-weight:800;color:var(--acc)}
+.label{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.cell{background:var(--bg);border-radius:12px;padding:10px}
+.val{font-size:17px;font-weight:700;margin-top:2px}
+.duel{margin-top:10px;padding:10px;border-radius:12px;background:var(--bg);display:flex;justify-content:space-between;gap:8px}
+.w{color:var(--ok);font-weight:700}.l{color:var(--bad);font-weight:700}
+.btn{display:block;width:100%;margin-top:16px;padding:12px;border:0;border-radius:12px;background:var(--acc);color:#1d1812;font-weight:700;font-size:16px;cursor:pointer;text-align:center;text-decoration:none}
+.msg{text-align:center;color:var(--mute);padding:40px 0}
+</style>
+</head>
+<body>
+<div class="card" id="card"><div class="msg">Загружаем кофейню...</div></div>
+<script>
+(function(){
+  var tg = window.Telegram && Telegram.WebApp;
+  if (tg) { try { tg.ready(); tg.expand(); } catch(e){} }
+  var root = document.getElementById('card');
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function fmt(n){ return Math.round(Number(n)||0).toLocaleString('ru-RU').replace(/ |,/g,' ') + ' ₽'; }
+  function show(d){
+    var s = d.season || {};
+    var place = s.place ? '#' + s.place : '—';
+    root.innerHTML =
+      '<div class="top"><div class="name">' + esc(d.cafe) + '</div><div class="lvl">Уровень ' + esc(d.level) + '</div></div>' +
+      '<div class="money">' + fmt(d.money) + '</div><div class="label">На руках</div>' +
+      '<div class="grid">' +
+        '<div class="cell"><div class="label">Всего заработано</div><div class="val">' + fmt(d.earned) + '</div></div>' +
+        '<div class="cell"><div class="label">Лучший день</div><div class="val">' + fmt(d.best_day) + '</div></div>' +
+        '<div class="cell"><div class="label">Место в сезоне</div><div class="val">' + esc(place) + '</div></div>' +
+        '<div class="cell"><div class="label">Рейтинг дуэлей</div><div class="val">' + esc(d.duel.r) + '</div></div>' +
+      '</div>' +
+      '<div class="duel"><span>Дуэли</span><span><span class="w">' + esc(d.duel.w) + ' побед</span> / <span class="l">' + esc(d.duel.l) + ' поражений</span></span></div>' +
+      '<a class="btn" id="open">Открыть игру</a>';
+    var open = document.getElementById('open');
+    open.addEventListener('click', function(e){
+      e.preventDefault();
+      var link = 'https://t.me/' + (d.bot || '') + '/' + (d.app || '');
+      if (tg && tg.openTelegramLink && d.bot) tg.openTelegramLink(link); else window.location.href = link;
+    });
+  }
+  function fail(t){ root.innerHTML = '<div class="msg">' + esc(t) + '</div>'; }
+  if (!tg || !tg.initData) { fail('Откройте карточку из Telegram.'); return; }
+  fetch('/api/cafecard', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({ initData: tg.initData }) })
+    .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
+    .then(function(x){
+      if (!x.ok || !x.j.ok) { fail(x.j && x.j.error === 'no player' ? 'Сначала откройте игру.' : 'Не удалось загрузить карточку.'); return; }
+      fetch('/api/config').then(function(r){ return r.json(); }).then(function(c){
+        x.j.bot = c.bot; x.j.app = c.app; show(x.j);
+      }).catch(function(){ show(x.j); });
+    })
+    .catch(function(){ fail('Нет связи, попробуйте позже.'); });
+})();
+</script>
+</body>
+</html>
