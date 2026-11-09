@@ -67,6 +67,12 @@ export async function channelTick(env, origin) {
     // не чаще одного поста в 3 минуты, чтобы не спамить
     const last = await env.DB.prepare('SELECT MAX(at) at FROM posts').first();
     if (last && last.at && Date.now() - last.at < 3 * 60000) return;
+    // одна проверка канала на всех за раз: запросы от разных игроков приходят одновременно,
+    // без замка каждый успевал опубликовать один и тот же пост
+    const now = Date.now();
+    await env.DB.prepare("INSERT OR IGNORE INTO cache (key, val, at) VALUES ('chan_lock', '', 0)").run();
+    const lk = await env.DB.prepare("UPDATE cache SET at = ?1 WHERE key = 'chan_lock' AND at < ?2").bind(now, now - 90000).run();
+    if (!lk || !lk.meta || lk.meta.changes !== 1) return;
 
     if (!(await posted(env, 'launch'))) {
       const ok = await post(env, origin, 'banner.jpg', ['<b>Brew Crew открыта</b>', '', 'Кофейня в Telegram, где всё на грани. Снимаешь пустое помещение, ставишь кофемашину, нанимаешь бариста, который завтра проспит, и разбираешься с проверками, гусями и бабушкой с купоном 2011 года.', '', '18+. Бесплатно. Работает, даже когда ты спишь.'].join('\n'));
@@ -264,5 +270,7 @@ async function duelDigest(env, origin) {
   const lines = rows.map((d, i) => { const aw = d.winner === d.a; const w = aw ? d.a_cafe : d.b_cafe, l = aw ? d.b_cafe : d.a_cafe, ws = Math.max(d.a_score, d.b_score), ls = Math.min(d.a_score, d.b_score);
     return `${i + 1}. «${esc(w)}» обыграла «${esc(l)}» ${ws} на ${ls} и забрала ${fm(d.stake * 2 * 0.9)} ₽`; });
   const html = ['<b>Дуэли дня: самые крупные ставки</b>', '', ...lines, '', 'Игра «Помнить заказ»: пять гостей, заказ по памяти. Вызвать соперника можно в «Зал → Дела».'].join('\n');
+  const cl = await env.DB.prepare('INSERT OR IGNORE INTO posts (key, at, ok, info) VALUES (?1, ?2, 0, ?3)').bind(key, Date.now(), 'pending').run();
+  if (!cl || !cl.meta || cl.meta.changes !== 1) return true;
   const ok = await post(env, origin, 'events.jpg', html); await mark(env, key, ok); return true;
 }
