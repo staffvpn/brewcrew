@@ -1349,7 +1349,7 @@ function refreshCands(){
   if(!crew.some(x=>x.role==='Бариста')) must.push('Бариста'); if(!crew.some(x=>x.role==='Кассир')) must.push('Кассир');
   const rolePool = Object.keys(ROLES).filter(r=>staffCap(r) > 0);
   for(let i=0;i<(S.level>=4?4:3);i++){ const c = makeStaff(must[i] || pick(rolePool)); c.lvl = RI(1,3); if(chance(0.35)){ c.realLvl = c.lvl; c.lvl = c.lvl + RI(1,3); c.claim = true; } S.cands.push(c); }
-  const legP = 0.006 + 0.002*perk('agency');
+  const legP = 0.01 + 0.002*perk('agency');
   if(S.day - (S.legendCandDay==null ? -99 : S.legendCandDay) >= 7 && chance(legP)){ const l = makeLegend(); if(l){ S.cands.push(l); S.legendCandDay = S.day; } }
 }
 function pickOffDays(role, roomId){
@@ -10762,6 +10762,35 @@ def('ny_gift', {cat:'story', t:'Подарки команде', x:'Первое 
   {t:'Премия каждому', fx:S=>{ badgeAdd('ny2027', 'Пережили новогоднюю запару', 'Новый год 2027 в кофейне'); return {fx:{m:-10000*Math.max(1, S.staff.filter(s=>!s.isYou).length), moodAll:25}, out:'Конверты с премией. Мойщица впервые за год улыбается на работе.'}; }},
   {t:'Корпоратив для своих', fx:S=>{ badgeAdd('ny2027', 'Пережили новогоднюю запару', 'Новый год 2027 в кофейне'); return {fx:{m:-30000, moodAll:15, soul:2}, out:'Свои, караоке и тот самый микрофон, который починили. «Владимирский централ» никто не поёт.'}; }},
   {t:'Открытки от руки', fx:S=>{ badgeAdd('ny2027', 'Пережили новогоднюю запару', 'Новый год 2027 в кофейне'); return {fx:{moodAll:8, pathos:2}, out:'Каждому открытка с честными словами. Кассир повесила свою над кассой.'}; }}]});
+
+/* ===== v33: «Продать сеть» в самом низу вкладки Опыт; новые легендарные сотрудники ===== */
+const _renderOwner33 = renderOwner;
+renderOwner = function(p){ _renderOwner33.apply(this, arguments); try{
+  const fr = [...p.querySelectorAll('.card')].find(c=>{ const t = c.querySelector('.t'); return t && /^Продать сеть/.test(t.textContent.trim()); });
+  if(fr){ p.appendChild(el(`<div class="h chalk">Продать сеть</div>`)); p.appendChild(fr); }
+}catch(e){ console.error(e); } };
+
+/* новые легенды: у каждой своя особенность */
+LEGENDS.push(
+  {name:'Бабушка Зина', sex:'f', role:'Повар', quirk:'none', legend:'Пирожки как в детстве. Сэндвичи, круассаны, сырники и завтраки в полтора раза дороже — гости не спорят.', mult:1.2},
+  {name:'Официант Лев', sex:'m', role:'Официант', quirk:'none', legend:'Помнит заказ каждого постоянного гостя. Скорость ×1,5, не устаёт к концу смены.', mult:1.5},
+  {name:'Валентина Петровна', sex:'f', role:'Кассир', quirk:'none', legend:'Тридцать лет за кассой. Очередь движется почти вдвое быстрее, сдачу считает в уме.', mult:1.8},
+  {name:'Фокусник Арсений', sex:'m', role:'Бариста', quirk:'none', legend:'Показывает фокусы, пока гость ждёт. Всё меню на 5% дороже: за шоу платят.', mult:1.2},
+  {name:'Ася-хорошее-настроение', sex:'f', role:'Официант', quirk:'none', legend:'Танцует между столиками. Каждую смену настроение всей команды растёт.', mult:1.3},
+  {name:'Су-шеф Марат', sex:'m', role:'Повар', quirk:'none', legend:'Ни одной ошибки на кухне за десять лет. Готовит в полтора раза быстрее.', mult:1.5},
+  {name:'Рита-ураган', sex:'f', role:'Мойщица', quirk:'none', legend:'Моет посуду быстрее, чем её пачкают. Скорость ×2.', mult:2}
+);
+const LG33 = n => LEGENDS.findIndex(l=>l.name===n) + 1;
+const _staffSpeed33 = staffSpeed;
+staffSpeed = function(s){ let f = _staffSpeed33.apply(this, arguments); try{ if(s && s.legendId > 5){ const L = LEGENDS[s.legendId-1]; if(L) f *= L.mult || 1; if(s.legendId === LG33('Официант Лев')) s.fatigue = Math.min(s.fatigue||0, 40); } }catch(e){} return f; };
+const _itemPrice33 = itemPrice;
+itemPrice = function(m, roomId){ let p = _itemPrice33.apply(this, arguments); try{
+  const here = id => S.staff.some(s=>s.room===roomId && s.legendId===id && s.today==='work');
+  if(['sandwich','croissant','syrniki','breakfast'].includes(m.id) && here(LG33('Бабушка Зина'))) p = Math.round(p*1.5/10)*10;
+  if(here(LG33('Фокусник Арсений'))) p = Math.round(p*1.05/10)*10;
+}catch(e){} return p; };
+const _closeDay33 = closeDay;
+closeDay = function(){ try{ const asya = LG33('Ася-хорошее-настроение'); if(S.staff.some(s=>s.legendId===asya && s.today==='work')) S.staff.forEach(s=>{ if(!s.isYou) s.mood = clamp((s.mood||50) + 4, 0, 100); }); }catch(e){} return _closeDay33.apply(this, arguments); };
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
