@@ -10102,13 +10102,13 @@ MODAL15.duelpick = (box, m, btn) => { const d = DUEL.data;
 
 /* ставка и старт */
 MODAL15.duelnew = (box, m, btn) => {
-  const myMax = Math.floor((S.money||0) * 0.25 / 1000) * 1000, max = m.max != null ? Math.min(m.max, myMax) : myMax;
-  const opts = [0, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000, 5000000, 10000000].filter(v => v === 0 || v <= max); if(max >= 25000 && !opts.includes(max)) opts.push(max);
-  let stake = opts.filter(v => v && v <= Math.max(25000, (S.money||0) * 0.05)).pop() || 0;
+  const myMax = Math.floor((S.money||0) * 0.5 / 1000) * 1000, max = m.max != null ? Math.min(m.max, myMax) : myMax;
+  const opts = [0, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000, 5000000, 10000000].filter(v => v === 0 || v <= max); if(max >= 10000 && !opts.includes(max)) opts.push(max);
+  let stake = opts.filter(v => v && v <= Math.max(10000, (S.money||0) * 0.05)).pop() || 0;
   box.append(el(`<div class="eyebrow">${m.rematch?'Реванш':'Вызов на дуэль'}</div>`), el(`<h2>${m.cafe ? '«'+esc(m.cafe)+'»' : 'Дуэль по ссылке'}</h2>`),
     el(`<p>Ты играешь сразу, соперник — когда ответит, у него сутки. Победитель забирает обе ставки минус 10%. Не ответят за сутки — значит, струсили, ставка вернётся.</p>`));
   const ch = el(`<div class="chips dst"></div>`); opts.forEach(v=>{ const b = el(`<button class="chipbtn" aria-pressed="${v===stake}">${v ? fmt(v)+' ₽' : 'Без ставки'}</button>`); b.onclick = () => { stake = v; ch.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed', x===b)); }; ch.appendChild(b); });
-  box.append(el(`<div class="d" style="margin:4px 0">Ставка, не больше четверти твоего счёта${m.max!=null?' и половины счёта соперника':''}:</div>`), ch);
+  box.append(el(`<div class="d" style="margin:4px 0">Ставка от 10 000 ₽, не больше половины твоего счёта${m.max!=null?' и не больше, чем есть у соперника':''}:</div>`), ch);
   const go = btn('Начать дуэль', async () => {
     if(stake && S.money < stake){ toast('Не хватает денег'); return; }
     go.disabled = true; const r = await duelApi({op:'new', pid:m.pid, stake, rematch:m.rematch?1:0}); go.disabled = false;
