@@ -869,6 +869,8 @@ input,textarea,select{font-size:16px!important}
 .fr-flag{border-color:#ffd24a!important;background:linear-gradient(90deg,rgba(255,210,74,.32),rgba(255,210,74,.06))!important;box-shadow:0 0 8px rgba(255,210,74,.5)!important;animation:flag34 3s ease-in-out infinite}
 .fr-flag span,.fr-flag b{color:#ffd24a!important}
 @keyframes flag34{50%{box-shadow:0 0 14px rgba(255,210,74,.75)}}
+.m34 em.lock34{color:var(--muted);text-align:right;font-size:11px;line-height:1.3}.m34 em.lock34 small{font-size:11px;color:var(--muted)}
+.lk34 .m34>div{opacity:.75}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -10993,11 +10995,12 @@ function buyMode34(k){ const d = k === 'bf' ? BF34 : NB34; if(S.money < d.cost |
   toast(k === 'bf' ? 'Завтраки открыты: с 6 до 11' : 'Ночной бар открыт: с 23 до 5'); save(); renderSheet(); }
 function hireSom34(){ if(S.staff.some(s => s.som34)) return; const s = makeStaff('Официант', {quirk:'none', sex:'m'});
   s.name = 'Сомелье Артур'; s.som34 = true; s.lvl = 25; s.rank = 2; s.shifts = 80; s.mood = 85; hire(s, 'main', 'white'); syncScene('main'); toast('Сомелье Артур вышел на смену'); save(); renderSheet(); }
-function modeCard34(){ const c = el(`<div class="card ro32"><div class="t">Завтраки и ночной бар</div><div class="d">Свои часы, меню, гости, истории и риски.</div></div>`);
+function modeCard34(){ const c = el(`<div class="card ro32 ${S.level < BF34.lvl ? 'lk34' : ''}"><div class="t">Завтраки и ночной бар</div><div class="d">Свои часы, меню, гости, истории и риски.</div></div>`);
   const row = (k, name, hrs, d, def) => { const own = !!S.c[k+'34']; const can = S.level >= def.lvl && S.money >= def.cost;
     const b = el(`<div class="m34"><div><b>${name}</b><small>${hrs}</small><span>${d}</span></div></div>`);
     if(own) b.appendChild(el(`<em>Открыто</em>`));
-    else { const btn = el(`<button class="btn num" ${can ? '' : 'disabled'}>${S.level < def.lvl ? 'С '+def.lvl+' уровня' : fmt(def.cost)+' ₽'}</button>`); btn.onclick = () => buyMode34(k); b.appendChild(btn); }
+    else if(S.level < def.lvl) b.appendChild(el(`<em class="lock34">Откроется на ${def.lvl} уровне<br><small>${fmt(def.cost)} ₽</small></em>`));
+    else { const btn = el(`<button class="btn num" ${can ? '' : 'disabled'}>${fmt(def.cost)} ₽</button>`); btn.onclick = () => buyMode34(k); b.appendChild(btn); }
     c.appendChild(b); };
   row('bf', 'Завтраки', 'с 6 до 11', 'Каша, яйца бенедикт, завтрак дня. Гостей утром +25%. Нужен повар и горячий цех.', BF34);
   row('nb', 'Ночной бар', 'с 23 до 5', 'Вино, глинтвейн, коктейли, сырная тарелка. Приглушённый свет и лампы. Гостей ночью больше вдвое. Без сомелье чек ниже, а ссор больше.', NB34);
@@ -11006,7 +11009,7 @@ function modeCard34(){ const c = el(`<div class="card ro32"><div class="t">За�
     if(!som){ const btn = el(`<button class="btn num">Нанять</button>`); btn.onclick = hireSom34; r.appendChild(btn); } c.appendChild(r); }
   return c; }
 const _renderUpgrades34 = renderUpgrades;
-renderUpgrades = function(p, id){ _renderUpgrades34.apply(this, arguments); try{ if((id || S.active || 'main') === 'main' && S.level >= 20) p.appendChild(modeCard34()); }catch(e){ console.error(e); } };
+renderUpgrades = function(p, id){ _renderUpgrades34.apply(this, arguments); try{ if((id || S.active || 'main') === 'main') p.appendChild(modeCard34()); }catch(e){ console.error(e); } };
 
 /* события в свои часы: планируем на следующий день при закрытии */
 const _closeDay34 = closeDay;
