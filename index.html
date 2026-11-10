@@ -871,6 +871,8 @@ input,textarea,select{font-size:16px!important}
 @keyframes flag34{50%{box-shadow:0 0 14px rgba(255,210,74,.75)}}
 .m34 em.lock34{color:var(--muted);text-align:right;font-size:11px;line-height:1.3}.m34 em.lock34 small{font-size:11px;color:var(--muted)}
 .lk34 .m34>div{opacity:.75}
+.mi931{color:#c8202a;font-size:15px;margin-left:4px}
+.trow .mi931{font-size:11px;margin-left:3px}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -8269,7 +8271,7 @@ attention = function(){
 function track(force){
   if(!S || !tg || !tg.initData) return;
   const z = szState();
-  const body = JSON.stringify({initData: tg.initData, stats:{view:(typeof viewSnap34==='function' ? viewSnap34(force) : undefined), cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{view:(typeof viewSnap34==='function' ? viewSnap34(force) : undefined), cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), mi:(S.mich34||{}).stars || 0, rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
@@ -11054,11 +11056,11 @@ function viewSnap34(force){ if(!S) return undefined; const now = Date.now(); if(
   try{ const rm = room('main');
     return {v:1, n:S.name, lv:S.level, rp:+S.rep.toFixed(1), up:rm.upg, it:(S.interior||{}).main || null, fr:frameOwnedId() || null, mf:S.c.mythFrame ? 1 : 0,
       st:S.staff.filter(s => s.room === 'main' && !s.isYou).slice(0, 10).map(s => ({r:s.role, n:s.name, x:s.sex, p:s.spr, l:s.legendId || 0, pz:s.prize ? 1 : 0, so:s.som34 ? 1 : 0})),
-      bf:S.c.bf34 ? 1 : 0, nb:S.c.nb34 ? 1 : 0, fl:S.c.flag34 ? 1 : 0, uf:S.c.uf34 || null, mu:S.c.mu34 || null, rooms:S.rooms.length, kt:(S.kitchen||{}).tier || 0, bd:(S.badges||[]).length, day:S.day}; }catch(e){ return undefined; } }
+      bf:S.c.bf34 ? 1 : 0, nb:S.c.nb34 ? 1 : 0, fl:S.c.flag34 ? 1 : 0, uf:S.c.uf34 || null, mu:S.c.mu34 || null, mi:(S.mich34||{}).stars || 0, rooms:S.rooms.length, kt:(S.kitchen||{}).tier || 0, bd:(S.badges||[]).length, day:S.day}; }catch(e){ return undefined; } }
 
 function shotView34(d, mode){ if(!d || !S) return null; const realS = S, realRT = RT.main; let out = null;
   try{ const f = JSON.parse(snapshot());
-    f.name = d.n || 'Кофейня'; f.level = d.lv || 1; f.rep = d.rp || 3; f.incidents = []; f.mods = []; f.pending = []; f.rivals = []; f.rival = null; f.crownWeek = null; f.closedUntil = 0; f.isOpen = true;
+    f.name = d.n || 'Кофейня'; f.mich34 = {stars:d.mi || 0, next:0, hist:[]}; f.wear34 = {main:100}; f.prem34 = null; f.level = d.lv || 1; f.rep = d.rp || 3; f.incidents = []; f.mods = []; f.pending = []; f.rivals = []; f.rival = null; f.crownWeek = null; f.closedUntil = 0; f.isOpen = true;
     f.gm = mode === 'bf' ? 8*60 : mode === 'nb' ? 23.5*60 : 14*60; f.weather = 'sun';
     const m = f.rooms.find(r => r.id === 'main'); m.upg = Object.assign({}, m.upg, d.up || {}); m.broken = {};
     f.interior = Object.assign({}, f.interior, {main: d.it || undefined}); f.szStyles = d.it ? [d.it] : []; f.promoSt = d.it ? [d.it] : [];
@@ -11096,7 +11098,7 @@ MODAL15.view34 = (box, m, btn) => {
 function visitBtn34(vk, cafe){ const b = el(`<button class="v34b" aria-label="Зайти в гости"><span>Зайти</span></button>`); b.onclick = (e) => { e.stopPropagation(); sfx('tap'); openView34(vk, cafe); }; return b; }
 const _renderSeason34v = renderSeason;
 renderSeason = function(p){ _renderSeason34v.apply(this, arguments); try{ const rows = p.querySelectorAll('.tour .trow'); const top = SZ_SNAP.season === sezId() ? SZ_SNAP.top : [];
-  rows.forEach((row, i) => { const t = top[i]; if(t && t.vk && t.cafe !== S.name) row.appendChild(visitBtn34(t.vk, t.cafe)); }); }catch(e){ console.error(e); } };
+  rows.forEach((row, i) => { const t = top[i]; if(t && t.mi){ const sp = row.querySelector('span'); if(sp) sp.insertAdjacentHTML('beforeend', ' <i class="mi931">'+'★'.repeat(t.mi)+'</i>'); } if(t && t.vk && t.cafe !== S.name) row.appendChild(visitBtn34(t.vk, t.cafe)); }); }catch(e){ console.error(e); } };
 const _friendRow34 = friendRow;
 friendRow = function(f, label){ const d = _friendRow34.apply(this, arguments); try{ if(f && f.vk) d.appendChild(visitBtn34(f.vk, f.cafe)); }catch(e){} return d; };
 
@@ -11161,6 +11163,138 @@ function atm34Card(){ const c = el(`<div class="card"><div class="t">Атмос�
   return c.children.length > 1 ? c : null; }
 const _renderSettings34a = renderSettings;
 renderSettings = function(p){ _renderSettings34a.apply(this, arguments); try{ flag34Apply(); const c = atm34Card(); if(c) p.appendChild(c); }catch(e){ console.error(e); } };
+
+/* ===== 9.3.1: инспектор Мишлен, износ мебели, кризис района, премиум-помещение, звёзды владельца, отзывы сотрудников ===== */
+
+/* ---------- износ мебели ---------- */
+function wear931(id){ S.wear34 = S.wear34 || {}; if(S.wear34[id] == null) S.wear34[id] = 100; return S.wear34[id]; }
+function wearCost931(id){ const u = UPG.find(x => x.id === 'tables'); const L = room(id).upg.tables || 0; let c = 20000; try{ c = Math.max(20000, Math.round(upCost(u, Math.max(0, L-1), id) * 0.3 / 1000) * 1000); }catch(e){} return c; }
+function wearDay931(){ const f = S.fin.today || {}; const per = (f.guests || 0) / Math.max(1, S.rooms.length);
+  for(const r of S.rooms){ if(roomDef(r.id).outdoor && S.weather === 'snow') continue; S.wear34[r.id] = Math.max(0, wear931(r.id) - Math.min(7, 0.6 + per/350)); }
+  if(wear931('main') < 20) repAdd(-0.03); }
+function wearCard931(id){ const w = Math.round(wear931(id)), cost = wearCost931(id);
+  const c = el(`<div class="card ro32"><div class="t">Состояние мебели</div><div class="d">Столы и стулья изнашиваются от гостей: чем больше поток, тем быстрее. Ниже 50% гости замечают потёртости (−4% гостей), ниже 20% столы шатаются и ломаются (−12% гостей и рейтинг падает). Инспектор Мишлен ждёт от 70%.</div></div>`);
+  c.appendChild(el(`<div class="ro32b"><span>Мебель</span><i><b style="width:${w}%;background:${w < 20 ? 'var(--bad)' : w < 50 ? 'var(--caramel)' : 'var(--good)'}"></b></i><em class="num">${w}%</em></div>`));
+  const b = el(`<div class="row"><button class="btn num ${w >= 95 ? 'ghost' : ''}" ${w < 95 && S.money >= cost ? '' : 'disabled'}>Обновить мебель за ${fmt(cost)} ₽</button></div>`);
+  b.querySelector('button').onclick = () => { if(S.money < cost) return; spend(cost, 'repairs', 'Новая мебель'); S.wear34[id] = 100; sfx('buy'); toast('Мебель как новая'); save(); renderSheet(); };
+  c.appendChild(b); return c; }
+const _sceneTable931 = sceneTable;
+sceneTable = function(st, x, y, L, i){ _sceneTable931.apply(this, arguments); try{ const w = wear931(S.active || 'main'); if(w >= 50) return;
+  ctx.strokeStyle = 'rgba(70,40,20,.55)'; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(x-12, y-18); ctx.lineTo(x-4, y-14); ctx.moveTo(x+6, y-19); ctx.lineTo(x+13, y-15); ctx.stroke();
+  if(w < 20 && i % 2 === 0){ ctx.strokeStyle = 'rgba(40,20,10,.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x-2, y-23); ctx.lineTo(x+2, y-17); ctx.lineTo(x-1, y-11); ctx.stroke(); rect(x+12, y-6, 4, 1.5, '#6a4a30'); }
+}catch(e){} };
+
+/* ---------- инспектор Мишлен ---------- */
+const MICH_LVL = 15;
+function mich931(){ S.mich34 = S.mich34 || {stars:0, next:0, hist:[]}; return S.mich34; }
+function michDay931(){ const m = mich931(); if(S.level < MICH_LVL) return;
+  if(!m.next || m.next < S.day){ m.next = S.day + RI(10, 20); return; }
+  if(m.next !== S.day) return;
+  const f = S.fin.today || {}, b = S.c.base931 || {}, guests = f.guests || 0;
+  const angry = Math.max(0, S.c.angry - (b.angry != null ? b.angry : S.c.angry)), mist = Math.max(0, (S.c.mistakes||0) - (b.mist != null ? b.mist : (S.c.mistakes||0)));
+  const ch = [
+    ['Рейтинг от 4,5', S.rep >= 4.5],
+    ['Чистота: бардак ниже 20%', dirtLevel('main') < 0.2],
+    ['Очередь: не больше 3 ушли, не дождавшись', ((f.lost||{}).wait || 0) <= 3],
+    ['Ушли недовольными не больше 1%', angry <= Math.max(2, guests * 0.01)],
+    ['Ни одной ошибки бариста', mist === 0],
+    ['Мебель от 70%', wear931('main') >= 70]];
+  const ok = ch.filter(x => x[1]).length, was = m.stars;
+  if(ok === 6 && m.stars < 3) m.stars++; else if(ok <= 3 && m.stars > 0) m.stars--;
+  m.hist.unshift({day:S.day, ok, stars:m.stars}); m.hist = m.hist.slice(0, 10); m.next = S.day + RI(10, 20);
+  const title = m.stars > was ? 'Мишлен: звезда '+m.stars+' из 3' : m.stars < was ? 'Мишлен снял звезду' : ok === 6 ? 'Мишлен: все три звезды уже у тебя' : 'Мишлен: в этот раз без звезды';
+  if(m.stars > was) badgeAdd('mich'+m.stars, 'Мишлен '+'★'.repeat(m.stars), 'Инспектор Мишлен');
+  queueModal({kind:'note', title, text:'Весь день в зале сидел неприметный гость с блокнотом. Это был инспектор Мишлен. Сдано '+ok+' из 6. Нужно все шесть, чтобы получить звезду, и 3 или меньше — звезду снимут. Каждая звезда: чек +5%.', chips: ch.map(x => [x[0], x[1]])});
+  try{ track(true); }catch(e){} }
+function michCard931(){ const m = mich931(); const c = el(`<div class="card"><div class="t">Звёзды Мишлен ${m.stars ? '<span class="mi931">'+'★'.repeat(m.stars)+'</span>' : ''}</div><div class="d">${S.level < MICH_LVL ? 'Инспектор начнёт приходить с '+MICH_LVL+' уровня.' : 'Инспектор приходит без предупреждения примерно раз в 10–20 дней и проверяет смену целиком: рейтинг от 4,5, чистоту, очередь, недовольных, ошибки бариста и мебель. Звезду дают, только если сдано всё. Максимум три, каждая — чек +5%. Звёзды видны на окне, в рейтинге и у тебя в гостях.'}</div></div>`);
+  if(m.hist.length) c.appendChild(el(`<div class="d">Последние визиты: ${m.hist.slice(0, 5).map(h => 'день '+h.day+' — '+h.ok+'/6').join(' · ')}</div>`));
+  return c; }
+const _sceneLamps931 = sceneLamps;
+sceneLamps = function(st, u, now){ _sceneLamps931.apply(this, arguments); try{ const n = (S.mich34 || {}).stars || 0; if(!n || st.outdoor) return;
+  RR(226, 46, 22, 13, 2, '#b3202a'); txt('★'.repeat(n), 237, 54.5, '700 6px sans-serif', '#ffd978', 'center'); txt('MICHELIN', 237, 58.3, '700 3px sans-serif', '#fff', 'center');
+}catch(e){} };
+
+/* ---------- кризис района: раз в 17 дней на сутки, общий для всех ---------- */
+const CR_ANCHOR = Date.parse('2026-11-13T09:00:00Z'), CR_PERIOD = 17 * 86400000, CR_LEN = 24 * 3600000;
+const CRISES = [
+  {id:'beans', n:'Зерно подорожало', d:'Поставщики подняли цены: закупки +40% на сутки.'},
+  {id:'road', n:'Ремонт улицы', d:'Перекопали тротуар перед входом: гостей −20% на сутки.'},
+  {id:'raid', n:'Рейд проверок', d:'По району ходят проверки: шанс визита санэпида и налоговой втрое выше.'}];
+function crisis931(){ const now = typeof srvNow === 'function' ? srvNow() : Date.now(); if(now < CR_ANCHOR) return null; const k = Math.floor((now - CR_ANCHOR) / CR_PERIOD); const from = CR_ANCHOR + k*CR_PERIOD;
+  return now < from + CR_LEN ? Object.assign({k, until: from + CR_LEN}, CRISES[k % CRISES.length]) : null; }
+const _modMul931 = modMul;
+modMul = function(k){ let m = _modMul931.apply(this, arguments); try{ if(!S) return m; const c = crisis931();
+  if(c && c.id === 'beans' && k === 'supply') m *= 1.4;
+  if(c && c.id === 'road' && k === 'traffic') m *= 0.8;
+  if(k === 'traffic'){ const w = wear931(S.active || 'main'); if(w < 20) m *= 0.88; else if(w < 50) m *= 0.96; if(S.prem34) m *= 1.08; }
+  if(k === 'check'){ const n = (S.mich34 || {}).stars || 0; if(n) m *= 1 + 0.05*n; }
+}catch(e){} return m; };
+function crisisDay931(){ const c = crisis931(), seen = S.c.crisis931;
+  if(c){ if(seen !== c.k){ S.c.crisis931 = c.k; S.c.crisisOk931 = true; queueModal({kind:'note', title:'Кризис района: '+c.n, text:c.d+' Это для всех кофеен района. Продержись без долгов — получишь значок.'}); }
+    if(S.debt && S.debt.stage >= 1) S.c.crisisOk931 = false;
+    if(c.id === 'raid' && chance(0.5)) S.pending.push({at:(S.day+1)*DAY_MIN + RI(10*60, 18*60), ev:pick(['inspect_san','inspect_tax'])}); }
+  else if(seen != null && S.c.crisisDone931 !== seen){ S.c.crisisDone931 = seen; if(S.c.crisisOk931) { badgeAdd('crisis'+seen, 'Пережил кризис №'+(seen+1), 'Кризис района без долгов'); toast('Кризис района пройден без долгов: новый значок'); } } }
+const _renderHud931 = renderHud;
+renderHud = function(){ _renderHud931.apply(this, arguments); try{ const c = crisis931(); const pe = $('#pills'); if(!c || !pe) return;
+  if(!pe.querySelector('.cr931')){ const h = Math.max(1, Math.ceil((c.until - (typeof srvNow === 'function' ? srvNow() : Date.now()))/3600000)); const p = el(`<span class="pill warn cr931">Кризис: ${esc(c.n)} · ${h} ч</span>`); pe.insertBefore(p, pe.firstChild); try{ hudPills34(); }catch(e){} } }catch(e){} };
+
+/* ---------- премиум-помещение ---------- */
+const PREM = {d:null, at:0};
+function premLoad931(){ if(!tg || !tg.initData || Date.now() - PREM.at < 60000) return; PREM.at = Date.now(); apiPost('/api/premium', {op:'get'}).then(r => { if(r && r.ok){ PREM.d = r; if(SHEET_OPEN931()) renderSheet(); } }).catch(() => {}); }
+function SHEET_OPEN931(){ try{ return !!document.querySelector('.sheet.open, #sheet.open'); }catch(e){ return false; } }
+function premCard931(){ const c = el(`<div class="card ro32"><div class="t">Премиум-помещение</div></div>`);
+  if(S.prem34){ c.appendChild(el(`<div class="d">Твоё: «${esc(S.prem34.n)}». Гостей +8% навсегда, значок рядом с названием.</div>`)); return c; }
+  premLoad931(); const d = PREM.d;
+  c.appendChild(el(`<div class="d">Раз в четыре недели на 48 часов выставляется одно помещение на весь район. Забирает тот, кто первым заплатит. Даёт +8% гостей навсегда и значок.</div>`));
+  if(!d){ c.appendChild(el(`<div class="d">${tg && tg.initData ? 'Узнаём, что продаётся…' : 'Доступно, когда игра открыта в Telegram.'}</div>`)); return c; }
+  const when = t => new Date(t).toLocaleString('ru-RU', {day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'});
+  if(d.owner){ c.appendChild(el(`<div class="d">«${esc(d.lot.n)}» уже купил${d.mine ? 'а твоя кофейня' : 'а кофейня «'+esc(d.owner)+'»'}. Следующий лот: ${when(d.next)}.</div>`)); return c; }
+  if(!d.open){ c.appendChild(el(`<div class="d">Следующий лот: «${esc(d.lot.n)}», ${fmt(d.lot.price)} ₽. Откроется ${when(d.next)}.</div>`)); return c; }
+  c.appendChild(el(`<div class="d">Сейчас продаётся: <b>«${esc(d.lot.n)}»</b>. До ${when(d.until)}.</div>`));
+  const b = el(`<div class="row"><button class="btn num" ${S.money >= d.lot.price ? '' : 'disabled'}>Купить за ${fmt(d.lot.price)} ₽</button></div>`);
+  b.querySelector('button').onclick = () => { if(S.money < d.lot.price) return; const btn = b.querySelector('button'); btn.disabled = true; try{ track(true); }catch(e){}
+    setTimeout(() => apiPost('/api/premium', {op:'buy'}).then(r => { if(r && r.ok && r.bought){ spend(r.bought.price, 'invest', 'Премиум-помещение'); S.prem34 = {id:r.bought.id, n:r.bought.n, day:S.day}; badgeAdd('prem_'+r.bought.id, r.bought.n, 'Премиум-помещение района'); sfx('level'); toast('«'+r.bought.n+'» теперь твоё'); save(); PREM.d = null; PREM.at = 0; renderSheet(); }
+      else { toast((r && r.error) || 'Не получилось'); PREM.at = 0; premLoad931(); } }), 1200); };
+  c.appendChild(b); return c; }
+
+/* ---------- карточки в Улучшениях ---------- */
+const _renderUpgrades931 = renderUpgrades;
+renderUpgrades = function(p, id){ _renderUpgrades931.apply(this, arguments); try{ const rid = id || S.active || 'main'; p.appendChild(wearCard931(rid)); if(rid === 'main'){ p.appendChild(michCard931()); p.appendChild(premCard931()); } }catch(e){ console.error(e); } };
+
+/* ---------- новый виток: звёзды владельца при продаже сети ---------- */
+PERKS.push({id:'loyal34', n:'Верные гости', d:'Рейтинг новой кофейни +0,1 на старте за уровень', cost:L=>3+L*2, max:5},
+  {id:'train34', n:'Наставник', d:'Сотрудники работают быстрее на 2% за уровень', cost:L=>3+L*2, max:10});
+const _sellFr931 = sellFranchise;
+sellFranchise = function(cityId){ const lvl = S.level, mich = S.mich34, prem = S.prem34, badges = S.badgeList, bon = Math.floor(lvl / 10), stars = (S.ownerStars34 || 0);
+  const r = _sellFr931.apply(this, arguments); if(!r) return r;
+  try{ S.shares += bon; S.ownerStars34 = stars + bon; if(prem) S.prem34 = prem; if(badges) S.badgeList = badges;
+    if(mich) S.mich34 = {stars:0, next:0, hist:[], past:(mich.past || 0) + (mich.stars || 0)};
+    const L = perk('loyal34'); if(L) S.rep = Math.min(5, S.rep + 0.1*L);
+    setTimeout(() => { try{ queueModal({kind:'note', title:'Новый виток', text:'За '+lvl+' уровень прошлой кофейни: +'+bon+' звёзд владельца (они же опыт владельца). Потрать их в Опыте на постоянные бонусы. Премиум-помещение и значки переехали с тобой.'}); }catch(e){} }, 800); }catch(e){ console.error(e); }
+  return r; };
+const _staffSpeed931 = staffSpeed;
+staffSpeed = function(s){ let v = _staffSpeed931.apply(this, arguments); try{ const L = perk('train34'); if(L) v *= 1 + 0.02*L; if(s && !s.isYou && s.mood >= 85 && (s.fatigue || 0) < 30) v *= 1.08; }catch(e){} return v; };
+
+/* ---------- отзывы: от гостей реже, добавились от сотрудников ---------- */
+const _reviewTick931 = reviewTick;
+reviewTick = function(){ if(!chance(0.4)) return; return _reviewTick931.apply(this, arguments); };
+const STAFF_REV = {
+  good:['Лучшее место, где я работал. Платят вовремя, выходные — святое.', 'Ухожу на повышение, но буду скучать по этой команде.', 'Хозяин помнит, как зовут всех, даже мойщицу. Редкость.', 'Научили варить кофе так, что меня теперь зовут везде.'],
+  mid:['Нормально. Кофе хороший, смены длинные.', 'Работать можно, если не боишься очередей.', 'Команда хорошая, график не очень.'],
+  bad:['Задерживали зарплату и смотрели, как будто так и надо.', 'Три смены подряд без выходных. Кофе вкусный, люди — нет.', 'Сказали, что я незаменим, и заменили через неделю.', 'Уставал так, что засыпал на мешках с зерном.']};
+const _removeStaff931 = removeStaff;
+removeStaff = function(id){ try{ const s = S.staff.find(x => x.id === id); if(s && !s.isYou && !s.sold && (s.shifts || 0) >= 5 && chance(0.45)){
+    const st = staffState(s), stars = st >= 75 ? 5 : st >= 50 ? (chance(0.5) ? 4 : 3) : chance(0.5) ? 2 : 1, k = stars >= 4 ? 'good' : stars === 3 ? 'mid' : 'bad';
+    S.reviews = S.reviews || []; S.reviews.unshift({id:S.uid++, day:S.day, stars, author:'Бывш. '+roleN(s).toLowerCase()+' '+s.name, text:pick(STAFF_REV[k]), reply:null, staff:1}); S.reviews = S.reviews.slice(0, 25);
+    repAdd(stars >= 4 ? 0.02 : stars <= 2 ? -0.03 : 0); } }catch(e){}
+  return _removeStaff931.apply(this, arguments); };
+
+/* ---------- закрытие смены ---------- */
+const _closeDay931 = closeDay;
+closeDay = function(){ try{ wearDay931(); michDay931(); crisisDay931();
+    if(S.money < 0 && S.staff.length){ S.staff.forEach(s => { if(!s.isYou) s.mood = Math.max(0, s.mood - 6); }); toast('Зарплата с задержкой: команда недовольна'); } }catch(e){ console.error(e); }
+  const r = _closeDay931.apply(this, arguments);
+  try{ S.c.base931 = {angry:S.c.angry, mist:S.c.mistakes || 0}; }catch(e){} return r; };
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
