@@ -1132,7 +1132,7 @@ function takeStock(need){
   }
 }
 function unitCost(k){ return STOCK[k].price / STOCK[k].pack * supplyMul(); }
-function supplyMul(){ return modMul('supply') * (1 - 0.03*perk('supplier')) * supplier().mul * (S.level>=18 ? 0.85 : S.level>=8 ? 0.88 : 1); }
+function supplyMul(){ return modMul('supply') * (1 - 0.03*perk('supplier')) * supplier().mul * (S.level>=18 ? 0.8 : S.level>=8 ? 0.85 : 1); }
 function needCost(need){ let c = 0; for(const k in need) c += need[k]*unitCost(k); return c; }
 function stockFree(k){ const pend = S.orders.filter(o=>o.k===k).reduce((a,o)=>a+o.q,0); return Math.max(0, stockCap(k) - stockQty(k) - pend); }
 const SHOP_SHARE = 0.25;
@@ -1405,7 +1405,7 @@ function hire(c, roomId, contract){
   S.staff.push(c); S.cands = S.cands.filter(x=>x!==c);
   if(S.isOpen) c.today = 'work';
 }
-function shiftPay(s){ return Math.round(ROLES[s.role].rate * Math.min(12, hoursOpen()) * RANK_PAY[s.rank] * (s.contract==='white'?1.3:1) * (s.legendId===4?0.5:1) * (s.rateMul||1) / 10) * 10; }
+function shiftPay(s){ return Math.round(ROLES[s.role].rate * Math.min(12, hoursOpen()) * RANK_PAY[s.rank] * (s.contract==='white'?1.3:1) * (s.legendId===4?0.5:1) * (s.rateMul||1) * (S.level>=8 && S.level<18 ? 0.9 : 1) / 10) * 10; }
 function hireCost(s){ return shiftPay(s) * 2; }
 function scheduledToday(s, d){
   d = d===undefined ? S.day : d; const wd = weekday(d);
@@ -10426,11 +10426,11 @@ onTrack = function(r){ try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const
 
 /* ---------- кредит в банке ---------- */
 const BANK29 = [
-  {id:'micro', n:'Микрозайм «До зарплаты»', sum:100000, back:300000, lvl:1},
-  {id:'bank', n:'Банк «Кофейный»', sum:500000, back:1250000, lvl:5},
-  {id:'biz', n:'Бизнес-кредит', sum:2000000, back:4500000, lvl:10},
-  {id:'inv', n:'Частный инвестор', sum:10000000, back:20000000, lvl:15}];
-const BANK29_DAYS = 7;
+  {id:'micro', n:'Микрозайм «До зарплаты»', sum:100000, back:200000, lvl:1},
+  {id:'bank', n:'Банк «Кофейный»', sum:500000, back:850000, lvl:5},
+  {id:'biz', n:'Бизнес-кредит', sum:2000000, back:3400000, lvl:10},
+  {id:'inv', n:'Частный инвестор', sum:10000000, back:17000000, lvl:15}];
+const BANK29_DAYS = 14;
 IN_N.loan = 'Кредит банка'; OUT_N.loan = 'Возврат кредита'; NON_OP_IN.push('loan');
 const _opProfit29 = opProfit;
 opProfit = function(f){ const L = (f && f.L) || {out:{}}; return _opProfit29(f) + ((L.out && L.out.loan) || 0); };
@@ -10452,12 +10452,12 @@ function bankCard(){ const b = bank29(), c = el(`<div class="card bank29"><div c
   if(b){ const left = Math.max(0, b.due - S.day);
     c.appendChild(el(`<div class="d">${esc(b.n)}: взял ${fmt(b.sum)} ₽, вернуть <b>${fmt(b.back)} ₽</b>. ${left > 1 ? 'Спишут через '+left+' '+plural29(left, 'день','дня','дней')+'.' : 'Спишут сегодня после закрытия смены.'} Если денег не хватит, банк спишет всё в минус и пришлёт коллекторов.</div>`));
     const row = el(`<div class="row"><button class="btn num" ${S.money >= b.back ? '' : 'disabled'}>Вернуть ${fmt(b.back)} ₽</button></div>`); row.querySelector('button').onclick = bankRepay; c.appendChild(row);
-    if(!b.rs && b.back > b.sum*1.5){ const nb = Math.round(b.sum*1.5/1000)*1000;
-      const rr = el(`<div class="row"><button class="btn ghost num">Реструктуризация: ${fmt(nb)} ₽ на 14 дней</button></div>`);
-      rr.querySelector('button').onclick = () => { const cur = bank29(); if(!cur || cur.rs) return; cur.back = Math.min(cur.back, nb); cur.due = S.day + 14; cur.rs = 1; repAdd(-0.1); sfx('coin'); toast('Банк пошёл навстречу: вернуть '+fmt(cur.back)+' ₽ за 14 дней'); save(); structDirty = true; renderHud(); try{ renderSheet(); }catch(e){} };
-      c.appendChild(rr); c.appendChild(el(`<div class="d">Один раз на кредит: сумма долга снижается до полуторной, срок 14 дней, рейтинг −0,1.</div>`)); }
+    if(!b.rs && b.back > b.sum*1.25){ const nb = Math.round(b.sum*1.25/1000)*1000;
+      const rr = el(`<div class="row"><button class="btn ghost num">Реструктуризация: ${fmt(nb)} ₽ на 21 день</button></div>`);
+      rr.querySelector('button').onclick = () => { const cur = bank29(); if(!cur || cur.rs) return; cur.back = Math.min(cur.back, nb); cur.due = S.day + 21; cur.rs = 1; repAdd(-0.1); sfx('coin'); toast('Банк пошёл навстречу: вернуть '+fmt(cur.back)+' ₽ за 21 день'); save(); structDirty = true; renderHud(); try{ renderSheet(); }catch(e){} };
+      c.appendChild(rr); c.appendChild(el(`<div class="d">Один раз на кредит: сумма долга снижается до 125% от займа, срок 21 день, рейтинг −0,1.</div>`)); }
     return c; }
-  c.appendChild(el(`<div class="d">Деньги сразу, вернуть втрое больше через ${BANK29_DAYS} дней. Один кредит за раз. Не вернёшь — коллекторы, касса в минусе и две недели без кредитов.</div>`));
+  c.appendChild(el(`<div class="d">Деньги сразу, вернуть примерно в полтора-два раза больше через ${BANK29_DAYS} дней. Один кредит за раз. Не вернёшь — коллекторы, касса в минусе и две недели без кредитов.</div>`));
   if(S.bankBan29 && S.day < S.bankBan29) c.appendChild(el(`<div class="d" style="color:var(--bad)">Банки отказывают ещё ${S.bankBan29 - S.day} ${plural29(S.bankBan29 - S.day, 'день','дня','дней')}.</div>`));
   BANK29.forEach(o=>{ const lock = S.level < o.lvl;
     const r = el(`<div class="bk29r"><div><b>${esc(o.n)}</b><span>${lock ? 'с '+o.lvl+' уровня' : 'вернуть '+fmt(o.back)+' ₽ через '+BANK29_DAYS+' дн.'}</span></div><button class="btn num" ${lock?'disabled':''}>+${fmt(o.sum)} ₽</button></div>`);
