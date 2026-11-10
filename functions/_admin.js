@@ -4,6 +4,7 @@
 import { ADMINS, tgApi, mskDay, SHOP, bindReferrer, sezId, SEZ_NAMES } from './_lib.js';
 import { post as channelPost, tourWeek } from './_channel.js';
 import { promoCallback, promoInput, promoPostText } from './_promo.js';
+import { GUIDE } from './_guide.js';
 
 const fmt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/ |,/g, ' ');
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -73,7 +74,7 @@ async function vHome(env) {
     [B('Рассылка всем', 'p:all'), B('Канал', 'p:ch')],
     [B('Турнир', 'p:tour'), B('Покупки', 'p:buy')],
     [B('Рефералы', 'p:refs'), B('Промокоды', 'p:prl')],
-    [B('Сезон и пропуск', 'p:sz')],
+    [B('Сезон и пропуск', 'p:sz'), B('Что нового', 'p:gd')],
     [B('Журнал', 'p:log'), B('Обновить', 'p:home')]
   ] };
 }
@@ -316,6 +317,14 @@ export async function adminCallback(env, cq) {
   const id = Number(parts[2]);
   // любое нажатие сбрасывает ожидание ввода, кроме подтверждений
   if (!['allgo', 'pngo'].includes(act)) await setState(env, from, null, null, chat, mid);
+  if (act === 'gd' || act === 'gdv' || act === 'gdi') {
+    const vi = Math.max(0, Math.min(GUIDE.length - 1, Number(parts[2]) || 0)), G = GUIDE[vi];
+    if (act === 'gdi') { const it = G.items[Number(parts[3]) || 0]; if (!it) return answer('Нет такого');
+      await edit({ text: `<b>${esc(it.t)}</b>\n<i>Обновление ${G.v}</i>\n\n${esc(it.x)}`, kb: [[B('Назад', 'p:gdv:' + vi)], HOME] }); return answer(''); }
+    const rows = G.items.map((it, i) => [B(it.t, 'p:gdi:' + vi + ':' + i)]);
+    const vers = GUIDE.map((g, i) => B((i === vi ? '· ' : '') + g.v, 'p:gdv:' + i));
+    await edit({ text: `<b>Что нового · ${G.v}</b> (${G.date})\n\nНажми на пункт, чтобы увидеть, как это работает и где найти в игре.`, kb: [...rows, vers, HOME] }); return answer('');
+  }
   if (act && act.startsWith('pr')) {
     if (act === 'prp') { const pr = await env.DB.prepare('SELECT * FROM promos WHERE code = ?1').bind(parts[2]).first(); if (!pr) return answer('Нет такого'); const ok = await channelPost(env, ORIGIN, 'events.jpg', promoPostText(pr)); return answer(ok ? 'Опубликовано в канале' : 'Не получилось опубликовать', !ok); }
     const r = await promoCallback(env, act, parts, from, edit, wait, ask, answer); if (r !== null) return r;
