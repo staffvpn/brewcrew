@@ -6834,7 +6834,7 @@ function renderMore(p){
     p.appendChild(el(`<div class="card"><div class="t">Опыт владельца: ${S.shares}</div><div class="d">Это твой опыт как хозяина. Каждое очко навсегда даёт +3% к доходу во всех будущих кофейнях. Сейчас доход ×${shareMult().toFixed(2).replace('.',',')}. Опыт дают достижения и продажа сети. Его можно потратить на вечные бонусы ниже.</div></div>`));
     const fr = el(`<div class="card"><div class="t">Продать сеть и начать заново</div><div class="d">Когда сеть заработает ${fmt(need)} ₽, её можно продать. Залы, команда и деньги уйдут покупателю, а ты получишь опыт и начнёшь заново в новом помещении с новым сюжетом.</div>
       <div class="mood">Заработано ${bar(e/need*100,'var(--caramel)')}<span class="num">${fmt(e)}</span></div>
-      <div class="d">За продажу сейчас: <b>${sh}</b> опыта. Продано сетей: ${S.franchises}.</div>
+      <div class="d">За продажу сейчас: <b>${sh}</b> опыта. Продано сетей: ${S.franchises}.</div><div class="d">Новая точка открывается с нуля: команда, улучшения, договоры и деньги обнуляются. С тобой остаются значки, вечные бонусы и вещи с пропуска. Плюс 600 000 ₽ на открытие и +3% гостей навсегда за каждую проданную сеть (до +15%).</div>
       <div class="row">${btnHtml('Продать сеть', 0, sh<=0)}</div></div>`);
     fr.querySelector('button').onclick = () => { if(sh>0) queueModal({kind:'franchise'}, true); };
     p.appendChild(fr);
@@ -11258,7 +11258,7 @@ const _modMul931 = modMul;
 modMul = function(k){ let m = _modMul931.apply(this, arguments); try{ if(!S) return m; const c = crisis931();
   if(c && c.id === 'beans' && k === 'supply') m *= 1.4;
   if(c && c.id === 'road' && k === 'traffic') m *= 0.8;
-  if(k === 'traffic'){ const w = wear931(S.active || 'main'); if(w < 20) m *= 0.88; else if(w < 50) m *= 0.96; if(S.prem34) m *= 1.08; }
+  if(k === 'traffic'){ const w = wear931(S.active || 'main'); if(w < 20) m *= 0.88; else if(w < 50) m *= 0.96; if(S.prem34) m *= 1.08; if(S.franchises) m *= 1 + 0.03*Math.min(5, S.franchises); }
   if(k === 'check'){ const n = (S.mich34 || {}).stars || 0; if(n) m *= 1 + 0.05*n; }
 }catch(e){} return m; };
 function crisisDay931(){ const c = crisis931(), seen = S.c.crisis931;
@@ -11275,9 +11275,9 @@ const PREM = {d:null, at:0};
 function premLoad931(){ if(!tg || !tg.initData || Date.now() - PREM.at < 60000) return; PREM.at = Date.now(); apiPost('/api/premium', {op:'get'}).then(r => { if(r && r.ok){ PREM.d = r; if(SHEET_OPEN931()) renderSheet(); } }).catch(() => {}); }
 function SHEET_OPEN931(){ try{ return !!document.querySelector('.sheet.open, #sheet.open'); }catch(e){ return false; } }
 function premCard931(){ const c = el(`<div class="card ro32"><div class="t">Премиум-помещение</div></div>`);
-  if(S.prem34){ c.appendChild(el(`<div class="d">Твоё: «${esc(S.prem34.n)}». Гостей +8% навсегда, значок рядом с названием.</div>`)); return c; }
+  if(S.prem34){ c.appendChild(el(`<div class="d">Твоё: «${esc(S.prem34.n)}». Гостей +8% и значок. При продаже сети помещение сгорает, значок остаётся.</div>`)); return c; }
   premLoad931(); const d = PREM.d;
-  c.appendChild(el(`<div class="d">Раз в четыре недели на 48 часов выставляется одно помещение на весь район. Забирает тот, кто первым заплатит. Даёт +8% гостей навсегда и значок.</div>`));
+  c.appendChild(el(`<div class="d">Раз в четыре недели на 48 часов выставляется одно помещение на весь район. Забирает тот, кто первым заплатит. Даёт +8% гостей и значок. При продаже сети помещение сгорает.</div>`));
   if(!d){ c.appendChild(el(`<div class="d">${tg && tg.initData ? 'Узнаём, что продаётся…' : 'Доступно, когда игра открыта в Telegram.'}</div>`)); return c; }
   const when = t => new Date(t).toLocaleString('ru-RU', {day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'});
   if(d.owner){ c.appendChild(el(`<div class="d">«${esc(d.lot.n)}» уже купил${d.mine ? 'а твоя кофейня' : 'а кофейня «'+esc(d.owner)+'»'}. Следующий лот: ${when(d.next)}.</div>`)); return c; }
@@ -11299,10 +11299,10 @@ PERKS.push({id:'loyal34', n:'Верные гости', d:'Рейтинг нов�
 const _sellFr931 = sellFranchise;
 sellFranchise = function(cityId){ const lvl = S.level, mich = S.mich34, prem = S.prem34, badges = S.badgeList, bon = Math.floor(lvl / 10), stars = (S.ownerStars34 || 0);
   const r = _sellFr931.apply(this, arguments); if(!r) return r;
-  try{ S.shares += bon; S.ownerStars34 = stars + bon; if(prem) S.prem34 = prem; if(badges) S.badgeList = badges;
-    if(mich) S.mich34 = {stars:0, next:0, hist:[], past:(mich.past || 0) + (mich.stars || 0)};
+  try{ S.shares += bon; S.ownerStars34 = stars + bon; if(badges) S.badgeList = badges; delete S.prem34; delete S.mich34;
+    S.money += 600000; S.fin.today.why = S.fin.today.why || {};
     const L = perk('loyal34'); if(L) S.rep = Math.min(5, S.rep + 0.1*L);
-    setTimeout(() => { try{ queueModal({kind:'note', title:'Новый виток', text:'За '+lvl+' уровень прошлой кофейни: +'+bon+' звёзд владельца (они же опыт владельца). Потрать их в Опыте на постоянные бонусы. Премиум-помещение и значки переехали с тобой.'}); }catch(e){} }, 800); }catch(e){ console.error(e); }
+    setTimeout(() => { try{ queueModal({kind:'note', title:'Новый виток', text:'Новая точка с нуля: команда, улучшения, договоры и деньги прошлой кофейни остались в прошлом. Ты получил +600 000 ₽ на открытие, гостей +'+Math.min(15, 3*(S.franchises||0))+'% навсегда за проданные сети и +'+bon+' звёзд владельца за '+lvl+' уровень (их тратят в Опыте). С тобой остались значки, вечные бонусы и вещи с пропуска.'}); }catch(e){} }, 800); }catch(e){ console.error(e); }
   return r; };
 const _staffSpeed931 = staffSpeed;
 staffSpeed = function(s){ let v = _staffSpeed931.apply(this, arguments); try{ const L = perk('train34'); if(L) v *= 1 + 0.02*L; if(s && !s.isYou && s.mood >= 85 && (s.fatigue || 0) < 30) v *= 1.08; }catch(e){} return v; };
