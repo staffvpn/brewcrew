@@ -103,7 +103,7 @@ export async function channelTick(env, origin) {
     const curS = sezId(); const prevS = sezId(Date.parse(curS + '-01T00:00:00+03:00') - 3600000);
     if (prevS !== curS) { const skey = 'season_' + prevS;
       if (!(await posted(env, skey))) {
-        const top = (await env.DB.prepare(`SELECT * FROM season WHERE season = ?1 AND sp > 0 AND tg_id NOT IN (${ADMINS.join(',')}) ORDER BY sp DESC LIMIT 5`).bind(prevS).all()).results || [];
+        const top = (await env.DB.prepare(`SELECT * FROM season WHERE season = ?1 AND sp > 0 AND tg_id NOT IN (${ADMINS.join(',')}) AND tg_id NOT IN (SELECT CAST(j.value AS INTEGER) FROM cache c, json_each(c.val) j WHERE c.key = 'szhide_' || ?1) ORDER BY sp DESC LIMIT 5`).bind(prevS).all()).results || [];
         if (!top.length) { await mark(env, skey, true, 'empty'); return; }
         const nm = SEZ_NAMES[prevS] || prevS;
         for (let i = 0; i < Math.min(3, top.length); i++) {

@@ -873,6 +873,9 @@ input,textarea,select{font-size:16px!important}
 .lk34 .m34>div{opacity:.75}
 .mi931{color:#c8202a;font-size:15px;margin-left:4px}
 .trow .mi931{font-size:11px;margin-left:3px}
+.dock{grid-template-columns:repeat(4,1fr)!important;gap:5px!important}
+.dockb{flex-direction:column!important;gap:2px!important;min-height:52px!important;font-size:12px!important;padding:4px 2px!important}
+.dockb svg{width:22px!important;height:22px!important}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -6288,6 +6291,7 @@ function pxIcon(rows, col){ let r = ''; rows.forEach((line,y)=>{ for(let x=0;x<l
 const ICONS = {
   hall:pxIcon(['....#..#........','...#..#.........','....#..#........','...#..#.........','................','.###########....','.#ooooooooo#....','.#ooooooooo####.','.#ooooooooo#..#.','.#ooooooooo#..#.','.#ooooooooo####.','..#ooooooo#.....','...#######......','#############...','.###########....','................']),
   up:pxIcon(['................','.......##.......','......####......','.....######.....','....########....','...##########...','..############..','......####......','......####......','......####......','......####......','......####......','......####......','....########....','....########....','................']),
+  team:pxIcon(['................','....##....##....','...####..####...','...####..####...','....##....##....','................','..######.######.','.#######.#######','.#######.#######','.#######.#######','.#######.#######','................','................','................','................','................']),
   set:pxIcon(['................','......####......','..##..#..#..##..','..#.##....##.#..','...#........#...','..#...####...#..','###..#....#..###','#....#....#....#','#....#....#....#','###..#....#..###','..#...####...#..','...#........#...','..#.##....##.#..','..##..#..#..##..','......####......','................'])
 };
 let sheet = null, hallTab = 'team';
@@ -6304,10 +6308,11 @@ function renderGame(){
   sc.insertBefore(cv, sc.firstChild); app.appendChild(sc);
   app.appendChild(el(`<nav class="dock">
     <button class="dockb" data-s="hall">${ICONS.hall}<span>Зал</span><i class="badge" id="b_hall" hidden></i></button>
+    <button class="dockb" data-s="team">${ICONS.team}<span>Команда</span></button>
     <button class="dockb" data-s="up">${ICONS.up}<span>Улучшения</span><i class="badge" id="b_up" hidden></i></button>
     <button class="dockb" data-s="set">${ICONS.set}<span>Настройки</span></button>
   </nav>`));
-  app.querySelectorAll('.dockb').forEach(b=>b.onclick=()=>{ sfx('tap'); openSheet(sheet===b.dataset.s ? null : b.dataset.s); });
+  app.querySelectorAll('.dockb').forEach(b=>b.onclick=()=>{ sfx('tap'); if(b.dataset.s==='team'){ const on = sheet==='hall' && hallTab==='team'; openSheet(on ? null : 'hall', 'team'); return; } if(b.dataset.s==='hall'){ const on = sheet==='hall' && hallTab!=='team'; openSheet(on ? null : 'hall', hallTab==='team' ? 'tasks' : undefined); return; } openSheet(sheet===b.dataset.s ? null : b.dataset.s); });
   if(!$('#sheetRoot')) document.body.appendChild(el(`<div id="sheetRoot"></div>`));
   requestAnimationFrame(resizeCanvas);
   S.rooms.forEach(r=>syncScene(r.id));
@@ -6555,7 +6560,7 @@ function renderHud(){
   const att = attention(); const hallN = att.filter(a=>a[2]).length;
   const bu = $('#b_up'); bu.hidden = !upB; bu.textContent = '';
   const bh = $('#b_hall'); bh.hidden = !att.length; bh.textContent = hallN || '';
-  document.querySelectorAll('.dockb').forEach(b=>b.classList.toggle('on', b.dataset.s===sheet));
+  document.querySelectorAll('.dockb').forEach(b=>b.classList.toggle('on', b.dataset.s==='team' ? (sheet==='hall' && hallTab==='team') : b.dataset.s==='hall' ? (sheet==='hall' && hallTab!=='team') : b.dataset.s===sheet));
 }
 function switchRoom(id){ if(!room(id)) return; S.active = id; syncScene(id); structDirty = true; renderHud(); toast(roomDef(id).n); }
 
@@ -8098,7 +8103,7 @@ function renderFin(p){
   // касса: наличные и расхождения
   const c = t.cash || {};
   p.appendChild(el(`<div class="card"><div class="t">Касса и наличные</div><div class="d">Пересчёт в конце дня. Сегодня пока: фальшивок ${c.fakeN||0}${c.fake?' (−'+fmt(c.fake)+' ₽)':''}, ошибок со сдачей ${c.errN||0}${c.err?' (−'+fmt(c.err)+' ₽)':''}${c.over?', излишек +'+fmt(c.over)+' ₽':''}${c.caught?', детектор поймал '+c.caught:''}.</div><div class="d">${detectorL()?'Детектор банкнот стоит (касса 4 ур. и выше).':'Детектора банкнот нет: он появится с 4 уровня улучшения «Касса».'} ${(room('main').upg.safety||0)>=6?'Камеры ловят воров.':'Камеры появятся с 6 уровня «Безопасности».'}</div></div>`));
-  p.appendChild(el(`<div class="card"><div class="t">Налог УСН 5%</div><div class="d">Начисляется с выручки и списывается каждый день в полночь. Сейчас накоплено ${fmt(S.fin.taxAcc)} ₽.${S.fin.noCheck>0?' Продано без чеков: '+fmt(S.fin.noCheck)+' ₽ — налоговая может прийти.':''}</div></div>`));
+  p.appendChild(el(`<div class="card"><div class="t">Налог</div><div class="d">Списывается каждый день в полночь за вчерашнюю выручку: 5% с первого миллиона, 6,5% с выручки от 1 до 3 млн и 7,5% сверх 3 млн. Сейчас к списанию ${fmt(Math.round(taxCalc(S.fin.taxAcc/0.05)))} ₽.${S.fin.noCheck>0?' Продано без чеков: '+fmt(S.fin.noCheck)+' ₽ — налоговая может прийти.':''}</div></div>`));
   if(S.debt.stage>0 || S.debt.loan>0 || S.money<0){
     const d = el(`<div class="card" style="border-color:var(--bad)"><div class="t">Долги</div><div class="d">Дней в минусе подряд: ${S.debt.daysNeg}. ${['','Поставщики работают только по предоплате.','Звонят коллекторы.','Арендодатель забрал зал.'][S.debt.stage]||''} После 14 дней в минусе — банкротство.</div>${S.debt.loan>0?`<div class="d">Долг «серьёзным людям»: ${fmt(S.debt.loan)} ₽, каждый день 4% платежа.</div><div class="row">${btnHtml('Погасить долг', S.debt.loan, false)}</div>`:''}</div>`);
     const lb = d.querySelector('button'); if(lb) lb.onclick = () => { if(S.money < S.debt.loan) return; spend(S.debt.loan,'other','Погашение долга'); S.debt.loan = 0; toast('Долг погашен. Люди в кожанках больше не заходят'); save(); renderPanel(); };
@@ -10882,6 +10887,33 @@ renderSeason = function(p){ _renderSeason34.apply(this, arguments);
     p.appendChild(c); }catch(e){ console.error(e); } };
 const _closeDay34m = closeDay;
 closeDay = function(){ const r = _closeDay34m.apply(this, arguments); miles34(); return r; };
+
+/* ===== 9.3.2: ступени 51–100 — вместо «Сарафанного радио» и голого опыта разные награды ===== */
+const SZ51F = {55:'fur', 60:'team', 65:'frame', 70:'supply', 75:'celeb', 80:'fur', 85:'style', 90:'team', 95:'frame'};
+const SZ51P = {55:'style', 65:'celeb', 75:'rush', 85:'fur', 95:'team'};
+const SZ51_DEF = {
+  fur:{k:'fur', t:'Мебельщик на дом', d:'Вся мебель снова как новая, во всех залах'},
+  team:{k:'team', t:'Корпоратив для команды', d:'Настроение всем +15, усталость −20'},
+  frame:{k:'frametry', t:'Примерка рамки на 3 дня', d:'Случайная анимированная рамка вывески на 3 дня'},
+  style:{k:'styletry', t:'Примерка стиля зала на 3 дня', d:'Случайный платный интерьер на 3 дня'},
+  supply:{k:'supply', t:'Поставка от партнёра', d:'Хозтовары и молоко на склад'},
+  celeb:{k:'mod', boost:1.2, modk:'check', t:'Блогер в зале', d:'Средний чек +20% на сутки'},
+  rush:{k:'mod', boost:1.2, t:'Очередь из соцсетей', d:'Гостей +20% на сутки'}};
+const _szReward932 = szReward;
+szReward = function(track, n){ if(n <= 50 || n >= 100) return _szReward932.apply(this, arguments);
+  const key = track === 'p' ? (SZ31_GEMS[n] ? null : SZ51P[n]) : SZ51F[n];
+  if(key) return Object.assign({}, SZ51_DEF[key]);
+  return _szReward932.apply(this, arguments); };
+const _frameOwned932 = frameOwned;
+frameOwned = function(k){ if(S && S.c && S.c.frameTry && S.c.frameTry.k === k && S.c.frameTry.until > Date.now()) return true; return _frameOwned932.apply(this, arguments); };
+const _szApply932 = szApplyUnlock;
+szApplyUnlock = function(rw, info, silent){
+  if(rw.k === 'fur'){ S.wear34 = S.wear34 || {}; S.rooms.forEach(r => S.wear34[r.id] = 100); if(!silent) toast('Мебель как новая'); return; }
+  if(rw.k === 'team'){ S.staff.forEach(s => { if(!s.isYou){ s.mood = Math.min(100, s.mood + 15); s.fatigue = Math.max(0, (s.fatigue||0) - 20); } }); if(!silent) toast('Команда отдохнула и довольна'); return; }
+  if(rw.k === 'frametry'){ const opts = FRAME_SHOP.filter(k => !frameOwned(k)); const k = pick(opts.length ? opts : FRAME_SHOP); S.c.frameTry = {k, until: Date.now() + 3*86400000}; S.c.signFrame = k; structDirty = true; if(!silent) toast('Рамка «'+SIGN_FRAMES[k].n+'» на 3 дня'); return; }
+  if(rw.k === 'styletry'){ const opts = ['int_soviet','int_loft','int_scandi','int_neon'].filter(k => !(S.ent && (S.ent.interiors||[]).includes(k))); const k = pick(opts.length ? opts : ['int_loft']);
+    S.promoStyles = S.promoStyles || {}; S.promoStyles[k] = Date.now() + 3*86400000; S.interior = S.interior || {}; S.interior.main = k; try{ mergeInteriors(); }catch(e){} structDirty = true; if(!silent) toast('Стиль «'+INTERIORS[k].n+'» на 3 дня'); return; }
+  return _szApply932.apply(this, arguments); };
 
 /* ===== 9.3: завтраки (25 ур.) и ночной бар (35 ур.) ===== */
 const BF34 = {lvl:25, cost:10000000, from:6, to:11}, NB34 = {lvl:35, cost:30000000, from:23, to:5};
