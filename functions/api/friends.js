@@ -1,6 +1,6 @@
 // POST /api/friends — кто тебя пригласил и кого пригласил ты. Награды выдаются автоматически (см. payReferrer).
 import { json, verifyInitData } from '../_lib.js';
-const COLS = 'tg_id, first_name, cafe, city, level, earned, last_seen, created_at, sessions, play_seconds, rooms, ref_paid, snap';
+const COLS = 'tg_id, first_name, cafe, city, level, earned, last_seen, created_at, sessions, play_seconds, rooms, ref_paid, snap, (SELECT vk FROM cafe_view v WHERE v.tg_id = players.tg_id) AS vk';
 export async function onRequestPost({ request, env }) {
   if (!env.DB || !env.BOT_TOKEN) return json({ ok: false, error: 'not configured' }, 503);
   let body; try { body = await request.json(); } catch { return json({ ok: false }, 400); }

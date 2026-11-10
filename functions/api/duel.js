@@ -75,21 +75,21 @@ export async function onRequestPost({ request, env }) {
       const my = await env.DB.prepare('SELECT cafe, money, duel_r, duel_w, duel_l FROM players WHERE tg_id = ?1').bind(me).first();
       const sz = sezId(now);
       const myLvl = (await env.DB.prepare('SELECT level FROM players WHERE tg_id = ?1').bind(me).first() || {}).level || 1;
-      const targets = (await env.DB.prepare("SELECT tg_id, cafe, level, duel_r, money, snap FROM players WHERE banned = 0 AND tg_id != ?1 AND last_seen > ?2 AND cafe IS NOT NULL AND cafe != '' ORDER BY ABS(level - ?3) ASC, level DESC, last_seen DESC LIMIT 60").bind(me, now - 3 * DAY, myLvl).all()).results || [];
+      const targets = (await env.DB.prepare("SELECT tg_id, cafe, level, duel_r, money, snap, (SELECT vk FROM cafe_view v WHERE v.tg_id = players.tg_id) AS vk FROM players WHERE banned = 0 AND tg_id != ?1 AND last_seen > ?2 AND cafe IS NOT NULL AND cafe != '' ORDER BY ABS(level - ?3) ASC, level DESC, last_seen DESC LIMIT 60").bind(me, now - 3 * DAY, myLvl).all()).results || [];
       const inc = (await env.DB.prepare("SELECT id, a_cafe, stake, a_at, rematch FROM duel WHERE b = ?1 AND status = 'open' ORDER BY a_at DESC LIMIT 10").bind(me).all()).results || [];
       const sent = (await env.DB.prepare("SELECT id, b_cafe, stake, a_at, a_score FROM duel WHERE a = ?1 AND status = 'open' ORDER BY a_at DESC LIMIT 10").bind(me).all()).results || [];
       const done = (await env.DB.prepare("SELECT id, a, b, a_cafe, b_cafe, stake, a_score, b_score, winner, done_at, rematch FROM duel WHERE (a = ?1 OR b = ?1) AND status = 'done' ORDER BY done_at DESC LIMIT 10").bind(me).all()).results || [];
-      const top = (await env.DB.prepare('SELECT tg_id, snap, cafe, duel_r, duel_w, duel_l FROM players WHERE duel_w + duel_l > 0 AND banned = 0 ORDER BY duel_r DESC LIMIT 10').all()).results || [];
+      const top = (await env.DB.prepare('SELECT tg_id, snap, cafe, duel_r, duel_w, duel_l, (SELECT vk FROM cafe_view v WHERE v.tg_id = players.tg_id) AS vk FROM players WHERE duel_w + duel_l > 0 AND banned = 0 ORDER BY duel_r DESC LIMIT 10').all()).results || [];
       const frs = await framesOf(env, targets.concat(top));
       const today = mskDay(now), dayStart = Date.parse(today + 'T00:00:00+03:00');
       const used = await env.DB.prepare("SELECT COUNT(*) n FROM duel WHERE a = ?1 AND created_at >= ?2 AND status != 'cancelled'").bind(me, dayStart).first();
       const myMoney = my ? my.money : 0;
       return json({ ok: true, pid: pidOf(me), me: my ? { r: my.duel_r || 1000, w: my.duel_w || 0, l: my.duel_l || 0 } : { r: 1000, w: 0, l: 0 }, left: Math.max(0, 3 - (used ? used.n : 0)),
-        targets: targets.map(t => ({ pid: pidOf(t.tg_id), cafe: t.cafe, lvl: t.level, r: t.duel_r || 1000, fr: frs[t.tg_id] || null, max: Math.max(0, Math.floor(Math.min(myMoney * 0.5, (t.money || 0)) / 1000) * 1000) })),
+        targets: targets.map(t => ({ pid: pidOf(t.tg_id), cafe: t.cafe, lvl: t.level, r: t.duel_r || 1000, fr: frs[t.tg_id] || null, vk: t.vk || null, max: Math.max(0, Math.floor(Math.min(myMoney * 0.5, (t.money || 0)) / 1000) * 1000) })),
         inc: inc.map(x => ({ id: x.id, cafe: x.a_cafe, stake: x.stake, until: x.a_at + DAY, rematch: x.rematch })),
         sent: sent.map(x => ({ id: x.id, cafe: x.b_cafe, stake: x.stake, until: x.a_at + DAY, score: x.a_score })),
         done: done.map(x => { const iamA = x.a === me; return { id: x.id, vs: iamA ? x.b_cafe : x.a_cafe, my: iamA ? x.a_score : x.b_score, their: iamA ? x.b_score : x.a_score, stake: x.stake, res: x.winner === me ? 'win' : x.winner ? 'lose' : 'draw', at: x.done_at, canRematch: x.winner && x.winner !== me && now - x.done_at < DAY, opp: pidOf(iamA ? x.b : x.a) }; }),
-        top: top.map(t => ({ cafe: t.cafe, r: t.duel_r, w: t.duel_w, l: t.duel_l, fr: frs[t.tg_id] || null })) });
+        top: top.map(t => ({ cafe: t.cafe, r: t.duel_r, w: t.duel_w, l: t.duel_l, fr: frs[t.tg_id] || null, vk: t.vk || null })) });
     }
     if (body.op === 'new') {
       const b = idOf(body.pid); if (!b || b === me) return json({ ok: false, error: 'Соперник не найден' });

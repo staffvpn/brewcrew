@@ -838,6 +838,37 @@ input,textarea,select{font-size:16px!important}
 .lgr.me{background:rgba(232,184,48,.18);font-weight:800}.lgr.up b{color:#2f7a35}.lgr.down b{color:#b8322a}
 .ro32b{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:13px;margin:6px 0}
 .ro32b i{height:8px;background:rgba(0,0,0,.12);position:relative}.ro32b i b{position:absolute;left:0;top:0;bottom:0}.ro32b em{font-style:normal}
+.top{grid-template-columns:minmax(0,1fr) auto!important;grid-template-areas:"name money" "clk meta"!important;gap:1px 10px!important;align-items:baseline!important;padding-top:2px!important;padding-bottom:2px!important}
+.top .topR{display:contents!important}
+.top .topR.register{background:none;border:0;box-shadow:none;padding:0}
+.top .cafe{font-size:16px!important}
+.top .money{grid-area:money;font-size:21px!important;line-height:1.1!important;text-align:right}
+.top .money.long{font-size:19px!important}.top .money.xlong{font-size:17px!important}
+.top #sInc{grid-area:meta;font-size:11px!important;text-align:right;color:#c9b48a}
+.top #clk{grid-area:clk;background:none!important;border:0!important;padding:0!important;display:block!important;font-size:11px!important;color:#c9b79c!important}
+.top #clk b{font-size:11px!important;color:#f4ead8!important;font-weight:700}
+.pillrow{min-height:0!important;margin-top:2px!important}
+.pillrow .pill{padding-top:3px!important;padding-bottom:3px!important;font-size:12px!important}
+.m32r div small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+.top{grid-template-areas:"name money" "clk clk"!important}
+.top #sInc{display:none!important}
+.pillrow{display:flex!important;gap:6px;align-items:center}
+.pillrow #pills:not(.all)>.px{display:none!important}
+.pillrow #pills.all{flex-wrap:wrap!important;overflow:visible!important}
+#pmore{display:inline-flex!important;flex:none!important}
+#pmore[style*="none"]{display:none!important}
+.m34{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px dashed var(--line)}
+.m34>div{min-width:0}.m34 b{display:block}.m34 small{display:block;font-size:11px;color:var(--caramel)}.m34 span{display:block;font-size:12px;color:var(--muted)}
+.m34 em{font-style:normal;font-size:12px;color:var(--good);white-space:nowrap}.m34 .btn{flex:none;white-space:nowrap}
+.v34 .v34p{margin:8px 0;border:3px solid #2a1d15;background:#1d1410;min-height:120px;max-height:56vh;overflow:hidden}
+.v34 .v34p canvas{display:block}
+.v34 .v34i{font-size:12px;color:var(--muted)}
+.v34 .v34m{margin:6px 0}
+.v34b{flex:none;margin-left:6px;padding:2px 8px;font-size:11px;border:2px solid #4d3727;background:#2a1d15;color:#e8d9c0;font-family:var(--mono);cursor:pointer}
+.trow .v34b{margin-left:auto}
+.fr-flag{border-color:#ffd24a!important;background:linear-gradient(90deg,rgba(255,210,74,.32),rgba(255,210,74,.06))!important;box-shadow:0 0 8px rgba(255,210,74,.5)!important;animation:flag34 3s ease-in-out infinite}
+.fr-flag span,.fr-flag b{color:#ffd24a!important}
+@keyframes flag34{50%{box-shadow:0 0 14px rgba(255,210,74,.75)}}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -1475,13 +1506,15 @@ function closeDay(){
 }
 function pickTwo(a){ const x = pick(a); const y = pick(a.filter(z=>z!==x)); return [x,y]; }
 function removeStaff(id){ S.staff = S.staff.filter(s=>s.id!==id); S.incidents = S.incidents.filter(i=>i.sid!==id && i.sid2!==id); HOOK.struct(); }
+// налог ступенями: 5% до 1 млн, 6,5% до 3 млн, 7,5% сверху; не больше 6,75% от всей выручки (максимум +35% к старому)
+function taxCalc(rev){ const t = Math.min(rev,1e6)*0.05 + Math.max(0,Math.min(rev,3e6)-1e6)*0.065 + Math.max(0,rev-3e6)*0.075; return Math.min(t, rev*0.0675); }
 function midnight(){
   // смена дня
   S.day++;
   spoilCheck();
   // налог раз в месяц
   // налог списывается каждый день, без месячного удара
-  if(S.fin.taxAcc > 0){ const tax = Math.round(S.fin.taxAcc); S.fin.taxAcc = 0; S.fin.taxDueDay = S.day + 1; spend(tax, 'tax', 'Налог УСН 5% за вчера'); }
+  if(S.fin.taxAcc > 0){ const rev = S.fin.taxAcc/0.05; const tax = Math.round(taxCalc(rev)); S.fin.taxAcc = 0; S.fin.taxDueDay = S.day + 1; spend(tax, 'tax', 'Налог за вчера, '+(Math.round(tax/rev*1000)/10).toString().replace('.',',')+'%'); }
   autoOrder();
   for(const s of S.staff){ if(s.mood < 100 && s.legendId===3) repAdd(0.01); }
   if(S.staff.some(s=>s.quirk==='blogger' && scheduledToday(s)) && chance(0.15)){ addMod('traffic', 1.15, 4, 'Видео тиктокера: гостей +15%'); }
@@ -1834,7 +1867,7 @@ function pushIncident(id, data){
   if(S.incidents.length >= 6) expireIncident(S.incidents.find(i=>EV[i.id] && EV[i.id].cat!=='inspect' && EV[i.id].cat!=='story') || S.incidents[0]);
   S.incidents.push(inc);
   HOOK.sfx('alert'); HOOK.struct();
-  const urgent = d && (d.cat==='inspect' || d.cat==='staff' || d.cat==='break' || d.cat==='money' || d.cat==='story');
+  const urgent = d && (d.cat==='inspect' || d.cat==='staff' || d.cat==='break' || d.cat==='money' || d.cat==='story' || d.cat==='bf34' || d.cat==='nb34');
   if(urgent) HOOK.modal({kind:'inc', uid:inc.uid, auto:true});
 }
 HOOK.event = pushIncident;
@@ -1844,7 +1877,7 @@ function expireIncident(inc){
   S.incidents = S.incidents.filter(x=>x!==inc);
   // если долго не решали: проверки и кадры решаются по умолчанию, остальное — мелкий штраф к рейтингу и бардак
   if(d && d.o){
-    if(d.cat==='story'){ let k = d.o.length-1; while(k>0 && d.o[k].req && !d.o[k].req(S, inc)) k--; resolveIncident(inc, k, true); }
+    if(d.cat==='story' || d.cat==='bf34' || d.cat==='nb34'){ let k = d.o.length-1; while(k>0 && d.o[k].req && !d.o[k].req(S, inc)) k--; resolveIncident(inc, k, true); }
     else if(d.cat==='inspect' || d.cat==='break' || d.cat==='money') resolveIncident(inc, 0, true);
     else if(inc.id==='quit') resolveIncident(inc, 0, true);
     else if(inc.id==='absent' || inc.id==='conflict'){ resolveIncident(inc, inc.id==='absent'?2:2, true); }
@@ -6825,7 +6858,7 @@ function showModal(){
     const inc = S.incidents.find(i=>i.uid===m.uid); if(!inc){ closeModal(); return; }
     const d = evDef(inc);
     const st = inc.sid ? S.staff.find(s=>s.id===inc.sid) : null;
-    const tag = {absurd:'Абсурд', inspect:'Проверка', staff:'Команда', break:'Поломка', money:'Деньги', story:'Сюжет · '+seasonName()}[d.cat] || 'Событие';
+    const tag = {absurd:'Абсурд', inspect:'Проверка', staff:'Команда', break:'Поломка', money:'Деньги', story:'Сюжет · '+seasonName(), bf34:'Завтраки', nb34:'Ночной бар'}[d.cat] || 'Событие';
     const ch = d.who ? CHARS[d.who] : null; if(d.who){ S.story.met = S.story.met || {}; S.story.met[d.who] = 1; }
     const head = el(`<div class="row">${ch?`<div class="spr" style="${sprStyle(charSpr(d.who),60)}"></div>`:st?`<div class="spr" style="${sprStyle(staffSpr(st),56)}"></div>`:''}<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="eyebrow">${esc(tag)}${ch?' · '+esc(ch.n):st?' · '+esc(st.name):''}</div><h2>${esc(fillText(d.t, inc))}</h2></div></div>`);
     box.append(head, el(`<p>${esc(fillText(d.x, inc))}</p>`));
@@ -8180,7 +8213,7 @@ function usePromo(code){
 }
 
 /* ---------- покупки: пропуск сезона ---------- */
-function refreshEntitlements(){ if(!tg || !tg.initData) return; apiPost('/api/purchases').then(r=>{ if(r && r.ok){ S.ent = {sub:r.sub, interiors:r.interiors, tips:r.tips, renames:r.renames||0, passes:r.passes||[], frames:r.frames||[], at:Date.now()}; mergeInteriors(); passWatch(true); save(); structDirty = true; } }).catch(()=>{}); }
+function refreshEntitlements(){ if(!tg || !tg.initData) return; apiPost('/api/purchases').then(r=>{ if(r && r.ok){ S.ent = {sub:r.sub, interiors:r.interiors, tips:r.tips, renames:r.renames||0, passes:r.passes||[], frames:r.frames||[], extras:r.extras||[], at:Date.now()}; mergeInteriors(); passWatch(true); save(); structDirty = true; } }).catch(()=>{}); }
 function passWatch(force){
   if(!S || !S.ent || !S.ent.passes) return; if(!force && Math.random() > 0.02) return;
   S.passSeen = S.passSeen || [];
@@ -8234,7 +8267,7 @@ attention = function(){
 function track(force){
   if(!S || !tg || !tg.initData) return;
   const z = szState();
-  const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{view:(typeof viewSnap34==='function' ? viewSnap34(force) : undefined), cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
@@ -10289,9 +10322,9 @@ renderSettings = function(p){ _renderSettings27.apply(this, arguments); try{
 /* ===== v29: магазин в общем стиле меню, подарки другу, кредит в банке, подсказка цены на бирже ===== */
 
 /* ---------- магазин: обычная шторка, как Улучшения ---------- */
-const SHOP29_TABS = [['frames','Рамки'],['pass','Пропуск'],['styles','Стили зала'],['money','Деньги'],['more','Разное']];
+const SHOP29_TABS = [['frames','Рамки'],['pass','Пропуск'],['styles','Стили зала'],['atm','Атмосфера'],['vip','Флагман'],['money','Деньги'],['more','Разное']];
 let SHOP29_TAB = 'frames';
-const GIFTABLE29 = id => !/^(sub_owner|rename)$/.test(id);
+const GIFTABLE29 = id => !/^(sub_owner|rename|flagship)$/.test(id);
 function shop29Items(){ const sub = ownerSub();
   return {
     frames:{d:'Анимированная рамка навсегда: вывеска над меню, рейтинг сезона и дуэли. Надеть другую можно в Настройках.', list: FRAME_SHOP.map(k=>({id:'frame_'+k, n:SIGN_FRAMES[k].n, d:(FRAME29_D[k]||''), stars:1000, owned:frameOwned(k), prev:'frame', k}))},
@@ -10299,6 +10332,11 @@ function shop29Items(){ const sub = ownerSub();
       {id:'pass', n:'Пропуск сезона', d:'Всё уже пройденное заберётся сразу.', stars:200, owned:passOwned(), prev:'pass'},
       {id:'pass15', n:'Пропуск +15 ступеней', d:'Пропуск и сразу 15 ступеней вперёд.', stars:500, owned:passOwned(), prev:'pass15'}]},
     styles:{d:'Свой вид основного зала с бонусом. Включается в Настройках, купленный остаётся навсегда.', list:['int_soviet','int_loft','int_scandi','int_neon'].map(k=>({id:k, n:INTERIORS[k].n, d:(INTERIOR_FX[k]||{}).d||'', stars:{int_soviet:50,int_loft:75,int_scandi:100,int_neon:150}[k], owned:hasInterior(k), prev:'style', k}))},
+    atm:{d:'Покупается один раз и остаётся навсегда. Включается и переключается в Настройках.', list:[
+      {id:'uniform', n:'Форма персонала', d:'Три стиля для всей команды: классика, джинса и бордо.', stars:100, owned:ext34('uniform'), prev:'uniform'},
+      {id:'music', n:'Музыка в зале', d:'Джаз, лоу-фай или русский рок. Гости подпевают и спорят о музыке.', stars:75, owned:ext34('music'), prev:'music'}]},
+    vip:{d:'Самая большая покупка в игре. Её видят все: в рейтинге, в дуэлях, в гостях у тебя и даже в чужих кофейнях.', list:[
+      {id:'flagship', n:'Флагман района', d:'Золотая анимированная вывеска «Флагман», золотое имя в рейтингах и дуэлях, легендарный сотрудник с твоим именем, гости других кофеен рассказывают о тебе. Навсегда.', stars:5000, owned:ext34('flagship'), prev:'flag'}]},
     money:{d:'Игровые деньги приходят сразу. Сумма считается от твоей выручки, но не меньше указанной.', list:[
       {id:'cash_s', n:'Конверт от инвестора', d:'Около дня выручки, сейчас +'+fmt(cashPack(1))+' ₽', stars:25, prev:'cash', k:'1 день'},
       {id:'cash_m', n:'Мама дала в долг без процентов', d:'Около трёх дней выручки, сейчас +'+fmt(cashPack(3))+' ₽', stars:60, prev:'cash', k:'3 дня'},
@@ -10314,6 +10352,9 @@ function shop29Prev(it){
   if(it.prev === 'style'){ const t = INTERIORS[it.k].theme; return `<div class="sp29" style="background:linear-gradient(${t.wall} 0 55%, ${t.trim} 55% 60%, ${t.fa} 60% 80%, ${t.fb} 80%)"><i style="position:absolute;left:12%;right:12%;bottom:18%;height:22%;background:${t.counter};border-top:3px solid ${t.ctop}"></i></div>`; }
   if(it.prev === 'pass' || it.prev === 'pass15') return `<div class="sp29 dark"><b>${it.prev==='pass15'?'+15':'★'}</b><span>сезон</span></div>`;
   if(it.prev === 'sub') return `<div class="sp29 dark"><b>24 ч</b><span>без тебя</span></div>`;
+  if(it.prev === 'uniform') return `<div class="sp29 dark"><b style="font-size:14px"><i style="display:inline-block;width:9px;height:14px;background:#f4f1ea;margin-right:2px"></i><i style="display:inline-block;width:9px;height:14px;background:#3b5a86;margin-right:2px"></i><i style="display:inline-block;width:9px;height:14px;background:#7a1f2b"></i></b><span>форма</span></div>`;
+  if(it.prev === 'music') return `<div class="sp29 dark"><b style="font-size:18px">♪</b><span>музыка</span></div>`;
+  if(it.prev === 'flag') return `<div class="sp29 frame"><div class="trow fr fr-flag"><b>1</b><span>«${esc(S.name)}»</span><i>★</i></div></div>`;
   if(it.prev === 'rename') return `<div class="sp29 dark"><b style="font-size:15px">Аа</b><span>название</span></div>`;
   return `<div class="sp29 dark"><b>₽</b><span>${esc(it.k||'')}</span></div>`; }
 function renderShop29(p){
@@ -10612,10 +10653,7 @@ function szMiles(){ const z = szState(), info = sezInfo(), t = Math.floor(z.sp /
   for(const [n, name, d] of SZ_MILES) if(t >= n) badgeAdd('szm'+n+'_'+info.id, name+' «'+info.n+'»', d); }
 const _renderSeason32 = renderSeason;
 renderSeason = function(p){ _renderSeason32.apply(this, arguments); if(!rel10On()) return;
-  try{ const z = szState(), t = Math.floor(z.sp / SZ_TIER); szMiles();
-    const c = el(`<div class="card m32"><div class="t">После сотой ступени</div><div class="d">Дальше только две вехи. За них — звание рядом с названием кофейни, которое останется в коллекции навсегда.</div></div>`);
-    for(const [n, name] of SZ_MILES){ const pr = Math.min(1, z.sp / (n*SZ_TIER)); c.appendChild(el(`<div class="m32r ${t>=n?'on':''}"><b class="num">${n}</b><div><span>${esc(name)}</span><i style="width:${Math.round(pr*100)}%"></i></div><em>${t>=n ? 'Есть' : Math.max(0, n*SZ_TIER - z.sp)+' очков'}</em></div>`)); }
-    p.appendChild(c);
+  try{ /* вехи после 100 ступени переехали в view34 */
     const lc = leagueCard(); if(lc){ const first = p.querySelector('.card'); if(first && first.nextSibling) p.insertBefore(lc, first.nextSibling); else p.appendChild(lc); }
   }catch(e){ console.error(e); } };
 
@@ -10791,6 +10829,335 @@ itemPrice = function(m, roomId){ let p = _itemPrice33.apply(this, arguments); tr
 }catch(e){} return p; };
 const _closeDay33 = closeDay;
 closeDay = function(){ try{ const asya = LG33('Ася-хорошее-настроение'); if(S.staff.some(s=>s.legendId===asya && s.today==='work')) S.staff.forEach(s=>{ if(!s.isYou) s.mood = clamp((s.mood||50) + 4, 0, 100); }); }catch(e){} return _closeDay33.apply(this, arguments); };
+
+/* ===== 9.3: компактный верх — название и деньги в одну строку, часы и касса мелко второй строкой ===== */
+const _renderHud34 = renderHud;
+renderHud = function(){ _renderHud34.apply(this, arguments); try{ if(!S) return;
+  const c = $('#clk'); if(c){ const h = '<b>'+WEEKDAYS[weekday()].slice(0,2)+' '+clockStr()+'</b> · '+WEATHER[S.weather].n.toLowerCase()+' · ур. '+S.level+' · ★ '+S.rep.toFixed(1).replace('.',','); if(c.innerHTML !== h) c.innerHTML = h; }
+  hudPills34();
+}catch(e){} };
+
+/* одна плашка видна, остальные под «Ещё N»; предупреждения идут первыми */
+function hudPills34(){ const pe = $('#pills'), more = $('#pmore'); if(!pe || !more) return; let n = 0;
+  const kids = [...pe.children].filter(ch => getComputedStyle(ch).display !== 'none' || ch.classList.contains('px'));
+  const warnFirst = kids.find(ch => ch.classList.contains('warn') || ch.classList.contains('hot'));
+  for(const ch of kids){ ch.classList.remove('px'); ch.style.order = ch === warnFirst ? -1 : ''; }
+  const order = warnFirst ? [warnFirst, ...kids.filter(k => k !== warnFirst)] : kids;
+  order.forEach((ch, i) => { if(i >= 1) ch.classList.add('px'); }); n = order.length;
+  pe.classList.toggle('all', _pillsAll); more.style.display = n > 1 ? '' : 'none'; more.textContent = _pillsAll ? 'Свернуть' : 'Ещё '+(n-1); }
+
+/* ===== 9.3: после 100 ступени — 8 разных наград каждые 25 ступеней (без денег) ===== */
+SIGN_FRAMES.myth = {n:'Миф сезона', bg:'#1d1630', edge:'#b89cff', ink:'#efe4ff', glow:'#9d7bff'};
+const _frameOwnedId34 = frameOwnedId;
+frameOwnedId = function(){ if(S && S.c && S.c.signFrame === 'myth' && S.c.mythFrame) return 'myth'; return _frameOwnedId34.apply(this, arguments); };
+const MILES34 = [
+  [125, 'Аншлаг на двое суток', 'Гостей +20% на 48 часов', {mod:['traffic', 1.2, 48, 'Аншлаг (сезон)']}],
+  [150, 'Значок «Полторы сотни»', 'Рядом с названием кофейни', {badge:'Полторы сотни'}],
+  [175, 'Звёздный вечер', 'Средний чек +25% на сутки', {mod:['check', 1.25, 24, 'Звёздный вечер']}],
+  [200, 'Легенда района', 'Звание и легендарный сотрудник в команду', {badge:'Легенда района', legend:true}],
+  [225, 'Очередь до угла', 'Гостей +25% на сутки', {mod:['traffic', 1.25, 24, 'Очередь до угла']}],
+  [250, 'Значок «Четверть тысячи»', 'Редкий значок сезона', {badge:'Четверть тысячи'}],
+  [275, 'Щедрые гости', 'Средний чек +30% на сутки', {mod:['check', 1.3, 24, 'Щедрые гости']}],
+  [300, 'Миф сезона', 'Звание и фиолетовая вывеска «Миф сезона» навсегда', {badge:'Миф сезона', frame:true}]
+];
+function miles34(silent){ try{ const z = szState(), info = sezInfo(), t = Math.floor(z.sp / SZ_TIER);
+  S.c.miles34 = S.c.miles34 || {}; const got = S.c.miles34[info.id] = S.c.miles34[info.id] || [];
+  for(const [n, name, d, rw] of MILES34){ if(t < n || got.includes(n)) continue; got.push(n);
+    if(rw.badge) badgeAdd('szm'+n+'_'+info.id, rw.badge+' «'+info.n+'»', 'Дошёл до '+n+' ступени');
+    if(rw.mod) addMod(rw.mod[0], rw.mod[1], rw.mod[2], rw.mod[3]);
+    if(rw.legend){ try{ const l = makePrizeStaff(30); syncScene('main'); toast('В команду '+he(l,'пришёл','пришла')+' '+l.name); }catch(e){ console.error(e); } }
+    if(rw.frame){ S.c.mythFrame = true; S.c.signFrame = 'myth'; }
+    if(!silent) toast('Сезон, ступень '+n+': '+name); }
+}catch(e){ console.error(e); } }
+const _renderSeason34 = renderSeason;
+renderSeason = function(p){ _renderSeason34.apply(this, arguments);
+  try{ miles34(); const z = szState(), info = sezInfo(), t = Math.floor(z.sp / SZ_TIER); const got = (S.c.miles34||{})[info.id] || [];
+    const c = el(`<div class="card m32"><div class="t">После сотой ступени</div><div class="d">Каждые 25 ступеней — своя награда. Деньгами не платим.</div></div>`);
+    for(const [n, name, d] of MILES34){ const pr = Math.min(1, z.sp / (n*SZ_TIER)); const on = got.includes(n);
+      c.appendChild(el(`<div class="m32r ${on?'on':''}"><b class="num">${n}</b><div><span>${esc(name)}</span><small>${esc(d)}</small><i style="width:${Math.round(pr*100)}%"></i></div><em>${on ? 'Есть' : Math.max(0, n*SZ_TIER - z.sp)+' очков'}</em></div>`)); }
+    p.appendChild(c); }catch(e){ console.error(e); } };
+const _closeDay34m = closeDay;
+closeDay = function(){ const r = _closeDay34m.apply(this, arguments); miles34(); return r; };
+
+/* ===== 9.3: завтраки (25 ур.) и ночной бар (35 ур.) ===== */
+const BF34 = {lvl:25, cost:10000000, from:6, to:11}, NB34 = {lvl:35, cost:30000000, from:23, to:5};
+function h34(){ return S.gm/60; }
+function bfHour(h){ return h >= BF34.from && h < BF34.to; }
+function nbHour(h){ return h >= NB34.from || h < NB34.to; }
+function bfOn(){ return !!(S && S.c && S.c.bf34) && bfHour(h34()); }
+function nbOn(){ return !!(S && S.c && S.c.nb34) && nbHour(h34()); }
+function som34(){ return S.staff.find(s => s.som34 && s.today === 'work' && !s.distract); }
+
+/* меню: свои позиции, видны только в свои часы */
+MENU.push(
+  {id:'porridge', n:'Каша с ягодами', price:320, w:1.2, need:{food:1}, food:1, kitchen:2, bf34:1},
+  {id:'benedict', n:'Яйца бенедикт', price:520, w:1.0, need:{food:1}, food:1, kitchen:2, bf34:1},
+  {id:'bfset', n:'Завтрак дня с кофе', price:590, w:1.4, need:{food:1, beans:18, cups:1}, food:1, kitchen:2, bf34:1},
+  {id:'wine', n:'Бокал вина', price:690, w:1.6, need:{cups:1, bar34:230}, nb34:1},
+  {id:'mulled', n:'Глинтвейн', price:480, w:1.3, need:{syrup:15, cups:1, bar34:120}, nb34:1},
+  {id:'cocktail', n:'Коктейль', price:750, w:1.2, need:{syrup:20, cups:1, bar34:260}, nb34:1},
+  {id:'cheese', n:'Сырная тарелка', price:890, w:0.7, need:{food:1, bar34:300}, food:1, kitchen:2, nb34:1}
+);
+/* «bar34» — условная закупка бара в рублях, складом не считается */
+const _stockQty34 = stockQty; stockQty = function(k){ return k === 'bar34' ? 1e9 : _stockQty34.apply(this, arguments); };
+const _unitCost34 = unitCost; unitCost = function(k){ return k === 'bar34' ? 1 : _unitCost34.apply(this, arguments); };
+const _takeStock34 = takeStock; takeStock = function(need){ if(need && need.bar34){ const n = Object.assign({}, need); delete n.bar34; return _takeStock34.call(this, n); } return _takeStock34.apply(this, arguments); };
+const _available34 = available;
+available = function(roomId){ const l = _available34.apply(this, arguments); const bf = bfOn(), nb = nbOn();
+  return l.filter(m => (!m.bf34 || bf) && (!m.nb34 || nb)); };
+
+/* поток и чек: до покупки утро и ночь чуть тише (−6%), после — свой наплыв */
+const _modMul34 = modMul;
+modMul = function(k){ let m = _modMul34.apply(this, arguments); try{ if(!S) return m; const h = h34();
+  if(k === 'traffic'){
+    if(bfHour(h)) m *= S.c.bf34 ? 1.25 : 0.94;
+    if(nbHour(h)) m *= S.c.nb34 ? 2.4 : 0.94; }
+  if(k === 'check'){
+    if(bfOn()) m *= 1.05;
+    if(nbOn()) m *= som34() ? 1.2 : 0.9; }
+}catch(e){} return m; };
+
+/* реплики гостей в эти часы */
+const BF34_LINES = ['Мне кашу, только чтобы как у бабушки.', 'Сырники есть? Тогда я остаюсь жить здесь.', 'Через двадцать минут пара, давайте что-нибудь быстрое.',
+  'Я только с пробежки, мне что-нибудь полезное. И круассан.', 'Отвела ребёнка в сад. Теперь можно и кофе спокойно.', 'Яйца бенедикт — это яйца, но дороже? Беру.',
+  'Таксую всю ночь, мне завтрак и двойной эспрессо.', 'А завтраки до одиннадцати? Тогда я ещё успеваю.', 'Можно без сахара, я на диете. И пончик.',
+  'У вас утром пахнет лучше, чем у меня дома.', 'Мне как всегда, только я тут первый раз.', 'Каша с ягодами — почти как отпуск.',
+  'Начальник сказал: опоздаешь — без премии. Завтрак с собой!', 'Варенье домашнее? Врёте же. Но вкусно.', 'Я ещё не проснулся, выберите за меня.', 'Утро без кофе — это просто ночь.'];
+const NB34_LINES = ['Бокал красного и чтобы никто не спрашивал, как дела.', 'Только смену закрыл, теперь я гость.', 'Мы ненадолго. Мы всегда так говорим.',
+  'Глинтвейн — единственное, что примиряет меня с ноябрём.', 'Код не компилируется, налейте что-нибудь.', 'Сомелье, удивите меня. Но не дорого.',
+  'Тут так тихо, что слышно, как вино дышит.', 'Таксую, мне только чай. Ну и сырную тарелку.', 'После клуба только к вам, у вас лампы добрые.',
+  'А это вино с какого года? С этого? Отлично, свежее.', 'Свидание. Посадите нас куда-нибудь, где темно.', 'Я сюда только за атмосферой. И за коктейлем.',
+  'Утром на работу, но это утром.', 'Можно потише музыку? Хотя нет, громче.', 'Мне то же, что у дамы за третьим столиком.', 'Ночь длинная, сыра много.'];
+const _pickLine34 = pickLine;
+pickLine = function(pool, key){ if(key === 'g' && S && chance(0.35)){ if(bfOn()) return _pickLine34(BF34_LINES, 'g34b'); if(nbOn()) return _pickLine34(NB34_LINES, 'g34n'); }
+  return _pickLine34.apply(this, arguments); };
+
+/* события */
+def('bf34_cook', {cat:'bf34', t:'Повар проспал', x:'Шесть утра, очередь за сырниками, а повар пишет: «Будильник не сработал, буду через час». Завтраки стоят.', o:[
+  {t:'Встать к плите самому', fx:{moodAll:2, m:-2000}, out:'Сырники вышли кривые, но гости хвалят. Повар пришёл к самому концу и долго извинялся.'},
+  {t:'Вызвать повара на такси', fx:{m:-3500}, out:'Через 25 минут повар на месте, в пижамной футболке. Завтраки пошли.'},
+  {t:'Объявить «сегодня только кофе»', fx:{rep:-1, mod:['traffic', 0.9, 6, 'Без завтраков: гостей −10%']}, out:'Половина утренних гостей ушла в соседнюю пекарню.'}]});
+def('bf34_milk', {cat:'bf34', t:'Молоко не приехало', x:'Поставщик застрял в пробке, а на завтраки молоко уходит литрами: каша, капучино, сырники.', o:[
+  {t:'Купить в магазине напротив', fx:{m:-6000}, out:'Дорого, зато утро спасено. Кассир магазина теперь здоровается с тобой по имени.'},
+  {t:'Варить кашу на воде', fx:{rep:-1}, out:'«А почему каша на воде?» — спросил каждый второй гость. И каждому пришлось объяснять.'}]});
+def('bf34_office', {cat:'bf34', t:'Офис заказал 30 завтраков', x:'Соседний офис хочет 30 завтраков к девяти, у них планёрка. Кухня успеет, но утренние гости будут ждать дольше.', o:[
+  {t:'Берём заказ', fx:{m:16000, mood:-4}, out:'Тридцать коробок к 8:58. Повар выглядит так, будто пробежал марафон. Офис обещал заказывать каждую пятницу.'},
+  {t:'Отказать, свои гости важнее', fx:{rep:1}, out:'Утренний зал спокойный, постоянные гости довольны.'}]});
+def('bf34_kid', {cat:'bf34', t:'Ребёнок и каша', x:'Мама с малышом третий раз просит «кашу без комочков, без ягод, без каши». Малыш уже плачет.', o:[
+  {t:'Сделать оладушек в форме зайца', fx:{m:-300, rep:1}, out:'Малыш замолчал и съел зайца целиком. Мама оставила чаевые и отзыв на пять звёзд.'},
+  {t:'Предложить просто какао', fx:{}, out:'Какао сработало. Кашу никто так и не попробовал.'}]});
+def('bf34_runner', {cat:'bf34', t:'Бегуны', x:'Клуб бегунов предлагает: каждую субботу после пробежки они завтракают у тебя, если будет скидка 15%.', o:[
+  {t:'Договорились', fx:{mod:['traffic', 1.12, 48, 'Клуб бегунов: гостей +12%'], m:-4000}, out:'Двадцать человек в мокрых футболках, громко обсуждают пульс. Утро стало шумным и прибыльным.'},
+  {t:'Без скидок', fx:{}, out:'Бегуны ушли в кафе у парка. Говорят, там каша хуже.'}]});
+def('nb34_fight', {cat:'nb34', t:'Спор за третьим столиком', x:'Двое после клуба спорят, кто кому должен за такси. Голоса уже громче музыки.', o:[
+  {t:'Сомелье разрулит', fx:S=>som34() ? {fx:{rep:1}, out:'Сомелье принёс два бокала «за счёт заведения, но только если помиритесь». Помирились.'} : {fx:{rep:-1, m:-5000}, out:'Сомелье сегодня нет. Разбили бокал и стул, ушли не заплатив.'}},
+  {t:'Вызвать охрану', fx:{m:-3000}, out:'Охранник пришёл через десять минут. Спорщики к тому времени уже обнимались.'},
+  {t:'Выключить музыку и включить свет', fx:{mod:['traffic', 0.9, 3, 'Свет на полную: гостей −10%']}, out:'Спор стих, но вместе с ним и вечер. Половина гостей попросила счёт.'}]});
+def('nb34_check', {cat:'nb34', t:'Ночная проверка', x:'В час ночи пришли проверять лицензию на алкоголь. Документы где-то в подсобке.', o:[
+  {t:'Найти и показать', fx:{m:-1000}, out:'Нашли за коробкой со стаканами. Проверяющий даже заказал глинтвейн.'},
+  {t:'«Мы только безалкогольное»', fx:{rep:-2, m:-40000}, out:'В меню написано «Бокал вина». Штраф выписали на месте.'}]});
+def('nb34_glass', {cat:'nb34', t:'Бокалы закончились', x:'Компания из восьми человек заказала по бокалу. Чистых бокалов — три. Мойщица ушла в полночь.', o:[
+  {t:'Мыть самому', fx:{moodAll:1}, out:'Ты моешь бокалы под джаз. Гости думают, что так и задумано.'},
+  {t:'Подать в кофейных чашках', fx:{rep:-1}, out:'Вино в капучинной чашке. Одна гостья сфотографировала и выложила: «Андеграунд».'},
+  {t:'Докупить бокалы в ночном магазине', fx:{m:-7000}, out:'Бокалы разные, зато восемь. Компания осталась до трёх.'}]});
+def('nb34_date', {cat:'nb34', t:'Предложение руки', x:'Гость шепчет сомелье: «Я сделаю ей предложение. Можно кольцо в бокал?»', o:[
+  {t:'Помочь, приглушить свет', fx:{m:-1500, rep:2}, out:'Она сказала «да». Весь зал аплодировал. Через неделю они пришли с друзьями отмечать.'},
+  {t:'Кольцо в бокал опасно, лучше в десерт', fx:{rep:1}, out:'Кольцо нашли в тирамису. Тоже «да», только с крошками.'}]});
+def('nb34_tired', {cat:'nb34', t:'Ночная смена выдохлась', x:'Четыре утра. Бармен зевает в шейкер, официант сидит на корточках за стойкой.', o:[
+  {t:'Отпустить их раньше', fx:{moodAll:5, mod:['check', 0.9, 2, 'Неполная смена: чек −10%']}, out:'Последних гостей ты обслужил сам. Команда завтра скажет спасибо.'},
+  {t:'Всем по двойному эспрессо', fx:{moodAll:-3, m:-400}, out:'Дотянули до пяти. Но улыбаться уже никто не может.'}]});
+
+/* сюжеты: 3 шага у каждого режима; шаги приходят в свои часы */
+function beat34(days, id){ const bf = id.startsWith('bf'); S.pending.push({at:(S.day + days)*DAY_MIN + (bf ? RI(6*60+30, 10*60) : RI(23*60+10, 23*60+50)), ev:id}); }
+def('bf34_s1', {cat:'bf34', t:'Первые завтраки', x:'Ты открыл завтраки. В 6:05 у двери уже стоит мужчина в костюме: «Наконец-то. Я ждал полгода».', o:[
+  {t:'Угостить первым кофе', fx:S=>(beat34(3, 'bf34_s2'), {fx:{m:-300, rep:1}, out:'Это Пётр Ильич, бухгалтер из соседнего здания. Обещал привести отдел.'})}]});
+def('bf34_s2', {cat:'bf34', t:'Отдел Петра Ильича', x:'Пётр Ильич привёл бухгалтерию. Двенадцать человек, у всех особые пожелания и один счёт на всех.', o:[
+  {t:'Посадить всех вместе', fx:S=>(beat34(4, 'bf34_s3'), {fx:{m:9000, mood:-3}, out:'Час спорили, кто что ел. Но платить пришли вовремя.'})},
+  {t:'Предложить сеты', fx:S=>(beat34(4, 'bf34_s3'), {fx:{m:7000}, out:'Три сета на выбор — и никакой путаницы. Пётр Ильич одобрил.'})}]});
+def('bf34_s3', {cat:'bf34', t:'Завтрак года', x:'Городской паблик проводит конкурс «Завтрак года». Пётр Ильич уже отправил твою заявку без спроса.', o:[
+  {t:'Готовиться всерьёз', fx:{m:-30000, rep:3, mod:['traffic', 1.15, 72, 'Завтрак года: гостей +15%']}, out:'Второе место! Первое — у пекарни, где работает племянник председателя жюри. Гости всё равно идут к тебе.'},
+  {t:'Не участвовать', fx:{}, out:'Пётр Ильич обиделся на два дня. Потом пришёл как ни в чём не бывало.'}]});
+def('nb34_s1', {cat:'nb34', t:'Ночь открыта', x:'Первая ночь бара. Лампы горят, сомелье протирает бокалы. В 23:10 заходит женщина в вечернем платье и говорит: «Мне то, что вы пьёте после смены».', o:[
+  {t:'Налить домашний глинтвейн', fx:S=>(beat34(3, 'nb34_s2'), {fx:{rep:1}, out:'Это Вера, джазовая певица из клуба за углом. Сказала, что придёт ещё.'})}]});
+def('nb34_s2', {cat:'nb34', t:'Вера предлагает', x:'Вера хочет петь у тебя по пятницам: «Без гонорара, только ужин и тишина, когда я пою».', o:[
+  {t:'Согласиться', fx:S=>(beat34(5, 'nb34_s3'), {fx:{m:-5000, mod:['traffic', 1.15, 72, 'Джаз по пятницам: гостей ночью +15%']}, out:'В пятницу зал полный. Даже бармен перестал греметь шейкером.'})},
+  {t:'Музыка только из колонки', fx:S=>(beat34(5, 'nb34_s3'), {fx:{}, out:'Вера пожала плечами и ушла петь в «Кофе Кофе».'})}]});
+def('nb34_s3', {cat:'nb34', t:'Ночной критик', x:'Сомелье узнал гостя: это автор канала «Где пить в городе». Он заказал самое дешёвое вино и молча пишет в телефон.', o:[
+  {t:'Принести лучшее за счёт заведения', fx:{m:-8000, rep:2}, out:'Пост вышел через день: «Лучшие лампы города и сомелье, который знает, когда молчать».'},
+  {t:'Обслужить как всех', fx:{rep:1}, out:'Пост вышел честный: «Неплохо, вино обычное, атмосфера прекрасная». Тоже реклама.'}]});
+
+/* покупка и сомелье */
+function buyMode34(k){ const d = k === 'bf' ? BF34 : NB34; if(S.money < d.cost || S.level < d.lvl) return;
+  spend(d.cost, 'invest', k === 'bf' ? 'Открытие завтраков' : 'Открытие ночного бара'); S.c[k+'34'] = S.day; sfx('buy');
+  S.pending.push({at: absNow() + 60, ev: k === 'bf' ? 'bf34_s1' : 'nb34_s1'});
+  toast(k === 'bf' ? 'Завтраки открыты: с 6 до 11' : 'Ночной бар открыт: с 23 до 5'); save(); renderSheet(); }
+function hireSom34(){ if(S.staff.some(s => s.som34)) return; const s = makeStaff('Официант', {quirk:'none', sex:'m'});
+  s.name = 'Сомелье Артур'; s.som34 = true; s.lvl = 25; s.rank = 2; s.shifts = 80; s.mood = 85; hire(s, 'main', 'white'); syncScene('main'); toast('Сомелье Артур вышел на смену'); save(); renderSheet(); }
+function modeCard34(){ const c = el(`<div class="card ro32"><div class="t">Завтраки и ночной бар</div><div class="d">Свои часы, меню, гости, истории и риски.</div></div>`);
+  const row = (k, name, hrs, d, def) => { const own = !!S.c[k+'34']; const can = S.level >= def.lvl && S.money >= def.cost;
+    const b = el(`<div class="m34"><div><b>${name}</b><small>${hrs}</small><span>${d}</span></div></div>`);
+    if(own) b.appendChild(el(`<em>Открыто</em>`));
+    else { const btn = el(`<button class="btn num" ${can ? '' : 'disabled'}>${S.level < def.lvl ? 'С '+def.lvl+' уровня' : fmt(def.cost)+' ₽'}</button>`); btn.onclick = () => buyMode34(k); b.appendChild(btn); }
+    c.appendChild(b); };
+  row('bf', 'Завтраки', 'с 6 до 11', 'Каша, яйца бенедикт, завтрак дня. Гостей утром +25%. Нужен повар и горячий цех.', BF34);
+  row('nb', 'Ночной бар', 'с 23 до 5', 'Вино, глинтвейн, коктейли, сырная тарелка. Приглушённый свет и лампы. Гостей ночью больше вдвое. Без сомелье чек ниже, а ссор больше.', NB34);
+  if(S.c.nb34){ const som = S.staff.find(s => s.som34);
+    const r = el(`<div class="m34"><div><b>Сомелье</b><span>${som ? esc(som.name)+' в команде. Чек ночью +20%.' : 'Профессиональный официант для бара. Без него ночью чек −10%.'}</span></div></div>`);
+    if(!som){ const btn = el(`<button class="btn num">Нанять</button>`); btn.onclick = hireSom34; r.appendChild(btn); } c.appendChild(r); }
+  return c; }
+const _renderUpgrades34 = renderUpgrades;
+renderUpgrades = function(p, id){ _renderUpgrades34.apply(this, arguments); try{ if((id || S.active || 'main') === 'main' && S.level >= 20) p.appendChild(modeCard34()); }catch(e){ console.error(e); } };
+
+/* события в свои часы: планируем на следующий день при закрытии */
+const _closeDay34 = closeDay;
+closeDay = function(){ const r = _closeDay34.apply(this, arguments); try{ const base = (S.day + 1) * DAY_MIN;
+  if(S.c.bf34 && chance(0.4)) S.pending.push({at: base + RI(6*60+20, 10*60+30), ev: pick(['bf34_cook','bf34_milk','bf34_office','bf34_kid','bf34_runner'])});
+  if(S.c.nb34){ const pr = som34() ? 0.35 : 0.55; if(chance(pr)) S.pending.push({at: base + RI(60, 4*60+30), ev: pick(['nb34_fight','nb34_check','nb34_glass','nb34_date','nb34_tired', S.staff.some(s=>s.som34) ? 'nb34_date' : 'nb34_fight'])}); }
+}catch(e){ console.error(e); } return r; };
+
+/* картинка: завтраки — тарелки, корзинки, утренний свет; ночь — бокалы, свечи, вино, лампы и полумрак */
+const _sceneTable34 = sceneTable;
+sceneTable = function(st, x, y, L, i){ _sceneTable34.apply(this, arguments); try{ if(st.outdoor) return;
+  if(bfOn()){ EL(x-7, y-17, 7, 2.6, '#f7f1e6'); EL(x-8.5, y-18, 2.4, 1.6, '#e2a64d'); EL(x-5, y-18.3, 2.4, 1.6, '#d8953c'); EL(x-6.5, y-19.5, 1.4, 0.8, '#c0392b');
+    rect(x+5, y-24, 5, 7, i % 2 ? '#c8c2b6' : '#8a5a3a'); rect(x+4, y-24, 7, 1.5, '#5a3a24'); rect(x+10, y-22, 1.5, 3, '#5a3a24');
+    if(i % 3 === 0){ rect(x-1, y-21, 3, 4, '#f3e3c2'); rect(x-1, y-22, 3, 1, '#b23a3a'); } }
+  else if(nbOn()){ const t = performance.now()/1000;
+    rect(x-1, y-23, 2.4, 6, '#f2e6cf'); EL(x+0.2, y-24.5 + Math.sin(t*6+i)*0.3, 1, 1.8, '#ffd27a'); glow2(x, y-24, 14, '255,190,110', 0.35);
+    [[x-9, '#7a1f2b'], [x+8, i % 2 ? '#e8d27a' : '#7a1f2b']].forEach(([gx, wc]) => { ctx.fillStyle = 'rgba(230,240,255,.55)'; ctx.beginPath(); ctx.moveTo(gx-2.5, y-27); ctx.lineTo(gx+2.5, y-27); ctx.lineTo(gx+1.4, y-23); ctx.lineTo(gx-1.4, y-23); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = wc; ctx.beginPath(); ctx.moveTo(gx-2, y-25.5); ctx.lineTo(gx+2, y-25.5); ctx.lineTo(gx+1.3, y-23.3); ctx.lineTo(gx-1.3, y-23.3); ctx.closePath(); ctx.fill();
+      rect(gx-0.4, y-23, 0.8, 4, 'rgba(230,240,255,.6)'); rect(gx-1.6, y-19.4, 3.2, 0.8, 'rgba(230,240,255,.6)'); }); }
+}catch(e){} };
+const _sceneLamps34 = sceneLamps;
+sceneLamps = function(st, u, now){ _sceneLamps34.apply(this, arguments); try{ if(st.outdoor) return;
+  if(bfOn()){ [[40, 0], [214, 1]].forEach(([bx, k]) => { EL(bx, BAR_TOP-3, 13, 3.5, '#8a5a32'); rect(bx-13, BAR_TOP-7, 26, 4, '#a8743f'); for(let j=0;j<4;j++){ EL(bx-8+j*5.5, BAR_TOP-8.5, 3.2, 2, k ? '#e6b25c' : '#d9a04c'); EL(bx-8+j*5.5, BAR_TOP-9.4, 2, 0.8, '#f4d08a'); } }); }
+  if(nbOn()){
+    rect(96, 140, 112, 2, '#4a3426'); rect(96, 136, 1.5, 6, '#4a3426'); rect(206.5, 136, 1.5, 6, '#4a3426');
+    for(let gx = 102; gx <= 202; gx += 8){ ctx.fillStyle = 'rgba(225,235,250,.7)'; rect(gx-0.4, 142, 0.8, 3, 'rgba(225,235,250,.7)'); ctx.beginPath(); ctx.moveTo(gx-2.5, 145); ctx.lineTo(gx+2.5, 145); ctx.lineTo(gx+1.5, 150); ctx.lineTo(gx-1.5, 150); ctx.closePath(); ctx.fill(); }
+    for(let j=0;j<5;j++){ const bx = 214 + j*6; rect(bx, BAR_TOP-14, 4, 12, ['#3b0f18','#1f3a22','#3b0f18','#4a2a10','#1f3a22'][j]); rect(bx+1, BAR_TOP-18, 2, 4, '#1a1a1a'); rect(bx, BAR_TOP-9, 4, 3, '#e8dcc0'); }
+  }
+}catch(e){} };
+const _drawRoom34 = drawRoom;
+drawRoom = function(id){ _drawRoom34.apply(this, arguments); try{ const def = roomDef(id); if(def.outdoor) return;
+  if(bfOn()){ glow2(262, 70, 120, '255,236,190', 0.22); }
+  if(nbOn()){ ctx.fillStyle = 'rgba(14,8,30,.30)'; ctx.fillRect(0, 0, W, H);
+    for(const t of TABLES) glow2(t.x, t.y-18, 36, '255,180,100', 0.28);
+    [92, 150, 208].forEach(x => glow2(x, 130, 46, '255,200,120', 0.22)); }
+}catch(e){} };
+
+/* ===== 9.3: просмотр чужих кофеен =====
+   Снимок зала уходит на сервер раз в 10 минут. Чужой зал рисуется той же отрисовкой, что и свой:
+   на один кадр подменяем состояние, снимаем картинку и сразу возвращаем своё. */
+function viewSnap34(force){ if(!S) return undefined; const now = Date.now(); if(!force && S.c.vs34 && now - S.c.vs34 < 10*60000) return undefined; S.c.vs34 = now;
+  try{ const rm = room('main');
+    return {v:1, n:S.name, lv:S.level, rp:+S.rep.toFixed(1), up:rm.upg, it:(S.interior||{}).main || null, fr:frameOwnedId() || null, mf:S.c.mythFrame ? 1 : 0,
+      st:S.staff.filter(s => s.room === 'main' && !s.isYou).slice(0, 10).map(s => ({r:s.role, n:s.name, x:s.sex, p:s.spr, l:s.legendId || 0, pz:s.prize ? 1 : 0, so:s.som34 ? 1 : 0})),
+      bf:S.c.bf34 ? 1 : 0, nb:S.c.nb34 ? 1 : 0, fl:S.c.flag34 ? 1 : 0, uf:S.c.uf34 || null, mu:S.c.mu34 || null, rooms:S.rooms.length, kt:(S.kitchen||{}).tier || 0, bd:(S.badges||[]).length, day:S.day}; }catch(e){ return undefined; } }
+
+function shotView34(d, mode){ if(!d || !S) return null; const realS = S, realRT = RT.main; let out = null;
+  try{ const f = JSON.parse(snapshot());
+    f.name = d.n || 'Кофейня'; f.level = d.lv || 1; f.rep = d.rp || 3; f.incidents = []; f.mods = []; f.pending = []; f.rivals = []; f.rival = null; f.crownWeek = null; f.closedUntil = 0; f.isOpen = true;
+    f.gm = mode === 'bf' ? 8*60 : mode === 'nb' ? 23.5*60 : 14*60; f.weather = 'sun';
+    const m = f.rooms.find(r => r.id === 'main'); m.upg = Object.assign({}, m.upg, d.up || {}); m.broken = {};
+    f.interior = Object.assign({}, f.interior, {main: d.it || undefined}); f.szStyles = d.it ? [d.it] : []; f.promoSt = d.it ? [d.it] : [];
+    f.ent = Object.assign({}, f.ent, {interiors: d.it ? [d.it] : [], frames: d.fr ? ['frame_'+d.fr] : []});
+    f.c = Object.assign({}, f.c, {signFrame: d.fr || undefined, frameGift: d.fr ? [d.fr] : [], mythFrame: !!d.mf, bf34: d.bf ? 1 : 0, nb34: d.nb ? 1 : 0, flag34: d.fl ? 1 : 0, uf34: d.uf || null, mu34: d.mu || null});
+    f.staff = (d.st || []).map((x, i) => ({id:'v34_'+i, name:String(x.n||'').slice(0, 30), role:x.r, sex:x.x, spr:x.p, legendId:x.l || 0, prize:!!x.pz, som34:!!x.so, room:'main', today:'work', lvl:10, rank:1, mood:80, fatigue:0, shifts:10, quirk:'none', off:[], sched:'5/2'}));
+    S = f; RT.main = undefined; syncScene('main');
+    const r = rt('main'); for(const id in r.staff){ const p = r.staff[id]; if(p.tx != null){ p.x = p.tx; p.y = p.ty; } }
+    drawRoom('main');
+    const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height; c.getContext('2d').drawImage(cv, 0, 0); out = c;
+  }catch(e){ console.error(e); }
+  finally{ S = realS; RT.main = realRT; try{ syncScene('main'); }catch(e){} }
+  return out; }
+
+const VIEW34 = {};
+function openView34(vk, title){ if(!vk || !tg || !tg.initData) return; queueModal({kind:'view34', vk, title: title || ''}, true); }
+MODAL15.view34 = (box, m, btn) => {
+  box.classList.add('v34');
+  box.append(el(`<div class="eyebrow">В гостях</div>`), el(`<h2>${esc(m.title ? '«'+m.title+'»' : 'Кофейня')}</h2>`));
+  const info = el(`<p class="v34i">Заходим…</p>`), pic = el(`<div class="v34p"></div>`), modes = el(`<div class="chips v34m"></div>`), acts = el(`<div class="row"></div>`);
+  box.append(info, pic, modes, acts);
+  const show = (d, mode) => { const c = shotView34(d, mode); pic.innerHTML = ''; if(c){ c.style.width = '100%'; c.style.height = 'auto'; pic.appendChild(c); } else pic.appendChild(el(`<p>Не получилось нарисовать зал.</p>`)); };
+  apiPost('/api/cafeview', {vk: m.vk}).then(r => { if(!r || !r.ok){ info.textContent = (r && r.error) || 'Кофейня закрыта для гостей.'; return; }
+    const d = r.data || {}; VIEW34[m.vk] = r;
+    info.textContent = 'Уровень '+(r.level || d.lv || 1)+' · ★ '+String(d.rp || 3).replace('.', ',')+' · сотрудников '+((d.st||[]).length)+' · значков '+(d.bd || 0)+' · гостей заходило '+fmt(r.views || 0)+' · похвал '+fmt(r.likes || 0);
+    const list = [['day', 'День']]; if(d.bf) list.unshift(['bf', 'Завтраки']); if(d.nb) list.push(['nb', 'Ночной бар']);
+    list.forEach(([k, n], i) => { const b = el(`<button class="chipbtn" aria-pressed="${k === 'day'}">${n}</button>`); b.onclick = () => { modes.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', 'true'); sfx('tap'); show(d, k); }; modes.appendChild(b); });
+    if(list.length < 2) modes.style.display = 'none';
+    show(d, 'day');
+    if(!r.mine){ const lb = el(`<button class="btn">Похвалить</button>`); lb.onclick = () => { lb.disabled = true; apiPost('/api/cafeview', {vk: m.vk, like: 1}).then(x => { if(x && x.ok){ lb.textContent = 'Похвалил'; toast('Хозяин увидит, что ты заходил'); } else { lb.textContent = (x && x.error) || 'Не получилось'; } }); }; acts.appendChild(lb); }
+  }).catch(() => { info.textContent = 'Нет связи.'; });
+  box.append(btn('Выйти', closeModal)); };
+
+/* кнопки «зайти» в списках: рейтинг сезона и друзья */
+function visitBtn34(vk, cafe){ const b = el(`<button class="v34b" aria-label="Зайти в гости"><span>Зайти</span></button>`); b.onclick = (e) => { e.stopPropagation(); sfx('tap'); openView34(vk, cafe); }; return b; }
+const _renderSeason34v = renderSeason;
+renderSeason = function(p){ _renderSeason34v.apply(this, arguments); try{ const rows = p.querySelectorAll('.tour .trow'); const top = SZ_SNAP.season === sezId() ? SZ_SNAP.top : [];
+  rows.forEach((row, i) => { const t = top[i]; if(t && t.vk && t.cafe !== S.name) row.appendChild(visitBtn34(t.vk, t.cafe)); }); }catch(e){ console.error(e); } };
+const _friendRow34 = friendRow;
+friendRow = function(f, label){ const d = _friendRow34.apply(this, arguments); try{ if(f && f.vk) d.appendChild(visitBtn34(f.vk, f.cafe)); }catch(e){} return d; };
+
+/* своя витрина: сколько раз заходили и хвалили */
+function myView34Card(){ const c = el(`<div class="card"><div class="t">Твоя кофейня глазами гостей</div><div class="d">Другие игроки могут зайти к тебе из рейтинга сезона и списка друзей. Они видят зал, интерьер, вывеску и команду. Обновляется раз в 10 минут, пока ты в игре.</div></div>`);
+  const row = el(`<div class="row"><button class="btn ghost">Посмотреть, как видят</button></div>`); row.querySelector('button').onclick = () => { apiPost('/api/cafeview', {me: 1}).then(r => { if(r && r.ok && r.vk) openView34(r.vk, S.name); else toast('Витрина появится через пару минут'); }); };
+  c.appendChild(row); return c; }
+const _renderSettings34 = renderSettings;
+renderSettings = function(p){ _renderSettings34.apply(this, arguments); try{ if(tg && tg.initData) p.appendChild(myView34Card()); }catch(e){} };
+
+/* ===== 9.3: Флагман района (5000 ★), форма персонала, музыка в зале ===== */
+function ext34(k){ return !!(S && S.ent && (S.ent.extras || []).includes(k)); }
+SIGN_FRAMES.flag = {n:'Флагман', bg:'#241808', edge:'#ffd24a', ink:'#ffeab0', glow:'#ffcf5a', anim:'spark'};
+const _frameOwnedId34f = frameOwnedId;
+frameOwnedId = function(){ if(S && S.c && S.c.signFrame === 'flag' && ext34('flagship')) return 'flag'; return _frameOwnedId34f.apply(this, arguments); };
+
+/* Флагман: при первой проверке покупки — вывеска, значок, легенда с именем владельца */
+function flag34Apply(){ if(!S || !ext34('flagship') || S.c.flag34) return; S.c.flag34 = S.day; S.c.signFrame = 'flag';
+  badgeAdd('flagship', 'Флагман района', 'Самая большая кофейня района');
+  try{ const me = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {}; const nm = String(me.first_name || 'Хозяин').slice(0, 20);
+    const s = makeStaff('Бариста', {quirk:'none'}); s.name = nm+' Флагманский'; s.prize = true; s.legendId = 0; s.lvl = 40; s.rank = 3; s.shifts = 200; s.mood = 95; s.flag34 = true; hire(s, 'main', 'white'); syncScene('main'); }catch(e){ console.error(e); }
+  queueModal({kind:'note', title:'Ты — Флагман района', text:'Золотая вывеска уже висит, имя в рейтингах и дуэлях золотое, в команду вышел легендарный бариста с твоим именем. Гости других кофеен теперь иногда рассказывают о тебе.'});
+  save(); try{ track(true); }catch(e){} }
+const _refreshEnt34 = refreshEntitlements;
+refreshEntitlements = function(){ const r = _refreshEnt34.apply(this, arguments); setTimeout(() => { try{ flag34Apply(); }catch(e){} }, 2500); return r; };
+const _staffSpeed34 = staffSpeed;
+staffSpeed = function(s){ const v = _staffSpeed34.apply(this, arguments); return s && s.flag34 ? v * 1.6 : v; };
+
+/* гости в чужих кофейнях вспоминают флагманов (список приходит из /api/config) */
+function flags34(){ try{ return ((typeof CFG !== 'undefined' && CFG && CFG.flags) || []).filter(n => n && n !== (S && S.name)); }catch(e){ return []; } }
+const FLAG34_LINES = ['Я обычно хожу во «%», но решил проверить, что у вас.', 'Во «%» вывеска золотая, а у вас кофе вкуснее. Наверное.', 'Подруга говорит, во «%» бариста легендарный. Посмотрим, как у вас.', 'Был вчера во «%». Там очередь до угла, поэтому я здесь.'];
+
+/* форма персонала: фартук и воротник поверх спрайта */
+const UF34 = {classic:{n:'Классика', a:'#1e1e22', b:'#f4f1ea', t:'#c9c4b8'}, denim:{n:'Джинса', a:'#3b5a86', b:'#e9e2d2', t:'#2a4266'}, bordo:{n:'Бордо', a:'#7a1f2b', b:'#f1e4d6', t:'#5a1520'}};
+const _drawStaff34 = drawStaff;
+drawStaff = function(s, p, id){ _drawStaff34.apply(this, arguments); try{ const u = ext34('uniform') && UF34[S.c.uf34]; if(!u || s.isYou || s.legendId || s.prize) return;
+  const [b] = walkPose(p); const top = p.y - b - STAFF_H*0.56, x = p.x;
+  ctx.fillStyle = u.b; ctx.fillRect(x-3.5, top, 7, 2.2);
+  ctx.fillStyle = u.a; ctx.fillRect(x-5, top+3.5, 10, STAFF_H*0.30); ctx.fillStyle = u.t; ctx.fillRect(x-5, top+3.5, 10, 1.2); ctx.fillRect(x-1, top+6, 2, 3);
+}catch(e){} };
+
+/* музыка: ноты у окна и реплики гостей */
+const MU34 = {jazz:{n:'Джаз', c:'#e8c27a', l:['Это Колтрейн? Я остаюсь ещё на один кофе.', 'Под такой джаз даже очередь не раздражает.', 'Саксофон в кофейне — это уже половина вкуса.', 'Можно эту пластинку погромче? Спасибо.']},
+  lofi:{n:'Лоу-фай', c:'#9fc4e8', l:['Под эту музыку я наконец доделаю отчёт.', 'Как будто в ютубе «музыка для учёбы», только с круассаном.', 'Не выключайте, у меня дедлайн.', 'Идеально, чтобы ничего не делать и пить раф.']},
+  rock:{n:'Русский рок', c:'#e8857a', l:['Под «Кино» любой американо как в девяностых.', 'Бариста, а вы тоже ждёте перемен?', 'Я сюда пришёл за кофе, а остался на весь альбом.', 'Подпевать можно? Уже подпеваю.']}};
+const _pickLine34m = pickLine;
+pickLine = function(pool, key){ try{ if(key === 'g' && S){ const m = ext34('music') && MU34[S.c.mu34]; if(m && chance(0.18)) return _pickLine34m(m.l, 'g34m');
+  const fl = flags34(); if(fl.length && chance(0.04)) return pick(FLAG34_LINES).replace('%', pick(fl)); } }catch(e){} return _pickLine34m.apply(this, arguments); };
+const _drawRoom34m = drawRoom;
+drawRoom = function(id){ _drawRoom34m.apply(this, arguments); try{ const m = ext34('music') && MU34[S.c.mu34]; if(!m || roomDef(id).outdoor) return; const t = performance.now()/1000;
+  for(let i=0;i<3;i++){ const ph = (t*0.35 + i/3) % 1; const x = 30 + Math.sin(ph*6 + i)*5 + i*10, y = 150 - ph*60; ctx.globalAlpha = Math.max(0, 1 - ph) * 0.8; txt(i % 2 ? '♫' : '♪', x, y, '700 9px sans-serif', m.c, 'center'); }
+  ctx.globalAlpha = 1; }catch(e){ ctx.globalAlpha = 1; } };
+
+/* настройки: переключатели формы, музыки и вывески Флагмана */
+function atm34Card(){ const c = el(`<div class="card"><div class="t">Атмосфера</div></div>`);
+  const chips = (title, list, cur, set) => { const w = el(`<div><div class="d">${title}</div><div class="subnav"></div></div>`); const sn = w.querySelector('.subnav');
+    [['', 'Выкл.'], ...list].forEach(([k, n]) => { const b = el(`<button class="chipbtn" aria-pressed="${(cur || '') === k}">${n}</button>`); b.onclick = () => { set(k || null); save(); structDirty = true; sfx('tap'); renderSheet(); }; sn.appendChild(b); }); c.appendChild(w); };
+  if(ext34('uniform')) chips('Форма персонала', Object.entries(UF34).map(([k, v]) => [k, v.n]), S.c.uf34, k => { S.c.uf34 = k; });
+  if(ext34('music')) chips('Музыка в зале', Object.entries(MU34).map(([k, v]) => [k, v.n]), S.c.mu34, k => { S.c.mu34 = k; });
+  if(ext34('flagship')){ const on = S.c.signFrame === 'flag'; const b = el(`<div class="row"><button class="btn ${on ? 'ghost' : ''}">${on ? 'Вывеска «Флагман» висит' : 'Повесить вывеску «Флагман»'}</button></div>`);
+    b.querySelector('button').onclick = () => { S.c.signFrame = 'flag'; save(); structDirty = true; try{ track(true); }catch(e){} renderSheet(); }; c.appendChild(b); }
+  return c.children.length > 1 ? c : null; }
+const _renderSettings34a = renderSettings;
+renderSettings = function(p){ _renderSettings34a.apply(this, arguments); try{ flag34Apply(); const c = atm34Card(); if(c) p.appendChild(c); }catch(e){ console.error(e); } };
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */

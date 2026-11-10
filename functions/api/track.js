@@ -31,6 +31,9 @@ export async function onRequestPost({ request, env, waitUntil }) {
         Math.min(num(s.best), 5e9), s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null, typeof s.bdn === 'string' ? s.bdn.slice(0, 40) : null),
     env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id)
   ]);
+  // 9.3: витрина кофейни для просмотра другими игроками
+  if (s.view && typeof s.view === 'object') { try { const data = JSON.stringify(s.view).slice(0, 3000);
+    await env.DB.prepare("INSERT INTO cafe_view (tg_id, vk, data, at) VALUES (?1, lower(hex(randomblob(6))), ?2, ?3) ON CONFLICT(tg_id) DO UPDATE SET data = ?2, at = ?3").bind(user.id, data, now).run(); } catch {} }
   // рефералы: привязка нового игрока и награда пригласившему за 3 уровень
   try { if (refId) await bindReferrer(env, user, refId, 'app'); await payReferrer(env, user.id); } catch {}
   // «Кофейня недели района» — пост в канал, раз в неделю на игрока
