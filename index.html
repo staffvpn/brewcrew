@@ -10848,7 +10848,7 @@ renderHud = function(){ _renderHud34.apply(this, arguments); try{ if(!S) return;
 
 /* одна плашка видна, остальные под «Ещё N»; предупреждения идут первыми */
 function hudPills34(){ const pe = $('#pills'), more = $('#pmore'); if(!pe || !more) return; let n = 0;
-  const kids = [...pe.children].filter(ch => getComputedStyle(ch).display !== 'none' || ch.classList.contains('px'));
+  const kids = [...pe.children].filter(ch => (getComputedStyle(ch).display !== 'none' || ch.classList.contains('px')) && ch.style.display !== 'none');
   const warnFirst = kids.find(ch => ch.classList.contains('warn') || ch.classList.contains('hot'));
   for(const ch of kids){ ch.classList.remove('px'); ch.style.order = ch === warnFirst ? -1 : ''; }
   const order = warnFirst ? [warnFirst, ...kids.filter(k => k !== warnFirst)] : kids;
@@ -11327,6 +11327,58 @@ closeDay = function(){ try{ wearDay931(); michDay931(); crisisDay931();
     if(S.money < 0 && S.staff.length){ S.staff.forEach(s => { if(!s.isYou) s.mood = Math.max(0, s.mood - 6); }); toast('Зарплата с задержкой: команда недовольна'); } }catch(e){ console.error(e); }
   const r = _closeDay931.apply(this, arguments);
   try{ S.c.base931 = {angry:S.c.angry, mist:S.c.mistakes || 0}; }catch(e){} return r; };
+
+/* ===== 9.3.2: чистка интерфейса ===== */
+
+/* «Сюжет» переезжает в «Гости»: отдельной вкладки больше нет */
+{ const i = HALL_TABS.findIndex(t => t[0] === 'story'); if(i >= 0) HALL_TABS.splice(i, 1); }
+let storyJump935 = false;
+const _openSheet935 = openSheet;
+openSheet = function(k, tabKey){ if(tabKey === 'story'){ tabKey = 'guests'; storyJump935 = true; } return _openSheet935.call(this, k, tabKey); };
+const _attention935 = attention;
+attention = function(){ return _attention935.apply(this, arguments).map(a => a[0] === 'story' ? ['guests', a[1], a[2]] : a).filter(a => !/закрыться на час/i.test(a[1] || '')); };
+const _renderGuests935 = renderGuests;
+renderGuests = function(p){ _renderGuests935.apply(this, arguments); try{ const h = el(`<div class="h chalk" id="story935">Сюжет</div>`); p.appendChild(h); renderStory(p);
+  if(storyJump935){ storyJump935 = false; setTimeout(() => { try{ h.scrollIntoView({block:'start'}); }catch(e){} }, 30); } }catch(e){ console.error(e); } };
+if(hallTab === 'story') hallTab = 'guests';
+
+/* «Закрыться на час» — из Дел в Настройки */
+const _renderTasks935 = renderTasks;
+renderTasks = function(p){ _renderTasks935.apply(this, arguments); try{ p.querySelectorAll('.card.clean15').forEach(c => c.remove()); }catch(e){} };
+function cleanCard935(){ const dirt = Math.round(dirtLevel(S.active)*100), d = dishCount(S.active), m = (rt(S.active).mess||[]).length, closed = S.closedUntil > absNow();
+  const c = el(`<div class="card"><div class="t">${closed ? (S.cleanHour ? 'Идёт генеральная уборка' : 'Кофейня закрыта') : 'Закрыться на час'}</div><div class="d">${closed ? 'Гостей нет, команда моет пол, столы и посуду.' : 'Повесить «Закрыто на уборку» на игровой час: гостей не будет, зато бардак, посуда и мусор уйдут.'}</div>${closed ? '' : `<div class="d">Сейчас: бардак ${dirt}%, посуды в мойке ${d}, мусора на полу ${m}.</div><div class="row"><button class="btn">Закрыться на уборку</button></div>`}</div>`);
+  const b = c.querySelector('button'); if(b) b.onclick = () => { const err = closeForCleaning(); if(err) toast(err); else { toast('Табличка «Закрыто на уборку» висит. Все за швабры'); sfx('door'); save(); renderSheet(); renderHud(); } };
+  return c; }
+const _renderSettings935 = renderSettings;
+renderSettings = function(p){ _renderSettings935.apply(this, arguments); try{ const c = cleanCard935(); const first = p.querySelector('.card'); if(first && first.nextSibling) p.insertBefore(c, first.nextSibling); else p.appendChild(c); }catch(e){ console.error(e); } };
+
+/* Опыт: неоткрытые достижения свёрнуты */
+let achAll935 = false;
+const _renderOwner935 = renderOwner;
+renderOwner = function(p){ _renderOwner935.apply(this, arguments); try{ const locked = [...p.querySelectorAll('.card.ach:not(.ok)')]; if(!locked.length) return;
+  locked.forEach(c => c.style.display = achAll935 ? '' : 'none');
+  const b = el(`<div class="row"><button class="btn ghost">${achAll935 ? 'Скрыть неоткрытые' : 'Показать неоткрытые ('+locked.length+')'}</button></div>`);
+  b.querySelector('button').onclick = () => { achAll935 = !achAll935; sfx('tap'); renderSheet(); };
+  locked[0].before(b); }catch(e){ console.error(e); } };
+
+/* Улучшения: «Реклама» и «Куда ещё потратить» — один блок */
+const _renderUpgrades935 = renderUpgrades;
+renderUpgrades = function(p, id){ _renderUpgrades935.apply(this, arguments); try{ const hs = [...p.querySelectorAll('.h')];
+  const spend = hs.find(h => h.textContent.trim() === 'Куда ещё потратить'), ads = hs.find(h => h.textContent.trim() === 'Реклама');
+  if(spend && ads){ spend.textContent = 'Реклама и траты'; const move = []; let n = ads.nextElementSibling; while(n && !n.classList.contains('h')){ move.push(n); n = n.nextElementSibling; }
+    let at = spend; move.forEach(x => { at.after(x); at = x; }); ads.remove(); }
+  else if(spend) spend.textContent = 'Реклама и траты'; }catch(e){ console.error(e); } };
+
+/* Склад: хозтовары один раз — отдельная карточка остаётся только как договор на автозаказ */
+const _renderStock935 = renderStock;
+renderStock = function(p, id){ _renderStock935.apply(this, arguments); try{ const c = [...p.querySelectorAll('.card')].find(x => { const t = x.querySelector('.t'); return t && t.textContent.trim() === 'Хозтовары' && x.querySelector('.d') && /губки/.test(x.textContent) && /автозаказ/i.test(x.textContent); });
+  if(!c) return; if(S.hozAuto) c.remove(); else { c.querySelector('.t').textContent = 'Договор на автозаказ хозтоваров'; } }catch(e){} };
+
+/* «Ты за стойкой» — только первые 3 дня или когда собралась очередь */
+function standPill935(){ const pe = $('#pills'); if(!pe) return; const show = S.day <= 3 || ((rt('main').queue || []).length >= 3);
+  pe.querySelectorAll('.pill.warn').forEach(x => { if(x.textContent.trim() === 'Ты за стойкой') x.style.display = show ? '' : 'none'; }); }
+const _hudPills935 = hudPills34;
+hudPills34 = function(){ standPill935(); return _hudPills935.apply(this, arguments); };
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
