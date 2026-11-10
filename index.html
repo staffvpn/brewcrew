@@ -1132,7 +1132,7 @@ function takeStock(need){
   }
 }
 function unitCost(k){ return STOCK[k].price / STOCK[k].pack * supplyMul(); }
-function supplyMul(){ return modMul('supply') * (1 - 0.03*perk('supplier')) * supplier().mul * (S.level>=18 ? 0.95 : 1); }
+function supplyMul(){ return modMul('supply') * (1 - 0.03*perk('supplier')) * supplier().mul * (S.level>=18 ? 0.85 : S.level>=8 ? 0.88 : 1); }
 function needCost(need){ let c = 0; for(const k in need) c += need[k]*unitCost(k); return c; }
 function stockFree(k){ const pend = S.orders.filter(o=>o.k===k).reduce((a,o)=>a+o.q,0); return Math.max(0, stockCap(k) - stockQty(k) - pend); }
 const SHOP_SHARE = 0.25;
@@ -10451,7 +10451,12 @@ closeDay = function(){ const r = _closeDay29.apply(this, arguments); try{ bankDu
 function bankCard(){ const b = bank29(), c = el(`<div class="card bank29"><div class="t">Банк</div></div>`);
   if(b){ const left = Math.max(0, b.due - S.day);
     c.appendChild(el(`<div class="d">${esc(b.n)}: взял ${fmt(b.sum)} ₽, вернуть <b>${fmt(b.back)} ₽</b>. ${left > 1 ? 'Спишут через '+left+' '+plural29(left, 'день','дня','дней')+'.' : 'Спишут сегодня после закрытия смены.'} Если денег не хватит, банк спишет всё в минус и пришлёт коллекторов.</div>`));
-    const row = el(`<div class="row"><button class="btn num" ${S.money >= b.back ? '' : 'disabled'}>Вернуть ${fmt(b.back)} ₽</button></div>`); row.querySelector('button').onclick = bankRepay; c.appendChild(row); return c; }
+    const row = el(`<div class="row"><button class="btn num" ${S.money >= b.back ? '' : 'disabled'}>Вернуть ${fmt(b.back)} ₽</button></div>`); row.querySelector('button').onclick = bankRepay; c.appendChild(row);
+    if(!b.rs && b.back > b.sum*1.5){ const nb = Math.round(b.sum*1.5/1000)*1000;
+      const rr = el(`<div class="row"><button class="btn ghost num">Реструктуризация: ${fmt(nb)} ₽ на 14 дней</button></div>`);
+      rr.querySelector('button').onclick = () => { const cur = bank29(); if(!cur || cur.rs) return; cur.back = Math.min(cur.back, nb); cur.due = S.day + 14; cur.rs = 1; repAdd(-0.1); sfx('coin'); toast('Банк пошёл навстречу: вернуть '+fmt(cur.back)+' ₽ за 14 дней'); save(); structDirty = true; renderHud(); try{ renderSheet(); }catch(e){} };
+      c.appendChild(rr); c.appendChild(el(`<div class="d">Один раз на кредит: сумма долга снижается до полуторной, срок 14 дней, рейтинг −0,1.</div>`)); }
+    return c; }
   c.appendChild(el(`<div class="d">Деньги сразу, вернуть втрое больше через ${BANK29_DAYS} дней. Один кредит за раз. Не вернёшь — коллекторы, касса в минусе и две недели без кредитов.</div>`));
   if(S.bankBan29 && S.day < S.bankBan29) c.appendChild(el(`<div class="d" style="color:var(--bad)">Банки отказывают ещё ${S.bankBan29 - S.day} ${plural29(S.bankBan29 - S.day, 'день','дня','дней')}.</div>`));
   BANK29.forEach(o=>{ const lock = S.level < o.lvl;
