@@ -11498,6 +11498,83 @@ pickLine = function(pool, key){ try{ if(key === 'g' && S){
   return _pickLine936b.apply(this, arguments); };
 setTimeout(() => { try{ loadSzTop(); }catch(e){} }, 8000);
 
+/* ===== 9.3.2 (12.11): реалистичная скорость, затупы, возвраты, арендодатель, тише тосты, склад проще ===== */
+
+/* ---------- скорость: −10% всем, потолок у стойки, усталость сильнее ---------- */
+const CAP937 = 45; /* напитков в игровой час на одного человека за стойкой */
+function hrKey937(){ return S.day*24 + Math.floor(S.gm/60); }
+function served937(room){ const h = S.c.hr937; return h && h.k === hrKey937() ? (h.n[room] || 0) : 0; }
+const _staffSpeed937 = staffSpeed;
+staffSpeed = function(s){ let v = _staffSpeed937.apply(this, arguments); try{ if(!s) return v; v *= 0.9;
+  const f = s.fatigue || 0; if(f > 50) v *= 1 - 0.2 * Math.min(1, (f - 50) / 50);
+  if(s.role === 'Бариста' || s.isYou){ const room = s.room || 'main'; const bar = workingStaff(room).filter(x => x.role === 'Бариста' || x.isYou).length || 1;
+    if(served937(room) >= CAP937 * bar) v *= 0.35; }
+}catch(e){} return v; };
+
+/* ---------- затупы ---------- */
+const STALL937 = {
+  'Кассир':['Так, с пятитысячной... это сколько сдачи?', 'Подождите, акция «второй со скидкой» — это на второй или на первый?', 'Терминал думает. Я тоже думаю', 'Чек застрял. Как и я', 'Вы сказали «без сахара» или «с сахаром»? Повторите медленно', 'Скидка по карте — это сколько процентов от процента?'],
+  'Бариста':['Ещё раз: раф или латте?', 'Ой, не то молоко. Переделываю', 'Питчер куда-то делся. Вот же он был', 'Я забыл, сколько шотов. Давайте два, на всякий', 'Пена опала. Это знак. Переделаю', 'Секунду, кофемолка решила подумать о жизни'],
+  'Официант':['Это был пятый стол или пятый гость?', 'Несу не туда. Разворачиваюсь', 'Кто заказывал сырники? Никто? А кому я их несу?', 'Перепутал заказы двух столов. Минуту'],
+  'Повар':['Сырники прилипли. Все. Начинаю заново', 'Где лопатка? Кто взял лопатку?', 'Плита не включается. А, включаю']};
+function stallChance937(s){ let p = 1/40; if((s.lvl||1) < 5) p *= 1.6; if((s.fatigue||0) > 60) p *= 1.5; if(s.quirk === 'sleepy' || s.quirk === 'blogger' || s.quirk === 'philo' || s.quirk === 'lover') p *= 1.5; if(s.quirk === 'workaholic' || s.quirk === 'genius') p *= 0.6; if(s.rank >= 2) p *= 0.6; if(s.legendId || s.prize) p *= 0.3; return p; }
+const _completeOrder937 = completeOrder;
+completeOrder = function(id, g, tapped){ try{
+  if(g && g.stallUntil){ if(Date.now() < g.stallUntil){ if(tapped){ g.stallUntil = Date.now() + Math.max(0, (g.stallUntil - Date.now())/2); sfx('tap'); toast('Подсказал — дело пошло быстрее'); } return; } }
+  else if(g && !g.stallDone && !g.reg){ const ws = workingStaff(id).filter(s => !s.isYou && (s.role === 'Кассир' || s.role === 'Бариста'));
+    const s = ws.length ? pick(ws) : null;
+    if(s && chance(stallChance937(s))){ g.stallUntil = Date.now() + R(6000, 15000); g.stallDone = true; const rr = rt(id);
+      if(id === S.active && rr.staff[s.id]) bubble2(0, 0, pick(STALL937[s.role] || STALL937['Бариста']), 3200, rr.staff[s.id]);
+      S.c.stalls937 = (S.c.stalls937 || 0) + 1; return; } }
+}catch(e){}
+  const qa = rt(id).queue.length; const r = _completeOrder937.apply(this, arguments);
+  try{ if(rt(id).queue.length < qa){ const k = hrKey937(); if(!S.c.hr937 || S.c.hr937.k !== k) S.c.hr937 = {k, n:{}}; S.c.hr937.n[id] = (S.c.hr937.n[id] || 0) + 1;
+    /* возврат: остыл, не то молоко, не тот сироп */
+    const bar = workingStaff(id).filter(s => s.role === 'Бариста' && !s.isYou); const weak = bar.length && bar.every(s => (s.lvl||1) < 5);
+    if(g && g.item && chance(weak ? 1/30 : 1/55)) setTimeout(() => { try{ const m = MENU.find(x => x.n === g.item); const cost = Math.round(((m && itemPrice(m)) || 300) * 0.4);
+      spend(cost, 'events', 'Переделка заказа'); if(id === S.active && g.state !== 'gone') bubble2(0, 0, pick(RETURN937).replace('%', g.item.toLowerCase()), 3000, g);
+      S.c.returns937 = (S.c.returns937 || 0) + 1; }catch(e){} }, R(2500, 5000)); } }catch(e){}
+  return r; };
+const RETURN937 = ['Извините, % остыл. Можно переделать?', 'Это не то молоко. Я просил овсяное', 'В % сироп не тот. Я просил карамельный', 'Тут пенки нет совсем. Переделайте, пожалуйста', 'Это точно %? По вкусу как вчерашний чай'];
+
+/* ---------- арендодатель: приходит за кофе, смотрит на зал ---------- */
+function rentMul937(){ return (S.c && S.c.rent937) || 1; }
+const _modMul937 = modMul;
+modMul = function(k){ const m = _modMul937.apply(this, arguments); return k === 'rent' && S && S.c ? m * rentMul937() : m; };
+function landlordBad937(){ return dirtLevel('main') > 0.3 || (typeof wear931 === 'function' && wear931('main') < 50) || S.rep < 4; }
+function landlordSet937(mul, why){ S.c.rent937 = Math.max(0.8, Math.min(1.8, rentMul937() * mul)); return why + ' Аренда сейчас ×' + rentMul937().toFixed(2).replace('.', ',') + ' от базовой.'; }
+def('landlord937', {cat:'money', t:'Арендодатель зашёл за кофе', x:'Аркадий Борисович, хозяин помещения, заказал американо и неспешно оглядывает зал: столы, пол, гостей, твоё лицо.', o:[
+  {t:'Угостить лучшим кофе', fx:S0 => { const bad = landlordBad937(), L = S.c.landlord937 = S.c.landlord937 || {good:0, bad:0};
+    if(bad){ L.bad++; L.good = 0; return {fx:{m:-300}, out:landlordSet937(1.12, 'Кофе он выпил, а потом провёл пальцем по столу. «Помещение надо беречь. С первого числа аренда выше на 12%».')}; }
+    L.good++; L.bad = 0; if(L.good >= 3){ L.good = 0; return {fx:{m:-300, rep:1}, out:landlordSet937(0.9, '«Третий раз захожу — и всегда порядок. Снижу вам аренду на 10%, держитесь».')}; }
+    return {fx:{m:-300}, out:'«Чисто, людно, кофе отличный. Аренду не трогаю». Ещё пара таких визитов — и он может сделать скидку.'}; }},
+  {t:'Начать торговаться заранее', fx:S0 => { const bad = landlordBad937();
+    if(bad) return {fx:{nerves:-1}, out:landlordSet937(1.2, 'Торговаться с ним при таком зале — плохая идея. «Раз вы о деньгах — аренда плюс 20%».')};
+    return {fx:{}, out:landlordSet937(1.05, 'Поторговались. Сошлись на символическом повышении на 5%.')}; }},
+  {t:'Показать план ремонта и чеки', fx:S0 => { const c = Math.max(30000, Math.round(dayBase() * 0.4 / 1000) * 1000);
+    return {fx:{m:-c}, out:'Потратил ' + fmt(c) + ' ₽ на мелкий ремонт при нём. Аркадий Борисович кивнул: «Вот это подход». Аренду не трогает.'}; }}]});
+function landlordTick937(){ if(S.level < 6) return; S.c.landlordNext937 = S.c.landlordNext937 || (S.day + RI(4, 10));
+  if(S.day + 1 < S.c.landlordNext937) return; const L = S.c.landlord937 || {}; S.c.landlordNext937 = S.day + 1 + ((L.bad || 0) >= 2 ? RI(6, 10) : RI(12, 18));
+  S.pending.push({at:(S.day + 1) * DAY_MIN + RI(11*60, 17*60), ev:'landlord937'}); }
+const _closeDay937 = closeDay;
+closeDay = function(){ const r = _closeDay937.apply(this, arguments); try{ landlordTick937(); }catch(e){} return r; };
+
+/* ---------- тосты: одинаковые не повторяются, пачка за секунду — одним сообщением ---------- */
+const TOAST937 = {buf:[], t:null, last:{}};
+const _toast937 = toast;
+toast = function(msg){ try{ const k = String(msg), now = Date.now(); if(TOAST937.last[k] && now - TOAST937.last[k] < 20000) return; TOAST937.last[k] = now;
+  TOAST937.buf.push(k); if(TOAST937.t) return; TOAST937.t = setTimeout(() => { const b = TOAST937.buf; TOAST937.buf = []; TOAST937.t = null;
+    if(b.length <= 2) b.forEach((m, i) => setTimeout(() => _toast937(m), i * 900)); else _toast937(b.slice(0, 3).join(' · ') + (b.length > 3 ? ' и ещё ' + (b.length - 3) : '')); }, 700); }catch(e){ _toast937(msg); } };
+
+/* ---------- склад: при включённом автодозаказе ручные кнопки свёрнуты ---------- */
+let stockManual937 = false;
+const _renderStock937 = renderStock;
+renderStock = function(p, id){ _renderStock937.apply(this, arguments); try{ if(S.restock === false && !S.autoOrder) return;
+  const rows = [...p.querySelectorAll('.card')].filter(c => c.querySelector('.tag.num') && c.querySelector('.row.wrap button') && /Упаковка/.test(c.textContent));
+  if(!rows.length) return; rows.forEach(c => { const w = c.querySelector('.row.wrap'); if(w) w.style.display = stockManual937 ? '' : 'none'; });
+  const b = el(`<div class="row"><button class="btn ghost">${stockManual937 ? 'Скрыть ручной заказ' : 'Заказать вручную'}</button><span class="d" style="margin-left:8px">Автодозаказ включён — склад пополняется сам</span></div>`);
+  b.querySelector('button').onclick = () => { stockManual937 = !stockManual937; sfx('tap'); renderSheet(); }; rows[0].before(b); }catch(e){} };
+
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
