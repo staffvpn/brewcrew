@@ -11447,6 +11447,57 @@ pickLine = function(pool, key){ try{ if(key === 'g' && S){ const m = S.mich34;
     if(typeof wear931 === 'function' && wear931(S.active || 'main') < 50 && chance(0.15)) return _pickLine936(CTX936.worn, 'g936w'); } }catch(e){}
   return _pickLine936.apply(this, arguments); };
 
+/* ===== 12.11: постоянные гости помнят заказ, мини-диалоги в очереди, сплетни про другие кофейни, новогодние реплики ===== */
+
+/* 1. постоянный гость помнит, что брал в прошлый раз, бариста тоже помнит */
+const REG_ASK = ['Мне как в прошлый раз: %', 'Помните меня? Опять %', 'Как обычно, %. Вы же помните', '% — как всегда. Не меняю привычки', 'Давайте снова %, в прошлый раз было идеально'];
+const REG_ANS = ['Помню-помню, %', 'Уже делаю, % ваш', 'Конечно, % как в тот раз', 'Знаю, %. Без сюрпризов'];
+const _completeOrder936 = completeOrder;
+completeOrder = function(id, g){ const r = _completeOrder936.apply(this, arguments); try{ if(g && g.reg && g.item){ S.c.regLast = S.c.regLast || {}; S.c.regLast[g.reg] = g.item; } }catch(e){} return r; };
+const _spawnGuest936 = spawnGuest;
+spawnGuest = function(id, reg){ const r = _spawnGuest936.apply(this, arguments); try{ if(reg && id === S.active){ const rr = rt(id), g = rr.guests[rr.guests.length-1], last = S.c.regLast && S.c.regLast[reg.id];
+  if(g && g.reg === reg.id && last && chance(0.75)){ setTimeout(() => { try{ if(g.state === 'leave') return; bubble2(0, 0, pick(REG_ASK).replace('%', last.toLowerCase()), 3000, g);
+    const ws = workingStaff(id).filter(s => !s.isYou && (s.role === 'Бариста' || s.role === 'Кассир')); const s = ws.length ? pick(ws) : null;
+    if(s && rr.staff[s.id]) setTimeout(() => { try{ bubble2(0, 0, pick(REG_ANS).replace('%', last.toLowerCase()), 2600, rr.staff[s.id]); }catch(e){} }, 1700); }catch(e){} }, 2500); } } }catch(e){} return r; };
+
+/* 2. мини-диалоги двух гостей в очереди */
+const DIALOGS936 = [
+  ['Вы последний?', 'Я крайний. Последний у меня был в 2019-м'], ['Вы тоже за рафом?', 'Я за смыслом. Но раф тоже возьму'],
+  ['Слушай, мы же вместе учились?', 'Я в первый раз в этом районе. Но давай сделаем вид'], ['Пропустите, я только спросить', 'Мы все тут только спросить'],
+  ['Вам не кажется, что очередь не движется?', 'Это мы не движемся. Очередь в порядке'], ['Что посоветуете?', 'Не стоять за мной. Я долго выбираю'],
+  ['Вы с ноутбуком надолго?', 'Пока не допишу диплом. Или пока не выгонят'], ['Девушка, вы уронили улыбку', 'Это не моя, это бариста раздаёт'],
+  ['А тут вкусно?', 'Я третий раз за день. Сами решайте'], ['Вы на каком молоке берёте?', 'На том, которое закончилось перед вами'],
+  ['Можно я вперёд, у меня такси?', 'А у меня жизнь. Тоже уезжает'], ['Это ваш кот?', 'Нет, это местный. Он тут главнее нас обоих'],
+  ['Вы тоже работаете из кофейни?', 'Я работаю на кофейню. Сколько тут уже оставил'], ['Как думаете, круассаны свежие?', 'Свежее, чем мы с вами в понедельник'],
+  ['Не толкайтесь!', 'Я не толкаюсь, я тянусь к витрине']];
+let dialogT936 = 90;
+const _vipTick936d = vipTick;
+vipTick = function(dt){ const r = _vipTick936d.apply(this, arguments); try{ dialogT936 -= dt; if(dialogT936 > 0) return r; dialogT936 = R(80, 160);
+  if(sheet || modals.length || document.hidden || !isWorking()) return r; const q = rt(S.active).queue.filter(g => g.state === 'queue'); if(q.length < 2) return r;
+  const i = RI(0, q.length - 2), a = q[i], b = q[i+1], d = pickLine(DIALOGS936, 'dlg');
+  bubble2(0, 0, d[0], 2600, b); setTimeout(() => { try{ if(a.state !== 'leave') bubble2(0, 0, d[1], 3000, a); }catch(e){} }, 1900); }catch(e){} return r; };
+
+/* 3. гости обсуждают другие кофейни района: лидера сезона и дуэли */
+const GOSSIP936 = ['Говорят, «%» сегодня первые в районе. Надо сходить проверить', 'Был вчера в «%». Там очередь, поэтому я к вам',
+  'Подруга работает в «%», говорит, у них бариста легендарный', 'Видел, как «%» выиграли дуэль. Вы когда?', 'В «%» говорят, кофе лучше. Я пришёл сравнить',
+  '«%» опять в топе. Как они это делают?'];
+function gossipName936(){ try{ const top = (SZ_SNAP.top || []).map(t => t.cafe).filter(n => n && n !== S.name); return top.length ? pick(top.slice(0, 5)) : null; }catch(e){ return null; } }
+
+/* 4. новогодние реплики с 19 декабря по 10 января */
+const NY936 = ['Мне что-нибудь новогоднее. Чтобы с корицей и надеждой', 'Глинтвейн есть? Я с ёлочного базара, замёрз', 'Капучино и мандарин. Мандарин свой, не переживайте',
+  'Ещё не купил ни одного подарка. Можно сначала кофе?', 'У вас тут ёлка или кофемашина так красиво светится?', 'Дайте раф с пряником. Пряник можно отдельно, я его подарю',
+  'Корпоратив был вчера. Сегодня мне просто эспрессо и тишина', 'Тридцать первое через неделю, а у меня ни салата, ни плана', 'Сделайте латте со снежинкой. Это же не сложно?',
+  'Мне какао, как в детстве, когда ждал Деда Мороза', 'Я Дед Мороз. Ну, работаю им. Мне двойной эспрессо, у меня ещё шесть утренников',
+  'Можно стаканчик с ёлочкой? Я его сохраню', 'Загадаю, чтобы в январе вы не закрывались', 'Оливье у вас нет? Жаль. Тогда круассан'];
+function nyNow936(){ try{ const t = typeof srvNow === 'function' ? srvNow() : Date.now(); return t >= Date.parse('2026-12-19T00:00:00+03:00') && t < Date.parse('2027-01-11T00:00:00+03:00'); }catch(e){ return false; } }
+
+const _pickLine936b = pickLine;
+pickLine = function(pool, key){ try{ if(key === 'g' && S){
+    if(nyNow936() && chance(0.25)) return _pickLine936b(NY936, 'g936ny');
+    if(chance(0.05)){ const n = gossipName936(); if(n) return _pickLine936b(GOSSIP936, 'g936g').replace('%', n); } } }catch(e){}
+  return _pickLine936b.apply(this, arguments); };
+setTimeout(() => { try{ loadSzTop(); }catch(e){} }, 8000);
+
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
