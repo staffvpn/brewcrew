@@ -1345,7 +1345,7 @@ function newTasks(){
     if(kind==='inventory'){ goal = 1; label = 'Провести инвентаризацию'; }
     if(kind==='delivery'){ goal = 15 + RI(0,3)*5; label = 'Отдать '+goal+' заказов доставки'; }
     if(kind==='kitchen'){ goal = 15 + RI(0,3)*5; label = 'Продать '+goal+' блюд кухни'; }
-    if(kind==='sell'){ const av = MENU.filter(m=>!m.side && !m.season && isUnlocked(m.id) && !S.tasks.some(t=>t.item===m.id)); if(!av.length) continue; item = pick(av).id; goal = 25 + RI(0,3)*5; label = 'Продать '+goal+': '+MENU.find(x=>x.id===item).n.toLowerCase(); }
+    if(kind==='sell'){ const av = MENU.filter(m=>!m.side && !m.season && !m.bf34 && !m.nb34 && isUnlocked(m.id) && !S.tasks.some(t=>t.item===m.id)); if(!av.length) continue; item = pick(av).id; goal = 25 + RI(0,3)*5; label = 'Продать '+goal+': '+MENU.find(x=>x.id===item).n.toLowerCase(); }
     S.tasks.push({kind, goal, prog:0, label, item, hint:TASK_HINT[kind] || TASK_HINT7[kind], reward: Math.round(daily*0.06/1000)*1000 + 3000, done:false, failed:false, day:S.day});
   }
   S.task = S.tasks[0];
@@ -2098,7 +2098,7 @@ const ACH = [
   ['rival','Поглощение','Выкупить помещение конкурента',S=>S.rivals.some(r=>r.owned),3],
   ['max1','Перфекционист','Любое улучшение до 20 уровня',S=>S.rooms.some(r=>UPG.some(u=>r.upg[u.id]>=MAXL)),2],
   ['maxall','Абсолют','Все улучшения зала на 20 уровне',S=>S.rooms.some(r=>UPG.every(u=>r.upg[u.id]>=MAXL)),5],
-  ['menuall','Полное меню','Открыть все позиции меню',S=>MENU.filter(m=>!m.season).every(m=>isUnlocked(m.id)),3],
+  ['menuall','Полное меню','Открыть все позиции меню',S=>MENU.filter(m=>!m.season && !m.bf34 && !m.nb34).every(m=>isUnlocked(m.id)),3],
   ['book50','Свои люди','Встретить половину гостей',S=>S.seen.g.length>=Math.ceil(GUEST_TOTAL()/2),2],
   ['bookall','Все свои','Встретить всех гостей',S=>S.seen.g.length>=GUEST_TOTAL(),5],
   ['pets20','Зоопарк','Встретить 20 питомцев',S=>S.seen.p.length>=20,2],
@@ -6802,6 +6802,7 @@ function renderMore(p){
   else if(sub==='menu'){
     p.appendChild(el(`<div class="empty" style="font-size:12px">Цены растут с уровнем меню. Новые позиции открываются не за деньги, а по достижениям кофейни.</div>`));
     MENU.forEach(m=>{
+      if((m.bf34 && !S.c.bf34) || (m.nb34 && !S.c.nb34)) return;
       if(m.season && !isUnlocked(m.id)) return;
       const un = isUnlocked(m.id);
       p.appendChild(el(`<div class="card"><div class="row"><span class="t">${m.n}</span><span class="sp"></span>${un?`<span class="tag num">${fmt(itemPrice(m, S.active))} ₽</span>`:'<span class="tag">Закрыто</span>'}</div><div class="d">${un?'Себестоимость ≈'+fmt(needCost(m.need))+' ₽ · продано '+sold(m.id):esc(m.unlock.t)}</div></div>`));
@@ -7321,6 +7322,7 @@ function renderMenu(p){
   p.appendChild(el(`<div class="card chalkboard"><div class="t chalk">Как продавать больше</div><div class="d">Позиция дня: на 15% дешевле и её берут втрое чаще. Рекомендации (до двух): бариста советует их каждому гостю, берут в 1,6 раза чаще по полной цене. Цены растут с уровнем «Меню», новые позиции открываются по достижениям.</div></div>`));
   const P = S.promo || {day:null, rec:[]};
   MENU.forEach(m=>{
+    if((m.bf34 && !S.c.bf34) || (m.nb34 && !S.c.nb34)) return;
     if(m.season && !isUnlocked(m.id)) return;
     if(m.kitchen && !isUnlocked(m.id) && (S.kitchen.tier||0) + 1 < m.kitchen) return;
     const un = isUnlocked(m.id), isDay = P.day===m.id, rec = (P.rec||[]).includes(m.id);
@@ -11085,6 +11087,23 @@ drawRoom = function(id){ _drawRoom34.apply(this, arguments); try{ const def = ro
     for(const t of TABLES) glow2(t.x, t.y-18, 36, '255,180,100', 0.28);
     [92, 150, 208].forEach(x => glow2(x, 130, 46, '255,200,120', 0.22)); }
 }catch(e){} };
+
+/* позиции завтраков и бара: закрыты без покупки, не попадают в задания и рекомендации, в меню подписаны часы */
+const _isUnlocked34 = isUnlocked;
+isUnlocked = function(id){ const m = MENU.find(x => x.id === id); if(m && S && S.c && ((m.bf34 && !S.c.bf34) || (m.nb34 && !S.c.nb34))) return false; return _isUnlocked34.apply(this, arguments); };
+function fixModeTasks34(){ try{ if(!S || !Array.isArray(S.tasks)) return; let ch = false;
+  for(const t of S.tasks){ if(t.kind !== 'sell' || !t.item) continue; const m = MENU.find(x => x.id === t.item); if(!m || !(m.bf34 || m.nb34)) continue;
+    const av = MENU.filter(x => !x.side && !x.season && !x.bf34 && !x.nb34 && isUnlocked(x.id) && !S.tasks.some(q => q.item === x.id)); if(!av.length) continue;
+    const it = pick(av); t.item = it.id; t.prog = 0; t.label = 'Продать '+t.goal+': '+it.n.toLowerCase(); ch = true; }
+  if(S.promo){ const bad = id => { const m = MENU.find(x => x.id === id); return m && (m.bf34 || m.nb34); }; if(bad(S.promo.day)) { S.promo.day = null; ch = true; } if(Array.isArray(S.promo.rec)) S.promo.rec = S.promo.rec.filter(id => !bad(id)); }
+  if(ch) save(); }catch(e){} }
+const _migrate34m = migrate;
+migrate = function(){ _migrate34m.apply(this, arguments); fixModeTasks34(); };
+setTimeout(fixModeTasks34, 3000);
+const _renderMenu34 = renderMenu;
+renderMenu = function(p){ _renderMenu34.apply(this, arguments); try{ p.querySelectorAll('.card.menu-item').forEach(c => { const t = c.querySelector('.t'); if(!t) return; const m = MENU.find(x => x.n === t.textContent.trim()); if(!m || !(m.bf34 || m.nb34)) return;
+  const b = c.querySelector('.d') || c; b.insertAdjacentHTML('beforeend', `<div class="d" style="color:var(--caramel)">${m.bf34 ? 'Только на завтраках, с 6 до 11' : 'Только в ночном баре, с 23 до 5'}</div>`);
+  c.querySelectorAll('button').forEach(btn => { if(/позици|Посоветовать|рекоменд/i.test(btn.textContent)) btn.remove(); }); }); }catch(e){} };
 
 /* ===== 9.3: просмотр чужих кофеен =====
    Снимок зала уходит на сервер раз в 10 минут. Чужой зал рисуется той же отрисовкой, что и свой:
