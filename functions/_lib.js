@@ -65,6 +65,7 @@ export const SHOP = {
   flagship: { title: 'Флагман района', desc: 'Навсегда: золотая анимированная вывеска, золотое имя в рейтингах и дуэлях, легендарный сотрудник с твоим именем, а гости других кофеен рассказывают о тебе.', stars: 5000 },
   uniform: { title: 'Форма персонала', desc: 'Три стиля формы для всей команды: классика, джинса и бордо. Переключается в Настройках. Навсегда.', stars: 100 },
   music: { title: 'Музыка в зале', desc: 'Три плейлиста: джаз, лоу-фай и русский рок. Гости подпевают и обсуждают музыку. Навсегда.', stars: 75 },
+  starter: { title: 'Набор «Первый месяц»', desc: '300 000 рублей в кассу, интерьер «Столовая №1» и двое суток гостей на 30% больше. Один раз.', stars: 49, cash: 1, once: 1 },
   cash_s: { title: 'Конверт от инвестора', desc: 'Игровые деньги: примерно дневная выручка кофейни, не меньше 300 000 ₽.', stars: 25, cash: 1 },
   cash_m: { title: 'Мама дала в долг без процентов', desc: 'Игровые деньги: примерно три дня выручки, не меньше 1 000 000 ₽.', stars: 60, cash: 3 },
   cash_l: { title: 'Чемодан из девяностых', desc: 'Игровые деньги: примерно восемь дней выручки, не меньше 3 000 000 ₽.', stars: 150, cash: 8 },
@@ -72,7 +73,7 @@ export const SHOP = {
 };
 
 // Подарки: что можно подарить и есть ли это уже у получателя
-export const GIFTABLE = id => !!SHOP[id] && !SHOP[id].sub && id !== 'rename' && id !== 'flagship';
+export const GIFTABLE = id => !!SHOP[id] && !SHOP[id].sub && id !== 'rename' && id !== 'flagship' && id !== 'starter';
 export async function giftCheck(env, from, to, item) {
   if (!GIFTABLE(item)) return { ok: false, error: 'Это нельзя подарить' };
   if (!to || to === from) return { ok: false, error: 'Выбери другую кофейню' };
@@ -114,7 +115,7 @@ export async function getBot(env) {
 }
 
 // Рефералы. Привязка друга к пригласившему: только для новых (до 3 суток) и только один раз.
-export const REF_START = 100000, REF_REWARD = 150000, REF_WINDOW = 3 * 86400000;
+export const REF_START = 100000, REF_NOW = 50000, REF_REWARD = 150000, REF_WINDOW = 3 * 86400000;
 const escH = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 export function parseRef(v) { const m = typeof v === 'string' ? v.match(/^ref_(\d{3,15})$/) : null; return m ? Number(m[1]) : null; }
 async function refLog(env, uid, ref, src, res) { try { await env.DB.prepare('INSERT INTO ref_log (tg_id, ref, src, res, at) VALUES (?1, ?2, ?3, ?4, ?5)').bind(uid, ref, src || null, res, Date.now()).run(); } catch {} }
@@ -139,7 +140,9 @@ export async function bindReferrer(env, user, refId, src, force) {
   await refLog(env, user.id, refId, src, 'ok');
   await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at) VALUES (?1, 'refgift', ?2, ?3, ?4)")
     .bind(user.id, REF_START, 'Бонус за вход по приглашению: +100 000 ₽', now).run();
-  try { await tgApi(env, 'sendMessage', { chat_id: refId, parse_mode: 'HTML', text: `По твоей ссылке пришёл <b>${escH(user.first_name || 'друг')}</b>. Когда он дойдёт до 3 уровня, тебе придёт 150 000 ₽.` }); } catch {}
+  await env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at) VALUES (?1, 'refgift', ?2, ?3, ?4)")
+    .bind(refId, REF_NOW, `${user.first_name || 'Друг'} пришёл по твоей ссылке: +50 000 ₽`, now).run();
+  try { await tgApi(env, 'sendMessage', { chat_id: refId, parse_mode: 'HTML', text: `По твоей ссылке пришёл <b>${escH(user.first_name || 'друг')}</b>. Тебе 50 000 ₽ уже ждут в игре, а когда он дойдёт до 3 уровня, придёт ещё 150 000 ₽.` }); } catch {}
   try { await payReferrer(env, user.id); } catch {}
   return true;
 }

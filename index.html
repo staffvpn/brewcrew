@@ -876,6 +876,8 @@ input,textarea,select{font-size:16px!important}
 .dock{grid-template-columns:repeat(4,1fr)!important;gap:5px!important}
 .dockb{flex-direction:column!important;gap:2px!important;min-height:52px!important;font-size:12px!important;padding:4px 2px!important}
 .dockb svg{width:22px!important;height:22px!important}
+.lock938{display:block;font-size:10px;opacity:.65;margin-top:4px}
+.inv938{margin-top:8px;width:100%}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -10335,7 +10337,7 @@ renderSettings = function(p){ _renderSettings27.apply(this, arguments); try{
 /* ---------- магазин: обычная шторка, как Улучшения ---------- */
 const SHOP29_TABS = [['frames','Рамки'],['pass','Пропуск'],['styles','Стили зала'],['atm','Атмосфера'],['vip','Флагман'],['money','Деньги'],['more','Разное']];
 let SHOP29_TAB = 'frames';
-const GIFTABLE29 = id => !/^(sub_owner|rename|flagship)$/.test(id);
+const GIFTABLE29 = id => !/^(sub_owner|rename|flagship|starter)$/.test(id);
 function shop29Items(){ const sub = ownerSub();
   return {
     frames:{d:'Анимированная рамка навсегда: вывеска над меню, рейтинг сезона и дуэли. Надеть другую можно в Настройках.', list: FRAME_SHOP.map(k=>({id:'frame_'+k, n:SIGN_FRAMES[k].n, d:(FRAME29_D[k]||''), stars:1000, owned:frameOwned(k), prev:'frame', k}))},
@@ -11520,7 +11522,7 @@ setTimeout(() => { try{ loadSzTop(); }catch(e){} }, 8000);
 /* ===== 9.3.2 (12.11): реалистичная скорость, затупы, возвраты, арендодатель, тише тосты, склад проще ===== */
 
 /* ---------- скорость: −10% всем, потолок у стойки, усталость сильнее ---------- */
-const CAP937 = 45; /* напитков в игровой час на одного человека за стойкой */
+const CAP937 = 60; /* напитков в игровой час на одного человека за стойкой */
 function hrKey937(){ return S.day*24 + Math.floor(S.gm/60); }
 function served937(room){ const h = S.c.hr937; return h && h.k === hrKey937() ? (h.n[room] || 0) : 0; }
 const _staffSpeed937 = staffSpeed;
@@ -11536,7 +11538,7 @@ const STALL937 = {
   'Бариста':['Ещё раз: раф или латте?', 'Ой, не то молоко. Переделываю', 'Питчер куда-то делся. Вот же он был', 'Я забыл, сколько шотов. Давайте два, на всякий', 'Пена опала. Это знак. Переделаю', 'Секунду, кофемолка решила подумать о жизни'],
   'Официант':['Это был пятый стол или пятый гость?', 'Несу не туда. Разворачиваюсь', 'Кто заказывал сырники? Никто? А кому я их несу?', 'Перепутал заказы двух столов. Минуту'],
   'Повар':['Сырники прилипли. Все. Начинаю заново', 'Где лопатка? Кто взял лопатку?', 'Плита не включается. А, включаю']};
-function stallChance937(s){ let p = 1/40; if((s.lvl||1) < 5) p *= 1.6; if((s.fatigue||0) > 60) p *= 1.5; if(s.quirk === 'sleepy' || s.quirk === 'blogger' || s.quirk === 'philo' || s.quirk === 'lover') p *= 1.5; if(s.quirk === 'workaholic' || s.quirk === 'genius') p *= 0.6; if(s.rank >= 2) p *= 0.6; if(s.legendId || s.prize) p *= 0.3; return p; }
+function stallChance937(s){ let p = 1/80; if((s.lvl||1) < 5) p *= 1.6; if((s.fatigue||0) > 60) p *= 1.5; if(s.quirk === 'sleepy' || s.quirk === 'blogger' || s.quirk === 'philo' || s.quirk === 'lover') p *= 1.5; if(s.quirk === 'workaholic' || s.quirk === 'genius') p *= 0.6; if(s.rank >= 2) p *= 0.6; if(s.legendId || s.prize) p *= 0.3; return p; }
 const _completeOrder937 = completeOrder;
 completeOrder = function(id, g, tapped){ try{
   if(g && g.stallUntil){ if(Date.now() < g.stallUntil){ if(tapped){ g.stallUntil = Date.now() + Math.max(0, (g.stallUntil - Date.now())/2); sfx('tap'); toast('Подсказал — дело пошло быстрее'); } return; } }
@@ -11550,7 +11552,7 @@ completeOrder = function(id, g, tapped){ try{
   try{ if(rt(id).queue.length < qa){ const k = hrKey937(); if(!S.c.hr937 || S.c.hr937.k !== k) S.c.hr937 = {k, n:{}}; S.c.hr937.n[id] = (S.c.hr937.n[id] || 0) + 1;
     /* возврат: остыл, не то молоко, не тот сироп */
     const bar = workingStaff(id).filter(s => s.role === 'Бариста' && !s.isYou); const weak = bar.length && bar.every(s => (s.lvl||1) < 5);
-    if(g && g.item && chance(weak ? 1/30 : 1/55)) setTimeout(() => { try{ const m = MENU.find(x => x.n === g.item); const cost = Math.round(((m && itemPrice(m)) || 300) * 0.4);
+    if(g && g.item && chance(weak ? 1/60 : 1/110)) setTimeout(() => { try{ const m = MENU.find(x => x.n === g.item); const cost = Math.round(((m && itemPrice(m)) || 300) * 0.4);
       spend(cost, 'events', 'Переделка заказа'); if(id === S.active && g.state !== 'gone') bubble2(0, 0, pick(RETURN937).replace('%', g.item.toLowerCase()), 3000, g);
       S.c.returns937 = (S.c.returns937 || 0) + 1; }catch(e){} }, R(2500, 5000)); } }catch(e){}
   return r; };
@@ -11593,6 +11595,56 @@ renderStock = function(p, id){ _renderStock937.apply(this, arguments); try{ if(S
   if(!rows.length) return; rows.forEach(c => { const w = c.querySelector('.row.wrap'); if(w) w.style.display = stockManual937 ? '' : 'none'; });
   const b = el(`<div class="row"><button class="btn ghost">${stockManual937 ? 'Скрыть ручной заказ' : 'Заказать вручную'}</button><span class="d" style="margin-left:8px">Автодозаказ включён — склад пополняется сам</span></div>`);
   b.querySelector('button').onclick = () => { stockManual937 = !stockManual937; sfx('tap'); renderSheet(); }; rows[0].before(b); }catch(e){} };
+
+/* ===== 9.3.3 (13.11): набор новичка, выходные чаевые, пропуск с замками, приглашение после смены ===== */
+
+/* ---------- выходные: чаевые в банке вдвое больше (суббота и воскресенье по Москве) ---------- */
+function weekend938(){ const d = new Date(Date.now() + 3*3600000).getUTCDay(); return d === 0 || d === 6; }
+const _tipDrop938 = tipDrop;
+tipDrop = function(amount){ const j0 = S.tips ? S.tips.jar : 0; _tipDrop938.apply(this, arguments);
+  try{ if(weekend938() && S.tips && S.tips.jar > j0) S.tips.jar = Math.min(tipJarCap(), j0 + (S.tips.jar - j0) * 2); }catch(e){} };
+function weekendNote938(){ try{ if(!S || !S.c || !weekend938()) return; const k = new Date(Date.now() + 3*3600000).toISOString().slice(0, 10);
+  if(S.c.wk938 === k || S.day < 2) return; S.c.wk938 = k; toast('Выходные: чаевые в банке вдвое больше'); }catch(e){} }
+setInterval(weekendNote938, 20000);
+
+/* ---------- набор новичка: 300 000 ₽, интерьер «Столовая №1», 2 суток гостей +30% ---------- */
+function starter938Apply(){ if(!S || !ext34('starter') || S.c.st938) return; S.c.st938 = S.day;
+  addMod('traffic', 1.3, 48, 'Набор «Первый месяц»: гостей +30%');
+  queueModal({kind:'note', title:'Набор «Первый месяц»', text:'Деньги уже в кассе, интерьер «Столовая №1» ждёт в Настройках, а следующие двое суток гостей приходит на 30% больше.'});
+  save(); try{ track(true); }catch(e){} }
+const _refreshEnt938 = refreshEntitlements;
+refreshEntitlements = function(){ const r = _refreshEnt938.apply(this, arguments); setTimeout(() => { try{ starter938Apply(); }catch(e){} }, 2800); return r; };
+const _shop29Items938 = shop29Items;
+shop29Items = function(){ const all = _shop29Items938.apply(this, arguments);
+  try{ if(!ext34('starter')) all.money.list.unshift({id:'starter', n:'Набор «Первый месяц»', d:'Один раз. 300 000 ₽ в кассу, интерьер «Столовая №1» и двое суток гостей на 30% больше.', stars:49, prev:'cash', k:'набор'}); }catch(e){}
+  return all; };
+/* один раз мягко показываем набор тем, кто уже втянулся, но ещё не платил */
+function starterOffer938(){ try{ if(!S || !S.c || S.c.stOf938 || ext34('starter')) return; if((S.lvl||1) < 3 || (S.lvl||1) > 14 || S.day < 3) return;
+  if(S.ent && ((S.ent.extras||[]).length || (S.ent.interiors||[]).length || (S.ent.passes||[]).length)) return;
+  if(modals && modals.length) return; S.c.stOf938 = S.day;
+  queueModal({kind:'starter938'}); save(); }catch(e){} }
+setInterval(starterOffer938, 45000);
+MODAL15.starter938 = (box, m, btn) => { box.append(el(`<div class="eyebrow">Предложение, один раз</div>`), el(`<h2>Набор «Первый месяц»</h2>`),
+  el(`<p>300 000 ₽ в кассу, интерьер «Столовая №1» навсегда и двое суток гостей на 30% больше. Стоит 49 ★, купить можно один раз.</p>`),
+  btn('Посмотреть', () => { closeModal(); openShop('money'); }), btn('Не сейчас', closeModal, 'ghost')); };
+
+/* ---------- пропуск: закрытые платные награды видны с замком ---------- */
+const _renderSeason938 = renderSeason;
+renderSeason = function(p){ _renderSeason938.apply(this, arguments);
+  try{ if(passOwned()) return; const z = szState(), tier = szTier(z);
+    p.querySelectorAll('.sz-cell.p.closed').forEach(c => { if(!c.querySelector('small')) c.appendChild(el(`<small class="lock938">Откроется с пропуском</small>`)); });
+    if(tier >= 1){ const head = p.querySelector('.sz-pass'); if(head && !head.querySelector('.lost938')) head.insertBefore(el(`<div class="d lost938">Платных наград за уже пройденные ступени: ${tier}. Они заберутся сразу, как только появится пропуск.</div>`), head.querySelector('.row.wrap')); }
+  }catch(e){} };
+
+/* ---------- приглашение после смены: награда сразу обоим ---------- */
+const _showModal938 = showModal;
+showModal = function(){ const had = !!$('#modalRoot').firstChild, m0 = modals && modals[0]; _showModal938.apply(this, arguments);
+  try{ if(had || !m0 || m0.kind !== 'z') return; const box = $('#modalRoot .modal'); if(!box || box.querySelector('.inv938') || (S.lvl||1) < 3) return;
+    const b = el(`<button class="btn ghost inv938">Позвать друга · тебе +50 000 ₽ сразу</button>`); b.onclick = () => { sfx('tap'); invite(); };
+    box.appendChild(b); }catch(e){} };
+invite = function(){ withLink(url => { const txt = 'Открыл кофейню «'+S.name+'» в Brew Crew. Заходи по моей ссылке: +100 000 ₽ на старте, а я получу бонус сразу.';
+  if(tg && tg.openTelegramLink){ tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(txt)); return; }
+  try{ navigator.clipboard.writeText(txt+' '+url).then(() => toast('Ссылка скопирована')); }catch(e){} }); };
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */

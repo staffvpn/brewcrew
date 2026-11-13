@@ -4,6 +4,7 @@ import { promoWatch } from '../_promo.js';
 import { opsFor } from '../_admin.js';
 import { channelTick, tourWeek, post as channelPost, worldInfo } from '../_channel.js';
 import { goalTrack, goalInfo } from '../_goal.js';
+import { winbackTick } from '../_winback.js';
 
 const num = (v, max = 1e15) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(n, max)) : 0; };
 const str = (v, len = 40) => (typeof v === 'string' ? v.slice(0, len) : null);
@@ -72,7 +73,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   let world = null; try { world = await worldInfo(env); } catch {}
   const origin = new URL(request.url).origin;
   if (waitUntil) waitUntil(promoWatch(env, user.id).catch(() => {})); else { try { await promoWatch(env, user.id); } catch {} }
-  if (waitUntil) { waitUntil(dispatchReminders(env)); waitUntil(channelTick(env, origin)); } else await dispatchReminders(env);
+  if (waitUntil) { waitUntil(dispatchReminders(env)); waitUntil(channelTick(env, origin)); waitUntil(winbackTick(env).catch(() => {})); } else await dispatchReminders(env);
   const me = await env.DB.prepare('SELECT banned FROM players WHERE tg_id = ?1').bind(user.id).first();
   let ops = [];
   try { ops = await opsFor(env, user.id); } catch {}

@@ -8,6 +8,7 @@ export async function onRequestPost({ request, env }) {
   if (!user || !user.id) return json({ ok: false, error: 'bad initData' }, 401);
   const item = SHOP[body.item];
   if (!item) return json({ ok: false, error: 'unknown item' }, 400);
+  if (item.once && env.DB) { const had = await env.DB.prepare('SELECT 1 x FROM purchases WHERE tg_id = ?1 AND item = ?2 AND refunded = 0').bind(user.id, body.item).first(); if (had) return json({ ok: false, error: 'Этот набор уже куплен' }); }
   // подарок другому игроку: проверяем получателя и что у него этого ещё нет
   let g = 0, gName = '';
   if (body.gift) {
