@@ -897,6 +897,12 @@ input,textarea,select{font-size:16px!important}
 .c940col button{height:28px;border-radius:8px;border:2px solid rgba(0,0,0,.15)}
 .c940 .card .btn{display:block;width:100%;margin-top:6px}
 .c940sub{margin-top:-4px}
+.c941{margin:8px -6px 8px}
+.c941h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 8px 4px;font-size:12px}
+.c941h b{font-size:14px}
+.c941h.me b{color:#c96a12}
+.c941s{overflow-x:auto;overflow-y:hidden;border-radius:10px;-webkit-overflow-scrolling:touch;border:2px solid #2a211b}
+.c941s canvas{display:block;image-rendering:auto}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -11708,7 +11714,7 @@ setInterval(dock940, 1500);
 function openCity940(){ queueModal({kind:'city940'}, true); }
 
 /* карта района */
-function citySvg940(d, onPick){ const W = 330, H = 108, out = [];
+let citySvg940 = function(d, onPick){ const W = 330, H = 108, out = [];
   const rows = [3, 2, 1, 0];
   out.push(`<svg viewBox="0 0 ${W} ${H*4+18}" class="c940map" role="img" aria-label="Карта района">`);
   rows.forEach((st, ri) => { const y0 = ri*H, s = ST940[st];
@@ -11729,7 +11735,7 @@ function citySvg940(d, onPick){ const W = 330, H = 108, out = [];
   out.push(`<text x="8" y="${H*4+13}" class="c940s">Корона — лучшая кофейня улицы за прошлую неделю</text></svg>`);
   const wrap = el(`<div class="c940w">${out.join('')}</div>`);
   wrap.querySelectorAll('.c940b').forEach(g => g.onclick = () => { sfx('tap'); const [s, i] = g.dataset.k.split('_').map(Number); onPick(d.plots.find(q => q.s === s && q.p === i)); });
-  return wrap; }
+  return wrap; };
 
 MODAL15.city940 = (box, m, btn) => { box.classList.add('c940');
   const head = el(`<div class="c940h"><div class="eyebrow">Город</div><h2>Район…</h2></div>`), body = el(`<div><p>Идём по улицам…</p></div>`), card = el(`<div class="c940c"></div>`), mine = el(`<div></div>`);
@@ -11763,6 +11769,109 @@ MODAL15.city940 = (box, m, btn) => { box.classList.add('c940');
 
 /* при входе тихо подтягиваем свою улицу, чтобы бонусы работали без открытия карты */
 setTimeout(() => { try{ if(cityOn940() && S && (!S.c.city940 || Date.now() - (CITY940.at||0) > 3600000)) cityLoad940().catch(() => {}); }catch(e){} }, 9000);
+
+/* ===== Город: нарисованные улицы-панорамы (вместо схемы) ===== */
+function rng941(seed){ let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function shade941(hex, k){ const n = parseInt(hex.slice(1), 16); const f = v => Math.max(0, Math.min(255, Math.round(v * k))); return 'rgb('+f(n >> 16)+','+f(n >> 8 & 255)+','+f(n & 255)+')'; }
+const A941 = {BW:84, PAD:22, H:132, GY:102, K:3};
+function drawStreet941(cv, d, st){ const {BW, PAD, H, GY, K} = A941, W = PAD*2 + BW*12; cv.width = W*K; cv.height = H*K;
+  const c = cv.getContext('2d'); c.setTransform(K, 0, 0, K, 0, 0); c.imageSmoothingEnabled = false;
+  const R = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+  const T = (s, x, y, col, size, align) => { c.fillStyle = col; c.font = '700 '+(size||6)+'px system-ui, sans-serif'; c.textAlign = align || 'center'; c.textBaseline = 'middle'; c.fillText(s, x, y); };
+  const r0 = rng941(d.district*97 + st*13 + 5);
+  /* небо и задний план */
+  const SKY = ['#cfe3ee', '#d6dde8', '#ecdfcf', '#cdeaf3'][st]; R(0, 0, W, H, SKY);
+  for(let i = 0; i < 9; i++){ const x = r0()*W, y = 6 + r0()*16, w = 18 + r0()*22; R(x, y, w, 4, '#ffffff'); R(x+4, y-3, w-10, 3, '#ffffff'); }
+  if(st === 0){ for(let x = -10; x < W; x += 118){ const h = 62 + Math.floor(r0()*22), w = 96, col = r0() < .5 ? '#bcc5cc' : '#cbc2b5'; const y = GY - h - 8; R(x, y, w, h + 8, col); R(x, y, w, 3, shade941('#8a8f94', 1));
+      for(let wy = y + 7; wy < GY - 14; wy += 9) for(let wx = x + 5; wx < x + w - 6; wx += 9) R(wx, wy, 5, 5, r0() < .22 ? '#f6dd8e' : '#8ea4b5');
+      R(x + w - 14, y - 6, 2, 6, '#777'); R(x + 10, y - 4, 8, 4, '#9aa0a5'); } }
+  if(st === 1){ R(0, 44, W, 5, '#6c6763'); R(0, 42, W, 2, '#8a847e'); for(let x = 20; x < W; x += 64){ R(x, 49, 6, GY - 49, '#7d7771'); R(x - 3, 49, 12, 3, '#6c6763'); }
+    let tx = 150 + r0()*200; R(tx, 28, 40, 14, '#b23b33'); R(tx + 30, 24, 10, 6, '#8f2d27'); R(tx + 4, 31, 8, 6, '#cfe6f2'); R(tx + 16, 31, 8, 6, '#cfe6f2');
+    for(let k = 1; k <= 6; k++){ const wx = tx + k*44; R(wx, 30, 40, 12, k % 2 ? '#4f6b8a' : '#6f8a5a'); for(let q = 0; q < 4; q++) R(wx + 4 + q*9, 33, 6, 5, '#dff0f8'); R(wx - 4, 38, 4, 2, '#444'); }
+    for(let x = tx; x < tx + 7*44; x += 11) R(x + 2, 42, 4, 2, '#2c2c2c'); }
+  if(st === 2){ for(let x = -6; x < W; ){ const w = 30 + Math.floor(r0()*30), h = 60 + Math.floor(r0()*38), col = ['#b9a48f', '#a89684', '#c4b39f', '#9b8f86'][Math.floor(r0()*4)]; const y = GY - h; R(x, y, w, h, col); R(x, y - 2, w, 2, shade941('#6b5d52', 1));
+      for(let wy = y + 5; wy < GY - 30; wy += 8) for(let wx = x + 4; wx < x + w - 5; wx += 7) R(wx, wy, 3, 5, r0() < .3 ? '#f6dd8e' : '#7d8894'); if(r0() < .25){ R(x + w/2 - 1, y - 14, 2, 12, '#6b5d52'); R(x + w/2 - 3, y - 16, 6, 3, '#b23b33'); } x += w + 2 + Math.floor(r0()*6); }
+    R(0, 50, W, 1, '#4a4a4a'); }
+  if(st === 3){ R(W - 120, 8, 16, 16, '#ffe9a6'); R(0, 60, W, GY - 60, '#bfe0c9'); for(let x = 0; x < W; x += 46){ const h = 10 + r0()*14; R(x, 60 - h, 50, h, '#9fcfae'); R(x + 8, 56 - h, 30, 5, '#9fcfae'); }
+    for(let i = 0; i < 6; i++){ const x = r0()*W, y = 26 + r0()*20; R(x, y, 3, 1, '#566'); R(x + 4, y, 3, 1, '#566'); R(x + 3, y + 1, 1, 1, '#566'); } }
+  /* тротуар и дорога или набережная */
+  if(st === 3){ R(0, GY, W, 10, '#e3d3b4'); for(let x = 0; x < W; x += 7) R(x, GY, 1, 10, '#cdbb99'); R(0, GY + 10, W, H - GY - 10, '#5f9bbd'); R(0, GY + 10, W, 2, '#8a8176');
+    for(let i = 0; i < 90; i++){ const x = r0()*W, y = GY + 14 + r0()*(H - GY - 16); R(x, y, 5 + r0()*6, 1, '#9cc8de'); }
+    for(let x = 4; x < W; x += 12){ R(x, GY + 3, 1, 8, '#3d3a37'); } R(0, GY + 3, W, 1, '#3d3a37'); R(0, GY + 6, W, 1, '#3d3a37');
+    for(let i = 0; i < 4; i++){ const x = 60 + r0()*(W - 140), y = GY + 17 + r0()*6; R(x, y, 26, 5, ['#fff', '#b23b33', '#2f5f8a', '#e9c46a'][i]); R(x + 3, y + 5, 20, 2, '#3a2c22'); R(x + 12, y - 16, 1, 16, '#5a4a3a'); R(x + 13, y - 15, 9, 11, '#fdf6e3'); R(x + 13, y - 15, 9, 1, '#d9cdb3'); } }
+  else { const pv = st === 2 ? '#d9cbb5' : '#cfc7ba'; R(0, GY, W, 9, pv); for(let x = 0; x < W; x += 8) R(x, GY, 1, 9, shade941(st === 2 ? '#d9cbb5' : '#cfc7ba', .9)); R(0, GY + 9, W, 2, '#9b948a');
+    R(0, GY + 11, W, H - GY - 11, st === 2 ? '#7b746f' : '#6d6a69'); if(st === 2) for(let i = 0; i < 260; i++) R(r0()*W, GY + 12 + r0()*(H - GY - 13), 3, 2, '#857e78');
+    for(let x = 6; x < W; x += 22) R(x, GY + 20, 10, 1, '#e8e2d2'); for(const cx of [PAD + BW*3 - 6, PAD + BW*9 - 6]) for(let q = 0; q < 5; q++) R(cx + q*5, GY + 12, 3, H - GY - 13, '#ece6d6');
+    if(st === 2){ R(0, GY + 15, W, 1, '#4b4744'); R(0, GY + 25, W, 1, '#4b4744'); }
+    const cars = st === 2 ? 3 : 5; for(let i = 0; i < cars; i++){ const x = 30 + r0()*(W - 80), y = GY + (r0() < .5 ? 12 : 21), col = ['#c0392b', '#2f6f9f', '#e9c46a', '#f1f1ee', '#3d5a45', '#22252b'][Math.floor(r0()*6)];
+      R(x, y + 2, 24, 5, col); R(x + 4, y - 1, 14, 4, col); R(x + 5, y, 5, 3, '#cfe6f2'); R(x + 12, y, 5, 3, '#cfe6f2'); R(x + 3, y + 6, 4, 3, '#1d1d1d'); R(x + 17, y + 6, 4, 3, '#1d1d1d'); R(x + 23, y + 3, 1, 2, '#ffe9a6'); }
+    if(st === 2){ const x = 380 + r0()*200; R(x, GY + 10, 62, 12, '#c8452f'); R(x, GY + 10, 62, 3, '#f3e7d3'); for(let q = 0; q < 6; q++) R(x + 4 + q*10, GY + 13, 7, 5, '#cfe6f2'); R(x + 6, GY + 22, 6, 2, '#1d1d1d'); R(x + 50, GY + 22, 6, 2, '#1d1d1d'); R(x + 30, 50, 1, GY - 40, '#4a4a4a'); }
+    if(st === 1){ const x = 620 + r0()*120; R(x, GY + 11, 46, 11, '#e9c46a'); for(let q = 0; q < 5; q++) R(x + 3 + q*9, GY + 13, 6, 4, '#cfe6f2'); R(x + 5, GY + 22, 5, 2, '#1d1d1d'); R(x + 36, GY + 22, 5, 2, '#1d1d1d'); } }
+  /* дома */
+  const WALL = ['#ead9bf', '#dcbc9d', '#c9a58b', '#bcc8c3', '#e5d0d2', '#d0d8c3', '#d9c8a7', '#bb8d78', '#aab6c6', '#efe3cf'];
+  const hits = [];
+  for(let i = 0; i < 12; i++){ const p = d.plots.find(q => q.s === st && q.p === i), x0 = PAD + i*BW, x = x0 + 6, bw = BW - 12; const r = rng941(d.district*1000 + st*100 + i*7 + 3);
+    /* между домами: дерево или фонарь */
+    if(i % 2){ R(x0 - 1, GY - 16, 2, 16, '#6b4a34'); R(x0 - 7, GY - 30, 14, 12, '#5f9a5b'); R(x0 - 5, GY - 34, 10, 5, '#6fae69'); R(x0 - 9, GY - 25, 4, 5, '#5f9a5b'); R(x0 + 4, GY - 22, 5, 4, '#4f8a4f'); }
+    else { R(x0 - 1, GY - 30, 1, 30, '#33302d'); R(x0 - 3, GY - 33, 5, 3, '#33302d'); R(x0 - 2, GY - 31, 3, 2, '#ffe9a6'); R(x0 - 2, GY - 1, 3, 1, '#33302d'); }
+    if(!p){ if(i === 0){ const h = 76, top = GY - h; R(x, top, bw, h, '#2f2823'); R(x - 2, top - 3, bw + 4, 4, '#c79a3a'); for(let f = 0; f < 2; f++) for(let k = 0; k < 3; k++) R(x + 8 + k*21, top + 9 + f*19, 12, 13, '#1c1815');
+        R(x + 5, GY - 44, bw - 10, 12, '#c79a3a'); T('УГОЛ · 250 ★', x + bw/2, GY - 38, '#2a211b', 6.5); R(x + 6, GY - 26, bw - 12, 22, '#1c1815'); for(let k = 0; k < 8; k++) R(x + 6, GY - 26 + k*3, bw - 12, 1, '#3a322c'); }
+      else { R(x - 4, GY - 6, bw + 8, 6, '#b79f7c'); for(let k = 0; k < Math.floor((bw + 8)/6); k++){ R(x - 4 + k*6, GY - 22 - (k % 3 === 0 ? 2 : 0), 5, 22, k % 2 ? '#c9a574' : '#b8935f'); } R(x - 4, GY - 16, bw + 8, 1, '#8a6a42');
+        R(x + bw/2 - 22, GY - 40, 44, 12, '#f5e9d0'); R(x + bw/2 - 22, GY - 40, 44, 1, '#8a6a42'); T('СВОБОДНО', x + bw/2, GY - 34, '#6b4a34', 6); R(x + bw/2 - 1, GY - 28, 2, 8, '#8a6a42');
+        R(x + 8, GY - 58, 2, 36, '#e2a13a'); R(x + 8, GY - 58, 30, 2, '#e2a13a'); R(x + 36, GY - 56, 1, 10, '#555'); R(x + 33, GY - 46, 7, 5, '#9a8f84'); }
+      continue; }
+    const corner = i === 0, h = (corner ? 84 : 68) + Math.floor(r()*3)*6, top = GY - h, wall = corner ? '#f1e6d0' : WALL[Math.floor(r()*WALL.length)], col = p.color, dark = shade941(col, .7), dim = p.sleep;
+    R(x, top, bw, h, wall); R(x + bw - 4, top, 4, h, shade941(wall.startsWith('#') ? wall : '#ead9bf', .88)); for(let k = 0; k < 14; k++) R(x + 2 + r()*(bw - 10), top + 4 + r()*(h - 50), 4, 1, shade941(wall, .93));
+    const roof = corner ? 3 : Math.floor(r()*3);
+    if(roof === 0){ R(x - 2, top - 3, bw + 4, 4, shade941(wall, .7)); R(x + 8 + r()*30, top - 9, 10, 6, '#9aa0a5'); R(x + bw - 14, top - 14, 1, 11, '#555'); R(x + bw - 17, top - 12, 7, 1, '#555'); }
+    else if(roof === 1){ const rc = ['#9a5a47', '#7a4b3c', '#5f6b76'][Math.floor(r()*3)]; for(let k = 0; k < 9; k++) R(x - 3 + k*4, top - 2 - k*2, bw + 6 - k*8, 2, k % 2 ? rc : shade941(rc.length === 7 ? rc : '#9a5a47', .9)); R(x + bw - 20, top - 20, 7, 12, '#8b6f5f'); R(x + bw - 21, top - 21, 9, 2, '#6b5145'); }
+    else if(roof === 2){ R(x - 1, top - 12, bw + 2, 12, '#5f6b76'); R(x - 2, top - 1, bw + 4, 2, '#49535c'); for(let k = 0; k < 2; k++){ R(x + 14 + k*30, top - 10, 10, 9, '#e9e2d2'); R(x + 16 + k*30, top - 8, 6, 6, dim ? '#55606b' : '#f6dd8e'); } }
+    else { R(x - 2, top - 3, bw + 4, 4, '#c79a3a'); R(x + bw/2 - 12, top - 22, 24, 19, '#f1e6d0'); R(x + bw/2 - 14, top - 26, 28, 5, '#c79a3a'); R(x + bw/2 - 8, top - 32, 16, 6, '#d8ad4a'); R(x + bw/2 - 1, top - 40, 2, 8, '#c79a3a'); R(x + bw/2 - 5, top - 17, 10, 10, '#2a211b'); R(x + bw/2 - 1, top - 16, 1, 5, '#f5e2c4'); R(x + bw/2 - 1, top - 12, 4, 1, '#f5e2c4'); }
+    for(let wy = top + 8; wy + 14 < GY - 46; wy += 19) for(let k = 0; k < 3; k++){ const wx = x + 8 + k*21, lit = !dim && r() < .6; R(wx - 1, wy - 1, 14, 16, '#fbf5e9'); R(wx, wy, 12, 14, lit ? '#f6dd8e' : '#7f96a8'); R(wx + 5, wy, 1, 14, '#fbf5e9'); R(wx, wy + 6, 12, 1, '#fbf5e9'); R(wx - 2, wy + 15, 16, 2, shade941(wall, .75));
+      if(lit && r() < .4) R(wx + 1, wy + 8, 4, 6, '#d8b46a'); if(r() < .3){ R(wx - 1, wy + 13, 14, 3, '#7a5a3c'); for(let q = 0; q < 4; q++) R(wx + q*3 + 1, wy + 11, 2, 2, ['#e0567a', '#f2c14e', '#e86a4f'][q % 3]); }
+      if(r() < .25){ R(wx - 4, wy - 1, 3, 16, dark); R(wx + 13, wy - 1, 3, 16, dark); } }
+    /* вывеска */
+    const neon = p.neon && !dim; if(neon){ c.globalAlpha = .28; R(x + 2, GY - 48, bw - 4, 16, '#ff4fc8'); c.globalAlpha = 1; }
+    R(x + 5, GY - 45, bw - 10, 11, neon ? '#3a0f33' : '#2a211b'); R(x + 5, GY - 45, bw - 10, 1, neon ? '#ff7bdc' : dark); R(x + 5, GY - 35, bw - 10, 1, neon ? '#ff7bdc' : dark);
+    let nm = String(p.cafe || 'Кофейня').toUpperCase(); if(nm.length > 13) nm = nm.slice(0, 12) + '…'; T(nm, x + bw/2, GY - 39.5, neon ? '#ffd3f4' : '#f5e2c4', nm.length > 9 ? 5.5 : 6.5);
+    /* маркиза */
+    R(x - 2, GY - 34, bw + 4, 2, dark); for(let k = 0; k < Math.ceil((bw + 4)/6); k++){ const sc = k % 2 ? col : '#fff7e8'; R(x - 2 + k*6, GY - 32, Math.min(6, bw + 2 - k*6), 7, sc); R(x - 1 + k*6, GY - 25, 4, 2, sc); }
+    /* витрина и дверь */
+    const ww = bw - 26; R(x + 4, GY - 22, ww, 19, '#4a382b');
+    if(dim){ R(x + 5, GY - 21, ww - 2, 17, '#8d9298'); for(let k = 0; k < 6; k++) R(x + 5, GY - 21 + k*3, ww - 2, 1, '#74797f'); }
+    else { R(x + 5, GY - 21, ww - 2, 17, '#f2c877'); R(x + 5, GY - 21, ww - 2, 5, '#f8dda0'); R(x + 7, GY - 10, ww - 14, 6, '#7a4f33'); R(x + 7, GY - 11, ww - 14, 1, '#f5e2c4'); R(x + 9, GY - 16, 7, 5, '#c9cdd1'); R(x + 10, GY - 18, 5, 2, '#9aa0a5');
+      for(let k = 0; k < 3; k++){ R(x + 12 + k*12, GY - 21, 1, 3, '#3a2c22'); R(x + 10 + k*12, GY - 18, 5, 2, '#3a2c22'); } R(x + 24, GY - 17, 4, 4, '#e8b98a'); R(x + 23, GY - 13, 6, 3, col); R(x + ww - 12, GY - 15, 4, 4, '#d9a57c'); R(x + ww - 13, GY - 11, 6, 5, '#55606b');
+      R(x + 5 + (ww - 2)/2, GY - 21, 1, 17, '#4a382b'); }
+    R(x + bw - 19, GY - 22, 14, 22, dark); R(x + bw - 17, GY - 20, 10, 11, dim ? '#74797f' : '#f8dda0'); R(x + bw - 8, GY - 9, 1, 3, '#f5e2c4'); R(x + bw - 21, GY - 1, 18, 1, '#8a8176');
+    if(!dim){ R(x + bw - 16, GY - 18, 8, 5, '#fff7e8'); T('ОТКР', x + bw - 12, GY - 15.3, '#3a2c22', 3); }
+    R(x + bw - 2, GY - 52, 6, 1, '#33302d'); R(x + bw + 1, GY - 51, 6, 7, col); R(x + bw + 2, GY - 49, 4, 3, '#fff7e8'); R(x + bw + 3, GY - 51, 1, 1, '#33302d');
+    /* улица перед домом */
+    const ex = Math.floor(r()*4); R(x + 5, GY - 4, ww, 4, '#7a5a3c'); for(let q = 0; q < Math.floor(ww/4); q++) R(x + 6 + q*4, GY - 6, 2, 2, ['#e0567a', '#f2c14e', '#6fae69', '#e86a4f'][q % 4]);
+    if(ex === 0 && !dim){ R(x + 8, GY - 1, 1, 8, '#33302d'); R(x + 3, GY + 1, 11, 1, '#5a4a3a'); R(x + 1, GY - 10, 15, 3, col); R(x + 3, GY - 12, 11, 2, col); R(x + 2, GY + 3, 3, 4, '#5a4a3a'); R(x + 12, GY + 3, 3, 4, '#5a4a3a'); }
+    if(ex === 1){ R(x + 10, GY + 1, 9, 9, '#2f2a26'); R(x + 11, GY + 2, 7, 6, '#3f4a3c'); R(x + 12, GY + 3, 5, 1, '#f5e2c4'); R(x + 12, GY + 5, 4, 1, '#f5e2c4'); }
+    if(ex === 2){ R(x + 6, GY + 4, 16, 2, '#7a5a3c'); R(x + 6, GY + 1, 16, 1, '#7a5a3c'); R(x + 7, GY + 6, 1, 3, '#33302d'); R(x + 20, GY + 6, 1, 3, '#33302d'); }
+    if(ex === 3){ R(x + 8, GY + 4, 5, 5, 'rgba(0,0,0,0)'); c.strokeStyle = '#33302d'; c.lineWidth = 1; c.strokeRect(x + 7.5, GY + 3.5, 5, 5); c.strokeRect(x + 16.5, GY + 3.5, 5, 5); R(x + 10, GY + 3, 9, 1, '#b23b33'); R(x + 13, GY + 1, 1, 3, '#b23b33'); }
+    /* отметки */
+    if(p.crown){ const cx = x + bw/2, cy = top - (roof === 1 ? 26 : roof === 3 ? 48 : 16); c.fillStyle = '#e8b33a'; c.beginPath(); c.moveTo(cx - 9, cy + 9); c.lineTo(cx - 9, cy); c.lineTo(cx - 4.5, cy + 4); c.lineTo(cx, cy - 3); c.lineTo(cx + 4.5, cy + 4); c.lineTo(cx + 9, cy); c.lineTo(cx + 9, cy + 9); c.closePath(); c.fill(); R(cx - 9, cy + 7, 18, 2, '#c7912a'); R(cx - 1, cy + 3, 2, 2, '#e0567a'); }
+    if(p.friend){ R(x + 6, top - 16, 1, 14, '#33302d'); R(x + 7, top - 16, 22, 8, '#4caf6a'); T('ДРУГ', x + 18, top - 11.7, '#fff', 5); }
+    if(p.me){ c.strokeStyle = '#f08a24'; c.lineWidth = 2; c.strokeRect(x - 3, top - 5, bw + 6, h + 6); R(x + bw/2 - 13, 3, 26, 11, '#f08a24'); T('ТЫ', x + bw/2, 8.7, '#fff', 7); c.fillStyle = '#f08a24'; c.beginPath(); c.moveTo(x + bw/2 - 4, 14); c.lineTo(x + bw/2 + 4, 14); c.lineTo(x + bw/2, 19); c.closePath(); c.fill(); }
+    hits.push({i, p}); }
+  /* прохожие */
+  const rp = rng941(d.district*31 + st*17 + 9); for(let i = 0; i < 16; i++){ const x = 10 + rp()*(W - 20), y = GY + 1 + rp()*2, cl = ['#b23b33', '#2f5f8a', '#3d5a45', '#e9c46a', '#7d6a9e', '#22252b', '#d98a5f'][Math.floor(rp()*7)];
+    R(x, y - 4, 3, 3, ['#e8b98a', '#d9a57c', '#c98e66'][Math.floor(rp()*3)]); R(x, y - 5, 3, 1, ['#3a2c22', '#8a5a2c', '#d9c06a', '#22252b'][Math.floor(rp()*4)]); R(x - 1, y - 1, 5, 5, cl); R(x, y + 4, 1, 3, '#2c2c2c'); R(x + 2, y + 4, 1, 3, '#2c2c2c'); if(rp() < .35){ R(x + 4, y, 2, 3, '#fff7e8'); } }
+  return hits; }
+
+function cityStreets941(d, onPick){ const {BW, PAD, H} = A941, W = PAD*2 + BW*12, wrap = el(`<div class="c941"></div>`);
+  [3, 2, 1, 0].forEach(st => { const s = ST940[st], mine = d.street === st;
+    wrap.appendChild(el(`<div class="c941h${mine ? ' me' : ''}"><b>${s.n}</b><span>${s.g > 1 ? 'гостей +'+Math.round((s.g - 1)*100)+'%' : 'старт'} · аренда ×${String(s.r).replace('.', ',')}${mine ? ' · ты здесь' : ''}</span></div>`));
+    const sc = document.createElement('div'), cv = document.createElement('canvas'); sc.className = 'c941s'; sc.appendChild(cv); cv.style.width = (W*2)+'px'; cv.style.height = (H*2)+'px';
+    try{ drawStreet941(cv, d, st); }catch(e){ console.error(e); }
+    cv.onclick = e => { const b = cv.getBoundingClientRect(), x = (e.clientX - b.left)/b.width*W, i = Math.floor((x - PAD)/BW); const p = d.plots.find(q => q.s === st && q.p === i); if(p){ sfx('tap'); onPick(p); } };
+    wrap.appendChild(sc);
+    if(mine) setTimeout(() => { try{ sc.scrollLeft = Math.max(0, (PAD + d.plot*BW + BW/2)*2 - sc.clientWidth/2); }catch(e){} }, 60); });
+  wrap.appendChild(el(`<div class="d">Листай улицы вбок. Нажми на дом, чтобы узнать хозяина и зайти в гости. Корона на крыше — лучшая кофейня улицы за прошлую неделю.</div>`));
+  return wrap; }
+citySvg940 = cityStreets941;
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
