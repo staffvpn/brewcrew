@@ -10351,10 +10351,10 @@ function shop29Items(){ const sub = ownerSub();
     vip:{d:'Самая большая покупка в игре. Её видят все: в рейтинге, в дуэлях, в гостях у тебя и даже в чужих кофейнях.', list:[
       {id:'flagship', n:'Флагман района', d:'Золотая анимированная вывеска «Флагман», золотое имя в рейтингах и дуэлях, легендарный сотрудник с твоим именем, гости других кофеен рассказывают о тебе. Навсегда.', stars:5000, owned:ext34('flagship'), prev:'flag'}]},
     money:{d:'Игровые деньги приходят сразу. Сумма считается от твоей выручки, но не меньше указанной.', list:[
-      {id:'cash_s', n:'Конверт от инвестора', d:'Около дня выручки, сейчас +'+fmt(cashPack(1))+' ₽', stars:25, prev:'cash', k:'1 день'},
-      {id:'cash_m', n:'Мама дала в долг без процентов', d:'Около трёх дней выручки, сейчас +'+fmt(cashPack(3))+' ₽', stars:60, prev:'cash', k:'3 дня'},
-      {id:'cash_l', n:'Чемодан из девяностых', d:'Около восьми дней выручки, сейчас +'+fmt(cashPack(8))+' ₽', stars:150, prev:'cash', k:'8 дней'},
-      {id:'cash_xl', n:'Спонсор из Дубая', d:'Около двадцати дней выручки, сейчас +'+fmt(cashPack(20))+' ₽', stars:350, prev:'cash', k:'20 дней'}]},
+      {id:'cash_s', n:'Конверт от инвестора', d:'Около дня выручки, сейчас +'+fmt(cashPack(1))+' ₽ без налога и сутки гостей +20%', stars:25, prev:'cash', k:'1 день'},
+      {id:'cash_m', n:'Мама дала в долг без процентов', d:'Около трёх дней выручки, сейчас +'+fmt(cashPack(3))+' ₽ без налога и сутки гостей +20%', stars:60, prev:'cash', k:'3 дня'},
+      {id:'cash_l', n:'Чемодан из девяностых', d:'Около восьми дней выручки, сейчас +'+fmt(cashPack(8))+' ₽ без налога и сутки гостей +20%', stars:150, prev:'cash', k:'8 дней'},
+      {id:'cash_xl', n:'Спонсор из Дубая', d:'Около двадцати дней выручки, сейчас +'+fmt(cashPack(20))+' ₽ без налога и сутки гостей +20%', stars:350, prev:'cash', k:'20 дней'}]},
     more:{d:'Подписка и смена названия.', list:[
       {id:'sub_owner', n:'Подписка «Владелец»', d: sub ? 'Активна до '+new Date(S.ent.sub).toLocaleDateString('ru-RU') : 'Кофейня без тебя работает до 24 часов, офлайн-доход 80%. 30 дней.', stars:150, owned:!!sub, prev:'sub'},
       {id:'rename', n:'Новое название кофейни', d: renamesLeft() ? 'Куплено смен: '+renamesLeft()+'. Сменить можно в Настройках.' : 'Одна смена названия. Новое название должно быть свободным.', stars:50, prev:'rename'}]}
@@ -11256,7 +11256,7 @@ function michDay931(){ const m = mich931(); if(S.level < MICH_LVL) return;
     ['Очередь: не больше 3 ушли, не дождавшись', ((f.lost||{}).wait || 0) <= 3],
     ['Ушли недовольными не больше 1%', angry <= Math.max(2, guests * 0.01)],
     ['Ни одной ошибки бариста', mist === 0],
-    ['Мебель от 70%', wear931('main') >= 70]];
+    ['Зал чистый', dirtLevel('main') < 0.25]];
   const ok = ch.filter(x => x[1]).length, was = m.stars;
   if(ok === 6 && m.stars < 3) m.stars++; else if(ok <= 3 && m.stars > 0) m.stars--;
   m.hist.unshift({day:S.day, ok, stars:m.stars}); m.hist = m.hist.slice(0, 10); m.next = S.day + RI(10, 20);
@@ -11645,6 +11645,27 @@ showModal = function(){ const had = !!$('#modalRoot').firstChild, m0 = modals &&
 invite = function(){ withLink(url => { const txt = 'Открыл кофейню «'+S.name+'» в Brew Crew. Заходи по моей ссылке: +100 000 ₽ на старте, а я получу бонус сразу.';
   if(tg && tg.openTelegramLink){ tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(txt)); return; }
   try{ navigator.clipboard.writeText(txt+' '+url).then(() => toast('Ссылка скопирована')); }catch(e){} }); };
+
+/* ===== 9.3.4 (14.11): откат урезаний ===== */
+/* износ мебели убран: всегда 100%, без карточки ремонта и без штрафов */
+wear931 = function(){ return 100; };
+wearDay931 = function(){};
+wearCard931 = function(){ return el('<div></div>'); };
+/* налог: не больше +30% к прежним 5% */
+taxCalc = function(rev){ const t = Math.min(rev,1e6)*0.05 + Math.max(0,Math.min(rev,3e6)-1e6)*0.065 + Math.max(0,rev-3e6)*0.075; return Math.min(t, rev*0.065); };
+/* арендодатель: поднимает аренду не чаще раза в 30 игровых дней */
+const _landlordSet939 = landlordSet937;
+landlordSet937 = function(mul, why){ if(mul > 1){ const last = S.c.rentUp939 || -999; if(S.day - last < 30) return why + ' В этот раз аренду не поднял.'; S.c.rentUp939 = S.day; }
+  return _landlordSet939.apply(this, arguments); };
+/* конверт: деньги без налога (как и было) и сутки гостей +20% */
+const _income939 = income;
+income = function(v, cat){ _income939.apply(this, arguments); try{ if(cat === 'donate' && v >= 100000) addMod('traffic', 1.2, 24, 'Конверт: гостей +20% на сутки'); }catch(e){} };
+/* подарок всем один раз */
+function gift939(){ try{ if(!S || !S.c || S.c.gift939 || S.day < 2) return; if(modals && modals.length) return;
+  S.c.gift939 = S.day; S.money += 200000; addMod('check', 2, 24, 'Подарок: выручка ×2 на сутки');
+  queueModal({kind:'note', title:'Спасибо, что остаёшься', text:'Мы убрали износ мебели, снизили налог и реже поднимаем аренду. В кассу уже упало 200 000 ₽, а следующие игровые сутки выручка с каждого заказа двойная.'});
+  save(); }catch(e){} }
+setInterval(gift939, 8000);
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
