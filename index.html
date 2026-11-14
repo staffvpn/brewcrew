@@ -878,6 +878,25 @@ input,textarea,select{font-size:16px!important}
 .dockb svg{width:22px!important;height:22px!important}
 .lock938{display:block;font-size:10px;opacity:.65;margin-top:4px}
 .inv938{margin-top:8px;width:100%}
+.dock.d5{grid-template-columns:repeat(5,1fr)!important}
+.c940 .c940w{margin:8px -4px 6px;border-radius:12px;overflow:hidden}
+.c940map{display:block;width:100%;height:auto}
+.c940map .c940s{font-size:9.5px;fill:#6b5646}
+.c940map .c940n{font-size:8px;fill:#fff}
+.c940map .c940m{font-size:10px;fill:#2a211b;font-weight:700}
+.c940map .c940e{font-size:12px;fill:#7a6a58}
+.c940map .c940g{font-size:10px;fill:#e8b33a}
+.c940map .c940f{font-size:9px;fill:#fff}
+.c940map .c940b{cursor:pointer}
+.c940c{background:#fffaf2;border:1px solid #d8c9b2;border-radius:12px;padding:10px 12px;margin-bottom:10px;color:#2a211b}
+.c940c .btn{margin-top:8px;width:100%}
+.c940ct{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.c940cr{font-size:11px;background:#e8b33a;color:#3b2a06;padding:2px 7px;border-radius:8px}
+.c940fr{font-size:11px;background:#4caf6a;color:#fff;padding:2px 7px;border-radius:8px}
+.c940col{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+.c940col button{height:28px;border-radius:8px;border:2px solid rgba(0,0,0,.15)}
+.c940 .card .btn{display:block;width:100%;margin-top:6px}
+.c940sub{margin-top:-4px}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -11666,6 +11685,84 @@ function gift939(){ try{ if(!S || !S.c || S.c.gift939 || S.day < 2) return; if(m
   queueModal({kind:'note', title:'Спасибо, что остаёшься', text:'Мы убрали износ мебели, снизили налог и реже поднимаем аренду. В кассу уже упало 200 000 ₽, а следующие игровые сутки выручка с каждого заказа двойная.'});
   save(); }catch(e){} }
 setInterval(gift939, 8000);
+
+/* ===== Город (готовится, выпуск по команде): районы, 4 улицы, соседи, короны недели ===== */
+const CITY940 = {data:null, at:0, sel:null, busy:false};
+const ST940 = [{n:'Спальный район', g:1, r:1, lv:1, cost:0}, {n:'У вокзала', g:1.15, r:1.3, lv:10, cost:500000}, {n:'Центр', g:1.25, r:1.6, lv:20, cost:1500000}, {n:'Набережная', g:1.4, r:2, lv:30, cost:4000000}];
+const ADM940 = [929887068, 432943377];
+function cityOn940(){ try{ return !!((typeof CFG !== 'undefined' && CFG && CFG.city) || ADM940.includes(Number(myId()))); }catch(e){ return false; } }
+function myStreet940(){ return S && S.c && S.c.city940 ? S.c.city940.st : null; }
+const _modMul940 = modMul;
+modMul = function(k){ let m = _modMul940.apply(this, arguments);
+  try{ const st = myStreet940(); if(st != null && cityOn940()){ if(k === 'traffic') m *= ST940[st].g; else if(k === 'rent') m *= ST940[st].r; } }catch(e){} return m; };
+function cityLoad940(extra){ if(!tg || !tg.initData) return Promise.resolve({ok:false, error:'Открой игру в Telegram'});
+  return apiPost('/api/city', extra || {}).then(r => { if(r && r.ok){ CITY940.data = r; CITY940.at = Date.now(); S.c.city940 = {st:r.street, d:r.district}; save(); } return r; }); }
+
+/* кнопка в нижней панели */
+const ICON940 = pxIcon(['................','..####..........','..#..#..######..','..####..#....#..','..#..#..#.##.#..','..####..#....#..','..#..#..#.##.#..','..####..#....#..','..#..#..#....#..','..####..######..','................','################','................','.##.##.##.##.##.','................','................']);
+function dock940(){ try{ const d = document.querySelector('.dock'); if(!d) return; const has = d.querySelector('.city940');
+  if(!cityOn940()){ if(has){ has.remove(); d.classList.remove('d5'); } return; } if(has) return;
+  const b = el(`<button class="dockb city940" data-s="city">${ICON940}<span>Город</span></button>`); b.onclick = () => { sfx('tap'); openCity940(); };
+  d.insertBefore(b, d.querySelector('[data-s="set"]')); d.classList.add('d5'); }catch(e){} }
+setInterval(dock940, 1500);
+function openCity940(){ queueModal({kind:'city940'}, true); }
+
+/* карта района */
+function citySvg940(d, onPick){ const W = 330, H = 108, out = [];
+  const rows = [3, 2, 1, 0];
+  out.push(`<svg viewBox="0 0 ${W} ${H*4+18}" class="c940map" role="img" aria-label="Карта района">`);
+  rows.forEach((st, ri) => { const y0 = ri*H, s = ST940[st];
+    out.push(`<rect x="0" y="${y0}" width="${W}" height="${H}" fill="${ri%2 ? '#e9dcc7' : '#e4d8c4'}"/>`);
+    if(st === 3) out.push(`<rect x="0" y="${y0}" width="${W}" height="${H}" fill="#d9e3cf"/>`);
+    out.push(`<text x="8" y="${y0+13}" class="c940s">${s.n} · гостей ${s.g > 1 ? '+'+Math.round((s.g-1)*100)+'%' : 'без бонуса'} · аренда ×${String(s.r).replace('.', ',')}</text>`);
+    out.push(`<rect x="0" y="${y0+78}" width="${W}" height="20" fill="${st === 3 ? '#9db7c9' : '#8c8580'}"/>`);
+    for(let i = 0; i < 12; i++){ const col = i % 6, row = Math.floor(i / 6); const x = 6 + col*54, y = y0 + 20 + row*29, w = 48, h = 26;
+      const p = d.plots.find(q => q.s === st && q.p === i);
+      if(!p){ out.push(`<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${i === 0 ? '#2a211b' : '#d2c6b3'}" ${i === 0 ? '' : 'stroke="#a89884" stroke-dasharray="3 2"'}/><text x="${x+w/2}" y="${y+17}" text-anchor="middle" class="${i === 0 ? 'c940g' : 'c940e'}">${i === 0 ? 'Угол' : '+'}</text></g>`); continue; }
+      const k = st+'_'+i;
+      out.push(`<g class="c940b${p.me ? ' me' : ''}" data-k="${k}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${p.color}" ${p.me ? 'stroke="#2a211b" stroke-width="2.5"' : ''} ${p.sleep ? 'opacity=".55"' : ''}/>`
+        + `<rect x="${x+5}" y="${y+h-10}" width="${w-10}" height="7" fill="${p.neon ? '#ff5fd2' : '#f5e2c4'}"/>`
+        + (p.me ? `<text x="${x+w/2}" y="${y+13}" text-anchor="middle" class="c940m">Ты</text>` : `<text x="${x+w/2}" y="${y+13}" text-anchor="middle" class="c940n">${esc(String(p.cafe||'').slice(0, 7))}</text>`)
+        + (p.crown ? `<path d="M${x+4} ${y} l4 -8 4 5 4 -5 4 8 z" fill="#e8b33a"/>` : '')
+        + (p.friend ? `<circle cx="${x+w-4}" cy="${y+3}" r="6" fill="#4caf6a"/><text x="${x+w-4}" y="${y+7}" text-anchor="middle" class="c940f">д</text>` : '') + `</g>`); }
+  });
+  out.push(`<text x="8" y="${H*4+13}" class="c940s">Корона — лучшая кофейня улицы за прошлую неделю</text></svg>`);
+  const wrap = el(`<div class="c940w">${out.join('')}</div>`);
+  wrap.querySelectorAll('.c940b').forEach(g => g.onclick = () => { sfx('tap'); const [s, i] = g.dataset.k.split('_').map(Number); onPick(d.plots.find(q => q.s === s && q.p === i)); });
+  return wrap; }
+
+MODAL15.city940 = (box, m, btn) => { box.classList.add('c940');
+  const head = el(`<div class="c940h"><div class="eyebrow">Город</div><h2>Район…</h2></div>`), body = el(`<div><p>Идём по улицам…</p></div>`), card = el(`<div class="c940c"></div>`), mine = el(`<div></div>`);
+  box.append(head, body, card, mine, btn('Закрыть', closeModal, 'ghost'));
+  const pick = p => { card.innerHTML = ''; if(!p) return; const st = ST940[p.s];
+    card.append(el(`<div class="c940ct"><b>«${esc(p.cafe || 'Кофейня')}»</b>${p.crown ? '<span class="c940cr">Корона улицы</span>' : ''}${p.friend ? '<span class="c940fr">Друг</span>' : ''}</div>`),
+      el(`<div class="d">${st.n}, участок ${p.p === 0 ? 'угловой' : p.p} · уровень ${p.lv || 1}${p.sleep ? ' · давно не заходил' : ''}</div>`));
+    if(!p.me && p.vk){ const b = el(`<button class="btn">Зайти в гости</button>`); b.onclick = () => { closeModal(); openView34(p.vk, p.cafe); }; card.appendChild(b); }
+    else if(!p.me) card.appendChild(el(`<div class="d">Витрина этой кофейни ещё не готова.</div>`)); };
+  const draw = d => { head.querySelector('h2').textContent = 'Район ' + d.district;
+    const n = d.plots.length; body.innerHTML = ''; body.append(el(`<div class="d c940sub">${n} из 48 мест занято · ты на улице «${ST940[d.street].n}»</div>`), citySvg940(d, pick));
+    pick(d.plots.find(p => p.me)); mineCard(d); };
+  const mineCard = d => { mine.innerHTML = ''; const own = new Set(d.owned || []), cur = d.street;
+    const c = el(`<div class="card"><div class="t">Переезд</div><div class="d">Дороже улица — больше гостей, но и аренда выше. Переезд в пределах своего района.</div></div>`);
+    ST940.forEach((s, i) => { if(i === cur) return; const lock = (S.level||1) < s.lv; const b = el(`<button class="btn ${i < cur ? 'ghost' : ''}">${s.n}${lock ? ' · с '+s.lv+' уровня' : s.cost ? ' · '+fmt(s.cost)+' ₽' : ' · бесплатно'}</button>`);
+      b.disabled = lock; b.onclick = () => { if(CITY940.busy) return; if(S.money < s.cost){ toast('Не хватает денег на переезд'); return; } CITY940.busy = true; b.disabled = true;
+        cityLoad940({move:i}).then(r => { CITY940.busy = false; if(r && r.ok){ if(s.cost) spend(s.cost, 'invest', 'Переезд: '+s.n); sfx('buy'); toast('Переехали: '+s.n); draw(r); } else { b.disabled = false; toast((r && r.error) || 'Не получилось'); } }); };
+      c.appendChild(b); });
+    mine.appendChild(c);
+    const v = el(`<div class="card"><div class="t">Твой фасад</div><div class="d">Это видят все соседи по району.</div></div>`);
+    const it = [['city_corner', 'Угловой участок', 250, own.has('city_corner') ? (d.plot === 0 ? 'Ты на углу' : 'Занять угол') : null],
+      ['city_neon', 'Неоновая вывеска', 75, own.has('city_neon') ? 'Горит' : null], ['city_color', 'Свой цвет фасада', 50, own.has('city_color') ? 'Выбери цвет ниже' : null]];
+    it.forEach(([id, n, st, have]) => { const b = el(`<button class="btn ${have ? 'ghost' : ''}">${n} · ${have || st+' ★'}</button>`);
+      b.onclick = () => { if(!have){ buyStars(id); return; } if(id === 'city_corner' && d.plot !== 0) cityLoad940({corner:1}).then(r => { if(r && r.ok){ toast('Угол твой'); draw(r); } else toast((r && r.error) || 'Не получилось'); }); };
+      v.appendChild(b); });
+    if(own.has('city_color')){ const row = el(`<div class="c940col"></div>`); (d.colors || []).forEach((col, i) => { const s = el(`<button style="background:${col}" aria-label="Цвет ${i+1}"></button>`);
+      s.onclick = () => cityLoad940({color:i}).then(r => { if(r && r.ok) draw(r); }); row.appendChild(s); }); v.appendChild(row); }
+    mine.appendChild(v); };
+  cityLoad940().then(r => { if(!r || !r.ok){ body.innerHTML = ''; body.appendChild(el(`<p>${esc((r && r.error) || 'Нет связи')}</p>`)); return; } draw(r); })
+    .catch(() => { body.innerHTML = '<p>Нет связи.</p>'; }); };
+
+/* при входе тихо подтягиваем свою улицу, чтобы бонусы работали без открытия карты */
+setTimeout(() => { try{ if(cityOn940() && S && (!S.c.city940 || Date.now() - (CITY940.at||0) > 3600000)) cityLoad940().catch(() => {}); }catch(e){} }, 9000);
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
