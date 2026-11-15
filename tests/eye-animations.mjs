@@ -19,6 +19,6 @@ for(const[name,clip]of Object.entries(CM)){
  if(!/^(barista|cashier|cook|waiter|washer)_/.test(name)||/:north|phone_head/.test(name)||clip.f.length<2)continue;
  assert(context.BC_EYES[name],'uncovered employee animation: '+name);
 }
-assert.equal(frames,453);assert(source.includes("pimg('fridge',290,151,94)"));assert(!source.includes("pimg('fridge',266,BAR_BOT+3,94)"));
+assert.equal(Object.keys(context.BC_EYES).length,24);assert(Object.keys(context.BC_EYES).every(n=>/^(barista|cashier|cook|waiter|washer)_/.test(n)),'guest eye artwork must remain untouched');assert(source.includes("pimg('fridge',294.5,146.5,72)"));assert(!source.includes("pimg('fridge',266,BAR_BOT+3,94)"));
 assert(!source.includes('BC_STAFF_HEAD'),'old whole-head freeze must be removed');
-console.log('PASS: 67 eye maps / 453 animation frames; all employee actions covered, mirrored eyes and original hand/body frame preserved; refrigerator beside chef.');
+console.log('PASS: 24 employee eye maps; all employee actions covered, mirrored eyes and original hand/body frame preserved; refrigerator beside chef.');
