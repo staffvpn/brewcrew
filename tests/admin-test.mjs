@@ -30,6 +30,6 @@ assert.equal((await call({},123,{},purchases)).lux.length,0);
 const source=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 for(const m of source.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g))if(!m[1].includes('src='))new vm.Script(m[2]);
 assert(!source.includes('window.__MAX')&&!source.includes('CITY940')&&!source.includes('/api/city'));
-for(const fragment of ['brewcrew-build','v15-faces-shop-20261115',"pimg('fridge',266,BAR_BOT+3,94)","pimg('cam',13,19,12)",'Лера с терьером','bcRubberMat(4,149,66,22)','bcRubberMat(76,149,76,22)','maint_on.jpg','maint_off.jpg'])assert(source.includes(fragment),fragment);
+for(const fragment of ['brewcrew-build','v15-eyes-kitchen-20261115',"pimg('fridge',290,151,94)","pimg('cam',13,19,12)",'Лера с терьером','bcRubberMat(4,149,66,22)','bcRubberMat(76,149,76,22)','maint_on.jpg','maint_off.jpg'])assert(source.includes(fragment),fragment);
 assert.equal(SHOP.lux_x_cat.stars,120);assert.equal(SHOP.cash_s.stars,25);
 console.log('PASS: Telegram auth, admin-only self purchases, disable flag, catalogue validation, zero-Star persistence, idempotent grants, cash, styles/lux/frames/pass/subscription entitlements, ordinary players, inline syntax and release invariants.');
