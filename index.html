@@ -903,8 +903,12 @@ input,textarea,select{font-size:16px!important}
 .c941h.me b{color:#c96a12}
 .c941s{overflow-x:auto;overflow-y:hidden;border-radius:10px;-webkit-overflow-scrolling:touch;border:2px solid #2a211b}
 .c941s canvas{display:block;image-rendering:auto}
-#mt942{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(26,19,14,.94);padding:24px}
-.mt942b{background:#f6ecdc;color:#2a211b;border:3px solid #2a211b;border-radius:14px;box-shadow:6px 6px 0 #000;max-width:340px;width:100%;padding:22px 20px;text-align:center}
+#mt942,#mt942d{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(26,19,14,.94);padding:24px}
+#mt942d{display:flex}
+.mt942b{background:#f6ecdc;color:#2a211b;border:3px solid #2a211b;border-radius:14px;box-shadow:6px 6px 0 #000;max-width:380px;width:100%;padding:0 0 16px;text-align:center;overflow:hidden}
+.mt942p{display:block;width:100%;height:auto;border-bottom:3px solid #2a211b;margin-bottom:14px}
+.mt942b .mt942t,.mt942b .d{padding:0 16px}
+.mt942b .btn{width:calc(100% - 32px);display:block;margin-left:auto;margin-right:auto}
 .mt942b h2{margin:4px 0 10px}
 .mt942i svg,.mt942i img,.mt942i canvas{width:64px;height:64px;image-rendering:pixelated}
 .mt942t{font-size:16px;line-height:1.45;margin:0 0 16px;white-space:pre-line}
@@ -11887,14 +11891,16 @@ function mtApply942(m){ const on = !!(m && m.on); MT942.text = (m && m.text) || 
   MT942.adm = isAdm942();
   if(MT942.adm){ mtBadge942(on); MT942.on = false; return; }
   if(on && !MT942.on){ MT942.on = true; try{ save(); }catch(e){} mtShow942(); }
-  else if(!on && MT942.on){ MT942.on = false; try{ if(S) S.savedAt = Date.now(); lastT = performance.now(); }catch(e){} mtHide942(); toast('Техработы закончились, кофейня снова открыта'); }
+  else if(!on && MT942.on){ MT942.on = false; try{ if(S) S.savedAt = Date.now(); lastT = performance.now(); }catch(e){} mtHide942(); mtDone942(); }
   else if(on) mtShow942(); }
 function mtShow942(){ let o = document.getElementById('mt942');
-  if(!o){ o = el(`<div id="mt942"><div class="mt942b"><div class="mt942i">${pxIcon(['................','......####......','.....#....#.....','....#..##..#....','....#.#..#.#....','....#..##..#....','.....#....#.....','...##########...','..#..........#..','..#.########.#..','..#.#......#.#..','..#.########.#..','..#..........#..','...##########...','................','................'])}</div>
-      <div class="eyebrow">Brew Crew</div><h2>Техработы</h2><p class="mt942t"></p><button class="btn mt942c">Открыть канал</button><div class="d">Твоя кофейня на паузе: деньги, гости и время стоят, пока мы чиним. Как закончим, игра продолжится сама.</div></div></div>`);
+  if(!o){ o = el(`<div id="mt942"><div class="mt942b"><img class="mt942p" src="img/maint_on.jpg" alt="Технические работы"><p class="mt942t"></p><button class="btn mt942c">Открыть канал</button><div class="d">Кофейня на паузе: деньги, гости и время стоят, пока мы чиним. Как закончим, игра продолжится сама.</div></div></div>`);
     o.querySelector('.mt942c').onclick = () => { const u = (typeof CFG !== 'undefined' && CFG && CFG.channel) || ''; if(!u){ toast('Канал скоро появится'); return; } try{ if(tg && tg.openTelegramLink && /t\.me\//.test(u)) tg.openTelegramLink(u); else window.open(u, '_blank'); }catch(e){ window.open(u, '_blank'); } };
     document.body.appendChild(o); }
   o.querySelector('.mt942t').textContent = MT942.text; o.style.display = 'flex'; }
+function mtDone942(){ let o = document.getElementById('mt942d'); if(o) o.remove();
+  o = el(`<div id="mt942d"><div class="mt942b"><img class="mt942p" src="img/maint_off.jpg" alt="Технические работы завершены"><p class="mt942t">Спасибо, что подождал. Кофейня снова открыта.</p><button class="btn mt942g">Вернуться в игру</button></div></div>`);
+  o.querySelector('.mt942g').onclick = () => { try{ sfx('tap'); }catch(e){} o.remove(); }; document.body.appendChild(o); }
 function mtHide942(){ const o = document.getElementById('mt942'); if(o) o.style.display = 'none'; }
 function mtBadge942(on){ let b = document.getElementById('mt942a'); if(!on){ if(b) b.remove(); return; }
   if(!b){ b = el(`<div id="mt942a">Техработы включены: игроки видят заглушку</div>`); document.body.appendChild(b); } }
@@ -11906,7 +11912,8 @@ const _cloud942 = saveCloud; saveCloud = function(){ if(MT942.on) return; return
 /* конфиг приходит при запуске; дальше проверяем раз в минуту */
 const _loadCfg942 = loadConfig; loadConfig = function(){ const r = _loadCfg942.apply(this, arguments); setTimeout(() => { try{ if(CFG && CFG.maint) mtApply942(CFG.maint); }catch(e){} }, 1500); return r; };
 function mtPoll942(){ fetch('/api/config?mt=' + Date.now()).then(r => r.json()).then(c => { if(c && c.ok){ CFG = Object.assign(CFG || {}, c); mtApply942(c.maint); } }).catch(() => {}); }
-setTimeout(mtPoll942, 600); setInterval(() => { if(!document.hidden) mtPoll942(); }, 60000);
+setTimeout(mtPoll942, 600);
+[ 'img/maint_on.jpg', 'img/maint_off.jpg' ].forEach(s => { const i = new Image(); i.src = s; }); setInterval(() => { if(!document.hidden) mtPoll942(); }, 60000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) mtPoll942(); });
 
 
