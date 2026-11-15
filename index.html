@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta name="brewcrew-build" content="v15-stars-visits-20261115">
+<meta name="brewcrew-build" content="v15-admin-assets-20261115">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -14529,7 +14529,7 @@ function bcDrawBaristaCat(){
 var bcSeasonSceneProps=sceneUpgradeProps;
 sceneUpgradeProps=function(st,u,items,now,r){
   bcSeasonSceneProps.apply(this,arguments);
-  if(!ready()||st.outdoor||!S||S.active!=='main'||!S.szPet||!passOwned())return;
+  if(!ready()||st.outdoor||!S||S.active!=='main'||!S.szPet||!(passOwned()||S.c&&S.c.adminPetGift))return;
   items.push({y:BAR_FACE+1,f:bcDrawBaristaCat});
 };window.sceneUpgradeProps=sceneUpgradeProps;
 
@@ -14564,7 +14564,7 @@ function bcStoreSku(cat,id){if(cat==='style')return id;if(cat==='lux')return 'lu
 function bcStoreReceipt(r){
  if(!S||!r||!r.ok)return;
  (r.interiors||[]).forEach(function(id){S.szStyles=S.szStyles||[];if(S.szStyles.indexOf(id)<0)S.szStyles.push(id);});
- (r.skins||[]).forEach(function(x){skinS();S.skinOwned[x.category+':'+x.id]=1;});
+ (r.skins||[]).forEach(function(x){skinS();if(x.category==='room'){S.c=S.c||{};S.c.roomLicenses=S.c.roomLicenses||{};S.c.roomLicenses[x.id]=1;if(S.c.roomResetAt&&(+x.at||0)<=S.c.roomResetAt&&!S.skinOwned['room:'+x.id])return;}S.skinOwned[x.category+':'+x.id]=1;});
  if(BC_PAID_WANTED){var sku=BC_PAID_WANTED,p=BC_STORE[sku],ready=false;
   if(r.skins&&r.skins.some(function(x){return bcStoreSku(x.category,x.id)===sku;})){equip(p.category,p.skin);ready=true;}
   else if((r.interiors||[]).includes(sku)){S.interior=S.interior||{};S.interior.main=sku;ready=true;}
@@ -14619,7 +14619,7 @@ var bcStoreCss=document.createElement('style');bcStoreCss.textContent='.bc-star-
 
 /* Saved cafe visits: public layout, isolated visual simulation, no economy ticks. */
 var bcVisitSnap=viewSnap34,bcVisitLast=0;
-viewSnap34=function(force){if(!S||!force&&Date.now()-bcVisitLast<60000)return;var d=bcVisitSnap(true);if(!d)return;bcVisitLast=Date.now();d.v=2;d.sk=JSON.parse(JSON.stringify(skinS()));d.so=Object.keys(S.skinOwned||{}).filter(function(k){return S.skinOwned[k];});d.gold=!!S.goldMachine;d.pet=!!(S.szPet&&passOwned());d.gm=S.gm;d.weather=S.weather;d.open=S.isOpen;d.st=workingStaff('main').slice(0,14).map(function(s){return{r:s.role,n:s.isYou?'Хозяин':s.name,x:s.sex,p:s.spr,l:s.legendId||0,pz:!!s.prize,so:!!s.som34,lv:s.lvl||10};});return d;};
+viewSnap34=function(force){if(!S||!force&&Date.now()-bcVisitLast<60000)return;var d=bcVisitSnap(true);if(!d)return;bcVisitLast=Date.now();d.v=2;d.sk=JSON.parse(JSON.stringify(skinS()));d.so=Object.keys(S.skinOwned||{}).filter(function(k){return S.skinOwned[k];});d.gold=!!S.goldMachine;d.pet=!!(S.szPet&&(passOwned()||S.c&&S.c.adminPetGift));d.gm=S.gm;d.weather=S.weather;d.open=S.isOpen;d.st=workingStaff('main').slice(0,14).map(function(s){return{r:s.role,n:s.isYou?'Хозяин':s.name,x:s.sex,p:s.spr,l:s.legendId||0,pz:!!s.prize,so:!!s.som34,lv:s.lvl||10};});return d;};
 HALL_TABS.push(['visit','В гости']);TAB_N.visit='В гости';
 function bcCafeDirectory(p){
  p.innerHTML='';p.append(el('<h3>В гости</h3>'),el('<p class="d">Три кофейни для знакомства. Или найди заведение по названию.</p>'));
@@ -14686,6 +14686,88 @@ openView34=function(vk,title){
  }).catch(function(){if(!disposed)status.textContent='Нет связи. Попробуй ещё раз.';});
 };
 var bcVisitCss=document.createElement('style');bcVisitCss.textContent='#bcVisit{position:fixed;inset:0;z-index:100000;background:#efe3c9;color:#392a20;display:flex;flex-direction:column;padding:12px max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom));box-sizing:border-box}#bcVisit header{flex:none;text-align:center}#bcVisit h2{margin:5px 0}#bcVisit .d{color:#69513c;font-size:12px}#bcVisit .bc-visit-picture{flex:1;min-height:0;display:flex;justify-content:center;overflow:hidden}#bcVisit canvas{max-width:100%;max-height:100%;object-fit:contain;image-rendering:auto}#bcVisit footer{display:flex;gap:8px;justify-content:center;padding-top:10px;flex-wrap:wrap}.bc-cafe-search{box-sizing:border-box;width:100%;padding:14px;border:1px solid #cdb99a;border-radius:12px;font:inherit;color:#392a20;background:#fffaf1;margin-bottom:12px}.bc-cafe-list~button[hidden]{display:none!important}.bc-cafe-list .card{margin-bottom:10px}.bc-visit-entry{margin-bottom:12px}';document.head.appendChild(bcVisitCss);
+
+/* Built expansions persist for this cafe; purchased licences survive a new run. */
+var bcCafeNewState=newState;
+newState=function(){var next=bcCafeNewState.apply(this,arguments);next.c=next.c||{};next.c.roomResetAt=Date.now();if(typeof BC_PAID_WANTED!=='undefined')BC_PAID_WANTED=null;return next;};
+var bcBuiltEquip=equip;
+equip=function(cat,id){if(cat==='room'){
+ skinS();if(id==='std'&&(expanded()||deepRoom())){toast('Построенное расширение нельзя уменьшить');return;}
+ if(id==='wide'&&deepRoom()){toast('Расширение вниз уже построено');return;}
+ if(id==='deep'&&!expanded()){toast('Сначала построй расширение вправо');return;}
+ if(id!=='std')S.skinOwned['room:'+id]=1;
+ }return bcBuiltEquip.apply(this,arguments);};window.equip=equip;
+var bcBuiltShop=shopPanel;
+shopPanel=function(p){bcBuiltShop(p);p.querySelectorAll('.u6it').forEach(function(card){var title=card.querySelector('.u6nm'),b=card.querySelector('.u6buy');if(!title||!b)return;var sku=Object.keys(BC_STORE).find(function(k){return BC_STORE[k].title===title.textContent||BC_STORE[k].title==='Интерьер «'+title.textContent+'»';});if(sku&&S.c.adminBlocks&&S.c.adminBlocks[sku]){b.disabled=true;b.textContent='Доступ отозван';}});if(window.__shopCat!=='room')return;var active=deepRoom()?2:expanded()?1:0;
+ p.querySelectorAll('.u6it').forEach(function(card,i){var act=card.querySelector('.u6act');if(!act)return;
+  if(i<=active){act.querySelectorAll('button').forEach(function(b){b.remove();});var status=act.querySelector('.u6on');if(status)status.remove();act.append(el('<span class="u6on">'+(i===0&&active?'Зал уже расширен':i?'Построено':'Обычный зал')+'</span>'));}
+  else if(S.c.roomLicenses&&S.c.roomLicenses[i===1?'wide':'deep']){var b=act.querySelector('.u6buy');if(b){b.textContent='Построить';b.onclick=function(){var id=i===1?'wide':'deep';equip('room',id);fitRoom();save();renderSheet();};}}
+ });var note=p.querySelector('.u6note:last-child');if(note)note.textContent='Построенное расширение нельзя уменьшить. Начать с обычного зала можно после продажи кофейни или начала заново. Купленное расширение останется доступным для повторной постройки.';
+};
+function bcAssetRemoveProduct(sku){
+ if(!S)return;skinS();S.c=S.c||{};
+ var p=BC_STORE[sku];if(p&&p.category&&p.category!=='style'&&p.category!=='lux'){
+  var cat=p.category,id=p.skin;skinS();delete S.skinOwned[cat+':'+id];
+  if(cat==='room'){if(S.c.roomLicenses)delete S.c.roomLicenses[id];if(id==='wide')delete S.skinOwned['room:deep'];S.skin.room=deepRoom()?'deep':expanded()?'wide':'std';}
+  else if(S.skin[cat]&&typeof S.skin[cat]==='object')delete S.skin[cat][id];
+  else if(S.skin[cat]===id){var df=(SKIN_DEF[cat]||[]).find(function(x){return !x[2];});S.skin[cat]=df?df[0]:'std';}
+ }
+ if(sku.indexOf('int_')===0){S.szStyles=(S.szStyles||[]).filter(function(k){return k!==sku;});if(S.promoStyles)delete S.promoStyles[sku];Object.keys(S.interior||{}).forEach(function(k){if(S.interior[k]===sku)delete S.interior[k];});if(S.ent)S.ent.interiors=(S.ent.interiors||[]).filter(function(k){return k!==sku;});}
+ if(sku.indexOf('lux_')===0){var id=sku.slice(4);delete S.skinOwned['lux:'+id];if(skinS().lux)delete skinS().lux[id];if(S.ent)S.ent.lux=(S.ent.lux||[]).filter(function(k){return k!==id;});}
+ if(sku.indexOf('frame_')===0){var id=sku.slice(6);S.c.frameGift=(S.c.frameGift||[]).filter(function(k){return k!==id;});if(S.c.signFrame===id)delete S.c.signFrame;if(S.ent)S.ent.frames=(S.ent.frames||[]).filter(function(k){return k!==sku;});}
+ if(sku==='reward_gold'){S.goldMachine=false;delete S.skinOwned['mach:m_season_gold'];if(skinS().mach==='m_season_gold')S.skin.mach='std';}
+ if(sku==='reward_pet'){S.szPet=false;S.c.adminPetGift=false;}
+ if(sku==='sub_owner'&&S.ent)S.ent.sub=0;
+ if((sku==='pass'||sku==='pass15')&&S.ent)S.ent.passes=[];
+ if(['flagship','music','uniform','starter'].includes(sku)&&S.ent){S.ent.extras=(S.ent.extras||[]).filter(function(k){return k!==sku;});if(sku==='uniform')S.c.uf34=null;if(sku==='music')S.c.mu34=null;if(sku==='flagship'){S.c.flag34=0;if(S.c.signFrame==='flag')delete S.c.signFrame;}}
+}
+function bcAssetEnforce(){if(!S)return;S.c=S.c||{};Object.keys(S.c.adminBlocks||{}).forEach(function(k){if(S.c.adminBlocks[k])bcAssetRemoveProduct(k);});}
+var bcRightsSkins=applySkins;applySkins=function(){bcAssetEnforce();return bcRightsSkins.apply(this,arguments);};window.applySkins=applySkins;
+function bcManagedApply(o){
+ var d;try{d=JSON.parse(o.text||'{}');}catch{return false;}if(!d||!['give','take','set'].includes(d.action))return false;
+ S.c=S.c||{};S.c.adminManaged=S.c.adminManaged||{};if(S.c.adminManaged[o.id])return false;
+ var take=d.action==='take',calc=function(current,min,max){var x=d.action==='set'?d.amount:current+(take?-d.amount:d.amount);return Math.max(min,Math.min(max,x));};
+ if(d.kind==='product'||d.kind==='reward'){
+  S.c.adminBlocks=S.c.adminBlocks||{};S.c.adminBlocks[d.id]=take?1:0;
+  if(take)bcAssetRemoveProduct(d.id);
+  else if(d.id==='reward_gold'){S.goldMachine=true;bcOwnGoldMachine(false);equip('mach','m_season_gold');}
+  else if(d.id==='reward_pet'){S.szPet=true;S.c.adminPetGift=true;}
+  else {var p=BC_STORE[d.id];if(p&&p.category&&p.category!=='style'&&p.category!=='lux'){skinS();S.skinOwned[p.category+':'+p.skin]=1;if(p.category==='room'&&p.skin==='deep')S.skinOwned['room:wide']=1;equip(p.category,p.skin);}refreshEntitlements();}
+ }
+ else if(d.kind==='badgegift'){badgeAdd('admin_'+(d.token||o.id),d.title,'Выдан администрацией');}
+ else if(d.kind==='staffgift'){makePrizeStaff(Number(String(d.id).replace('legend',''))||20);syncScene('main');}
+ else if(d.kind==='consumable'){invAdd(d.id==='giftcash'?{k:'money',v:50000,t:'Сертификат администрации',src:'Администрация'}:d.id==='giftxp'?{k:'xp',v:500,t:'Опыт от администрации',src:'Администрация'}:{k:'mod',v:24,boost:1.15,t:'Гостей +15% на сутки',src:'Администрация'});}
+ else if(d.kind==='resource'){
+  if(d.id==='money'){MONEY_CTX={cat:'admin',out:'other',why:'Изменение баланса администрацией'};S.money=Math.min(1e12,d.action==='set'?d.amount:d.action==='give'?S.money+d.amount:S.money>0?Math.max(0,S.money-d.amount):S.money);MONEY_CTX=null;}
+  if(d.id==='xp'){if(d.action==='give')addXp(d.amount);else S.xp=calc(S.xp,0,1e9);}
+  if(d.id==='level'){S.level=Math.max(1,Math.min(60,d.amount));S.xp=0;}
+  if(d.id==='sp')szState().sp=calc(szState().sp,0,1e7);
+  if(d.id==='rep')S.rep=calc(S.rep,1,5);
+ }
+ else if(d.kind==='stock'&&STOCK[d.id]){var amount=calc(stockQty(d.id),0,100000),st=STOCK[d.id];S.stock[d.id]=st.perish?(amount?[{q:amount,exp:S.day+st.perish}]:[]):amount;}
+ else if(d.kind==='upgrade'&&room('main').upg[d.id]!=null){room('main').upg[d.id]=calc(room('main').upg[d.id],0,20);}
+ else if(d.kind==='staff'){S.staff=S.staff.filter(function(s){return s.isYou||String(s.id)!==String(d.id);});syncScene('main');}
+ else if(d.kind==='inventory'){S.inv=(S.inv||[]).filter(function(it){return String(it.uid)!==String(d.id);});}
+ else if(d.kind==='badge'){S.badges=(S.badges||[]).filter(function(b){return b!==d.title;});S.badgeList=(S.badgeList||[]).filter(function(b){return b.id!==d.id;});if(S.badgeOn===d.id)S.badgeOn=null;}
+ else if(d.kind==='feature'){
+  if(!take)applyGrant(d.id);
+  else if(d.id==='hall2'){S.staff.forEach(function(s){if(s.room==='hall2')s.room='main';});S.rooms=S.rooms.filter(function(r){return r.id!=='hall2';});delete RT.hall2;if(S.active==='hall2')S.active='main';}
+  else if(d.id==='proj'||d.id==='sofa')cineState()[d.id]=false;
+  else if(d.id==='kitchen'){S.kitchen={tier:0};}
+  else {if(S.spends)delete S.spends[d.id];if(d.id==='buyout')S.owned=(S.owned||[]).filter(function(k){return k!=='main';});if(d.id==='roaster')S.roast=null;}
+ }
+ bcAssetEnforce();applySkins();S.c.adminManaged[o.id]=1;var keys=Object.keys(S.c.adminManaged);if(keys.length>512)keys.slice(0,keys.length-512).forEach(function(k){delete S.c.adminManaged[k];});save();structDirty=true;return true;
+}
+var bcManagedTrack=onTrack;
+onTrack=function(r){if(r&&r.ok&&S&&Array.isArray(r.ops)){r.ops.forEach(function(o){if(o.op==='manage'&&bcManagedApply(o))toast('Администрация: '+(JSON.parse(o.text).action==='take'?'изъятие':'изменение')+' · '+JSON.parse(o.text).title);});}return bcManagedTrack.apply(this,arguments);};
+var bcManagedApi=apiPost;
+apiPost=function(path,data){return bcManagedApi(path,data).then(function(r){if(r&&r.ok&&S){var ent=r.entitlements||r;if(Array.isArray(ent.blocked)){S.c=S.c||{};S.c.adminBlocks={};ent.blocked.forEach(function(k){S.c.adminBlocks[k]=1;});(ent.rewards||[]).forEach(function(k){if(k==='reward_gold')S.goldMachine=true;if(k==='reward_pet'){S.szPet=true;S.c.adminPetGift=true;}});bcAssetEnforce();applySkins();}}return r;});};
+function bcPrivateAdminInventory(){
+ return {owned:Object.keys(S.skinOwned||{}).filter(function(k){return S.skinOwned[k];}).concat(S.szStyles||[],S.ent&&S.ent.frames||[],S.ent&&S.ent.extras||[],S.goldMachine?['reward_gold']:[],S.szPet?['reward_pet']:[]),staff:(S.staff||[]).filter(function(s){return !s.isYou;}).map(function(s){return{id:String(s.id),title:s.name,role:s.role};}),inventory:(S.inv||[]).map(function(it){return{id:String(it.uid),title:invText(it)};}),badges:(S.badgeList||[]).map(function(b){return{id:b.id,title:b.n};}).concat((S.badges||[]).map(function(b){return{id:b,title:b};})),cash:S.money,stock:Object.fromEntries(Object.keys(STOCK).map(function(k){return[k,stockQty(k)];})),xp:S.xp,sp:szState().sp,rep:S.rep};
+}
+// Publish private admin inventory alongside the existing signed heartbeat, never in public visits.
+var bcAdminFetch=window.fetch;
+window.fetch=function(input,options){if(input==='/api/track'&&options&&typeof options.body==='string'&&S){try{var body=JSON.parse(options.body);body.stats.adminProtocol=1;body.stats.adminInventory=bcPrivateAdminInventory();options=Object.assign({},options,{body:JSON.stringify(body)});}catch(e){console.error(e);}}return bcAdminFetch.apply(this,[input,options]);};
 
 })();
 

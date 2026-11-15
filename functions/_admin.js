@@ -1,3 +1,6 @@
+import {adminPanel,loadAdminIcons} from './_admin-ui.js';
+import {ASSET_GROUPS,ADMIN_ASSETS,adminSnapshot,assetEntries,validateAssetAction,applyAssetAction,restrictions} from './_admin-assets.js';
+import {cafeNameExpr,cafeNameQuery} from './_cafe-public.js';
 // Админка в боте: одна панель-сообщение с кнопками, которое редактируется на месте.
 // Состояние игры хранится на устройстве игрока, поэтому изменения ставятся в очередь (admin_ops)
 // и применяются игрой при следующем выходе на связь.
@@ -13,8 +16,8 @@ const CITY = { msk: 'Москва', spb: 'Петербург', kzn: 'Казан�
 const ago = ts => { if (!ts) return 'никогда'; const m = Math.round((Date.now() - ts) / 60000); if (m < 2) return 'только что'; if (m < 60) return m + ' мин назад'; const h = Math.round(m / 60); if (h < 48) return h + ' ч назад'; return Math.round(h / 24) + ' дн назад'; };
 const short = ts => { if (!ts) return '—'; const m = Math.round((Date.now() - ts) / 60000); if (m < 3) return 'в игре'; if (m < 60) return m + ' мин'; const h = Math.round(m / 60); if (h < 48) return h + ' ч'; return Math.round(h / 24) + ' дн'; };
 const when = ts => new Date(ts).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-const OPN = { refgift: 'Реферальный бонус', level: 'Уровень', cash: 'Покупка денег', give: 'Начислено', take: 'Списано', set: 'Баланс', wipe: 'Удаление', ent: 'Покупки обновлены', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименование', staff: 'Легенда в команду', grant: 'Выдано', xp: 'Опыт', sp: 'Очки сезона', badge: 'Значок', trsold: 'Трансфер' };
-const STYLES = [['int_soviet', 'Столовая №1'], ['int_loft', 'Заводской лофт'], ['int_scandi', 'Фика'], ['int_neon', 'Не спим'], ['frame_fire', 'Рамка «Огонь»'], ['frame_bulbs', 'Рамка «Огни кинотеатра»'], ['frame_spark', 'Рамка «Золотые искры»'], ['frame_aurora', 'Рамка «Северное сияние»'], ['frame_cat', 'Рамка «Кот на вывеске»']];
+const OPN = { refgift: 'Реферальный бонус', level: 'Уровень', cash: 'Покупка денег', give: 'Начислено', take: 'Списано', set: 'Баланс', wipe: 'Удаление', ent: 'Покупки обновлены', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименование', staff: 'Легенда в команду', grant: 'Выдано', xp: 'Опыт', sp: 'Очки сезона', badge: 'Значок', manage:'Изменение имущества' };
+const STYLES = Object.entries(SHOP).filter(([id])=>id.startsWith('int_')||/^frame_coffee_/.test(id)).map(([id,p])=>[id,p.title]);
 const COVERS = [['updates.jpg', 'Обновления'], ['events.jpg', 'События'], ['banner.jpg', 'Баннер'], ['hall.jpg', 'Новый зал']];
 const PAGE = 10;
 const MONEY_LEGS = ['Зачисление от инвестора', 'Отправили шейхи', 'Возврат НДС', 'Наследство двоюродной тёти', 'Компенсация от поставщика'];
@@ -38,12 +41,8 @@ async function findPlayers(env, q) {
   q = String(q || '').trim().replace(/^@/, '');
   if (!q) return [];
   if (/^\d{3,15}$/.test(q)) { const r = await env.DB.prepare('SELECT * FROM players WHERE tg_id = ?1').bind(Number(q)).first(); if (r) return [r]; }
-  // lower() в SQLite не понимает кириллицу, поэтому фильтруем в коде
-  const ql = q.toLowerCase();
-  const all = (await env.DB.prepare('SELECT tg_id, username, first_name, cafe FROM players ORDER BY last_seen DESC LIMIT 5000').all()).results || [];
-  const ids = all.filter(p => [p.username, p.first_name, p.cafe].some(v => v && String(v).toLowerCase().includes(ql))).slice(0, 10).map(p => p.tg_id);
-  if (!ids.length) return [];
-  return (await env.DB.prepare(`SELECT * FROM players WHERE tg_id IN (${ids.join(',')}) ORDER BY last_seen DESC`).all()).results || [];
+  const term='%'+cafeNameQuery(q)+'%';
+  return (await env.DB.prepare(`SELECT p.* FROM players p WHERE ${cafeNameExpr('p.cafe')} LIKE ?1 ESCAPE '\\' OR ${cafeNameExpr('p.first_name')} LIKE ?1 ESCAPE '\\' OR lower(p.username) LIKE ?1 ESCAPE '\\' ORDER BY p.last_seen DESC LIMIT 12`).bind(term).all()).results||[];
 }
 const playerBtn = p => B(`${(p.first_name || '?').slice(0, 16)} · «${(p.cafe || '?').slice(0, 16)}» · ур. ${p.level} · ${short(p.last_seen)}${p.banned ? ' · бан' : ''}`, 'p:u:' + p.tg_id);
 
@@ -57,28 +56,19 @@ const ask = (title, hint, back) => ({ text: `<b>${title}</b>\n\n${hint}\n\n<i>Ж
 async function vHome(env) {
   const now = Date.now(), today = Date.parse(mskDay(now) + 'T00:00:00+03:00');
   const q = (sql, ...b) => env.DB.prepare(sql).bind(...b).first();
-  const [total, online, newT, actT, pay, top, refs] = await Promise.all([
+  const [total, online, newT, actT, pay] = await Promise.all([
     q('SELECT COUNT(*) n FROM players'), q('SELECT COUNT(*) n FROM players WHERE last_seen >= ?1', now - ONLINE_MS),
     q('SELECT COUNT(*) n FROM players WHERE created_at >= ?1', today), q('SELECT COUNT(*) n FROM players WHERE last_seen >= ?1', today),
-    q('SELECT COALESCE(SUM(CASE WHEN created_at >= ?1 THEN stars ELSE 0 END),0) t, COALESCE(SUM(CASE WHEN created_at >= ?2 THEN stars ELSE 0 END),0) w, COALESCE(SUM(stars),0) a FROM purchases WHERE refunded = 0 AND stars > 0', today, now - 7 * 86400000),
-    env.DB.prepare(`SELECT cafe, first_name, level, earned, money, best_day FROM players WHERE banned = 0 AND last_seen >= ?1 AND tg_id NOT IN (${ADMINS.join(',')}) ORDER BY best_day DESC LIMIT 5`).bind(now - 3 * 86400000).all(),
-    q('SELECT COUNT(*) n, COALESCE(SUM(CASE WHEN created_at >= ?1 THEN 1 ELSE 0 END),0) t, COALESCE(SUM(ref_paid),0) paid FROM players WHERE referrer IS NOT NULL', today)
+    q('SELECT COALESCE(SUM(CASE WHEN created_at >= ?1 THEN stars ELSE 0 END),0) t, COALESCE(SUM(CASE WHEN created_at >= ?2 THEN stars ELSE 0 END),0) w, COALESCE(SUM(stars),0) a FROM purchases WHERE refunded = 0 AND stars > 0', today, now - 7 * 86400000)
   ]);
-  const lines = ['<b>Brew Crew · админка</b>', '',
-    `Сейчас в игре: <b>${online.n}</b>`, `Заходили сегодня: <b>${actT.n}</b> · новых: <b>${newT.n}</b>`, `Всего игроков: <b>${total.n}</b>`, '',
-    `По приглашениям: <b>${refs.n}</b> (сегодня ${refs.t}) · наград выдано ${refs.paid}`, '',
-    `Звёзды: сегодня <b>${pay.t}</b> · за неделю <b>${pay.w}</b> · всего <b>${pay.a}</b>`, '',
-    '<b>Топ-5 кофеен по лучшему дню</b>', '<i>активные за 3 дня; рекорд выручки за игровой день · сейчас на счету · заработано за всё время</i>', ...((top.results || []).map((t, i) => `${i + 1}. «${esc(t.cafe || '?')}» — ${esc(t.first_name || '')}, ур. ${t.level}\n    день ${fmt(t.best_day || 0)} ₽ · счёт ${fmt(t.money || 0)} ₽ · всего ${fmt(t.earned || 0)} ₽`))];
-  return { text: lines.join('\n'), kb: [
-    [B('Все игроки', 'p:pl:last:0'), B('Найти игрока', 'p:find')],
-    [B('Сейчас в игре', 'p:pl:on:0'), B('Новые', 'p:pl:new:0')],
-    [B('Рассылка всем', 'p:all'), B('Канал', 'p:ch')],
-    [B('Турнир', 'p:tour'), B('Покупки', 'p:buy')],
-    [B('Рефералы', 'p:refs'), B('Промокоды', 'p:prl')],
-    [B('Сезон и пропуск', 'p:sz'), B('Что нового', 'p:gd')],
-    [B('Техработы', 'p:mt'), B('Журнал', 'p:log')],
-    [B('Обновить', 'p:home')]
-  ] };
+  const lines=['<b>Brew Crew · управление</b>','',`👥 Сейчас в игре: <b>${online.n}</b>`,`📅 Сегодня: <b>${actT.n}</b> игроков · новых <b>${newT.n}</b>`,`☕ Всего игроков: <b>${total.n}</b>`,'',`⭐ Stars сегодня: <b>${pay.t}</b>`,`За неделю: <b>${pay.w}</b> · всего: <b>${pay.a}</b>`,'','Найди игрока, чтобы управлять его деньгами, командой и имуществом.'];
+  return {banner:'admin-banner.png',text:lines.join('\n'),kb:[
+    [B('Найти игрока','p:find'),B('Игроки','p:pl:last:0')],
+    [B('Сейчас в игре','p:pl:on:0'),B('Покупки','p:buy')],
+    [B('Журнал действий','p:log'),B('Сезон и пропуск','p:sz')],
+    [B('Техработы','p:mt'),B('Дополнительно','p:ops')],
+    [B('Обновить','p:home')]
+  ]};
 }
 const SORTS = { last: ['По последнему входу', 'ORDER BY last_seen DESC'], new: ['Новые', 'ORDER BY created_at DESC'], rich: ['По заработку', 'ORDER BY earned DESC'], lvl: ['По уровню', 'ORDER BY level DESC, earned DESC'], on: ['Сейчас в игре', 'ORDER BY last_seen DESC'] };
 async function vMaint(env, note) {
@@ -113,29 +103,11 @@ async function vCard(env, id, note) {
   const pd = pend.results || []; let expected = p.money;
   for (const o of pd) { if (o.op === 'give' || o.op === 'refgift') expected += o.amount; if (o.op === 'take') expected -= o.amount; if (o.op === 'set') expected = o.amount; }
   const owned = (ints.results || []).map(r => r.item); const styles = STYLES.filter(s => owned.includes(s[0])).map(s => s[1]);
-  const lines = [
-    note ? `<i>${esc(note)}</i>\n` : '',
-    `<b>${esc(p.first_name || 'Без имени')}</b>${p.username ? ' @' + esc(p.username) : ''}${p.banned ? ' · <b>ЗАБАНЕН</b>' : ''}`,
-    `ID <code>${p.tg_id}</code>`, '',
-    '<b>Кофейня</b>', `«${esc(p.cafe || '?')}» · помещение №${(p.franchises || 0) + 1} · уровень ${p.level} · залов ${p.rooms}`,
-    `Баланс <b>${fmt(p.money)} ₽</b>${pd.some(o => ['give', 'refgift', 'take', 'set'].includes(o.op)) ? ` → станет ${fmt(expected)} ₽` : ''}`,
-    `Заработано всего ${fmt(p.earned)} ₽ · франшиз ${p.franchises} · банкротств ${p.bankrupt}`, '',
-    '<b>Активность</b>', `Был в игре: ${ago(p.last_seen)} · заходов ${p.sessions} · ${Math.round(p.play_seconds / 60)} мин всего`,
-    `С нами с ${new Date(p.created_at).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' })}`, '',
-    '<b>Друзья</b>', `${p.referrer ? 'Пришёл по ссылке игрока <code>' + p.referrer + '</code>' + (p.ref_paid ? ' · награда пригласившему выдана' : '') : 'Пришёл сам'}`,
-    `Привёл друзей: ${fr.n || 0} · дошли до 3 ур.: ${fr.act || 0} · наград выдано: ${fr.paid || 0} (${fmt((fr.paid || 0) * 150000)} ₽)`, '',
-    '<b>Покупки</b>', `${pay.s} звёзд (${pay.n})${sub && sub.e > Date.now() ? ' · «Владелец» до ' + new Date(sub.e).toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' }) : ''}${styles.length ? ' · стили: ' + styles.join(', ') : ''}`,
-    pd.length ? `\nЖдут применения: ${pd.length}. Применятся при входе игрока.` : ''
-  ].filter(x => x !== '');
-  return { text: lines.join('\n'), kb: [
+  const lines=[note?'<i>'+esc(note)+'</i>':'','<b>'+esc(p.first_name||'Игрок')+'</b>'+(p.banned?' · ЗАБАНЕН':''),p.username?'@'+esc(p.username):'',`ID <code>${p.tg_id}</code>`,'',`☕ <b>«${esc(p.cafe||'?')}»</b>`,`💰 Баланс: <b>${fmt(p.money)} ₽</b>`+(pd.some(o=>['give','take','set'].includes(o.op))?' → '+fmt(expected)+' ₽':''),`📈 Уровень ${p.level} · залов ${p.rooms||1}`,`🕒 Был в игре: ${ago(p.last_seen)}`,`⭐ Оплачено: ${fmt(pay.s)} Stars · покупок ${pay.n}`,sub?.e>Date.now()?'🔑 Подписка до '+new Date(sub.e).toLocaleDateString('ru-RU'):'',pd.length?'📋 Ожидают применения: '+pd.length:''];
+  return { banner:'hall.jpg',text: lines.join('\n'), kb: [
     [B('Деньги', 'p:um:' + id), B('Написать', 'p:umsg:' + id)],
-    [B('Стили и подписка', 'p:ust:' + id), B('Легенда в команду', 'p:uleg:' + id)],
-    [B('Выдать: залы, пропуск, опыт, уровень', 'p:gv:' + id)],
-    [B('Переименовать', 'p:uren:' + id)],
-    [B('История', 'p:uh:' + id), B(`Друзья (${fr.n || 0})`, 'p:ufr:' + id)],
-    [...(p.referrer ? [B('Кто пригласил', 'p:u:' + p.referrer)] : []), B(p.referrer ? 'Сменить пригласившего' : 'Привязать к пригласившему', 'p:uref:' + id)],
-    [B(p.banned ? 'Разбанить' : 'Забанить', 'p:uban:' + id), B('Удалить аккаунт', 'p:udel:' + id)],
-    ...(pd.length ? [[B('Отменить ожидающие (' + pd.length + ')', 'p:ucan:' + id)]] : []),
+    [B('Имущество: выдать / изъять','p:inv:'+id)],
+    [B('История','p:uh:'+id),B('Аккаунт и связи','p:account:'+id)],
     [B('‹ Все игроки', 'p:pl:last:0'), B('Обновить', 'p:u:' + id), ...HOME]
   ] };
 }
@@ -155,7 +127,7 @@ async function vSeason(env) {
   const all = await env.DB.prepare("SELECT COUNT(*) n, COALESCE(SUM(stars),0) st FROM purchases WHERE item IN ('pass','pass15') AND refunded = 0 AND created_at >= ?1").bind(Date.parse(sz + '-01T00:00:00+03:00') - 40 * 86400000).first();
   const lines = [`<b>Сезон «${esc(SEZ_NAMES[sz] || sz)}»</b>`, '', `Пропусков куплено: ${all.n} · звёзд: ${all.st}`, `В топ-20 с пропуском: ${passN}`, '', '<b>Топ по очкам сезона</b>'];
   if (!rows.length) lines.push('Пока пусто.');
-  rows.forEach((r, i) => lines.push(`${i + 1}. «${esc(r.cafe || '?')}» — ${esc(r.first_name || '')} · ${fmt(r.sp)} оч. · ступень ${Math.min(30, Math.floor(r.sp / 160))}${r.pass ? ' · <b>пропуск</b>' : ''}${r.badge_name ? ' · ' + esc(r.badge_name) : ''}`));
+  rows.forEach((r, i) => lines.push(`${i + 1}. «${esc(r.cafe || '?')}» — ${esc(r.first_name || '')} · ${fmt(r.sp)} оч. · ступень ${Math.min(50, Math.floor(r.sp / 160))}${r.pass ? ' · <b>пропуск</b>' : ''}${r.badge_name ? ' · ' + esc(r.badge_name) : ''}`));
   const kb = []; for (let i = 0; i < Math.min(rows.length, 10); i += 2) kb.push(rows.slice(i, i + 2).map(r => B((r.first_name || '?').slice(0, 16) + ' · ' + r.sp, 'p:u:' + r.tg_id)));
   kb.push([B('Только с пропуском', 'p:szp'), B('Обновить', 'p:sz')], HOME);
   return { text: lines.join('\n'), kb };
@@ -165,7 +137,7 @@ async function vSeasonPass(env) {
   const rows = (await env.DB.prepare(`SELECT p.tg_id, p.first_name, p.cafe, COALESCE(s.sp, 0) sp, GROUP_CONCAT(u.item) items FROM purchases u JOIN players p ON p.tg_id = u.tg_id LEFT JOIN season s ON s.tg_id = u.tg_id AND s.season = ?1 WHERE u.item IN ('pass','pass15') AND u.refunded = 0 AND u.created_at >= ?2 GROUP BY p.tg_id ORDER BY sp DESC LIMIT 30`).bind(sz, Date.parse(sz + '-01T00:00:00+03:00') - 40 * 86400000).all()).results || [];
   const lines = ['<b>Владельцы пропуска сезона</b>', ''];
   if (!rows.length) lines.push('Пока никто не купил.');
-  rows.forEach((r, i) => lines.push(`${i + 1}. «${esc(r.cafe || '?')}» — ${esc(r.first_name || '')} · ${fmt(r.sp)} оч. · ступень ${Math.min(30, Math.floor(r.sp / 160))}${String(r.items).includes('pass15') ? ' · +15' : ''}`));
+  rows.forEach((r, i) => lines.push(`${i + 1}. «${esc(r.cafe || '?')}» — ${esc(r.first_name || '')} · ${fmt(r.sp)} оч. · ступень ${Math.min(50, Math.floor(r.sp / 160))}${String(r.items).includes('pass15') ? ' · +15' : ''}`));
   const kb = []; for (let i = 0; i < Math.min(rows.length, 10); i += 2) kb.push(rows.slice(i, i + 2).map(r => B((r.first_name || '?').slice(0, 16) + ' · ' + r.sp, 'p:u:' + r.tg_id)));
   kb.push([B('‹ Сезон', 'p:sz')], HOME);
   return { text: lines.join('\n'), kb };
@@ -199,22 +171,9 @@ async function vStyles(env, id) {
     [B('‹ Карточка', 'p:u:' + id), ...HOME]] };
 }
 const GRANTS = { hall2: 'Зона отдыха', proj: 'Проектор', sofa: 'Кинодиван', h2upg5: 'Зона отдыха: улучшения +5', upg5: 'Основной зал: улучшения +5', stock: 'Полный склад', rep: 'Рейтинг +0,5', party: 'Команде настроение 100', kitchen: 'Кухня +1 ступень', buyout: 'Выкуп помещения', roaster: 'Своя обжарка', goldm: 'Золотая кофемашина' };
-const DECOR_N = { ficus: 'Фикус «Геннадий»', aquarium: 'Аквариум', vinyl: 'Винил и колонка', easel: 'Картина' };
-function vGive(id, note) {
-  return { text: '<b>Выдать игроку</b>\n\nВсё применится при входе игрока в игру. Деньги — в разделе «Деньги».' + (note ? '\n\n<b>' + note + '</b>' : ''), kb: [
-    ...Object.entries(GRANTS).reduce((rows, [k, n], i) => { if (i % 2 === 0) rows.push([]); rows[rows.length - 1].push(B(n, `p:gr:${id}:${k}`)); return rows; }, []),
-    [B('Очки сезона', 'p:usp:' + id), B('Значок', 'p:ubd:' + id)],
-    [B('Стили, рамки, подписка', 'p:ust:' + id), B('Деньги', 'p:um:' + id)],
-    [B('Пропуск сезона', 'p:gp:' + id)],
-    [B('Опыт', 'p:uxp:' + id), B('Уровень', 'p:ulvl:' + id)],
-    [B('Легенда 10 ур.', `p:gl:${id}:10`), B('20 ур.', `p:gl:${id}:20`), B('30 ур.', `p:gl:${id}:30`)],
-    [B('‹ Карточка', 'p:u:' + id), ...HOME]] };
-}
-function vGiveDecor(id) { return { text: '<b>Предмет интерьера</b>\n\nВстанет на своё место бесплатно.', kb: [...Object.entries(DECOR_N).map(([k, n]) => [B(n, `p:gr:${id}:decor-${k}`)]), [B('‹ Выдать', 'p:gv:' + id), ...HOME]] }; }
-async function vHistory(env, id) {
-  const r = (await env.DB.prepare('SELECT * FROM admin_ops WHERE tg_id = ?1 ORDER BY id DESC LIMIT 15').bind(id).all()).results || [];
-  return { text: '<b>История операций</b>\n\n' + (r.length ? r.map(o => `${when(o.created_at)} · ${OPN[o.op] || o.op}${o.amount != null && o.op !== 'msg' ? ' ' + fmt(o.amount) : ''}${o.text && o.op !== 'msg' ? ' · ' + esc(o.text).slice(0, 40) : ''}${o.applied_at ? '' : ' · ждёт'}`).join('\n') : 'Пусто.'), kb: [[B('‹ Карточка', 'p:u:' + id), ...HOME]] };
-}
+const DECOR_N = {};
+function opSummary(o){if(o.op==='manage'){try{const d=JSON.parse(o.text);return ({give:'➕ Выдано',take:'➖ Изъято',set:'✏️ Установлено'}[d.action]||'Изменено')+' · '+esc(d.title)+(['resource','stock','upgrade'].includes(d.kind)?' · '+d.amount:'');}catch{}}return esc(OPN[o.op]||o.op)+(o.amount!=null&&o.op!=='msg'?' '+fmt(o.amount):'');}
+async function vHistory(env,id){const rows=(await env.DB.prepare('SELECT * FROM admin_ops WHERE tg_id=?1 ORDER BY id DESC LIMIT 12').bind(id).all()).results||[];return {text:'<b>История операций</b>\n\n'+(rows.length?rows.map(o=>when(o.created_at)+' · '+opSummary(o)+(o.applied_at?' · ✅ применено':' · ⏳ ожидает')).join('\n'):'Пока нет операций.'),kb:[[B('‹ Карточка','p:u:'+id),...HOME]]};}
 async function vChannel(env) {
   if (!env.CHANNEL_ID) return { text: 'Канал не подключён: нет CHANNEL_ID в настройках Cloudflare.', kb: [HOME] };
   const r = (await env.DB.prepare("SELECT key, at, msg_id, caption FROM posts WHERE key != 'record' AND msg_id IS NOT NULL ORDER BY at DESC LIMIT 10").all()).results || [];
@@ -237,10 +196,8 @@ async function vBuys(env) {
   const r = (await env.DB.prepare('SELECT b.*, p.first_name, p.cafe FROM purchases b LEFT JOIN players p ON p.tg_id = b.tg_id ORDER BY b.created_at DESC LIMIT 15').all()).results || [];
   return { text: '<b>Покупки</b>\n\n' + (r.length ? r.map(b => `${when(b.created_at)} · ${esc(b.first_name || b.tg_id)} · ${esc((SHOP[b.item] || {}).title || b.item)} · ${b.stars ? b.stars + ' звёзд' : 'выдал админ'}${b.refunded ? ' · возврат' : ''}`).join('\n') : 'Пока ничего.'), kb: [[B('Обновить', 'p:buy'), ...HOME]] };
 }
-async function vLog(env) {
-  const r = (await env.DB.prepare('SELECT o.op, o.amount, o.text, o.created_at, MIN(o.applied_at) applied_at, COUNT(*) n, MAX(p.first_name) first_name, MAX(o.tg_id) tg_id FROM admin_ops o LEFT JOIN players p ON p.tg_id = o.tg_id WHERE o.by_admin != 0 GROUP BY o.created_at, o.op, o.text, o.amount ORDER BY o.created_at DESC LIMIT 15').all()).results || [];
-  return { text: '<b>Журнал админов</b>\n\n' + (r.length ? r.map(o => `${when(o.created_at)} · ${o.n > 1 ? 'Рассылка всем (' + o.n + ')' : esc(o.first_name || o.tg_id)} · ${OPN[o.op] || o.op}${o.amount != null && o.op !== 'msg' ? ' ' + fmt(o.amount) : ''}${o.op === 'msg' ? ': ' + esc(o.text || '').slice(0, 30) : ''}${o.applied_at ? '' : ' · ждёт'}`).join('\n') : 'Пусто.'), kb: [[B('Обновить', 'p:log'), ...HOME]] };
-}
+async function vLog(env){const rows=(await env.DB.prepare('SELECT o.*,p.first_name FROM admin_ops o LEFT JOIN players p ON p.tg_id=o.tg_id WHERE o.by_admin!=0 ORDER BY o.id DESC LIMIT 12').all()).results||[];return {text:'<b>Журнал админов</b>\n\n'+(rows.length?rows.map(o=>when(o.created_at)+' · '+esc(o.first_name||o.tg_id)+'\n'+opSummary(o)+'\nАдмин '+o.by_admin+' · '+(o.applied_at?'✅ применено':'⏳ ожидает')).join('\n\n'):'Пока нет действий.'),kb:[[B('Обновить','p:log'),...HOME]]};}
+
 const confirm = (title, yes, no) => ({ text: `<b>${title}</b>\n\nТочно?`, kb: [[B('Да', yes), B('Нет', no)]] });
 
 /* ---------- рассылка ---------- */
@@ -260,6 +217,32 @@ async function broadcast(env, msg, by) {
   return `<b>Рассылка отправлена</b>\n\nВ игре сейчас: ${onl ? onl.n : 0}, увидят сразу.\nВ бота дошло: ${ok}. Не дошло: ${bad} (не писали боту или заблокировали).${left > 0 ? `\nНе успел в бота: ${left}, увидят в игре при входе.` : ''}`;
 }
 
+/* Current catalogue and an explicit review step for every inventory change. */
+async function vInventory(env,id,note){
+ const snap=await adminSnapshot(env,id);const p=await env.DB.prepare('SELECT cafe FROM players WHERE tg_id=?1').bind(id).first();
+ return {banner:'expand.jpg',text:'<b>Имущество · «'+esc(p?.cafe||id)+'»</b>\n\n'+(note?esc(note)+'\n\n':'')+'Выбери раздел, затем предмет и действие. Перед изменением появится подтверждение с игроком и точным количеством.\n\n'+(snap?'Снимок инвентаря: '+when(snap.at)+'. Сотрудники: '+snap.staff.length+' · предметы в рюкзаке: '+snap.inventory.length:'Игрок ещё не прислал инвентарь. Каталог выдачи доступен; личные предметы появятся после его входа.')+'\n\nИзъятие покупки отзывает доступ. Звёзды игроку автоматически не возвращаются.',kb:[...Object.entries(ASSET_GROUPS).reduce((rows,[k,n],i)=>{if(i%2===0)rows.push([]);rows.at(-1).push(B(n,'p:agroup:'+id+':'+k+':0'));return rows;},[]),[B('Найти предмет','p:afind:'+id),B('Выдать сотрудника','p:glmenu:'+id)],[B('‹ Карточка','p:u:'+id),...HOME]]};
+}
+async function vAssetPage(env,id,group,page=0){
+ if(!ASSET_GROUPS[group])return vInventory(env,id);const entries=await assetEntries(env,id,group);page=Math.max(0,Math.min(Math.ceil(entries.length/8)-1,Number(page)||0));
+ const start=page*8,kb=entries.slice(start,start+8).map((a,i)=>[B(a.title,'p:ait:'+id+':'+group+':'+(start+i))]);
+ const nav=[];if(page>0)nav.push(B('‹ Назад','p:agroup:'+id+':'+group+':'+(page-1)));if(start+8<entries.length)nav.push(B('Дальше ›','p:agroup:'+id+':'+group+':'+(page+1)));if(nav.length)kb.push(nav);kb.push([B('‹ Имущество','p:inv:'+id),...HOME]);
+ return{banner:'expand.jpg',text:'<b>'+esc(ASSET_GROUPS[group])+'</b>\n\n'+(entries.length?'Выбери предмет. Страница '+(page+1)+' из '+Math.ceil(entries.length/8)+'.':'Пока пусто. Снимок обновится при следующем входе игрока.')+(group==='resources'?'\nЕдиницы указаны в названии: для зерна — граммы, для молока и сиропа — миллилитры.':''),kb};
+}
+async function vAssetDetail(env,id,group,index){
+ const a=(await assetEntries(env,id,group))[index];if(!a)return vAssetPage(env,id,group,0);const snap=await adminSnapshot(env,id);const block=await restrictions(env,id);let state='';
+ if(a.kind==='product'){const p=SHOP[a.id];const row=await env.DB.prepare('SELECT 1 x FROM purchases WHERE tg_id=?1 AND item=?2 AND refunded=0').bind(id,a.id).first();const own=!!row||snap?.owned?.includes(a.id)||p.category&&snap?.owned?.includes(p.category+':'+p.skin);state=block[a.id]?'Доступ отозван':own?'Есть у игрока':'Не найден в последнем снимке';}
+ if(a.kind==='reward')state=block[a.id]?'Доступ отозван':Object.hasOwn(block,a.id)||snap?.owned?.includes(a.id)?'Выдано игроку':'Не найдено в снимке';
+ if(a.kind==='resource'){if(a.id==='money'||a.id==='level'){const p=await env.DB.prepare('SELECT money,level FROM players WHERE tg_id=?1').bind(id).first();state='По последнему снимку: '+fmt(a.id==='money'&&snap?snap.cash:p?.[a.id]||0);}else state='По снимку: '+fmt(snap?.[a.id]||0);}
+ if(a.kind==='stock')state='По снимку: '+fmt(snap?.stock?.[a.id]||0);
+ const amount=['resource','stock','upgrade'].includes(a.kind);const onlyTake=['staff','inventory','badge'].includes(a.kind);const choices=['staffgift','consumable','badgegift'].includes(a.kind)?['give']:a.kind==='resource'&&a.id==='level'?['set']:onlyTake?['take']:amount?['give','take','set']:['give','take'];
+ return{banner:'expand.jpg',text:'<b>'+esc(a.title)+'</b>\n\n'+state+'\n\n'+(onlyTake?'Будет удалён именно выбранный объект.':amount?'Можно добавить, списать или установить точное значение.':a.kind==='product'?'Выдача бесплатная. Отзыв доступа не делает возврат платежа.':'Изменение применится при следующем выходе игры на связь.'),kb:[...choices.map(action=>[B({give:'Выдать',take:'Изъять',set:'Установить значение'}[action],'p:ap:'+id+':'+group+':'+index+':'+action)]),[B('‹ Назад','p:agroup:'+id+':'+group+':'+Math.floor(index/8)),...HOME]]};
+}
+async function assetConfirmation(env,id,data,admin){
+ const d=validateAssetAction(data);if(!d)return{text:'Некорректное действие.',kb:[HOME]};const token=crypto.randomUUID().replaceAll('-','').slice(0,20);const player=await env.DB.prepare('SELECT cafe,first_name FROM players WHERE tg_id=?1').bind(id).first();if(!player)return{text:'Игрок не найден.',kb:[HOME]};
+ await env.DB.prepare('INSERT INTO cache(key,val,at)VALUES(?1,?2,?3)').bind('admin_draft_'+token,JSON.stringify({admin,id,data:d,until:Date.now()+15*60000}),Date.now()).run();
+ return{banner:'expand.jpg',text:'<b>Проверь изменение</b>\n\nИгрок: <b>'+esc(player.first_name||id)+'</b> · <code>'+id+'</code>\nКофейня: «'+esc(player.cafe||'?')+'»\nДействие: <b>'+{give:'выдать',take:'изъять',set:'установить'}[d.action]+'</b>\nОбъект: <b>'+esc(d.title)+'</b>'+(['resource','stock','upgrade'].includes(d.kind)?'\nКоличество / значение: <b>'+String(d.amount)+'</b>':'')+'\n\nПрименится при следующем выходе игры на связь. Действие попадёт в журнал.',kb:[[B('Подтвердить '+(d.action==='take'?'изъятие':'изменение'),'p:ago:'+token)],[B('Отмена','p:inv:'+id)]]};
+}
+
 /* ---------- вход: команда /admin ---------- */
 let ORIGIN = 'https://brewcrew.pages.dev';
 export async function adminCommand(env, chat, from, text, origin) {
@@ -269,7 +252,7 @@ export async function adminCommand(env, chat, from, text, origin) {
   if (!ADMINS.includes(from)) { await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Эта команда только для администраторов.' }); return true; }
   await clearState(env, from);
   const v = await vHome(env);
-  const r = await tgApi(env, 'sendMessage', { chat_id: chat, parse_mode: 'HTML', text: v.text, reply_markup: { inline_keyboard: v.kb }, disable_web_page_preview: true });
+  const r = await adminPanel(env,'sendMessage',{chat_id:chat},v,from);
   if (r && r.ok) await setState(env, from, null, null, chat, r.result.message_id);
   return true;
 }
@@ -280,9 +263,20 @@ export async function adminInput(env, chat, from, msgId, text) {
   const st = await getState(env, from);
   if (!st || !st.mode) return false;
   const data = st.data ? JSON.parse(st.data) : {};
-  const show = async v => { await tgApi(env, 'deleteMessage', { chat_id: chat, message_id: msgId }); if (st.msg_id) { const r = await tgApi(env, 'editMessageText', { chat_id: st.chat, message_id: st.msg_id, parse_mode: 'HTML', text: v.text, reply_markup: { inline_keyboard: v.kb || [] }, disable_web_page_preview: true }); if (r && r.ok) return; } const r2 = await tgApi(env, 'sendMessage', { chat_id: chat, parse_mode: 'HTML', text: v.text, reply_markup: { inline_keyboard: v.kb || [] } }); if (r2 && r2.ok) await setState(env, from, null, null, chat, r2.result.message_id); };
+  const show = async v => { await tgApi(env, 'deleteMessage', { chat_id: chat, message_id: msgId }); if (st.msg_id) { const r = await adminPanel(env,'editMessageText',{chat_id:st.chat,message_id:st.msg_id},v,from); if (r && r.ok) return; } const r2 = await adminPanel(env,'sendMessage',{chat_id:chat},v,from); if (r2 && r2.ok) await setState(env, from, null, null, chat, r2.result.message_id); };
   const done = async v => { await clearState(env, from); await show(v); };
   const m = st.mode;
+  if(m==='asset_badge'){const title=String(text).trim();if(title.length<2||title.length>40){await show(ask('Название значка','Нужно от 2 до 40 символов.','p:inv:'+data.id));return true;}await done(await assetConfirmation(env,data.id,{kind:'badgegift',id:'newbadge',action:'give',title},from));return true;}
+  if(m==='asset_amount'){
+    const amount=data.data?.id==='rep'?Number(String(text).replace(',','.')):parseAmount(text),d=validateAssetAction({...data.data,amount});
+    if(!d){await show(ask('Количество','Пришли целое неотрицательное число в пределах лимита.','p:inv:'+data.id));return true;}
+    await done(await assetConfirmation(env,data.id,d,from));return true;
+  }
+  if(m==='asset_find'){
+    const q=String(text).trim().toLowerCase();if(q.length<2){await show(ask('Найти предмет','Введи хотя бы две буквы.','p:inv:'+data.id));return true;}
+    const matches=ADMIN_ASSETS.filter(x=>x.title.toLowerCase().includes(q)).slice(0,12);
+    await done({banner:'expand.jpg',text:'<b>Поиск предмета</b>\n\n'+(matches.length?'Выбери результат.':'Не найдено. Попробуй другое название.'),kb:[...matches.map(a=>[B(a.title,'p:ait:'+data.id+':'+a.group+':'+ADMIN_ASSETS.filter(x=>x.group===a.group).indexOf(a))]),[B('Искать ещё','p:afind:'+data.id),B('‹ Имущество','p:inv:'+data.id)]]});return true;
+  }
   if (m === 'find') { const r = await findPlayers(env, text); if (r.length === 1) { await done(await vCard(env, r[0].tg_id)); return true; } { await done({ text: r.length ? `<b>Нашлось: ${r.length}</b>\n\nВыбери игрока.` : 'Никого не нашлось. Попробуй ID, @ник, имя или название кофейни.', kb: [...r.map(p => [playerBtn(p)]), [B('Искать ещё', 'p:find'), ...HOME]] }); return true; } }
   if (m === 'mt') { const tx = String(text).trim().slice(0, 300); if (tx.length < 5) { await show({ text: 'Слишком коротко, пришли текст ещё раз.', kb: [[B('Отмена', 'p:mt')]] }); return true; } await setMaint(env, { text: tx }, from); await done(await vMaint(env, 'Текст обновлён.')); return true; }
   if (m === 'prcode' || m === 'pramt' || m === 'prleg') return await promoInput(env, m, text, from, show, done);
@@ -295,9 +289,9 @@ export async function adminInput(env, chat, from, msgId, text) {
   if (m === 'amt') { const a = parseAmount(text); if (!Number.isFinite(a) || a < 0 || a > 1e12) { await show({ text: 'Не понял сумму. Примеры: 50000, 250к, 1.5млн', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; } await addOp(env, data.id, data.op, a, null, from); { await done(await vCard(env, data.id, `${OPN[data.op]}: ${fmt(a)} ₽. Применится при входе игрока`)); return true; } }
   if (m === 'msg') { await addOp(env, data.id, 'msg', null, text.slice(0, 500), from); const r = await tgApi(env, 'sendMessage', { chat_id: data.id, text: 'Сообщение от команды Brew Crew:\n\n' + text.slice(0, 3500) }); { await done(await vCard(env, data.id, r && r.ok ? 'Сообщение ушло в бота и покажется в игре' : 'В бота не дошло, но покажется в игре')); return true; } }
   if (m === 'ref') { const rid = Number(String(text).replace(/\D/g, '')); const p = await env.DB.prepare('SELECT tg_id, first_name, username FROM players WHERE tg_id = ?1').bind(data.id).first(); const ok = rid && p ? await bindReferrer(env, { id: p.tg_id, first_name: p.first_name, username: p.username }, rid, 'admin', true) : false; await done(await vCard(env, data.id, ok ? 'Привязан к ' + rid + '. Бонусы начислены' : 'Не получилось: проверь ID пригласившего')); return true; }
-  if (m === 'sp') { const n = parseInt(String(text).replace(/\s/g, ''), 10); if (!(n >= 1 && n <= 100000)) { await show({ text: 'Нужно число от 1 до 100 000.', kb: [[B('Отмена', 'p:gv:' + data.id)]] }); return true; } await addOp(env, data.id, 'sp', n, null, from); await done(vGive(data.id, 'Очки сезона +' + n + ' придут при входе')); return true; }
-  if (m === 'bd') { const t = String(text).trim().slice(0, 40); if (t.length < 2) { await show({ text: 'Слишком коротко.', kb: [[B('Отмена', 'p:gv:' + data.id)]] }); return true; } await addOp(env, data.id, 'badge', null, t, from); await done(vGive(data.id, 'Значок «' + t + '» придёт при входе')); return true; }
-  if (m === 'xp') { const n = parseInt(String(text).replace(/\s/g, ''), 10); if (!(n >= 1 && n <= 1000000)) { await show({ text: 'Нужно число от 1 до 1 000 000.', kb: [[B('Отмена', 'p:gv:' + data.id)]] }); return true; } await addOp(env, data.id, 'xp', n, null, from); await done(vGive(data.id, 'Опыт +' + n + ' придёт при входе')); return true; }
+  if (m === 'sp') { const n = parseInt(String(text).replace(/\s/g, ''), 10); if (!(n >= 1 && n <= 100000)) { await show({ text: 'Нужно число от 1 до 100 000.', kb: [[B('Отмена', 'p:gv:' + data.id)]] }); return true; } await addOp(env, data.id, 'sp', n, null, from); await done(await vInventory(env,data.id, 'Очки сезона +' + n + ' придут при входе')); return true; }
+  if (m === 'bd') { const t = String(text).trim().slice(0, 40); if (t.length < 2) { await show({ text: 'Слишком коротко.', kb: [[B('Отмена', 'p:gv:' + data.id)]] }); return true; } await addOp(env, data.id, 'badge', null, t, from); await done(await vInventory(env,data.id, 'Значок «' + t + '» придёт при входе')); return true; }
+  if (m === 'xp') { const n = parseInt(String(text).replace(/\s/g, ''), 10); if (!(n >= 1 && n <= 1000000)) { await show({ text: 'Нужно число от 1 до 1 000 000.', kb: [[B('Отмена', 'p:gv:' + data.id)]] }); return true; } await addOp(env, data.id, 'xp', n, null, from); await done(await vInventory(env,data.id, 'Опыт +' + n + ' придёт при входе')); return true; }
   if (m === 'lvl') { const n = parseInt(text, 10); if (!(n >= 1 && n <= 60)) { await show({ text: 'Нужно число от 1 до 60.', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; } await addOp(env, data.id, 'level', n, null, from); await env.DB.prepare('UPDATE players SET level = ?2 WHERE tg_id = ?1').bind(data.id, n).run(); { await done(await vCard(env, data.id, 'Уровень ' + n + ' поставится при входе игрока')); return true; } }
   if (m === 'ren') { const nn = text.trim().slice(0, 28); if (nn.length < 2) { await show({ text: 'Слишком коротко. Пришли новое название ещё раз.', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; } await addOp(env, data.id, 'rename', null, nn, from); await env.DB.prepare('UPDATE players SET cafe = ?2 WHERE tg_id = ?1').bind(data.id, nn).run(); { await done(await vCard(env, data.id, 'Название поменяется в игре при входе')); return true; } }
   if (m === 'all') {
@@ -320,7 +314,7 @@ export async function adminCallback(env, cq) {
   if (!ADMINS.includes(from)) { await answer('Только для администраторов'); return; }
   const chat = cq.message.chat.id, mid = cq.message.message_id;
   const parts = String(cq.data || '').split(':'); const act = parts[1];
-  const edit = v => tgApi(env, 'editMessageText', { chat_id: chat, message_id: mid, parse_mode: 'HTML', text: v.text, reply_markup: { inline_keyboard: v.kb || [] }, disable_web_page_preview: true });
+  const edit = v => adminPanel(env,'editMessageText',{chat_id:chat,message_id:mid},v,from);
   const wait = async (mode, data, v) => { await setState(env, from, mode, data, chat, mid); await edit(v); await answer(''); };
   if (parts[0] !== 'p') { await answer('Старая кнопка. Открой /admin'); return; }
   const id = Number(parts[2]);
@@ -345,6 +339,30 @@ export async function adminCallback(env, cq) {
   }
   if (act === 'lg') { const dr = await env.DB.prepare('SELECT val FROM cache WHERE key = ?1').bind('legdraft_' + from).first(); const d = dr ? JSON.parse(dr.val) : null; if (!d) { await edit(await vHome(env)); return answer('Черновик потерян'); } const leg = parts[2] === 'r' ? null : MONEY_LEGS[Number(parts[2])] || null; await addOp(env, d.id, 'give', d.amount, leg, from); await edit(await vCard(env, d.id, `Начислено: ${fmt(d.amount)} ₽ · ${leg || 'случайная легенда'}`)); return answer('Готово'); }
   if (act === 'lgc') return wait('leg', null, ask('Своя легенда', 'Пришли, как это будет выглядеть в отчёте игрока. Например: «Отправили шейхи».', 'p:home'));
+  if(act==='ops'){await edit({banner:'admin-banner.png',text:'<b>Дополнительные инструменты</b>\n\nПубликации, акции и расширенная статистика.',kb:[[B('Канал','p:ch'),B('Рассылка','p:all')],[B('Рефералы','p:refs'),B('Промокоды','p:prl')],[B('Турнир','p:tour'),B('Что нового','p:gd')],[...HOME]]});return answer('');}
+  if(act==='account'){const p=await env.DB.prepare('SELECT banned FROM players WHERE tg_id=?1').bind(id).first();await edit({banner:'hall.jpg',text:'<b>Аккаунт игрока</b>\n\nИзменения аккаунта и связи с другими игроками.',kb:[[B('Переименовать','p:uren:'+id),B('Друзья','p:ufr:'+id)],[B('Изменить пригласившего','p:uref:'+id),B('Уровень','p:ulvl:'+id)],[B(p?.banned?'Разбанить':'Забанить','p:uban:'+id),B('Удалить аккаунт','p:udel:'+id)],[B('‹ Карточка','p:u:'+id),...HOME]]});return answer('');}
+  if(act==='gi'||act==='gp'||act==='gs'){const sku=act==='gi'?parts[3]:act==='gp'?'pass':'sub_owner';await edit(await assetConfirmation(env,id,{kind:'product',id:sku,action:'give'},from));return answer('');}
+  if(['ulvl','uxp','usp'].includes(act)){const resource={ulvl:'level',uxp:'xp',usp:'sp'}[act];return wait('asset_amount',{id,data:{kind:'resource',id:resource,action:resource==='level'?'set':'give'}},ask('Изменить '+{level:'уровень',xp:'опыт',sp:'очки сезона'}[resource],'Пришли новое значение / количество. Далее будет подтверждение.','p:inv:'+id));}
+  if(act==='um'){await edit(await vAssetDetail(env,id,'resources',0));return answer('');}
+  if(act==='inv'||act==='gv'||act==='ust'){await edit(await vInventory(env,id));return answer('');}
+  if(act==='agroup'){await edit(await vAssetPage(env,id,parts[3],parts[4]));return answer('');}
+  if(act==='ait'){await edit(await vAssetDetail(env,id,parts[3],Number(parts[4])));return answer('');}
+  if(act==='afind')return wait('asset_find',{id},ask('Найти предмет','Пришли название из магазина.','p:inv:'+id));
+  if(act==='gl'){const level=[10,20,30].includes(Number(parts[3]))?Number(parts[3]):20;await edit(await assetConfirmation(env,id,{id:'legend'+level,kind:'staffgift',action:'give'},from));return answer('');}
+  if(act==='glmenu'){await edit({text:'<b>Выдать сотрудника</b>\n\nСотрудник выйдет на смену при входе игрока.',kb:[[B('Легенда 10 уровня','p:gl:'+id+':10'),B('20 уровня','p:gl:'+id+':20')],[B('30 уровня','p:gl:'+id+':30')],[B('‹ Имущество','p:inv:'+id)]]});return answer('');}
+  if(act==='ap'){
+    const a=(await assetEntries(env,id,parts[3]))[Number(parts[4])];if(!a)return answer('Предмет не найден');
+    if(a.kind==='badgegift')return wait('asset_badge',{id},ask('Название значка','Пришли название от 2 до 40 символов.','p:inv:'+id));
+    const d={id:a.id,kind:a.kind,title:a.title,action:parts[5]};
+    if(['resource','stock','upgrade'].includes(a.kind))return wait('asset_amount',{id,data:d},ask(a.title,'Действие: '+({give:'добавить',take:'списать',set:'установить'}[d.action]||'?')+'. Пришли количество'+(a.max?' (максимум '+fmt(a.max)+')':'')+'.','p:inv:'+id));
+    await edit(await assetConfirmation(env,id,d,from));return answer('');
+  }
+  if(act==='ago'){
+    const token=parts[2];if(!/^[a-f0-9]{20}$/.test(token))return answer('Некорректное подтверждение');
+    const row=await env.DB.prepare('SELECT val FROM cache WHERE key=?1').bind('admin_draft_'+token).first();let draft;try{draft=JSON.parse(row?.val||'null');}catch{}
+    if(!draft||draft.admin!==from||draft.until<Date.now())return answer('Подтверждение устарело. Выбери действие заново.',true);
+    try{const changed=await applyAssetAction(env,draft.id,draft.data,from,token);await edit(await vInventory(env,draft.id,changed?'Изменение записано. Применится при выходе игры на связь.':'Это действие уже выполнено.'));return answer(changed?'Готово':'Уже выполнено');}catch(e){return answer(e.message,true);}
+  }
   switch (act) {
     case 'home': await edit(await vHome(env)); return answer('');
     case 'pl': await edit(await vPlayers(env, parts[2], Number(parts[3]))); return answer('');
@@ -368,10 +386,9 @@ export async function adminCallback(env, cq) {
     case 'gi': { const k = parts[3]; if (!STYLES.some(s => s[0] === k)) return answer('Нет такого стиля'); await env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at) VALUES (?1, ?2, ?3, 0, ?4, NULL)').bind('admin_' + k + '_' + id, id, k, Date.now()).run(); await addOp(env, id, 'ent', null, null, from); await edit(await vStyles(env, id)); return answer('Стиль выдан'); }
     case 'gp': { const has = await env.DB.prepare("SELECT 1 FROM purchases WHERE tg_id = ?1 AND item IN ('pass','pass15') AND created_at >= ?2 AND refunded = 0").bind(id, Date.now() - 31 * 86400000).first(); if (!has) { await env.DB.prepare('INSERT INTO purchases (charge_id, tg_id, item, stars, created_at) VALUES (?1, ?2, ?3, 0, ?4)').bind('admin_' + Date.now() + '_' + id, id, 'pass', Date.now()).run(); await addOp(env, id, 'ent', null, null, from); } await edit(await vCard(env, id, has ? 'Пропуск уже есть' : 'Пропуск сезона выдан. Появится при входе')); return answer('Готово'); }
     case 'gs': { const cur = await env.DB.prepare("SELECT MAX(expires_at) e FROM purchases WHERE tg_id = ?1 AND item = 'sub_owner' AND refunded = 0").bind(id).first(); const base = Math.max(Date.now(), (cur && cur.e) || 0); await env.DB.prepare('INSERT INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at) VALUES (?1, ?2, ?3, 0, ?4, ?5)').bind('admin_' + Date.now() + '_' + id, id, 'sub_owner', Date.now(), base + 30 * 86400000).run(); await addOp(env, id, 'ent', null, null, from); await edit(await vCard(env, id, 'Подписка продлена на 30 дней')); return answer('Готово'); }
-    case 'gv': await edit(vGive(id)); return answer('');
-    case 'gd': await edit(vGiveDecor(id)); return answer('');
-    case 'gr': { const k = parts[3]; const nm = GRANTS[k] || (k.startsWith('decor-') && DECOR_N[k.slice(6)]); if (!nm) return answer('Нет такого'); await addOp(env, id, 'grant', null, k, from); await edit(vGive(id, 'Выдано: ' + nm)); return answer('Готово'); }
-    case 'gl': { const n = Math.max(5, Math.min(50, Number(parts[3]) || 20)); await addOp(env, id, 'staff', n, 'Подарок от администрации.', from); await edit(vGive(id, 'Легенда ' + n + ' уровня выйдет на смену')); return answer('Готово'); }
+    case 'gv': await edit(await vInventory(env,id)); return answer('');
+    case 'gr': { const k = parts[3]; const nm = GRANTS[k] || (k.startsWith('decor-') && DECOR_N[k.slice(6)]); if (!nm) return answer('Нет такого'); await addOp(env, id, 'grant', null, k, from); await edit(await vInventory(env,id, 'Выдано: ' + nm)); return answer('Готово'); }
+    case 'gl': { const n = Math.max(5, Math.min(50, Number(parts[3]) || 20)); await addOp(env, id, 'staff', n, 'Подарок от администрации.', from); await edit(await vInventory(env,id, 'Легенда ' + n + ' уровня выйдет на смену')); return answer('Готово'); }
     case 'usp': return wait('sp', { id }, ask('Очки сезона', 'Пришли количество очков. Одна ступень пропуска — 160 очков.', 'p:gv:' + id));
     case 'ubd': return wait('bd', { id }, ask('Значок', 'Пришли название значка, до 40 символов. Например: «Друг разработчиков».', 'p:gv:' + id));
     case 'uxp': return wait('xp', { id }, ask('Выдать опыт', 'Пришли количество опыта, например 500.', 'p:gv:' + id));
@@ -412,8 +429,8 @@ export async function adminCallback(env, cq) {
 }
 
 // Игра забирает команды при отметке онлайн.
-export async function opsFor(env, id) {
-  return (await env.DB.prepare('SELECT id, op, amount, text FROM admin_ops WHERE tg_id = ?1 AND applied_at IS NULL ORDER BY id LIMIT 20').bind(id).all()).results || [];
+export async function opsFor(env, id, supportsManaged = false) {
+  return (await env.DB.prepare('SELECT id, op, amount, text FROM admin_ops WHERE tg_id = ?1 AND applied_at IS NULL AND (op != \'manage\' OR ?2 = 1) ORDER BY id LIMIT 20').bind(id,supportsManaged?1:0).all()).results || [];
 }
 export async function ackOps(env, id, ids) {
   ids = (Array.isArray(ids) ? ids : []).map(Number).filter(Number.isFinite).slice(0, 20);

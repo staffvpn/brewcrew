@@ -1,3 +1,4 @@
+import {safeAdminSnapshot} from '../_admin-assets.js';
 import { publicCafe } from '../_cafe-public.js';
 // POST /api/track — игра раз в минуту сообщает, что игрок онлайн, и его краткие показатели.
 import { json, mskDay, verifyInitData, dispatchReminders, ADMINS, parseRef, bindReferrer, payReferrer, sezId } from '../_lib.js';
@@ -35,6 +36,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
         Math.min(num(s.best), 5e9), s.snap && typeof s.snap === 'object' ? JSON.stringify(s.snap).slice(0, 400) : null, typeof s.bdn === 'string' ? s.bdn.slice(0, 40) : null),
     env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id)
   ]);
+  if(s.adminInventory){const snap=safeAdminSnapshot(s.adminInventory);if(snap)await env.DB.prepare('INSERT OR REPLACE INTO cache(key,val,at) VALUES(?1,?2,?3)').bind('admin_inventory_'+user.id,JSON.stringify(snap),now).run();}
   // 9.3: витрина кофейни для просмотра другими игроками
   if (s.view && typeof s.view === 'object') { try { const data = JSON.stringify(publicCafe(s.view));
     await env.DB.prepare("INSERT INTO cafe_view (tg_id, vk, data, at) VALUES (?1, lower(hex(randomblob(6))), ?2, ?3) ON CONFLICT(tg_id) DO UPDATE SET data = ?2, at = ?3").bind(user.id, data, now).run(); } catch {} }
@@ -79,6 +81,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (waitUntil) { waitUntil(dispatchReminders(env)); waitUntil(channelTick(env, origin)); waitUntil(winbackTick(env).catch(() => {})); } else await dispatchReminders(env);
   const me = await env.DB.prepare('SELECT banned FROM players WHERE tg_id = ?1').bind(user.id).first();
   let ops = [];
-  try { ops = await opsFor(env, user.id); } catch {}
+  try { ops = await opsFor(env, user.id, s.adminProtocol===1); } catch {}
   return json({ ok: true, banned: Boolean(me && me.banned), ops, goal, world });
 }

@@ -7,8 +7,8 @@ import {onRequestPost} from '../functions/api/admin-test.js';
 import {onRequestPost as purchases} from '../functions/api/purchases.js';
 import {ADMINS,SHOP} from '../functions/_lib.js';
 const sql=new DatabaseSync(':memory:');
-sql.exec(`CREATE TABLE purchases(charge_id TEXT PRIMARY KEY,tg_id INTEGER,item TEXT,stars INTEGER,created_at INTEGER,expires_at INTEGER,refunded INTEGER DEFAULT 0);CREATE TABLE admin_ops(tg_id INTEGER,op TEXT,amount INTEGER,text TEXT,created_at INTEGER,by_admin INTEGER);`);
-const DB={prepare(q){return{bind(...args){return{all:async()=>({results:sql.prepare(q).all(...args)}),run:()=>sql.prepare(q).run(...args)}}}},async batch(stmts){sql.exec('BEGIN');try{for(const s of stmts)s.run();sql.exec('COMMIT');}catch(e){sql.exec('ROLLBACK');throw e;}}};
+sql.exec(`CREATE TABLE cache(key TEXT PRIMARY KEY,val TEXT,at INTEGER);CREATE TABLE purchases(charge_id TEXT PRIMARY KEY,tg_id INTEGER,item TEXT,stars INTEGER,created_at INTEGER,expires_at INTEGER,refunded INTEGER DEFAULT 0);CREATE TABLE admin_ops(tg_id INTEGER,op TEXT,amount INTEGER,text TEXT,created_at INTEGER,by_admin INTEGER);`);
+const DB={prepare(q){return{bind(...args){return{first:async()=>sql.prepare(q).get(...args)||null,all:async()=>({results:sql.prepare(q).all(...args)}),run:()=>sql.prepare(q).run(...args)}}}},async batch(stmts){sql.exec('BEGIN');try{for(const s of stmts)s.run();sql.exec('COMMIT');}catch(e){sql.exec('ROLLBACK');throw e;}}};
 const env={BOT_TOKEN:'test-token',DB};
 function signed(id,age=0){const p=new URLSearchParams({auth_date:String(Math.floor(Date.now()/1000)-age),user:JSON.stringify({id})});const check=[...p].sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${k}=${v}`).join('\n');const key=createHmac('sha256','WebAppData').update(env.BOT_TOKEN).digest();p.set('hash',createHmac('sha256',key).update(check).digest('hex'));return p.toString();}
 async function call(data,id=ADMINS[0],extraEnv={},handler=onRequestPost){const r=await handler({request:new Request('https://test/api/admin-test',{method:'POST',body:JSON.stringify({initData:signed(id),...data})}),env:{...env,...extraEnv}});return{status:r.status,...await r.json()};}
@@ -30,6 +30,6 @@ assert.equal((await call({},123,{},purchases)).lux.length,0);
 const source=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 for(const m of source.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g))if(!m[1].includes('src='))new vm.Script(m[2]);
 assert(!source.includes('window.__MAX')&&!source.includes('CITY940')&&!source.includes('/api/city'));
-for(const fragment of ['brewcrew-build','v15-stars-visits-20261115',"pimg('fridge',294.5,146.5,72)","pimg('cam',13,19,12)",'Лера с терьером','bcRubberMat(4,149,66,22)','bcRubberMat(76,149,76,22)','maint_on.jpg','maint_off.jpg'])assert(source.includes(fragment),fragment);
+for(const fragment of ['brewcrew-build','v15-admin-assets-20261115',"pimg('fridge',294.5,146.5,72)","pimg('cam',13,19,12)",'Лера с терьером','bcRubberMat(4,149,66,22)','bcRubberMat(76,149,76,22)','maint_on.jpg','maint_off.jpg'])assert(source.includes(fragment),fragment);
 assert.equal(SHOP.lux_x_cat.stars,120);assert.equal(SHOP.cash_s.stars,25);
 console.log('PASS: Telegram auth, admin-only self purchases, disable flag, catalogue validation, zero-Star persistence, idempotent grants, cash, styles/lux/frames/pass/subscription entitlements, ordinary players, inline syntax and release invariants.');
