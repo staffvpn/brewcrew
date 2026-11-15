@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta name="brewcrew-build" content="v15-admin-test-20261115">
+<meta name="brewcrew-build" content="v15-faces-shop-20261115">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -3132,7 +3132,7 @@ const SEZ_INFO = {
 };
 function sezInfo(id){ id = id || sezId(); if(SEZ_INFO[id]) return Object.assign({id}, SEZ_INFO[id]); const m = +id.slice(5,7); const winter = m===12 || m<=2;
   return {id, n:'Сезон «'+SEZ_MONTHS[m-1][0].toUpperCase()+SEZ_MONTHS[m-1].slice(1)+' смена»', d:'Новый месяц — новый сезон: свой рейтинг, свои награды.', drink:'Сезонный раф', item:'garland', style: winter ? 'int_winter' : 'int_autumn', leg:{name:'Сезонная легенда', sex:'m', bio:'Пришёл по объявлению «нужен бариста с душой». Душа на месте, остальное тоже.'}}; }
-const SZ_TIER = 160, SZ_TIERS = 100;
+const SZ_TIER = 160, SZ_TIERS = 50;
 function szState(){ const id = sezId(); if(!S.sz || S.sz.id !== id){ if(S.sz) szArchive(S.sz); S.sz = {id, sp:0, acc:0, claimed:{f:[], p:[]}, login:null, profit:0, v50:true}; HOOK.struct(); } return S.sz; }
 function szArchive(z){ S.szHist = (S.szHist||[]).concat([{id:z.id, sp:z.sp, tier:szTier(z)}]).slice(-12); }
 function szTier(z){ z = z || S.sz; return z ? Math.min(SZ_TIERS, Math.floor(z.sp / SZ_TIER)) : 0; }
@@ -5798,7 +5798,7 @@ function finishJob(id, j){
   if(free.length && chance(0.75)){ const vf = free.filter(i=>slotOf(id,i)[2]!=='out'); g.seat = vf.length && chance(0.85) ? pick(vf) : pick(free); r.seats[g.seat] = g; g.state = 'toSeat'; } else g.state = 'leave';
 }
 function flyMoney(lx, ly, amt){
-  const cvR = cv.getBoundingClientRect(); const mEl = $('#sMoney');
+  const cvR = cv.getBoundingClientRect(); const mEl = document.querySelector('#hud2 .h2money') || $('#sMoney');
   if(!mEl || !cvR.width || document.hidden) return;
   const sx = cvR.left + (lx-OX)/VW*cvR.width, sy = cvR.top + ly/H*cvR.height;
   const mR = mEl.getBoundingClientRect(); const tx = mR.left + mR.width*0.6, ty = mR.top + mR.height/2;
@@ -5809,7 +5809,7 @@ function flyMoney(lx, ly, amt){
     {transform:'translate(-50%,-150%) scale(1)', opacity:1, offset:.25},
     {transform:'translate(-50%,-170%) scale(1)', opacity:1, offset:.5},
     {transform:`translate(calc(-50% + ${tx-sx}px), calc(-50% + ${ty-sy}px)) scale(.6)`, opacity:.9}], {duration: reduce?400:1150, easing:'cubic-bezier(.4,0,.2,1)'});
-  anim.onfinish = () => { f.remove(); const m = $('#sMoney'); if(m){ m.classList.remove('pulse'); void m.offsetWidth; m.classList.add('pulse'); } };
+  anim.onfinish = () => { f.remove(); const m = document.querySelector('#hud2 .h2money') || $('#sMoney'); if(m){ m.classList.remove('pulse'); void m.offsetWidth; m.classList.add('pulse'); } };
 }
 
 /* ============ drawing ============ */
@@ -8026,10 +8026,7 @@ function renderSeason(p){
   p.appendChild(el(`<div class="card chalkboard sz-head"><div class="eyebrow">Сезон · осталось ${left} дн.</div><div class="t chalk">${esc(info.n)}</div><div class="d">${esc(info.d)}</div><div class="mood">Ступень <b class="num">${tier}</b> из ${SZ_TIERS} ${bar(into,'var(--caramel)')}<span class="num">${tier>=SZ_TIERS?'всё':Math.floor(z.sp%SZ_TIER)+'/'+SZ_TIER}</span></div><div class="d">Очки сезона: заход в игру за день +25, все задания дня +20, день без злых гостей +15, решённое событие +5, каждые 40 гостей +1, разборка на ковре +10.</div></div>`));
   const pc = el(`<div class="card sz-pass ${own?'own':''}"><div class="row"><span class="t">Пропуск сезона</span><span class="sp"></span>${own?'<span class="tag g">Активен</span>':''}</div><div class="d">${own?'Платные награды открыты, каждый день капают дивиденды инвестора.':'Открывает платную ветку: всё, что уже пройдено, забирается сразу.'}</div>
     <div class="sz-best">${[1,5,10,20,30,50].map(n=>{ const rw = szReward('p', n); return `<div><b>${n}</b><span>${esc(rw.t)}</span></div>`; }).join('')}</div><div class="row wrap"></div></div>`);
-  if(!own){ const row = pc.querySelector('.row.wrap'); const can = !!(tg && tg.initData && tg.openInvoice);
-    const b1 = el(`<button class="btn" ${can?'':'disabled'}>Пропуск · 200 ★</button>`); b1.onclick = () => buyStars('pass');
-    const b2 = el(`<button class="btn red" ${can?'':'disabled'}>Пропуск +15 ступеней · 500 ★</button>`); b2.onclick = () => buyStars('pass15');
-    row.append(b1, b2); if(!can) row.appendChild(el(`<div class="d">Покупка работает в Telegram.</div>`)); }
+  if(!own){const row=pc.querySelector('.row.wrap');row.appendChild(el('<div class="d">Пропуск можно купить в магазине, в разделе «Пропуск».</div>'));const b=el('<button class="btn">Перейти в магазин</button>');b.onclick=function(){openShop('pass');};row.appendChild(b);}
   p.appendChild(pc);
   const unF = []; const unP = []; for(let i=1;i<=tier;i++){ if(!z.claimed.f.includes(i)) unF.push(i); if(own && !z.claimed.p.includes(i)) unP.push(i); }
   if(unF.length || unP.length){ const c = el(`<div class="card"><div class="row"><span class="t">Ждут тебя: ${unF.length + unP.length}</span><span class="sp"></span><button class="btn red">Забрать всё</button></div></div>`); c.querySelector('button').onclick = () => { const n = szClaimAll('f') + (own ? szClaimAll('p') : 0); toast('Забрано наград: '+n+'. Деньги, опыт и бонусы — в «Инвентаре»'); sfx('level'); save(); renderSheet(); renderHud(); }; p.appendChild(c); }
@@ -8240,7 +8237,7 @@ function passWatch(force){
   S.passSeen = S.passSeen || [];
   for(const ps of S.ent.passes){ if(S.passSeen.includes(ps.id)) continue; S.passSeen.push(ps.id);
     if(ps.season !== sezId()) continue;
-    const z = szState(); if(ps.plus) z.sp = Math.min(SZ_TIERS*SZ_TIER, z.sp + ps.plus*SZ_TIER);
+    const z = szState(); if(ps.plus) z.sp = Math.max(z.sp, Math.min(SZ_TIERS*SZ_TIER, z.sp + ps.plus*SZ_TIER));
     const n = szClaimAll('p'); szClaimAll('f'); mergeInteriors();
     queueModal({kind:'promo', title:'Пропуск сезона активирован', text:'Платная ветка открыта'+(ps.plus?', плюс '+ps.plus+' ступеней':'')+'. Забрано наград: '+n+'. Дивиденды инвестора будут приходить каждый день до конца сезона.'});
     sfx('level'); save(); structDirty = true; }
@@ -9727,47 +9724,8 @@ renderTeam = function(p, id){
   swipeDeck(p, id);
   // сплетни — после карточек команды, перед резюме
   try{ const gc = gossipCard(id); const deckH = Array.from(p.children).find(x=>x.classList && x.classList.contains('chalk') && /Собеседование/.test(x.textContent)); if(deckH) p.insertBefore(gc, deckH); else p.appendChild(gc); }catch(e){ console.error(e); }
-  // трансферное окно
-  try{ p.appendChild(marketSection(id)); }catch(e){ console.error(e); }
 };
 
-/* ---------- трансферное окно ---------- */
-const MK_KEYS = ['name','role','lvl','rank','quirk','sex','spr','legendId','prize','xp','shifts'];
-function mkPack(s){ const o = {}; for(const k of MK_KEYS) if(s[k] != null) o[k] = s[k]; return o; }
-function mkUnpack(o){ const s = makeStaff(o.role, {quirk:o.quirk||'none'}); for(const k of MK_KEYS) if(o[k] != null) s[k] = o[k]; s.mood = 70; s.fatigue = 0; s.interviewed = true; s.claim = false; s.transfer = true; return s; }
-function mkValue(s){ return Math.max(20000, Math.round(shiftPay(s) * (6 + s.lvl*2 + (s.rank||0)*6 + (s.legendId||s.prize ? 40 : 0)) / 1000) * 1000); }
-let MARKET = {list:[], mine:[], at:0, busy:false};
-async function mkApi(body){ if(!(tg && tg.initData)) return {ok:false, error:'Открой игру из Telegram'}; try{ const r = await fetch('/api/market', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData:tg.initData}, body))}); return await r.json(); }catch(e){ return {ok:false, error:'Нет связи'}; } }
-async function mkLoad(force){ if(MARKET.busy || (!force && Date.now() - MARKET.at < 60000)) return; MARKET.busy = true; const r = await mkApi({op:'get'}); MARKET.busy = false; if(r && r.ok){ MARKET.list = r.list||[]; MARKET.mine = r.mine||[]; MARKET.at = Date.now(); structDirty = true; if(sheet) renderPanel(); } }
-function marketSection(id){
-  mkLoad();
-  const box = el(`<div><div class="h chalk">Трансферное окно</div><div class="empty" style="font-size:12px">Сотрудники других игроков. Покупаешь — человек переходит к тебе со своим уровнем и характером. Своего можно выставить из его карточки.</div></div>`);
-  for(const it of MARKET.mine){ const c = el(`<div class="card"><div class="row wrap"><span class="t">${esc(it.staff.name)}</span><span class="tag">${esc(it.staff.role)}</span><span class="tag num">ур. ${it.staff.lvl}</span><span class="sp"></span><span class="tag ${it.status==='sold'?'g':''}">${it.status==='sold'?'Продан':'Выставлен'}</span></div><div class="d">${it.status==='sold'?'Купил'+'а кофейня «'+esc(it.buyer_cafe||'?')+'». Деньги придут при следующем отчёте.':'Цена '+fmt(it.price)+' ₽. Пока ждёт покупателя.'}</div>${it.status==='open'?'<div class="row"><button class="btn ghost">Снять с продажи и вернуть</button></div>':''}</div>`);
-    const b = c.querySelector('button'); if(b) b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'cancel', id:it.id}); if(r && r.ok && r.staff){ const s = mkUnpack(r.staff); hire(s, 'main', 'white'); syncScene('main'); toast(s.name+' '+he(s,'вернулся','вернулась')+' в команду'); save(); } else toast((r && r.error) || 'Не получилось'); mkLoad(true); };
-    box.appendChild(c); }
-  const others = MARKET.list.slice(0, 12);
-  if(!others.length) box.appendChild(el(`<div class="empty">${MARKET.at ? 'Пока никто никого не продаёт.' : 'Загружаем…'}</div>`));
-  for(const it of others){ const s = it.staff; const cnt = staffIn(id).filter(x=>x.role===s.role && !x.isYou).length, full = cnt >= staffCap(s.role);
-    const q = s.quirk && s.quirk!=='none' && QUIRKS[s.quirk] ? qN(s) : 'без странностей';
-    const c = el(`<div class="card staff"><div class="spr" style="${sprStyle(s.spr, 48)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${esc(s.role)}</span><span class="tag num">ур. ${s.lvl}</span>${s.legendId||s.prize?'<span class="tag gold">Легенда</span>':''}</div><div class="d">${esc(q)} · из «${esc(it.seller_cafe||'?')}»</div><div class="row">${full?'<span class="tag">Мест на эту роль нет</span>':btnHtml('Купить · '+fmt(it.price)+' ₽', it.price, S.money < it.price)}</div></div></div>`);
-    const b = c.querySelector('button[data-cost]'); if(b) b.onclick = async () => { if(S.money < it.price){ toast('Не хватает денег'); return; } b.disabled = true; const r = await mkApi({op:'buy', id:it.id});
-      if(r && r.ok && r.staff){ spend(it.price, 'invest', 'Трансфер: '+r.staff.name); const ns = mkUnpack(r.staff); hire(ns, id, 'white'); syncScene(id); sfx('buy'); toast(ns.name+' '+he(ns,'перешёл','перешла')+' к тебе из «'+(it.seller_cafe||'?')+'»'); save(); } else toast((r && r.error) || 'Уже купили'); mkLoad(true); };
-    box.appendChild(c); }
-  return box;
-}
-// кнопка «Выставить на трансфер» в карточке сотрудника
-const _staffModal25 = staffModal;
-staffModal = function(box, m, btn){
-  _staffModal25(box, m, btn);
-  const s = S.staff.find(x=>x.id===m.sid); if(!s || s.isYou || s.today==='sub') return;
-  const v = mkValue(s);
-  const wrap = el(`<div class="card" style="margin-top:8px"><div class="t">Трансферное окно</div><div class="d">Выставить ${esc(s.name)} на продажу другим игрокам. Пока висит объявление, сотрудник уходит из команды. Снять можно в любой момент — вернётся. Комиссия площадки 10%.</div><div class="row wrap mk-p"></div></div>`);
-  const row = wrap.querySelector('.mk-p');
-  [[0.7,'Дёшево'],[1,'Норма'],[1.5,'Дорого']].forEach(([k, n])=>{ const price = Math.round(v*k/1000)*1000; const b = el(`<button class="btn ghost">${n} · ${fmt(price)} ₽</button>`);
-    b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'list', staff:mkPack(s), price, cafe:S.name}); if(r && r.ok){ removeStaff(s.id); syncScene(s.room||'main'); toast(s.name+' '+he(s,'выставлен','выставлена')+' за '+fmt(price)+' ₽'); save(); closeModal(); mkLoad(true); } else { b.disabled = false; toast((r && r.error) || 'Не получилось'); } };
-    row.appendChild(b); });
-  box.appendChild(wrap);
-};
 // деньги за проданного приходят через отчёт
 const _onTrack25 = onTrack;
 onTrack = function(r){ try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const o of r.ops){ if(o.op==='trsold'){ const a = Math.max(0, Math.round(Number(o.amount)||0)); if(a){ income(a, 'events', 'Трансфер: '+(o.text||'сотрудник')); toast('Продан на трансфере: '+(o.text||'сотрудник')+' · +'+fmt(a)+' ₽'); sfx('coin'); } } } }catch(e){ console.error(e); } return _onTrack25(r); };
@@ -10228,23 +10186,6 @@ function duelPlay(g){
 }
 
 /* ===== 13:43: биржа отдельной вкладкой, без плашки загрузки, без подсобки, плашки скроллом ===== */
-const _mkSection27 = marketSection;
-marketSection = function(){ return document.createElement('div'); };
-mkValue = function(s){ const base = typeof _shiftPay26 === 'function' ? _shiftPay26(s) : shiftPay(s); return Math.max(20000, Math.round(base * (6 + s.lvl*2 + (s.rank||0)*6 + (s.legendId||s.prize ? 40 : 0)) / 1000) * 1000); };
-HALL_TABS.splice(HALL_TABS.findIndex(t=>t[0]==='team')+1, 0, ['market','Биржа']); TAB_N.market = 'Биржа';
-function mkSellSection(){ const box = el(`<div><div class="h chalk">Продать своего</div><div class="empty" style="font-size:12px">Объявление видят все игроки. Пока висит, человек не работает. Снять можно в любой момент. Деньги минус 10% придут после продажи.</div></div>`);
-  const list = S.staff.filter(s=>!s.isYou && s.today!=='sub');
-  if(!list.length) box.appendChild(el(`<div class="empty">Некого продавать.</div>`));
-  list.forEach(s=>{ const v = mkValue(s); const c = el(`<div class="card staff"><div class="spr" style="${sprStyle(s.spr, 44)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:5px;min-width:0"><div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${esc(s.role)}</span><span class="tag num">ур. ${s.lvl}</span></div><div class="row wrap mk-p"></div></div></div>`);
-    const row = c.querySelector('.mk-p');
-    [[0.7,'Дёшево'],[1,'Норма'],[1.3,'Дорого']].forEach(([k, n])=>{ const price = Math.round(v*k/1000)*1000; const b = el(`<button class="btn ghost" style="padding:6px 8px;font-size:12px">${n} · ${fmt(price)} ₽</button>`);
-      b.onclick = async () => { b.disabled = true; const r = await mkApi({op:'list', staff:mkPack(s), price, cafe:S.name}); if(r && r.ok){ removeStaff(s.id); syncScene(s.room||'main'); toast(s.name+' '+he(s,'выставлен','выставлена')+' за '+fmt(price)+' ₽'); save(); mkLoad(true); renderSheet(); } else { b.disabled = false; toast((r && r.error) || 'Не получилось'); } };
-      row.appendChild(b); });
-    box.appendChild(c); });
-  return box; }
-const _renderSheet27 = renderSheet;
-renderSheet = function(){ _renderSheet27.apply(this, arguments); try{ if(sheet === 'hall' && hallTab === 'market'){ const p = $('#panel'); if(!p) return; const st = p.scrollTop; p.innerHTML = '';
-  const buy = _mkSection27(S.active||'main'); const h = buy.querySelector('.h'); if(h) h.textContent = 'Купить у других'; p.appendChild(buy); p.appendChild(mkSellSection()); p.scrollTop = st; refreshAfford(); } }catch(e){ console.error(e); } };
 /* плашка «Аншлаг · Бар · Зал» больше не нужна; плашки листаются вбок */
 const _renderHud27b = renderHud;
 renderHud = function(){ _renderHud27b.apply(this, arguments); try{ const pe = $('#pills'); if(!pe) return; pe.querySelectorAll('.pill.load').forEach(x=>{ if(/Бар \d+%/.test(x.textContent)) x.remove(); }); }catch(e){} };
@@ -10477,7 +10418,7 @@ function bankCard(){ const b = bank29(), c = el(`<div class="card bank29"><div c
   return c; }
 function plural29(n, a, b, c){ n = Math.abs(n) % 100; const n1 = n % 10; if(n > 10 && n < 20) return c; if(n1 > 1 && n1 < 5) return b; if(n1 === 1) return a; return c; }
 const _renderFin29 = renderFin;
-renderFin = function(p){ _renderFin29.apply(this, arguments); try{ const c = bankCard(); const first = p.querySelector('.card'); if(first) p.insertBefore(c, first); else p.appendChild(c); }catch(e){ console.error(e); } };
+renderFin = function(p){ _renderFin29.apply(this, arguments); try{ const c = bankCard(); const first = p.querySelector('.card'); const nav=p.querySelector('.finnav'); if(nav){p.insertBefore(c,nav);nav.classList.add('bc-fin-periods');}else if(first) p.insertBefore(c, first); else p.appendChild(c); }catch(e){ console.error(e); } };
 // плашка вверху, пока висит кредит
 const _renderHud29 = renderHud;
 renderHud = function(){ _renderHud29.apply(this, arguments); try{ const pe = $('#pills'); if(!pe || !S) return; let pl = pe.querySelector('.pill.loan29'); const b = bank29();
@@ -10485,17 +10426,6 @@ renderHud = function(){ _renderHud29.apply(this, arguments); try{ const pe = $('
   const left = Math.max(0, b.due - S.day), t = 'Кредит '+fmt(b.back)+' ₽ · '+(left > 1 ? left+' дн.' : 'сегодня');
   if(!pl){ pl = el(`<button class="pill loan29"></button>`); pl.onclick = () => { hallTab = 'money'; openSheet('hall'); }; pe.insertBefore(pl, pe.firstChild); }
   if(pl.textContent !== t) pl.textContent = t; pl.classList.toggle('hot', left <= 1); }catch(e){} };
-
-/* ---------- биржа: за сколько уходят похожие ---------- */
-let MK29P = null, MK29T = 0;
-function mk29Prices(){ if(Date.now() - MK29T < 300000) return; MK29T = Date.now(); mkApi({op:'prices'}).then(r=>{ if(r && r.ok){ MK29P = r.prices || {}; if(sheet === 'hall' && hallTab === 'market') renderSheet(); } }).catch(()=>{}); }
-function mk29Hint(s){ if(!MK29P) return 'Смотрим цены на бирже…'; const a = MK29P[s.role+'|'+Math.floor((s.lvl||1)/5)], b = MK29P[s.role+'|*'];
-  if(a) return 'Похожих ('+s.role.toLowerCase()+', ур. '+(Math.floor((s.lvl||1)/5)*5||1)+'–'+(Math.floor((s.lvl||1)/5)*5+4)+') брали за ~'+fmt(a.med)+' ₽, сделок: '+a.n;
-  if(b) return 'Таких ещё не продавали. '+s.role+' в среднем уходит за ~'+fmt(b.med)+' ₽';
-  return 'Таких на бирже ещё не продавали. Цена на твой вкус'; }
-const _mkSell29 = mkSellSection;
-mkSellSection = function(){ const box = _mkSell29.apply(this, arguments); try{ mk29Prices(); const list = S.staff.filter(s=>!s.isYou && s.today!=='sub');
-  box.querySelectorAll('.card.staff').forEach((c, i)=>{ const s = list[i]; if(!s) return; const row = c.querySelector('.mk-p'); const h = el(`<div class="mk29h">${esc(mk29Hint(s))}</div>`); if(row) row.before(h); else c.appendChild(h); }); }catch(e){ console.error(e); } return box; };
 
 /* ================= v29: ноябрь — хандра, ремонт у соседей, фуд-блогер, инспектор «на кофе», две арки сотрудников, новые реплики ================= */
 Object.assign(CHARS, {
@@ -10673,13 +10603,10 @@ function srvNow(){ return Date.now() + REL10.skew; }
 function rel10Admin(){ try{ return REL10_ADMINS.includes(Number(myId())); }catch(e){ return false; } }
 function rel10On(){ if(REL10.off) return false; if(window.__rel10 === true || rel10Admin()) return true; return srvNow() >= REL10_AT; }
 
-/* ---------- пропуск: вехи 200 и 300 ---------- */
-const SZ_MILES = [[200, 'Легенда района', 'Дошёл до 160 ступени'], [300, 'Миф сезона', 'Дошёл до 300 ступени']];
-function szMiles(){ const z = szState(), info = sezInfo(), t = Math.floor(z.sp / SZ_TIER);
-  for(const [n, name, d] of SZ_MILES) if(t >= n) badgeAdd('szm'+n+'_'+info.id, name+' «'+info.n+'»', d); }
+/* ---------- пропуск и лига кофеен ---------- */
 const _renderSeason32 = renderSeason;
 renderSeason = function(p){ _renderSeason32.apply(this, arguments); if(!rel10On()) return;
-  try{ /* вехи после 100 ступени переехали в view34 */
+  try{ /* Лига показывается рядом с сезоном. */
     const lc = leagueCard(); if(lc){ const first = p.querySelector('.card'); if(first && first.nextSibling) p.insertBefore(lc, first.nextSibling); else p.appendChild(lc); }
   }catch(e){ console.error(e); } };
 
@@ -10876,35 +10803,6 @@ function hudPills34(){ const pe = $('#pills'), more = $('#pmore'); if(!pe || !mo
 SIGN_FRAMES.myth = {n:'Миф сезона', bg:'#1d1630', edge:'#b89cff', ink:'#efe4ff', glow:'#9d7bff'};
 const _frameOwnedId34 = frameOwnedId;
 frameOwnedId = function(){ if(S && S.c && S.c.signFrame === 'myth' && S.c.mythFrame) return 'myth'; return _frameOwnedId34.apply(this, arguments); };
-const MILES34 = [
-  [125, 'Аншлаг на двое суток', 'Гостей +20% на 48 часов', {mod:['traffic', 1.2, 48, 'Аншлаг (сезон)']}],
-  [150, 'Значок «Полторы сотни»', 'Рядом с названием кофейни', {badge:'Полторы сотни'}],
-  [175, 'Звёздный вечер', 'Средний чек +25% на сутки', {mod:['check', 1.25, 24, 'Звёздный вечер']}],
-  [200, 'Легенда района', 'Звание и легендарный сотрудник в команду', {badge:'Легенда района', legend:true}],
-  [225, 'Очередь до угла', 'Гостей +25% на сутки', {mod:['traffic', 1.25, 24, 'Очередь до угла']}],
-  [250, 'Значок «Четверть тысячи»', 'Редкий значок сезона', {badge:'Четверть тысячи'}],
-  [275, 'Щедрые гости', 'Средний чек +30% на сутки', {mod:['check', 1.3, 24, 'Щедрые гости']}],
-  [300, 'Миф сезона', 'Звание и фиолетовая вывеска «Миф сезона» навсегда', {badge:'Миф сезона', frame:true}]
-];
-function miles34(silent){ try{ const z = szState(), info = sezInfo(), t = Math.floor(z.sp / SZ_TIER);
-  S.c.miles34 = S.c.miles34 || {}; const got = S.c.miles34[info.id] = S.c.miles34[info.id] || [];
-  for(const [n, name, d, rw] of MILES34){ if(t < n || got.includes(n)) continue; got.push(n);
-    if(rw.badge) badgeAdd('szm'+n+'_'+info.id, rw.badge+' «'+info.n+'»', 'Дошёл до '+n+' ступени');
-    if(rw.mod) addMod(rw.mod[0], rw.mod[1], rw.mod[2], rw.mod[3]);
-    if(rw.legend){ try{ const l = makePrizeStaff(30); syncScene('main'); toast('В команду '+he(l,'пришёл','пришла')+' '+l.name); }catch(e){ console.error(e); } }
-    if(rw.frame){ S.c.mythFrame = true; S.c.signFrame = 'myth'; }
-    if(!silent) toast('Сезон, ступень '+n+': '+name); }
-}catch(e){ console.error(e); } }
-const _renderSeason34 = renderSeason;
-renderSeason = function(p){ _renderSeason34.apply(this, arguments);
-  try{ miles34(); const z = szState(), info = sezInfo(), t = Math.floor(z.sp / SZ_TIER); const got = (S.c.miles34||{})[info.id] || [];
-    const c = el(`<div class="card m32"><div class="t">После сотой ступени</div><div class="d">Каждые 25 ступеней — своя награда. Деньгами не платим.</div></div>`);
-    for(const [n, name, d] of MILES34){ const pr = Math.min(1, z.sp / (n*SZ_TIER)); const on = got.includes(n);
-      c.appendChild(el(`<div class="m32r ${on?'on':''}"><b class="num">${n}</b><div><span>${esc(name)}</span><small>${esc(d)}</small><i style="width:${Math.round(pr*100)}%"></i></div><em>${on ? 'Есть' : Math.max(0, n*SZ_TIER - z.sp)+' очков'}</em></div>`)); }
-    p.appendChild(c); }catch(e){ console.error(e); } };
-const _closeDay34m = closeDay;
-closeDay = function(){ const r = _closeDay34m.apply(this, arguments); miles34(); return r; };
-
 /* ===== 9.3.2: ступени 51–100 — вместо «Сарафанного радио» и голого опыта разные награды ===== */
 const SZ51F = {55:'fur', 60:'team', 65:'frame', 70:'supply', 75:'celeb', 80:'fur', 85:'style', 90:'team', 95:'frame'};
 const SZ51P = {55:'style', 65:'celeb', 75:'rush', 85:'fur', 95:'team'};
@@ -12539,11 +12437,7 @@ if(typeof sceneTable!=='undefined'){ var _stb0=sceneTable; window.sceneTable=fun
 if(typeof drawDirt!=='undefined'){ var _dd=drawDirt; window.drawDirt=function(id,r,items,now){
   if(!ready()) return _dd(id,r,items,now);
   var dl=0; try{ dl=dirtLevel(id); }catch(e){}
-  if(dl>0.3){ var ng=Math.round((dl-0.25)*14);
-    for(var gi=0;gi<ng;gi++){ var gx=30+((gi*67)%210), gy=250+((gi*97)%Math.max(60,H-275)), al=Math.min(0.85,0.35+dl*0.5);
-      if(gi%3===0) decal('crumbs',gx,gy,18,al); else if(gi%3===1){ ctx.fillStyle='rgba(105,80,55,'+(al*0.4)+')'; ctx.beginPath(); ctx.ellipse(gx,gy,9,3,0.2*gi,0,6.3); ctx.fill(); ctx.beginPath(); ctx.ellipse(gx+7,gy+2,3,1.2,0,0,6.3); ctx.fill(); }
-      else { ctx.fillStyle='rgba(90,70,50,'+(al*0.5)+')'; for(var fp=0;fp<3;fp++){ ctx.beginPath(); ctx.ellipse(gx+fp*6,gy+(fp%2)*3,2.2,1.1,0.4,0,6.3); ctx.fill(); } } }
-  } else if(dl<0.12){ for(var si=0;si<5;si++){ var tp=(now*0.35+si*0.21)%1; if(tp<0.4) twinkle(40+((si*83+Math.floor(now*0.35+si*0.21)*47)%220), 255+((si*59+Math.floor(now*0.35+si*0.21)*31)%Math.max(60,H-280)), 2.6, Math.sin(tp/0.4*Math.PI)*0.75); } }
+  if(dl<0.12){ for(var si=0;si<5;si++){ var tp=(now*0.35+si*0.21)%1; if(tp<0.4) twinkle(40+((si*83+Math.floor(now*0.35+si*0.21)*47)%220), 255+((si*59+Math.floor(now*0.35+si*0.21)*31)%Math.max(60,H-280)), 2.6, Math.sin(tp/0.4*Math.PI)*0.75); } }
   items.push({y:9999, f:function(){ statusIcons(now); }}); themeFloorProps(EFF(),items,now);
   var dk=r.dirty||{};
   Object.keys(dk).forEach(function(k){ var n=Math.min(4,dk[k]);
@@ -13843,7 +13737,7 @@ var _sp14=shopPanel;
 shopPanel=function(p){
   if(window.__shopCat!=='lux') return _sp14(p);
   var save0=window.__shopCat; window.__shopCat='style'; _sp14(p); window.__shopCat=save0;
-  var cats=p.querySelector('.u8cats'); Array.prototype.forEach.call(cats.children,function(b){ b.classList.toggle('on',b.textContent==='Атмосфера'); });
+  var cats=p.querySelector('.u8cats'); Array.prototype.forEach.call(cats.children,function(b){ b.classList.toggle('on',b.textContent==='Декор'); });
   var old=p.querySelectorAll('.u6grid,.u6note'); Array.prototype.forEach.call(old,function(n){ n.remove(); });
   var k=skinS(), grid=el('<div class="u6grid"></div>'), can=!!(typeof tg!=='undefined'&&tg&&tg.initData&&tg.openInvoice);
   LUX.forEach(function(l){ var id=l[0], has=!!S.skinOwned['lux:'+id], on=!!k.lux[id]&&has;
@@ -14033,7 +13927,7 @@ shopPanel=function(p){
   if(cat==='lux'){
     window.__shopCat='style';_sp14(p);window.__shopCat='lux';
     p.querySelectorAll('.u6grid,.u6note').forEach(function(e){e.remove();});
-    p.querySelectorAll('.u6cat').forEach(function(b){b.classList.toggle('on',b.textContent==='Атмосфера');});
+    p.querySelectorAll('.u6cat').forEach(function(b){b.classList.toggle('on',b.textContent==='Декор');});
     var grid=el('<div class="u6grid"></div>');
     LUX.forEach(function(l){atmosphereCard(grid,'lux',[l[0],l[1],LUX_PRICE[l[0]]],{x_cat:'На передней стойке',x_gram:'На рабочей столешнице',x_chand:'Под потолком'}[l[0]],l[5]);});
     atmosphereEntries.forEach(function(a){atmosphereCard(grid,a[0],a[1],a[0]==='lamp'?'Под потолком':a[1][0]==='d_floorlamp'?'У правой стены':'Вдоль верхней части стены');});
@@ -14103,7 +13997,7 @@ var auditApply=applySkins;
 applySkins=function(){var k=skinS();if(['m_white','m_black','m_lux'].indexOf(k.mach)>=0)k.mach='std';if(['g_black','g_brass'].indexOf(k.grind)>=0)k.grind='std';auditApply();};window.applySkins=applySkins;
 // Keep the terminal eight world pixels left of its barrier for both room sizes.
 var auditProps=window.sceneUpgradeProps;
-window.sceneUpgradeProps=function(st,u,items,now,r){auditProps(st,u,items,now,r);if(!st.outdoor&&expanded())items.push({y:BAR_BOT+3,f:function(){pimg('fridge',266,BAR_BOT+3,94);}});};
+window.sceneUpgradeProps=function(st,u,items,now,r){auditProps(st,u,items,now,r);if(!st.outdoor)items.push({y:BAR_BOT+3,f:function(){pimg('fridge',266,BAR_BOT+3,94);}});};
 // Stable fallback direction for actors without a diagonal clip.
 dclip=function(pref,d,e){var m=md(d);if(CM[pref+m[0]])return[pref+m[0],m[1]];var c=CARD[d];if(!c)return null;var vx=Math.abs(e&&e._vx||0),vy=Math.abs(e&&e._vy||0);var pick=vx>vy?c[1]:c[0];if(e){e._clipAxes=e._clipAxes||{};var old=e._clipAxes[pref];if(old&&vx<vy*1.35&&vy<vx*1.35&&c.indexOf(old)>=0)pick=old;e._clipAxes[pref]=pick;}m=md(pick);return CM[pref+m[0]]?[pref+m[0],m[1]]:null;};
 // Back-facing counter seats: long bar-stool legs, with the seat facing the counter.
@@ -14125,7 +14019,7 @@ var auditFloor=floorDecor14;floorDecor14=function(items,now){auditFloor(items,no
 var auditCard=atmosphereCard;
 atmosphereCard=function(grid,cat,q,where,bonus){if(cat!=='lux')return auditCard(grid,cat,q,where,bonus);var k=skinS(),id=q[0],has=!!S.skinOwned['lux:'+id],on=has&&!!k.lux[id];var card=el('<div class="u6it'+(on?' on':'')+'"><div class="u6pv">'+preview(cat,id)+'</div><div class="u6nm">'+esc(q[1])+'</div><p class="u15place">'+esc(where)+' · '+esc(bonus)+'</p><div class="u6act"></div></div>');var b=el('<button class="'+(has?'u6alt':'u6buy')+'">'+(has?(on?'Убрать':'Поставить'):q[2]+' ★')+'</button>');b.onclick=function(){if(!has){if(tg&&tg.initData)buyStars('lux_'+id);else toast('Покупка за звёзды доступна в Telegram');return;}k.lux[id]=on?0:1;applySkins();save();renderSheet();};card.querySelector('.u6act').appendChild(b);grid.appendChild(card);};
 var auditShop=shopPanel;
-shopPanel=function(p){var cat=window.__shopCat||'style';if(cat==='lux'||cat==='atmosphere'){window.__shopCat='style';_sp14(p);window.__shopCat=cat;p.querySelectorAll('.u6grid,.u6note').forEach(function(e){e.remove();});p.querySelectorAll('.u6cat').forEach(function(b){b.classList.toggle('on',b.textContent===(cat==='lux'?'Люкс ★':'Атмосфера'));});var grid=el('<div class="u6grid"></div>');if(cat==='lux'){var positions={x_cat:'Передняя барная стойка',x_gram:'Задняя рабочая столешница',x_chand:'Потолок справа от вывески',clock:'Задняя стена',d_aquarium:'Задняя рабочая столешница',d_jukebox:'У правой стены'};LUX.forEach(function(l){atmosphereCard(grid,'lux',[l[0],l[1],l[2]],positions[l[0]],l[5]);});}else atmosphereEntries.forEach(function(a){atmosphereCard(grid,a[0],a[1],a[0]==='lamp'?'Под потолком вне вывески':a[1][0]==='d_floorlamp'?'У правой стены':'Верхняя часть стены');});p.appendChild(grid);p.appendChild(el('<div class="u6note">'+(cat==='lux'?'Цены в звёздах Telegram.':'Свет и украшения за игровые рубли.')+'</div>'));return;}auditShop(p);if(cat==='art'){p.querySelectorAll('.u15place').forEach(function(n){n.textContent='Задняя стена. Нажми «Показать в зале», чтобы увидеть место.';});p.querySelectorAll('.u9try').forEach(function(b){b.textContent='Показать в зале';});}};
+shopPanel=function(p){var cat=window.__shopCat||'style';if(cat==='lux'||cat==='atmosphere'){window.__shopCat='style';_sp14(p);window.__shopCat=cat;p.querySelectorAll('.u6grid,.u6note').forEach(function(e){e.remove();});p.querySelectorAll('.u6cat').forEach(function(b){b.classList.toggle('on',b.textContent===(cat==='lux'?'Люкс ★':'Декор'));});var grid=el('<div class="u6grid"></div>');if(cat==='lux'){var positions={x_cat:'Передняя барная стойка',x_gram:'Задняя рабочая столешница',x_chand:'Потолок справа от вывески',clock:'Задняя стена',d_aquarium:'Задняя рабочая столешница',d_jukebox:'У правой стены'};LUX.forEach(function(l){atmosphereCard(grid,'lux',[l[0],l[1],l[2]],positions[l[0]],l[5]);});}else atmosphereEntries.forEach(function(a){atmosphereCard(grid,a[0],a[1],a[0]==='lamp'?'Под потолком вне вывески':a[1][0]==='d_floorlamp'?'У правой стены':'Верхняя часть стены');});p.appendChild(grid);p.appendChild(el('<div class="u6note">'+(cat==='lux'?'Цены в звёздах Telegram.':'Свет и украшения за игровые рубли.')+'</div>'));return;}auditShop(p);if(cat==='art'){p.querySelectorAll('.u15place').forEach(function(n){n.textContent='Задняя стена. Нажми «Показать в зале», чтобы увидеть место.';});p.querySelectorAll('.u9try').forEach(function(b){b.textContent='Показать в зале';});}};
 // Replace the old paid border collection, retaining owned legacy borders for compatibility.
 Object.assign(SIGN_FRAMES,{coffee_copper:{n:'Медная кофейня',bg:'#342218',edge:'#cf8852',ink:'#ffe5bd',glow:'#dc9655',anim:'bulbs'},coffee_moon:{n:'Лунный кофе',bg:'#191c35',edge:'#8c9ed2',ink:'#e7eaff',glow:'#afcaff',anim:'aurora'},coffee_cream:{n:'Ванильные искры',bg:'#46382c',edge:'#e5c99b',ink:'#fff1d8',glow:'#ffe0a5',anim:'spark'}});
 FRAME_SHOP.splice(0,FRAME_SHOP.length,'coffee_copper','coffee_moon','coffee_cream');Object.assign(FRAME29_D,{coffee_copper:'Медная рамка с бегущими огнями',coffee_moon:'Мягкое лунное свечение',coffee_cream:'Тёплая рамка с искрами'});
@@ -14258,12 +14152,11 @@ shopPanel=function(p){
   if(cat==='barmat')cat=window.__shopCat='backfloor';
   if(cat==='atmosphere'){
     window.__shopCat='style';try{_sp14(p);}finally{window.__shopCat=cat;}
-    p.querySelectorAll('.u6grid,.u6note').forEach(function(e){e.remove();});p.querySelectorAll('.u6cat').forEach(function(b){b.classList.toggle('on',b.textContent==='Атмосфера');});
+    p.querySelectorAll('.u6grid,.u6note').forEach(function(e){e.remove();});p.querySelectorAll('.u6cat').forEach(function(b){b.classList.toggle('on',b.textContent==='Декор');});
     var grid=el('<div class="u6grid"></div>'),seen={};
-    var entries=SKIN_DEF.decor.map(function(q){return ['decor',q];}).concat(atmosphereEntries);
+    var entries=atmosphereEntries.slice();
     entries.forEach(function(a){var key=a[0]+':'+a[1][0];if(seen[key])return;seen[key]=1;var where=a[0]==='lamp'?'Под потолком вне вывески':a[1][0].indexOf('garland')===0?'Вдоль всей стены':a[1][0]==='d_floorlamp'?'На полу у стены':'Декор зала';atmosphereCard(grid,a[0],a[1],where);});
-    p.appendChild(grid);p.appendChild(el('<div class="u6note">Свет и декор за игровые рубли. Музыка и набор формы — ниже.</div>'));p.appendChild(el('<div class="h">Музыка и форма персонала</div>'));
-    var prevTab=SHOP29_TAB;SHOP29_TAB='atm';try{renderShop29(p);}finally{SHOP29_TAB=prevTab;}return;
+    p.appendChild(grid);p.appendChild(el('<div class="u6note">Свет и гирлянды. Музыка в зале — в разделе «Разное».</div>'));return;
   }
   bcShop(p);
   if(cat==='backfloor'){
@@ -14467,6 +14360,108 @@ buyUpg=async function(u,id,n){
   if(r)bcAdminBuyUpg(u,id,count);
 };
 bcAdminStatus().then(function(enabled){if(enabled&&S){structDirty=true;renderPanel();renderHud();}});
+
+/* v15 review: calm staff faces, table-linked litter and consistent shop navigation. */
+var bcStableBlit=blit;
+var BC_STAFF_HEAD={barista:30,cashier:31,cook:35,waiter:29,washer:31};
+blit=function(sheet,name,idx,cx,fy,H,mirror,alpha){
+  var match=/^(barista|cashier|cook|waiter|washer)_idle:south$/.exec(name),c=CM[name];
+  if(!match||!c)return bcStableBlit.apply(this,arguments);
+  var scale=(H/70)*(c.k||1),cut=fy-((c.ay==null?c.h:c.ay)-BC_STAFF_HEAD[match[1]])*scale,info;
+  // Keep the original calm head; idle motion continues below the neck.
+  ctx.save();ctx.beginPath();ctx.rect(cx-120,cut,240,200);ctx.clip();info=bcStableBlit(sheet,name,idx,cx,fy,H,mirror,alpha);ctx.restore();
+  ctx.save();ctx.beginPath();ctx.rect(cx-120,fy-200,240,cut-(fy-200));ctx.clip();bcStableBlit(sheet,name,0,cx,fy,H,mirror,alpha);ctx.restore();return info;
+};
+var bcGuestLeftMess=leaveMess;
+leaveMess=function(id,g){
+  var seated=g&&g.state==='sit'&&g.seat!=null,slot=seated?slotOf(id,g.seat):null;
+  bcGuestLeftMess(id,g);
+  if(!seated||!slot||slot[2]==='out'||g._bcLitterLeft)return;
+  g._bcLitterLeft=true;
+  if(slot[2]!=='table'&&id!=='hall2')return;
+  var r=rt(id);r.mess=r.mess||[];
+  if(r.mess.length>=5||!chance(.35))return;
+  var table=id==='main'&&TABLES[slot[3]],x=table?table.x:slot[0],y=table?table.y:slot[1];
+  r.mess.push({kind:'crumbs',x:clamp(x+18,16,(id==='main'?RW():W)-16),y:Math.min(H-14,y+18),t:0,source:'table-departure',seat:g.seat});
+};
+// Ticking can increase the consequences of existing litter, never create it.
+messTick=function(id,r,dt){r.mess=r.mess||[];if(r.mess.length>=3)meter('chaos',.02*dt*r.mess.length);};
+hmDirtyTable=function(t,n){
+  var x=t.x,y=t.y-13;
+  EL(x+4,y+.5,3,1,'rgba(120,80,45,.4)');
+  EL(x-2,y+.8,5.1,1.7,'#d9d2c2');EL(x-2,y+.1,5.1,1.7,'#f6f1e6');
+  ctx.fillStyle='rgba(190,150,90,.8)';ctx.fillRect(x-3,y-.4,1,.8);ctx.fillRect(x,y+.2,.9,.7);
+  for(var i=1;i<n;i++)item('cup',x+2+(i%2)*3,y-Math.floor((i-1)/2)*2,5.6);
+};
+
+var BC_REMOVED_DECOR=SKIN_DEF.decor.map(function(q){return q[0];});
+var BC_REMOVED_OBJECTS=['d_gumball','d_arcade','d_jukebox'];
+SKIN_DEF.decor=atmosphereEntries.filter(function(q){return q[0]==='decor';}).map(function(q){return q[1];});
+SKIN_DEF.table=SKIN_DEF.table.filter(function(q){return q[0]!=='t_square';});
+LUX=LUX.filter(function(q){return q[0]!=='d_jukebox';});SKIN_DEF.lux=LUX.map(function(q){return[q[0],q[1],q[2]];});
+SKIN_CAT.forEach(function(c){if(c[0]==='atmosphere')c[1]='Декор';});
+var bcReviewCats=allCats;
+allCats=function(){return bcReviewCats().filter(function(c){return ['decor','lamp','p:atm'].indexOf(c[0])<0;}).map(function(c){return c[0]==='atmosphere'?['atmosphere','Декор']:c;});};
+var bcReviewItems=shop29Items;
+shop29Items=function(){var all=bcReviewItems(),seen={};all.more.list.forEach(function(x){seen[x.id]=true;});(all.atm&&all.atm.list||[]).forEach(function(x){if(!seen[x.id]){all.more.list.push(x);seen[x.id]=true;}});all.more.d='Подписка, музыка, форма, смена названия и статус кофейни.';return all;};
+var bcReviewApply=applySkins;
+applySkins=function(){var k=skinS();BC_REMOVED_DECOR.forEach(function(id){k.decor[id]=0;});BC_REMOVED_OBJECTS.forEach(function(id){k.decor[id]=0;if(k.lux)k.lux[id]=0;});if(k.table==='t_square')k.table='light';bcReviewApply();};window.applySkins=applySkins;
+var bcReviewShop=shopPanel;
+shopPanel=function(p){var cat=window.__shopCat||'style';if(['decor','lamp'].indexOf(cat)>=0)window.__shopCat='atmosphere';if(cat==='p:atm')window.__shopCat='p:more';bcReviewShop(p);};
+// The hall sheet still hosts the shop; its dock selection is independent.
+function bcDockSelection(){
+  var shop=sheet==='shop'||sheet==='hall'&&hallTab==='shop';
+  document.querySelectorAll('nav.dock .dockb').forEach(function(b){
+    var selected=shop?b.dataset.s==='shop':b.dataset.s==='team'?(sheet==='hall'&&hallTab==='team'):b.dataset.s==='hall'?(sheet==='hall'&&hallTab!=='team'):b.dataset.s===sheet;
+    b.classList.toggle('on',selected);b.setAttribute('aria-pressed',String(selected));
+    if(b.dataset.s==='shop')b.onclick=function(){sfx('tap');if(sheet==='shop'||sheet==='hall'&&hallTab==='shop')openSheet(null);else openShop();};
+  });
+}
+var bcReviewHud=renderHud;
+renderHud=function(){var r=bcReviewHud.apply(this,arguments);bcDockSelection();return r;};
+var bcReviewSheet=renderSheet;
+renderSheet=function(){var r=bcReviewSheet.apply(this,arguments);bcDockSelection();return r;};
+
+/* PixelLab artwork accompanies the existing usable rewards, without changing their economy. */
+function bcRewardArt(rw){
+  var kind={money:'cash',xp:'xp',mod:'boost',style:'style',styletry:'style',item:'style',pet:'pet',legend:'staff',staff:'staff',team:'staff',drink:'drink',goldm:'machine',badge:'badge',gem:'badge',gemf:'badge',frametry:'badge',supply:'supplies',fur:'style',celeb:'boost',rush:'boost'}[rw.k]||'badge';
+  return '<img class="bc-reward-art" src="img/pass-rewards/'+kind+'.png" alt="" width="48" height="48" loading="lazy">';
+}
+var bcReviewSeason=renderSeason;
+renderSeason=function(p){
+  bcReviewSeason(p);
+  p.querySelectorAll('.sz-row').forEach(function(row){var n=Number(row.querySelector('b.num').textContent);['f','p'].forEach(function(track){var cell=row.querySelector('.sz-cell.'+track);if(cell&&!cell.querySelector('.bc-reward-art'))cell.insertAdjacentHTML('afterbegin',bcRewardArt(szReward(track,n)));});});
+  p.querySelectorAll('.sz-best>div').forEach(function(card){var n=Number(card.querySelector('b').textContent);if(!card.querySelector('.bc-reward-art'))card.insertAdjacentHTML('afterbegin',bcRewardArt(szReward('p',n)));});
+};
+
+// Retired listings are returned through the same durable operations queue as other grants.
+var bcReviewTrack=onTrack;
+onTrack=function(r){
+  if(r&&r.ok&&S&&Array.isArray(r.ops))r.ops.forEach(function(o){if(o.op!=='trreturn')return;try{
+    S.c.transferReturns=S.c.transferReturns||[];if(S.c.transferReturns.includes(o.id))return;
+    var data=JSON.parse(o.text),st=makeStaff(data.role,{quirk:data.quirk||'none'});
+    ['name','role','lvl','rank','quirk','sex','spr','legendId','prize','xp','shifts'].forEach(function(k){if(data[k]!=null)st[k]=data[k];});
+    st.mood=70;st.fatigue=0;st.interviewed=true;st.claim=false;hire(st,'main','white');S.c.transferReturns.push(o.id);syncScene('main');save();toast(st.name+' возвращается в команду: трансфер закрыт');
+  }catch(e){console.error(e);}});
+  return bcReviewTrack(r);
+};
+var bcRetireBusy=false;
+async function bcRetireTransfers(){if(bcRetireBusy||!tg||!tg.initData)return;bcRetireBusy=true;try{var r=await apiPost('/api/market',{op:'retire'});if(r&&r.ok&&typeof window.track==='function')window.track();}catch(e){}finally{bcRetireBusy=false;}}
+bcRetireTransfers();
+
+var bcReviewCSS=document.createElement('style');bcReviewCSS.textContent=`
+html body .toast,html[data-th="B"] body .toast{background:#30231a!important;color:#fff1d9!important;border:1px solid #bc9870;text-shadow:none!important;opacity:1;line-height:1.4;z-index:100000}
+html[data-th="B"]{--mut:#b9ac9b}
+html body .modal.paper,html[data-th="B"] body .modal.paper{background:#f5e8cf!important;color:#37261a!important}
+html body .modal.paper .btn.ghost{background:#ead8b8!important;color:#37261a!important}
+html body .modal.paper .eyebrow,html body .modal.paper h2,html body .modal.paper .newsitem,html body .modal.paper .newsitem b,html body .modal.paper .newsitem p{color:#37261a!important;text-shadow:none!important;opacity:1!important}
+html body .sheet #panel .bc-fin-periods{display:flex!important;flex:none;gap:8px;overflow:visible!important;min-height:42px;margin:0 0 8px;padding:0}
+html body .sheet #panel .bc-fin-periods .chipbtn{flex:1;min-height:42px;justify-content:center;color:var(--ink)!important;background:var(--card)!important}
+html body .sheet #panel .bc-fin-periods .chipbtn[aria-pressed="true"]{color:var(--accI)!important;background:var(--acc)!important}
+html body .bc-reward-art{display:block;object-fit:contain;image-rendering:pixelated;width:48px;height:48px;align-self:center;flex:none}
+html body .sz-best>div .bc-reward-art{width:42px;height:42px}
+`;document.head.appendChild(bcReviewCSS);
+try{if(S)applySkins();bcDockSelection();}catch(e){}
 
 })();
 

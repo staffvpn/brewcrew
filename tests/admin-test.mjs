@@ -17,7 +17,7 @@ assert.equal((await call({kind:'status'},123)).adminTest,false);
 assert.equal((await call({kind:'premium',item:'cash_s',adminTest:true},123)).status,403);
 assert.equal((await call({kind:'skin',category:'floor',id:'marble'},ADMINS[0],{ADMIN_TEST_PURCHASES:'0'})).status,403);
 for(const initData of ['forged',signed(ADMINS[0],8*86400)])assert.equal((await call({kind:'premium',item:'cash_s',initData})).status,401);
-for(const data of [{kind:'premium',item:'__proto__'},{kind:'premium',item:'city_corner'},{kind:'skin',category:'floor',id:'forged'},{kind:'upgrade',id:'machine',count:21},{kind:'premium',item:'cash_s',to:123}])assert.equal((await call(data)).status,400);
+for(const data of [{kind:'premium',item:'__proto__'},{kind:'premium',item:'city_corner'},{kind:'premium',item:'lux_d_jukebox'},{kind:'skin',category:'decor',id:'d_monstera'},{kind:'skin',category:'table',id:'t_square'},{kind:'skin',category:'floor',id:'forged'},{kind:'upgrade',id:'machine',count:21},{kind:'premium',item:'cash_s',to:123}])assert.equal((await call(data)).status,400);
 for(const data of [{kind:'skin',category:'barmat',id:'sink'},{kind:'skin',category:'backfloor',id:'hex'},{kind:'upgrade',id:'machine',count:20}])assert.equal((await call(data)).ok,true);
 for(const item of ['lux_x_cat','frame_coffee_copper','sub_owner','pass15','starter','cash_s','rename']){assert.equal((await call({kind:'premium',item})).ok,true);assert.equal((await call({kind:'premium',item})).ok,true);}
 assert.equal((await call({kind:'skin',category:'style',id:'int_autumn'})).ok,true);
@@ -30,6 +30,6 @@ assert.equal((await call({},123,{},purchases)).lux.length,0);
 const source=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 for(const m of source.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g))if(!m[1].includes('src='))new vm.Script(m[2]);
 assert(!source.includes('window.__MAX')&&!source.includes('CITY940')&&!source.includes('/api/city'));
-for(const fragment of ['brewcrew-build','v15-admin-test-20261115',"pimg('fridge',266,BAR_BOT+3,94)","pimg('cam',13,19,12)",'Лера с терьером','bcRubberMat(4,149,66,22)','bcRubberMat(76,149,76,22)','maint_on.jpg','maint_off.jpg'])assert(source.includes(fragment),fragment);
+for(const fragment of ['brewcrew-build','v15-faces-shop-20261115',"pimg('fridge',266,BAR_BOT+3,94)","pimg('cam',13,19,12)",'Лера с терьером','bcRubberMat(4,149,66,22)','bcRubberMat(76,149,76,22)','maint_on.jpg','maint_off.jpg'])assert(source.includes(fragment),fragment);
 assert.equal(SHOP.lux_x_cat.stars,120);assert.equal(SHOP.cash_s.stars,25);
 console.log('PASS: Telegram auth, admin-only self purchases, disable flag, catalogue validation, zero-Star persistence, idempotent grants, cash, styles/lux/frames/pass/subscription entitlements, ordinary players, inline syntax and release invariants.');

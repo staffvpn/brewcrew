@@ -44,7 +44,6 @@ export const TEST_SKINS = {
     "black",
     "pink",
     "blue",
-    "t_square",
     "t_marble"
   ],
   "chair": [
@@ -111,23 +110,9 @@ export const TEST_SKINS = {
     "a_botan"
   ],
   "decor": [
-    "clock",
-    "plant",
-    "neon",
-    "pennant",
-    "radio",
-    "wreath",
-    "pumpkin",
-    "xtree",
     "garlandL",
     "garlandA",
-    "d_monstera",
     "d_floorlamp",
-    "d_bookshelf",
-    "d_gumball",
-    "d_aquarium",
-    "d_arcade",
-    "d_jukebox",
     "garlandF",
     "garlandW",
     "garlandH",
@@ -187,8 +172,7 @@ export const TEST_SKINS = {
     "x_gram",
     "x_chand",
     "clock",
-    "d_aquarium",
-    "d_jukebox"
+    "d_aquarium"
   ],
   "backfloor": [
     "auto",
