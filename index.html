@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta name="brewcrew-build" content="v15-eyes-kitchen-20261115">
+<meta name="brewcrew-build" content="v15-full-pass-gold-20261115">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -14059,7 +14059,7 @@ PHOTO14.base=['#ead6b7','#503021','#a45b43','Домашняя кухня'];
 var hmPimg=pimg;pimg=function(n,x,y,h,a){if(hmHome()&&n==='vinyl')return 0;return hmPimg(n,x,y,h,a);};
 
 /* Five-panel Home counter: keep the room footprint and the panel proportions. */
-function hmCounterBands(w,h){var face=Math.min(35*w/226,h-6),trim=h-face;return [trim*11/17,face,trim*6/17];}
+function hmCounterBands(w,h){var top=Math.min(10,h*.3),toe=Math.min(4,h*.12);return [top,h-top-toe,toe];}
 var hmCounterPut=put;
 put=function(n,x,y,w,h){
   if(n!=='barw'||!hmHome())return hmCounterPut.apply(this,arguments);
@@ -14359,7 +14359,7 @@ buyUpg=async function(u,id,n){
   var count=Math.min(20,Math.max(1,Math.floor(n||1))),r=await bcAdminPurchase({kind:'upgrade',id:u.id,count:count});
   if(r)bcAdminBuyUpg(u,id,count);
 };
-bcAdminStatus().then(function(enabled){if(enabled&&S){structDirty=true;renderPanel();renderHud();}});
+bcAdminStatus().then(function(enabled){if(enabled&&S){refreshEntitlements();structDirty=true;renderPanel();renderHud();}});
 
 /* v15 review: calm staff faces, table-linked litter and consistent shop navigation. */
 // Eye artwork is fixed to the head silhouette; hands and body keep the original frames.
@@ -14469,6 +14469,52 @@ html body .bc-reward-art{display:block;object-fit:contain;image-rendering:pixela
 html body .sz-best>div .bc-reward-art{width:42px;height:42px}
 `;document.head.appendChild(bcReviewCSS);
 try{if(S)applySkins();bcDockSelection();}catch(e){}
+
+/* Season reward: a real front-facing gold machine, owned and selectable permanently. */
+var BC_GOLD_MACHINE='m_season_gold',BC_GOLD_BOUNDS=[13, 10, 70, 63];
+window.__AX[BC_GOLD_MACHINE]='img/season-gold-machine.png';
+var bcGoldImage=new Image();bcGoldImage.onload=function(){structDirty=true;};bcGoldImage.src=window.__AX[BC_GOLD_MACHINE];DEC[BC_GOLD_MACHINE]=bcGoldImage;
+var bcGoldPimg=pimg;
+pimg=function(n,x,y,h,alpha){
+  if(n!==BC_GOLD_MACHINE)return bcGoldPimg.apply(this,arguments);
+  var im=DEC[n];if(!im||!im.naturalWidth)return 0;
+  var b=BC_GOLD_BOUNDS,w=b[2]*h/b[3];ctx.save();if(alpha!=null)ctx.globalAlpha=alpha;ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(im,b[0],b[1],b[2],b[3],x-w/2,y-h,w,h);ctx.restore();return w;
+};
+function bcOwnGoldMachine(equipNow){
+  if(!S||!S.goldMachine)return;skinS();S.c=S.c||{};S.skinOwned['mach:'+BC_GOLD_MACHINE]=1;
+  if(equipNow||!S.c.seasonGoldSprite){skinS().mach=BC_GOLD_MACHINE;S.c.seasonGoldSprite=1;}
+}
+var bcGoldApplySkins=applySkins;
+applySkins=function(){bcOwnGoldMachine(false);return bcGoldApplySkins.apply(this,arguments);};window.applySkins=applySkins;
+var bcGoldUnlock=szApplyUnlock;
+szApplyUnlock=function(rw,info,silent){var result=bcGoldUnlock.apply(this,arguments);if(rw.k==='goldm'){bcOwnGoldMachine(true);applySkins();}return result;};
+var bcGoldRewardArt=bcRewardArt;
+bcRewardArt=function(rw){if(rw.k==='goldm')return '<img class="bc-reward-art" src="img/season-gold-machine.png" alt="Золотая кофемашина, вид спереди" width="48" height="48" loading="lazy">';return bcGoldRewardArt(rw);};
+var bcGoldShop=shopPanel;
+shopPanel=function(p){
+  bcGoldShop(p);if(window.__shopCat!=='mach')return;
+  bcOwnGoldMachine(false);var has=!!(S.goldMachine||S.skinOwned&&S.skinOwned['mach:'+BC_GOLD_MACHINE]),on=has&&skinS().mach===BC_GOLD_MACHINE;
+  var card=el('<div class="u6it bc-season-machine'+(on?' on':'')+'"><div class="u6pv"><img src="img/season-gold-machine.png" alt="Золотая кофемашина, вид спереди"></div><div class="u6nm">Золотая кофемашина</div><p class="u15place">Награда пропуска · 20-я ступень. Остаётся навсегда.</p><div class="u6act"></div></div>'),act=card.querySelector('.u6act');
+  if(on)act.appendChild(el('<span class="u6on">Выбрано</span>'));
+  else {var b=el('<button class="u6alt">'+(has?'Поставить':'Открыть пропуск')+'</button>');b.onclick=function(){if(!has){openSheet('hall','season');return;}skinS().mach=BC_GOLD_MACHINE;applySkins();save();renderSheet();};act.appendChild(b);}
+  var grid=p.querySelector('.u6grid');if(grid)grid.prepend(card);
+};
+/* A server-issued full-season entitlement completes both tracks once per season. */
+var bcFullPassWatch=passWatch;
+passWatch=function(force){
+  if(bcAdminTest&&S&&S.ent&&Array.isArray(S.ent.passes)){
+    var full=S.ent.passes.find(function(p){return p.full&&p.season===sezId()&&String(p.id).indexOf('admin_full:')===0;});
+    if(full){
+      var z=szState(),before=z.sp;z.sp=Math.max(z.sp,SZ_TIERS*SZ_TIER);
+      var count=szClaimAll('f')+szClaimAll('p');S.passSeen=S.passSeen||[];
+      var fresh=S.passSeen.indexOf(full.id)<0;if(fresh)S.passSeen.push(full.id);
+      if(fresh||count||z.sp!==before){mergeInteriors();applySkins();save();structDirty=true;}
+    }
+  }
+  return bcFullPassWatch.apply(this,arguments);
+};
+try{if(S){bcOwnGoldMachine(false);applySkins();passWatch(true);}}catch(e){console.error(e);}
 
 })();
 

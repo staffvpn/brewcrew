@@ -25,11 +25,11 @@ assert.equal(sql.prepare("SELECT count(*) n FROM purchases WHERE item='starter'"
 assert.equal(sql.prepare("SELECT count(*) n FROM purchases WHERE item='cash_s'").get().n,2);
 assert.equal(sql.prepare('SELECT count(*) n FROM admin_ops').get().n,3);
 assert.equal(sql.prepare('SELECT sum(stars) n FROM purchases').get().n,0);
-const ent=await call({},ADMINS[0],{},purchases);assert(ent.lux.includes('x_cat'));assert(ent.frames.includes('frame_coffee_copper'));assert(ent.interiors.includes('int_autumn'));assert(ent.sub>Date.now());assert.equal(ent.renames,2);assert.equal(ent.passes.length,1);
+const ent=await call({},ADMINS[0],{},purchases);assert(ent.lux.includes('x_cat'));assert(ent.frames.includes('frame_coffee_copper'));assert(ent.interiors.includes('int_autumn'));assert(ent.sub>Date.now());assert.equal(ent.renames,2);assert.equal(ent.passes.length,2);assert.equal(ent.passes.filter(p=>p.full).length,1);assert(ent.passes.find(p=>p.full).id.startsWith('admin_full:'));assert.equal((await call({},123,{},purchases)).passes.length,0);assert.equal((await call({},ADMINS[0],{ADMIN_TEST_PURCHASES:'0'},purchases)).passes.some(p=>p.full),false);
 assert.equal((await call({},123,{},purchases)).lux.length,0);
 const source=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 for(const m of source.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g))if(!m[1].includes('src='))new vm.Script(m[2]);
 assert(!source.includes('window.__MAX')&&!source.includes('CITY940')&&!source.includes('/api/city'));
-for(const fragment of ['brewcrew-build','v15-eyes-kitchen-20261115',"pimg('fridge',290,151,94)","pimg('cam',13,19,12)",'Лера с терьером','bcRubberMat(4,149,66,22)','bcRubberMat(76,149,76,22)','maint_on.jpg','maint_off.jpg'])assert(source.includes(fragment),fragment);
+for(const fragment of ['brewcrew-build','v15-full-pass-gold-20261115',"pimg('fridge',290,151,94)","pimg('cam',13,19,12)",'Лера с терьером','bcRubberMat(4,149,66,22)','bcRubberMat(76,149,76,22)','maint_on.jpg','maint_off.jpg'])assert(source.includes(fragment),fragment);
 assert.equal(SHOP.lux_x_cat.stars,120);assert.equal(SHOP.cash_s.stars,25);
 console.log('PASS: Telegram auth, admin-only self purchases, disable flag, catalogue validation, zero-Star persistence, idempotent grants, cash, styles/lux/frames/pass/subscription entitlements, ordinary players, inline syntax and release invariants.');

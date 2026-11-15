@@ -13,6 +13,7 @@ export async function purchaseState(env, userId) {
   const renames = rows.filter(r => r.item === 'rename').length;
   const frames = [...new Set(rows.filter(r => r.item.startsWith('frame_')).map(r => r.item))];
   const passes = rows.filter(r => r.item === 'pass' || r.item === 'pass15').map(r => ({ id: String(r.charge_id).slice(-24), season: sezId(r.created_at), plus: r.item === 'pass15' ? 15 : 0 }));
+  if (adminTestEnabled(env, userId)) passes.push({ id: 'admin_full:' + userId + ':' + sezId(now), season: sezId(now), plus: 0, full: true });
   const extras = [...new Set(rows.filter(r => ['flagship', 'uniform', 'music', 'starter'].includes(r.item)).map(r => r.item))];
   const lux = [...new Set(rows.filter(r => r.item.startsWith('lux_')).map(r => r.item.slice(4)))];
   return { ok: true, adminTest: adminTestEnabled(env, userId), lux, sub: subUntil > now ? subUntil : 0, interiors, tips, renames, passes, frames, extras };
