@@ -2,6 +2,7 @@
 // Состояние игры хранится на устройстве игрока, поэтому изменения ставятся в очередь (admin_ops)
 // и применяются игрой при следующем выходе на связь.
 import { ADMINS, tgApi, mskDay, SHOP, bindReferrer, sezId, SEZ_NAMES } from './_lib.js';
+import { getMaint, setMaint, MAINT_TEXT } from './_maint.js';
 import { post as channelPost, tourWeek } from './_channel.js';
 import { promoCallback, promoInput, promoPostText } from './_promo.js';
 import { GUIDE } from './_guide.js';
@@ -75,10 +76,17 @@ async function vHome(env) {
     [B('Турнир', 'p:tour'), B('Покупки', 'p:buy')],
     [B('Рефералы', 'p:refs'), B('Промокоды', 'p:prl')],
     [B('Сезон и пропуск', 'p:sz'), B('Что нового', 'p:gd')],
-    [B('Журнал', 'p:log'), B('Обновить', 'p:home')]
+    [B('Техработы', 'p:mt'), B('Журнал', 'p:log')],
+    [B('Обновить', 'p:home')]
   ] };
 }
 const SORTS = { last: ['По последнему входу', 'ORDER BY last_seen DESC'], new: ['Новые', 'ORDER BY created_at DESC'], rich: ['По заработку', 'ORDER BY earned DESC'], lvl: ['По уровню', 'ORDER BY level DESC, earned DESC'], on: ['Сейчас в игре', 'ORDER BY last_seen DESC'] };
+async function vMaint(env, note) {
+  const m = await getMaint(env);
+  const since = m.on && m.at ? ` с ${new Date(m.at + 3 * 3600000).toISOString().slice(11, 16)} МСК` : '';
+  return { text: `<b>Техработы: ${m.on ? 'ВКЛЮЧЕНЫ' + since : 'выключены'}</b>${note ? '\n\n' + note : ''}\n\nКогда включены, игроки видят заглушку с этим текстом и кнопкой канала, игра у них на паузе и ничего не сохраняет на сервер. Ты и второй админ играете как обычно. Включение и выключение доходит до игроков в течение минуты.\n\n<b>Текст заглушки:</b>\n${esc(m.text)}`,
+    kb: [[m.on ? B('Выключить техработы', 'p:mt0') : B('Включить техработы', 'p:mt1')], [B('Изменить текст', 'p:mtx'), B('Текст по умолчанию', 'p:mtd')], HOME] };
+}
 async function vPlayers(env, sort, page) {
   const s = SORTS[sort] ? sort : 'last'; page = Math.max(0, page | 0);
   const where = s === 'on' ? 'WHERE last_seen >= ' + (Date.now() - ONLINE_MS) : '';
@@ -276,6 +284,7 @@ export async function adminInput(env, chat, from, msgId, text) {
   const done = async v => { await clearState(env, from); await show(v); };
   const m = st.mode;
   if (m === 'find') { const r = await findPlayers(env, text); if (r.length === 1) { await done(await vCard(env, r[0].tg_id)); return true; } { await done({ text: r.length ? `<b>Нашлось: ${r.length}</b>\n\nВыбери игрока.` : 'Никого не нашлось. Попробуй ID, @ник, имя или название кофейни.', kb: [...r.map(p => [playerBtn(p)]), [B('Искать ещё', 'p:find'), ...HOME]] }); return true; } }
+  if (m === 'mt') { const tx = String(text).trim().slice(0, 300); if (tx.length < 5) { await show({ text: 'Слишком коротко, пришли текст ещё раз.', kb: [[B('Отмена', 'p:mt')]] }); return true; } await setMaint(env, { text: tx }, from); await done(await vMaint(env, 'Текст обновлён.')); return true; }
   if (m === 'prcode' || m === 'pramt' || m === 'prleg') return await promoInput(env, m, text, from, show, done);
   if (m === 'leg') { const dr = await env.DB.prepare('SELECT val FROM cache WHERE key = ?1').bind('legdraft_' + from).first(); const d = dr ? JSON.parse(dr.val) : null; if (!d) { await done(await vHome(env)); return true; } const leg = String(text).slice(0, 80); await addOp(env, d.id, 'give', d.amount, leg, from); await done(await vCard(env, d.id, `Начислено: ${fmt(d.amount)} ₽ · ${leg}`)); return true; }
   if (m === 'amt' && data.op === 'give') { const a = parseAmount(text); if (!Number.isFinite(a) || a <= 0 || a > 1e12) { await show({ text: 'Не понял сумму. Примеры: 50000, 250к, 1.5млн', kb: [[B('Отмена', 'p:u:' + data.id)]] }); return true; }
@@ -317,6 +326,11 @@ export async function adminCallback(env, cq) {
   const id = Number(parts[2]);
   // любое нажатие сбрасывает ожидание ввода, кроме подтверждений
   if (!['allgo', 'pngo'].includes(act)) await setState(env, from, null, null, chat, mid);
+  if (act === 'mt') { await edit(await vMaint(env)); return answer(''); }
+  if (act === 'mt1') { await setMaint(env, { on: true }, from); await edit(await vMaint(env, 'Включено. Игроки увидят заглушку в течение минуты.')); return answer('Техработы включены'); }
+  if (act === 'mt0') { await setMaint(env, { on: false }, from); await edit(await vMaint(env, 'Выключено. Игра у всех продолжится в течение минуты.')); return answer('Техработы выключены'); }
+  if (act === 'mtd') { await setMaint(env, { text: MAINT_TEXT }, from); await edit(await vMaint(env, 'Вернул текст по умолчанию.')); return answer(''); }
+  if (act === 'mtx') return wait('mt', {}, { text: 'Пришли новый текст заглушки одним сообщением (до 300 знаков). Например: «Обновляемся, вернёмся к 15:00 по Москве».', kb: [[B('Отмена', 'p:mt')]] });
   if (act === 'gd' || act === 'gdv' || act === 'gdi') {
     const vi = Math.max(0, Math.min(GUIDE.length - 1, Number(parts[2]) || 0)), G = GUIDE[vi];
     if (act === 'gdi') { const it = G.items[Number(parts[3]) || 0]; if (!it) return answer('Нет такого');

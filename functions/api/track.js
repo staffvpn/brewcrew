@@ -5,6 +5,7 @@ import { opsFor } from '../_admin.js';
 import { channelTick, tourWeek, post as channelPost, worldInfo } from '../_channel.js';
 import { goalTrack, goalInfo } from '../_goal.js';
 import { winbackTick } from '../_winback.js';
+import { getMaint } from '../_maint.js';
 
 const num = (v, max = 1e15) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(n, max)) : 0; };
 const str = (v, len = 40) => (typeof v === 'string' ? v.slice(0, len) : null);
@@ -15,6 +16,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   try { body = await request.json(); } catch { return json({ ok: false }, 400); }
   const user = await verifyInitData(body.initData, env.BOT_TOKEN);
   if (!user || !user.id) return json({ ok: false, error: 'bad initData' }, 401);
+  if (!ADMINS.includes(user.id)) { const mt = await getMaint(env); if (mt.on) return json({ ok: true, maint: true, text: mt.text }); }
   const s = body.stats || {};
   const now = Date.now();
   const dt = Math.round(num(s.dt, 120));

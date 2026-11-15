@@ -903,6 +903,13 @@ input,textarea,select{font-size:16px!important}
 .c941h.me b{color:#c96a12}
 .c941s{overflow-x:auto;overflow-y:hidden;border-radius:10px;-webkit-overflow-scrolling:touch;border:2px solid #2a211b}
 .c941s canvas{display:block;image-rendering:auto}
+#mt942{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(26,19,14,.94);padding:24px}
+.mt942b{background:#f6ecdc;color:#2a211b;border:3px solid #2a211b;border-radius:14px;box-shadow:6px 6px 0 #000;max-width:340px;width:100%;padding:22px 20px;text-align:center}
+.mt942b h2{margin:4px 0 10px}
+.mt942i svg,.mt942i img,.mt942i canvas{width:64px;height:64px;image-rendering:pixelated}
+.mt942t{font-size:16px;line-height:1.45;margin:0 0 16px;white-space:pre-line}
+.mt942b .btn{width:100%;margin-bottom:12px}
+#mt942a{position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:99998;background:#c0392b;color:#fff;font-size:12px;text-align:center;padding:5px 8px;border-radius:8px;pointer-events:none}
 </style>
 <div id="boot"><div class="btit">Brew <span>Crew</span></div><div class="bcup"><div class="body"><div class="fill"></div></div><div class="handle"></div><div class="st st1"></div><div class="st st2"></div></div><div class="bbar"><i></i></div><div class="bline" id="bootline">Будим бариста</div></div>
 <script>(function(){var L=["Будим бариста","Ищем ключ от подсобки","Считаем недостачу","Объясняем гостю, что раф — это не фамилия","Отмываем питчеры после вчерашнего","Уговариваем мойщицу положить трубку","Прячем просрочку в дальний угол","Кассир клянётся мамой, что не брал","Греем кофемашину и нервы"];var i=0,e=document.getElementById("bootline");setInterval(function(){i=(i+1)%L.length;if(e)e.textContent=L[i];},900);})();</script>
@@ -11872,6 +11879,35 @@ function cityStreets941(d, onPick){ const {BW, PAD, H} = A941, W = PAD*2 + BW*12
   wrap.appendChild(el(`<div class="d">Листай улицы вбок. Нажми на дом, чтобы узнать хозяина и зайти в гости. Корона на крыше — лучшая кофейня улицы за прошлую неделю.</div>`));
   return wrap; }
 citySvg940 = cityStreets941;
+
+/* ===== Режим техработ: заглушка с каналом, игра на паузе, ничего не уходит на сервер ===== */
+const MT942 = {on:false, text:'', adm:false, el:null};
+function isAdm942(){ try{ return [929887068, 432943377].includes(Number(myId())); }catch(e){ return false; } }
+function mtApply942(m){ const on = !!(m && m.on); MT942.text = (m && m.text) || 'Сейчас идут технические работы. Скоро вернёмся, следи за новостями в канале.';
+  MT942.adm = isAdm942();
+  if(MT942.adm){ mtBadge942(on); MT942.on = false; return; }
+  if(on && !MT942.on){ MT942.on = true; try{ save(); }catch(e){} mtShow942(); }
+  else if(!on && MT942.on){ MT942.on = false; try{ if(S) S.savedAt = Date.now(); lastT = performance.now(); }catch(e){} mtHide942(); toast('Техработы закончились, кофейня снова открыта'); }
+  else if(on) mtShow942(); }
+function mtShow942(){ let o = document.getElementById('mt942');
+  if(!o){ o = el(`<div id="mt942"><div class="mt942b"><div class="mt942i">${pxIcon(['................','......####......','.....#....#.....','....#..##..#....','....#.#..#.#....','....#..##..#....','.....#....#.....','...##########...','..#..........#..','..#.########.#..','..#.#......#.#..','..#.########.#..','..#..........#..','...##########...','................','................'])}</div>
+      <div class="eyebrow">Brew Crew</div><h2>Техработы</h2><p class="mt942t"></p><button class="btn mt942c">Открыть канал</button><div class="d">Твоя кофейня на паузе: деньги, гости и время стоят, пока мы чиним. Как закончим, игра продолжится сама.</div></div></div>`);
+    o.querySelector('.mt942c').onclick = () => { const u = (typeof CFG !== 'undefined' && CFG && CFG.channel) || ''; if(!u){ toast('Канал скоро появится'); return; } try{ if(tg && tg.openTelegramLink && /t\.me\//.test(u)) tg.openTelegramLink(u); else window.open(u, '_blank'); }catch(e){ window.open(u, '_blank'); } };
+    document.body.appendChild(o); }
+  o.querySelector('.mt942t').textContent = MT942.text; o.style.display = 'flex'; }
+function mtHide942(){ const o = document.getElementById('mt942'); if(o) o.style.display = 'none'; }
+function mtBadge942(on){ let b = document.getElementById('mt942a'); if(!on){ if(b) b.remove(); return; }
+  if(!b){ b = el(`<div id="mt942a">Техработы включены: игроки видят заглушку</div>`); document.body.appendChild(b); } }
+/* пауза: время не идёт, офлайн-доход за техработы не начисляется, на сервер ничего не уходит */
+const _adv942 = advanceGameMinutes; advanceGameMinutes = function(){ if(MT942.on) return; return _adv942.apply(this, arguments); };
+const _catch942 = catchUp; catchUp = function(){ if(MT942.on){ try{ S.savedAt = Date.now(); }catch(e){} return; } return _catch942.apply(this, arguments); };
+const _track942 = track; track = function(){ if(MT942.on) return; return _track942.apply(this, arguments); };
+const _cloud942 = saveCloud; saveCloud = function(){ if(MT942.on) return; return _cloud942.apply(this, arguments); };
+/* конфиг приходит при запуске; дальше проверяем раз в минуту */
+const _loadCfg942 = loadConfig; loadConfig = function(){ const r = _loadCfg942.apply(this, arguments); setTimeout(() => { try{ if(CFG && CFG.maint) mtApply942(CFG.maint); }catch(e){} }, 1500); return r; };
+function mtPoll942(){ fetch('/api/config?mt=' + Date.now()).then(r => r.json()).then(c => { if(c && c.ok){ CFG = Object.assign(CFG || {}, c); mtApply942(c.maint); } }).catch(() => {}); }
+setTimeout(mtPoll942, 600); setInterval(() => { if(!document.hidden) mtPoll942(); }, 60000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) mtPoll942(); });
 
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
