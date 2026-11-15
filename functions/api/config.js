@@ -2,7 +2,6 @@
 import { json, getBot } from '../_lib.js';
 import { versionInfo, worldInfo } from '../_channel.js';
 import { rel10Off } from './league.js';
-import { cityOn } from './city.js';
 import { getMaint } from '../_maint.js';
 export async function onRequestGet({ env }) {
   let bot = null, ver = null, world = null;
@@ -14,7 +13,6 @@ export async function onRequestGet({ env }) {
     else { flags = ((await env.DB.prepare("SELECT DISTINCT p.cafe FROM purchases u JOIN players p ON p.tg_id = u.tg_id WHERE u.item = 'flagship' AND u.refunded = 0 AND p.cafe IS NOT NULL LIMIT 30").all()).results || []).map(r => r.cafe);
       await env.DB.prepare("INSERT INTO cache (key, val, at) VALUES ('flags34', ?1, ?2) ON CONFLICT(key) DO UPDATE SET val = ?1, at = ?2").bind(JSON.stringify(flags), Date.now()).run(); } } } catch {}
   let rel10off = false; try { if (env.DB) rel10off = await rel10Off(env); } catch {}
-  let city = false; try { if (env.DB) city = await cityOn(env); } catch {}
   let maint = { on: false }; try { if (env.DB) maint = await getMaint(env); } catch {}
-  return json({ ok: true, maint, city, bot, app: env.APP_SHORT || null, channel: env.CHANNEL_URL || null, ver, world, now: Date.now(), rel10off, flags });
+  return json({ ok: true, maint, bot, app: env.APP_SHORT || null, channel: env.CHANNEL_URL || null, ver, world, now: Date.now(), rel10off, flags });
 }
