@@ -1,3 +1,4 @@
+import {paymentPayload} from '../_payment.js';
 // POST /tg/webhook — сюда Telegram присылает сообщения боту. Команды: /start, /admin (только для админов).
 import { ADMINS, json, mskDay, tgApi, SHOP, dispatchReminders, parseRef, bindReferrer, GIFTABLE } from '../_lib.js';
 import { adminCommand, adminCallback, adminInput } from '../_admin.js';
@@ -17,7 +18,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // оплата звёздами: подтверждаем счёт и записываем покупку
   if (upd.pre_checkout_query) {
     const q = upd.pre_checkout_query; let ok = false;
-    try { const p = JSON.parse(q.invoice_payload); ok = Boolean(SHOP[p.i]) && p.u === q.from.id && q.currency === 'XTR' && q.total_amount === SHOP[p.i].stars && (!p.g || (GIFTABLE(p.i) && p.g !== p.u)); } catch {}
+    if(env.WEBHOOK_SECRET){try{const p=await paymentPayload(env,q,q.from.id);ok=!!p&&(!p.g||(GIFTABLE(p.i)&&p.g!==p.u));}catch{}}
     await tgApi(env, 'answerPreCheckoutQuery', ok ? { pre_checkout_query_id: q.id, ok: true } : { pre_checkout_query_id: q.id, ok: false, error_message: 'Товар не найден, попробуй ещё раз из игры' });
     return json({ ok: true });
   }
@@ -29,30 +30,23 @@ export async function onRequestPost({ request, env, waitUntil }) {
   }
   const msg = upd.message;
   if (msg && msg.successful_payment && env.DB) {
-    const p = msg.successful_payment; let item = '?', gift = 0;
-    try { const pl = JSON.parse(p.invoice_payload); item = pl.i; gift = Number(pl.g) || 0; } catch {}
-    if (gift && GIFTABLE(item)) {
-      const now = Date.now();
-      await env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at, gift_from) VALUES (?1, ?2, ?3, ?4, ?5, NULL, ?6)')
-        .bind(p.telegram_payment_charge_id, gift, item, p.total_amount, now, msg.from.id).run();
-      const from = await env.DB.prepare('SELECT cafe FROM players WHERE tg_id = ?1').bind(msg.from.id).first();
-      const to = await env.DB.prepare('SELECT cafe, write_ok FROM players WHERE tg_id = ?1').bind(gift).first();
-      const fromCafe = (from && from.cafe) || msg.from.first_name || 'Друг', toCafe = (to && to.cafe) || 'друга';
-      const title = SHOP[item] ? SHOP[item].title : 'подарок';
-      if (SHOP[item] && SHOP[item].cash) await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, ?3, ?4, ?5, 0)').bind(gift, 'cash', SHOP[item].cash, 'Подарок от «' + fromCafe + '»', now).run();
-      else await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, 0, ?3, ?4, 0)').bind(gift, 'ent', '', now).run();
-      await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, 0, ?3, ?4, 0)').bind(gift, 'giftin', JSON.stringify({ from: fromCafe, item, title }), now).run();
-      try { await tgApi(env, 'sendMessage', { chat_id: gift, text: 'Тебе подарок! Кофейня «' + fromCafe + '» дарит: ' + title + '. Зайди в игру, он уже там.' }); } catch {}
-      await tgApi(env, 'sendMessage', { chat_id: msg.chat.id, text: 'Подарок отправлен кофейне «' + toCafe + '»: ' + title + '. Мы им уже написали.' });
-      return json({ ok: true });
+    if(!env.WEBHOOK_SECRET)return json({ok:false,error:'payment verification unavailable'},503);
+    const p=msg.successful_payment,pl=await paymentPayload(env,p,msg.from.id);
+    if(!pl)return json({ok:false,error:'invalid payment'},400);
+    const item=pl.i,gift=Number(pl.g)||0,owner=gift||msg.from.id,now=Date.now();
+    if(gift&&!GIFTABLE(item))return json({ok:false},400);
+    const exp=item==='sub_owner'?(p.subscription_expiration_date?p.subscription_expiration_date*1000:now+30*86400000):null;
+    const writes=[env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id,tg_id,item,stars,created_at,expires_at,gift_from) VALUES (?1,?2,?3,?4,?5,?6,?7)').bind(p.telegram_payment_charge_id,owner,item,p.total_amount,now,exp,gift?msg.from.id:null)];
+    if(SHOP[item].cash)writes.push(env.DB.prepare("INSERT INTO admin_ops (tg_id,op,amount,text,created_at,by_admin) SELECT ?1,'cash',?2,?3,?4,0 WHERE changes()=1").bind(owner,SHOP[item].cash,SHOP[item].title,now));
+    const result=await env.DB.batch(writes);if(result[0]?.meta?.changes===0)return json({ok:true});
+    if(gift){
+      if(!SHOP[item].cash)await env.DB.prepare("INSERT INTO admin_ops (tg_id,op,amount,text,created_at,by_admin) VALUES (?1,'ent',0,'',?2,0)").bind(owner,now).run();
+      const from=await env.DB.prepare('SELECT cafe FROM players WHERE tg_id=?1').bind(msg.from.id).first();
+      await env.DB.prepare('INSERT INTO admin_ops (tg_id,op,amount,text,created_at,by_admin) VALUES (?1,?2,0,?3,?4,0)').bind(owner,'giftin',JSON.stringify({from:from?.cafe||'Друг',item,title:SHOP[item].title}),now).run();
+      try{await tgApi(env,'sendMessage',{chat_id:gift,text:'Тебе подарок! Кофейня «'+(from?.cafe||'Друг')+'» дарит: '+SHOP[item].title+'. Зайди в игру, он уже там.'});}catch{}
     }
-    const exp = item === 'sub_owner' ? (p.subscription_expiration_date ? p.subscription_expiration_date * 1000 : Date.now() + 30 * 86400000) : null;
-    await env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')
-      .bind(p.telegram_payment_charge_id, msg.from.id, item, p.total_amount, Date.now(), exp).run();
-    if (SHOP[item] && SHOP[item].cash) await env.DB.prepare('INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) VALUES (?1, ?2, ?3, ?4, ?5, 0)').bind(msg.from.id, 'cash', SHOP[item].cash, SHOP[item].title, Date.now()).run();
-    const thanks = SHOP[item] && SHOP[item].cash ? 'Готово! Деньги уже летят в кассу кофейни.' : (item === 'pass' || item === 'pass15') ? 'Пропуск сезона активирован. Открой игру: всё пройденное заберётся сразу.' : 'Готово! Покупка уже в игре.';
-    await tgApi(env, 'sendMessage', { chat_id: msg.chat.id, text: thanks });
-    return json({ ok: true });
+    await tgApi(env,'sendMessage',{chat_id:msg.chat.id,text:gift?'Подарок отправлен.':'Готово! Покупка уже в игре.'});
+    return json({ok:true});
   }
   if (msg && msg.refunded_payment && env.DB) {
     await env.DB.prepare('UPDATE purchases SET refunded = 1 WHERE charge_id = ?1').bind(msg.refunded_payment.telegram_payment_charge_id).run();

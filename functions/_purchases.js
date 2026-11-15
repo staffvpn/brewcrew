@@ -1,3 +1,4 @@
+import { STORE_ITEMS } from './_store.js';
 import { ADMINS, sezId } from './_lib.js';
 
 export function adminTestEnabled(env, userId) {
@@ -15,6 +16,7 @@ export async function purchaseState(env, userId) {
   const passes = rows.filter(r => r.item === 'pass' || r.item === 'pass15').map(r => ({ id: String(r.charge_id).slice(-24), season: sezId(r.created_at), plus: r.item === 'pass15' ? 15 : 0 }));
   if (adminTestEnabled(env, userId)) passes.push({ id: 'admin_full:' + userId + ':' + sezId(now), season: sezId(now), plus: 0, full: true });
   const extras = [...new Set(rows.filter(r => ['flagship', 'uniform', 'music', 'starter'].includes(r.item)).map(r => r.item))];
+  const skins = [...new Set(rows.map(r=>r.item))].map(k=>STORE_ITEMS[k]).filter(p=>p&&p.category!=='style'&&p.category!=='lux').map(p=>({category:p.category,id:p.skin}));
   const lux = [...new Set(rows.filter(r => r.item.startsWith('lux_')).map(r => r.item.slice(4)))];
-  return { ok: true, adminTest: adminTestEnabled(env, userId), lux, sub: subUntil > now ? subUntil : 0, interiors, tips, renames, passes, frames, extras };
+  return { ok: true, adminTest: adminTestEnabled(env, userId), skins, lux, sub: subUntil > now ? subUntil : 0, interiors, tips, renames, passes, frames, extras };
 }

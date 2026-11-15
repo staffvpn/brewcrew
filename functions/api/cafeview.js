@@ -1,8 +1,10 @@
+import { publicCafe } from '../_cafe-public.js';
 // POST /api/cafeview — витрина чужой кофейни по ключу vk: зал, команда, вывеска. Можно один раз в день похвалить.
 import { json, verifyInitData } from '../_lib.js';
 export async function onRequestPost({ request, env }) {
   if (!env.DB || !env.BOT_TOKEN) return json({ ok: false }, 503);
   let body; try { body = await request.json(); } catch { return json({ ok: false }, 400); }
+  if (!body || typeof body!=='object') return json({ok:false},400);
   const user = await verifyInitData(body.initData, env.BOT_TOKEN);
   if (!user || !user.id) return json({ ok: false }, 401);
   const vk = typeof body.vk === 'string' && /^[0-9a-f]{12}$/.test(body.vk) ? body.vk : null;
@@ -20,5 +22,6 @@ export async function onRequestPost({ request, env }) {
   }
   if (!mine) await env.DB.prepare('UPDATE cafe_view SET views = views + 1 WHERE tg_id = ?1').bind(row.tg_id).run();
   let data = null; try { data = JSON.parse(row.data || 'null'); } catch {}
+  data=publicCafe(data||{n:row.cafe,lv:row.level,incomplete:true});
   return json({ ok: true, mine, vk: mine ? row.vk : undefined, cafe: row.cafe, level: row.level, badge: row.badge_name || null, views: (row.views || 0) + (mine ? 0 : 1), likes: row.likes || 0, at: row.at, data });
 }

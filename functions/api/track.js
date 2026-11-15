@@ -1,3 +1,4 @@
+import { publicCafe } from '../_cafe-public.js';
 // POST /api/track — игра раз в минуту сообщает, что игрок онлайн, и его краткие показатели.
 import { json, mskDay, verifyInitData, dispatchReminders, ADMINS, parseRef, bindReferrer, payReferrer, sezId } from '../_lib.js';
 import { promoWatch } from '../_promo.js';
@@ -35,7 +36,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     env.DB.prepare('INSERT OR IGNORE INTO days (day, tg_id) VALUES (?1, ?2)').bind(mskDay(now), user.id)
   ]);
   // 9.3: витрина кофейни для просмотра другими игроками
-  if (s.view && typeof s.view === 'object') { try { const data = JSON.stringify(s.view).slice(0, 3000);
+  if (s.view && typeof s.view === 'object') { try { const data = JSON.stringify(publicCafe(s.view));
     await env.DB.prepare("INSERT INTO cafe_view (tg_id, vk, data, at) VALUES (?1, lower(hex(randomblob(6))), ?2, ?3) ON CONFLICT(tg_id) DO UPDATE SET data = ?2, at = ?3").bind(user.id, data, now).run(); } catch {} }
   // рефералы: привязка нового игрока и награда пригласившему за 3 уровень
   try { if (refId) await bindReferrer(env, user, refId, 'app'); await payReferrer(env, user.id); } catch {}

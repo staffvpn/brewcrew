@@ -1,3 +1,4 @@
+import { STORE_ITEMS } from './_store.js';
 // Общие функции для серверной части Brew Crew (Cloudflare Pages Functions)
 
 export const ADMINS = [929887068, 432943377];
@@ -49,14 +50,15 @@ export async function tgApi(env, method, body) {
 
 // Каталог покупок за Telegram Stars (цены в звёздах)
 export const SHOP = {
+  ...STORE_ITEMS,
   lux_x_cat: { title: 'Золотой кот удачи', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 120 },
   lux_x_gram: { title: 'Граммофон', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 150 },
   lux_x_chand: { title: 'Хрустальная люстра', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 250 },
   lux_clock: { title: 'Коллекционные часы', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 90 },
   lux_d_aquarium: { title: 'Панорамный аквариум', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 180 },
-  frame_coffee_copper: { title: 'Медная кофейня', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 1000 },
-  frame_coffee_moon: { title: 'Лунный кофе', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 1000 },
-  frame_coffee_cream: { title: 'Ванильные искры', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 1000 },
+  frame_coffee_copper: { title: 'Медная кофейня', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 150 },
+  frame_coffee_moon: { title: 'Лунный кофе', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 250 },
+  frame_coffee_cream: { title: 'Ванильные искры', desc: 'Предмет оформления кофейни. Остаётся в коллекции.', stars: 200 },
   sub_owner: { title: 'Подписка «Владелец»', desc: 'Кофейня без тебя работает до 24 часов, офлайн-доход 80%. На 30 дней.', stars: 150, sub: true },
   int_loft: { title: 'Интерьер «Заводской лофт»', desc: 'Мягкий кирпич, бетонный пол, чёрный металл и лампы Эдисона. Средний чек +6%.', stars: 75 },
   int_scandi: { title: 'Интерьер «Фика»', desc: 'Белые стены, светлый дуб и шалфейные кресла. Гости ждут на 15% дольше.', stars: 100 },
@@ -70,7 +72,7 @@ export const SHOP = {
   frame_spark: { title: 'Рамка «Золотые искры»', desc: 'Анимированная рамка: блик по золоту и падающие монетки. Видна в рейтингах и дуэлях. Навсегда.', stars: 1000 },
   frame_aurora: { title: 'Рамка «Северное сияние»', desc: 'Анимированная рамка: цвета медленно переливаются. Видна в рейтингах и дуэлях. Навсегда.', stars: 1000 },
   frame_cat: { title: 'Рамка «Кот на вывеске»', desc: 'Анимированная рамка: кот гуляет по вывеске и садится сверху. Виден в рейтингах и дуэлях. Навсегда.', stars: 1000 },
-  flagship: { title: 'Флагман района', desc: 'Навсегда: золотая анимированная вывеска, золотое имя в рейтингах и дуэлях, легендарный сотрудник с твоим именем, а гости других кофеен рассказывают о тебе.', stars: 5000 },
+  flagship: { title: 'Флагман района', desc: 'Навсегда: золотая анимированная вывеска, золотое имя в рейтингах и дуэлях, легендарный сотрудник с твоим именем, а гости других кофеен рассказывают о тебе.', stars: 1500 },
   uniform: { title: 'Форма персонала', desc: 'Три стиля формы для всей команды: классика, джинса и бордо. Переключается в Настройках. Навсегда.', stars: 100 },
   music: { title: 'Музыка в зале', desc: 'Три плейлиста: джаз, лоу-фай и русский рок. Гости подпевают и обсуждают музыку. Навсегда.', stars: 75 },
   starter: { title: 'Набор «Первый месяц»', desc: '300 000 рублей в кассу, интерьер «Столовая №1» и двое суток гостей на 30% больше. Один раз.', stars: 49, cash: 1, once: 1 },
@@ -81,6 +83,9 @@ export const SHOP = {
 };
 
 // Подарки: что можно подарить и есть ли это уже у получателя
+// Preserve descriptive premium entries and the permanent catalogue metadata.
+for (const [sku,p] of Object.entries(STORE_ITEMS)) Object.assign(SHOP[sku],{once:1,category:p.category,skin:p.skin,oldCoins:p.oldCoins});
+for (const [sku,p] of Object.entries(SHOP)) if (sku.startsWith('frame_') || ['flagship','uniform','music'].includes(sku)) p.once=1;
 export const GIFTABLE = id => !!SHOP[id] && !SHOP[id].sub && id !== 'rename' && id !== 'flagship' && id !== 'starter';
 export async function giftCheck(env, from, to, item) {
   if (!GIFTABLE(item)) return { ok: false, error: 'Это нельзя подарить' };
