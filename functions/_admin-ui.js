@@ -47,7 +47,19 @@ export function plainAdmin(params,keepButtonIcons=false){
  const out={...params};if('text'in out)out.text=strip(out.text);if('caption'in out)out.caption=strip(out.caption);if(out.media)out.media={...out.media,caption:strip(out.media.caption)};if(out.reply_markup)out.reply_markup=keyboard(out.reply_markup);return out;
 }
 async function panelRequest(env,method,params,admin){
- let r=await tgApi(env,method,params);if(r.ok||/message is not modified/i.test(r.description||''))return r.ok?r:{ok:true,result:{message_id:params.message_id}};
+ let r=await tgApi(env,method,params);
+ if(r.ok){
+  const expected=[...(params.text||'').matchAll(/<tg-emoji\s+emoji-id="(\d+)"/g)].map(m=>m[1]);
+  const actual=(r.result?.entities||[]).filter(e=>e.type==='custom_emoji').map(e=>e.custom_emoji_id);
+  if(expected.length&&typeof r.result?.text==='string'&&!expected.every(id=>actual.includes(id))){
+   const clean=plainAdmin(params,true);if(method==='sendMessage')clean.message_id=r.result.message_id;
+   const fixed=await panelRequest(env,method==='sendMessage'?'editMessageText':method,clean,admin);
+   try{await env.DB.prepare('INSERT OR REPLACE INTO cache(key,val,at)VALUES(?1,?2,?3)').bind('admin_icon_error_'+admin,JSON.stringify({description:'Telegram удалил custom_emoji из сообщения. Обычные цветные эмодзи убраны. Проверь Premium у владельца бота в BotFather.',at:Date.now()}),Date.now()).run();}catch{}
+   return fixed;
+  }
+  return r;
+ }
+ if(/message is not modified/i.test(r.description||''))return{ok:true,result:{message_id:params.message_id}};
  if(!/emoji|icon|BUTTON|style|parse entities/i.test(r.description||''))return r;
  const initial=r.description;
  // Text and button custom emoji have separate Telegram permission checks.
