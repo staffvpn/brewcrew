@@ -12,7 +12,7 @@ async function grantPremium(env, userId, item, style = false) {
   const writes = [env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id, tg_id, item, stars, created_at, expires_at) VALUES (?1, ?2, ?3, 0, ?4, ?5)').bind(charge, userId, item, now, expires)];
   if (product.cash) {
     // Повторная выдача once-товара не создаёт второе начисление в той же транзакции.
-    writes.push(env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) SELECT ?1, 'cash', ?2, ?3, ?4, ?1 WHERE changes() = 1").bind(userId, product.cash, 'Тест: ' + product.title, now));
+    writes.push(env.DB.prepare("INSERT INTO admin_ops (tg_id, op, amount, text, created_at, by_admin) SELECT ?1, ?2, ?3, ?4, ?5, ?1 WHERE changes() = 1").bind(userId,product.cashAmount?'give':'cash',product.cashAmount||product.cash,(product.cashAmount?'Stars · ':'Тест: ')+product.title,now));
   }
   await env.DB.batch(writes);
   return purchaseState(env, userId);

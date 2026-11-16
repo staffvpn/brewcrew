@@ -88,9 +88,14 @@ for (const [sku,p] of Object.entries(STORE_ITEMS)) Object.assign(SHOP[sku],{once
 for (const [sku,p] of Object.entries(SHOP)) if (sku.startsWith('frame_') || ['flagship','uniform','music'].includes(sku)) p.once=1;
 // Optional services and collections remain in Stars; everyday uniforms and music use cafe cash.
 for (const p of Object.values(SHOP)) if(!p.currency){p.currency='XTR';p.gamePrice=0;}
-for (const [sku,stars] of Object.entries({frame_coffee_copper:29,frame_coffee_moon:59,frame_coffee_cream:39,flagship:399,sub_owner:99,pass:149,pass15:349,rename:25}))SHOP[sku].stars=stars;
-Object.assign(SHOP.uniform,{currency:'GAME',gamePrice:35000});
-Object.assign(SHOP.music,{currency:'GAME',gamePrice:50000});
+for (const [sku,stars] of Object.entries({frame_coffee_copper:149,frame_coffee_moon:249,frame_coffee_cream:199,flagship:1499,sub_owner:299,pass:499,pass15:999,rename:99}))SHOP[sku].stars=stars;
+Object.assign(SHOP.uniform,{currency:'GAME',gamePrice:1500000});
+Object.assign(SHOP.music,{currency:'GAME',gamePrice:2500000});
+// Fixed payouts are pinned to each invoice. Legacy quotes retain their revenue-based grant.
+for (const [sku,stars,cashAmount] of [['cash_s',149,3000000],['cash_m',449,10000000],['cash_l',999,25000000],['cash_xl',2299,65000000],['starter',199,3000000]]) {
+  Object.assign(SHOP[sku],{stars,cashAmount,cashVersion:2});
+  SHOP[sku].desc=sku==='starter'?'3 000 000 ₽ в кассу, интерьер «Столовая №1» и двое суток гостей +30%. Один раз.':cashAmount.toLocaleString('ru-RU')+' ₽ в кассу. Фиксированная сумма, не зависит от выручки. Без налога; гостей +20% на сутки.';
+}
 export const GIFTABLE = id => !!SHOP[id] && SHOP[id].currency!=='GAME' && !SHOP[id].sub && id !== 'rename' && id !== 'flagship' && id !== 'starter';
 export async function giftCheck(env, from, to, item) {
   if (!GIFTABLE(item)) return { ok: false, error: 'Это нельзя подарить' };

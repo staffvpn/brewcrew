@@ -37,7 +37,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if(gift&&!GIFTABLE(item)&&!(pl.n&&SHOP[item].currency==='GAME'))return json({ok:false},400);
     const exp=item==='sub_owner'?(p.subscription_expiration_date?p.subscription_expiration_date*1000:now+30*86400000):null;
     const writes=[env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id,tg_id,item,stars,created_at,expires_at,gift_from) VALUES (?1,?2,?3,?4,?5,?6,?7)').bind(p.telegram_payment_charge_id,owner,item,p.total_amount,now,exp,gift?msg.from.id:null)];
-    if(SHOP[item].cash)writes.push(env.DB.prepare("INSERT INTO admin_ops (tg_id,op,amount,text,created_at,by_admin) SELECT ?1,'cash',?2,?3,?4,0 WHERE changes()=1").bind(owner,SHOP[item].cash,SHOP[item].title,now));
+    if(SHOP[item].cash)writes.push(env.DB.prepare("INSERT INTO admin_ops (tg_id,op,amount,text,created_at,by_admin) SELECT ?1,?2,?3,?4,?5,0 WHERE changes()=1").bind(owner,pl.fixedCash?'give':'cash',pl.fixedCash||SHOP[item].cash,(pl.fixedCash?'Stars · ':'')+SHOP[item].title,now));
     const result=await env.DB.batch(writes);if(result[0]?.meta?.changes===0)return json({ok:true});
     if(gift){
       if(!SHOP[item].cash)await env.DB.prepare("INSERT INTO admin_ops (tg_id,op,amount,text,created_at,by_admin) VALUES (?1,'ent',0,'',?2,0)").bind(owner,now).run();
