@@ -47,6 +47,6 @@
   const oldAge=window.ageOk;window.ageOk=function(){return has()||oldAge.apply(this,arguments);};
   const oldSettings=window.renderSettings;window.renderSettings=function(p){const r=oldSettings.apply(this,arguments),card=document.createElement('div');card.className='card';card.innerHTML='<div class="t">Документы Brew Crew</div><div class="bc-legal-links"><a href="terms.html" target="_blank" rel="noopener">Соглашение</a><a href="privacy.html" target="_blank" rel="noopener">Конфиденциальность</a><a href="payments.html" target="_blank" rel="noopener">Покупки и возвраты</a></div>';p.appendChild(card);return r;};
  }
- function run(start){if(pending)return;const local=(()=>{try{return JSON.parse(localStorage.getItem('brewcrew_max13')||'null');}catch{return null;}})();if(local?.v===3&&!has()){pending=true;restoring(local,()=>{pending=false;start();});return;}start();}
+ function run(start){if(pending)return;const local=(()=>{try{if(typeof loadLocal==='function')return loadLocal();return JSON.parse(localStorage.getItem('brewcrew_max13')||localStorage.getItem('brewcrew_v3')||'null');}catch{return null;}})();if(local?.v===3&&!has()){pending=true;restoring(local,()=>{pending=false;start();});return;}start();}
  window.BrewCrewLegal={version:VERSION,documents:DOCS,key:KEY,has,allowed,receipt,install,run};
 })();

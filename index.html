@@ -6184,7 +6184,11 @@ function save(){ if(!S) return; try{ localStorage.setItem(KEY, snapshot()); }cat
 function cloudOK(){ return tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'); }
 function saveCloud(){ if(!S || !cloudOK()) return; const js = snapshot(); const parts = []; for(let i=0;i<js.length;i+=3900) parts.push(js.slice(i,i+3900)); if(parts.length > 200) return;
   try{ parts.forEach((p,i)=>tg.CloudStorage.setItem('bc3_'+i, p)); tg.CloudStorage.setItem('bc3_n', String(parts.length)); }catch(e){} }
-function loadLocal(){ try{ const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
+function bcProg(d){ return d && d.v===3 ? (Number(d.level)||0)*1e6 + (Number(d.day)||0) : -1; }
+function loadLocal(){ let cur=null, old=null; try{ const raw = localStorage.getItem(KEY); cur = raw ? JSON.parse(raw) : null; }catch(e){}
+  try{ const r2 = localStorage.getItem('brewcrew_v3'); old = r2 ? JSON.parse(r2) : null; }catch(e){}
+  if(old && old.v===3 && bcProg(old) > bcProg(cur)){ try{ localStorage.setItem('brewcrew_v3_bak', JSON.stringify(old)); localStorage.removeItem('brewcrew_v3'); localStorage.setItem(KEY, JSON.stringify(old)); }catch(e){} old.__restored = 1; return old; }
+  return cur; }
 function loadCloud(cb){ if(!cloudOK()) return cb(null);
   try{ tg.CloudStorage.getItem('bc3_n', (err, n)=>{ n = parseInt(n,10); if(err || !n) return cb(null); const keys = Array.from({length:n},(_,i)=>'bc3_'+i); const out = {}; let left = Math.ceil(n/50);
     for(let i=0;i<n;i+=50){ tg.CloudStorage.getItems(keys.slice(i,i+50), (e2, vals)=>{ if(vals) Object.assign(out, vals); if(--left===0){ try{ cb(JSON.parse(keys.map(k=>out[k]||'').join(''))); }catch(x){ cb(null); } } }); } }); }catch(e){ cb(null); } }
@@ -14977,7 +14981,7 @@ BrewCrewLegal.run(function(){
 var bcBootLocal=loadLocal(),bcBootLocalAt=Number(bcBootLocal&&bcBootLocal.savedAt)||0;
 boot(bcBootLocal);var bcBootState=S;
 if(S){ streakCheck(); refreshEntitlements(); loadFriends(); setTimeout(()=>track(), 1500); }
-loadCloud(cloud=>{ if(cloud && cloud.v===3 && S===bcBootState && (!bcBootLocal || (cloud.savedAt||0) > bcBootLocalAt + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
+loadCloud(cloud=>{ if(cloud && cloud.v===3 && S===bcBootState && (!bcBootLocal || ((cloud.savedAt||0) > bcBootLocalAt + 5000 && bcProg(cloud) >= bcProg(bcBootLocal)))){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
 });
 
 </script>
