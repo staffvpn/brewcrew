@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta name="brewcrew-build" content="v15-places-28-20261116">
+<meta name="brewcrew-build" content="v15-save-recovery-20261116">
 <meta charset="utf-8">
 <script src="legal-gate.js"></script>
+<script src="save-manager.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -6180,15 +6181,10 @@ function ambientTick(){
 
 /* ---------- сохранение ---------- */
 function snapshot(){ S.savedAt = Date.now(); S.sound = soundOn; const copy = Object.assign({}, S); return JSON.stringify(copy, (k,v)=> k==='distract' ? undefined : v); }
-function save(){ if(!S) return; try{ localStorage.setItem(KEY, snapshot()); }catch(e){} }
+function save(){if(!S||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;const raw=snapshot();if(window.BrewCrewSaves?.active){BrewCrewSaves.writeLocal(S,raw);return;}try{localStorage.setItem(KEY,raw);}catch(e){}}
 function cloudOK(){ return tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'); }
-function saveCloud(){ if(!S || !cloudOK()) return; const js = snapshot(); const parts = []; for(let i=0;i<js.length;i+=3900) parts.push(js.slice(i,i+3900)); if(parts.length > 200) return;
-  try{ parts.forEach((p,i)=>tg.CloudStorage.setItem('bc3_'+i, p)); tg.CloudStorage.setItem('bc3_n', String(parts.length)); }catch(e){} }
-function bcProg(d){ return d && d.v===3 ? (Number(d.level)||0)*1e6 + (Number(d.day)||0) : -1; }
-function loadLocal(){ let cur=null, old=null; try{ const raw = localStorage.getItem(KEY); cur = raw ? JSON.parse(raw) : null; }catch(e){}
-  try{ const r2 = localStorage.getItem('brewcrew_v3'); old = r2 ? JSON.parse(r2) : null; }catch(e){}
-  if(old && old.v===3 && bcProg(old) > bcProg(cur)){ try{ localStorage.setItem('brewcrew_v3_bak', JSON.stringify(old)); localStorage.removeItem('brewcrew_v3'); localStorage.setItem(KEY, JSON.stringify(old)); }catch(e){} old.__restored = 1; return old; }
-  return cur; }
+function saveCloud(){if(!S||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;if(window.BrewCrewSaves?.active){BrewCrewSaves.writeCloud(snapshot());return;} }
+function loadLocal(){if(window.BrewCrewSaves?.active)return BrewCrewSaves.peekLocal();try{const data=[KEY,'brewcrew_v3','brewcrew_v3_bak'].map(k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}).filter(s=>s?.v===3);return data.sort((a,b)=>(Number(b.level)||0)-(Number(a.level)||0)||(Number(b.day)||0)-(Number(a.day)||0))[0]||null;}catch(e){return null;}}
 function loadCloud(cb){ if(!cloudOK()) return cb(null);
   try{ tg.CloudStorage.getItem('bc3_n', (err, n)=>{ n = parseInt(n,10); if(err || !n) return cb(null); const keys = Array.from({length:n},(_,i)=>'bc3_'+i); const out = {}; let left = Math.ceil(n/50);
     for(let i=0;i<n;i+=50){ tg.CloudStorage.getItems(keys.slice(i,i+50), (e2, vals)=>{ if(vals) Object.assign(out, vals); if(--left===0){ try{ cb(JSON.parse(keys.map(k=>out[k]||'').join(''))); }catch(x){ cb(null); } } }); } }); }catch(e){ cb(null); } }
@@ -6197,6 +6193,7 @@ function loadCloud(cb){ if(!cloudOK()) return cb(null);
 let trackT = 0, trackStart = true;
 function cashPack(days){ const h = (S && S.fin && S.fin.hist || []).slice(0,7).map(f=>f.rev||0); const avg = h.length ? h.reduce((a,b)=>a+b,0)/h.length : 0; return Math.round(Math.max({1:300000,3:1000000,8:3000000,20:8000000}[days] || 300000*days, avg*days)/1000)*1000; }
 function track(force){
+  if(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite())return;
   if(!S || !tg || !tg.initData) return;
   const body = JSON.stringify({initData: tg.initData, stats:{cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:60, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + profitOf(S.fin.today)), best:Math.round(S.c.maxDayRev||0), snap:{rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
@@ -6205,6 +6202,7 @@ function track(force){
 
 /* ---------- команды из админки ---------- */
 function onTrack(r){
+  if(r?.recoveryRequired&&window.BrewCrewSaves?.active){BrewCrewSaves.requireRecovery(r);return;}
   if(r && r.ok && S && S.flags && S.flags.starPost) S.flags.starPost = false;
   if(!r || !r.ok || !S) return;
   showBanned(!!r.banned);
@@ -6228,7 +6226,7 @@ function onTrack(r){
     else if(o.op==='wipe') wipe = true;
   }
   save(); saveCloud(); structDirty = true; renderHud();
-  apiPost('/api/ack', {ids:ops.map(o=>o.id)}).then(()=>{ if(wipe){ hardReset(); toast('Аккаунт удалён администрацией'); } }).catch(()=>{});
+  apiPost('/api/ack', {ids:ops.map(o=>o.id)}).then(()=>{ if(wipe){ hardReset('admin_wipe'); toast('Аккаунт удалён администрацией'); } }).catch(()=>{});
 }
 function showBanned(on){ let b = $('#banned');
   if(!on){ if(b) b.remove(); return; }
@@ -6303,7 +6301,7 @@ function renderBuild(name, cityId, ref){
   };
   draw();
   w.querySelector('#back').onclick = () => renderStart();
-  w.querySelector('#open').onclick = () => { unlockAudio();
+  w.querySelector('#open').onclick = () => {if(window.BrewCrewSaves?.active&&!BrewCrewSaves.allowCreate())return;unlockAudio();
     S = newState(name, cityId); if(ref){ S.ref = ref; }
     applyBuild(choice); initState();
     for(const k of ['beans','cups','syrup','tea','milk','desserts']){ if(k==='desserts' && !isUnlocked('dessert')) continue; const want = stockCap(k)*0.6 - stockQty(k); if(want>0){ if(STOCK[k].perish) S.stock[k].push({q:Math.round(want), exp:S.day+STOCK[k].perish}); else S.stock[k] += Math.round(want); } } S.interior = {}; S.promo = {day:null, rec:[]}; S.onb = {};
@@ -6516,7 +6514,7 @@ function renderSettings(p){
   const misc = el(`<div class="card"><div class="t">Игра</div><div class="d">«${esc(S.name)}», ${placeName()}, игровой день ${S.day}. Прогресс сохраняется на устройстве${cloudOK()?' и в облаке Telegram':''}.</div><div class="row wrap"></div></div>`);
   const row = misc.lastElementChild;
   const rs = el(`<button class="btn ghost">Начать заново</button>`);
-  rs.onclick = () => { if(!rs.dataset.sure){ rs.dataset.sure='1'; rs.textContent='Точно? Пропадёт всё'; return; } try{ localStorage.removeItem(KEY); }catch(e){} if(cloudOK()){ try{ tg.CloudStorage.setItem('bc3_n','0'); }catch(e){} } S = null; modals = []; sheet = null; $('#modalRoot').innerHTML=''; $('#sheetRoot').innerHTML=''; for(const k in RT) delete RT[k]; renderStart(); };
+  rs.onclick = () => { if(!rs.dataset.sure){ rs.dataset.sure='1'; rs.textContent='Точно? Пропадёт всё'; return; } hardReset(); };
   row.appendChild(rs);
   p.appendChild(misc);
 }
@@ -7070,7 +7068,7 @@ function showModal(){
   else if(m.kind==='menu'){
     box.append(el(`<h2>Меню</h2>`), el(`<p style="font-size:13px;color:var(--muted)">«${esc(S.name)}», ${placeName()}, игровой день ${S.day}. Прогресс сохраняется на устройстве${cloudOK()?' и в облаке Telegram':''}.</p>`));
     const snd = btn(soundOn?'Звук: включён':'Звук: выключен', ()=>{ soundOn = !soundOn; if(soundOn) unlockAudio(); snd.textContent = soundOn?'Звук: включён':'Звук: выключен'; save(); }, 'ghost');
-    const rs = btn('Начать заново', ()=>{ if(!rs.dataset.sure){ rs.dataset.sure='1'; rs.textContent='Точно? Всё пропадёт, даже достижения'; return; } try{ localStorage.removeItem(KEY); }catch(e){} if(cloudOK()){ try{ tg.CloudStorage.setItem('bc3_n','0'); }catch(e){} } S = null; modals = []; $('#modalRoot').innerHTML=''; for(const k in RT) delete RT[k]; renderStart(); }, 'ghost');
+    const rs = btn('Начать заново', ()=>{ if(!rs.dataset.sure){ rs.dataset.sure='1'; rs.textContent='Точно? Всё пропадёт, даже достижения'; return; } hardReset(); }, 'ghost');
     box.append(snd, rs, btn('Закрыть', closeModal));
   }
   root.appendChild(veil);
@@ -7183,11 +7181,11 @@ window.addEventListener('pagehide', ()=>{ if(S){ save(); saveCloud(); } });
 /* ---------- запуск ---------- */
 try{ if(tg){ tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#17120e'); tg.setBackgroundColor && tg.setBackgroundColor('#17120e'); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } }catch(e){}
 function boot(data){
-  if(data && data.v===3){ try{ const savedAt=Number(data.savedAt)||Date.now(); S = data; migrate(); soundOn = S.sound!==false; S.staff.forEach(s=>{ s.distract = null; }); renderGame(); S.savedAt=savedAt; catchUp(); if(!ageOk()) ageGate(()=>{}); }catch(e){ console.error(e); renderBroken(e); } }
+  if(data && data.v===3){ try{ const savedAt=Number(data.savedAt)||Date.now(); S = data; migrate(); soundOn = S.sound!==false; S.staff.forEach(s=>{ s.distract = null; }); renderGame(); S.savedAt=savedAt; catchUp(); if(!ageOk()) ageGate(()=>{});if(window.BrewCrewSaves?.active)BrewCrewSaves.restored(S); }catch(e){console.error(e);if(window.BrewCrewSaves?.active){S=null;BrewCrewSaves.failed(e);}else renderBroken(e);} }
   else { S = null; renderStart(); }
 }
-function hardReset(){ try{ localStorage.removeItem(KEY); }catch(e){} if(cloudOK()){ try{ tg.CloudStorage.setItem('bc3_n','0'); }catch(e){} } S = null; modals = []; sheet = null; const mr = $('#modalRoot'); if(mr) mr.innerHTML=''; const sr = $('#sheetRoot'); if(sr) sr.innerHTML=''; for(const k in RT) delete RT[k]; renderStart(); }
-function renderBroken(e){ S = null; const app = $('#app'); app.className = 'startapp'; app.innerHTML = '';
+function hardReset(reason){if(window.BrewCrewSaves?.active)BrewCrewSaves.reset(reason);try{ localStorage.removeItem(KEY); }catch(e){} if(cloudOK()){ try{ tg.CloudStorage.setItem('bc3_n','0'); }catch(e){} } S = null; modals = []; sheet = null; const mr = $('#modalRoot'); if(mr) mr.innerHTML=''; const sr = $('#sheetRoot'); if(sr) sr.innerHTML=''; for(const k in RT) delete RT[k]; renderStart(); }
+function renderBroken(e){if(window.BrewCrewSaves?.active){BrewCrewSaves.failed(e);return;} S = null; const app = $('#app'); app.className = 'startapp'; app.innerHTML = '';
   const w = el(`<div class="start"><div class="logo">Brew Crew</div><div class="note kraft"><p>Старое сохранение не открылось в новой версии. Можно начать заново: пустое помещение, новый бюджет.</p></div><button class="btn big">Начать заново</button></div>`);
   w.querySelector('button').onclick = hardReset; app.appendChild(w); }
 function migrate(){
@@ -8298,14 +8296,16 @@ attention = function(){
 
 /* ---------- связь с сервером: трекинг и команды ---------- */
 function track(force){
+  if(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite())return;
   if(!S || !tg || !tg.initData) return;
   const z = szState();
-  const body = JSON.stringify({initData: tg.initData, stats:{view:(typeof viewSnap34==='function' ? viewSnap34(force) : undefined), cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), mi:(S.mich34||{}).stars || 0, rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
+  const body = JSON.stringify({initData: tg.initData, stats:{resetConfirmed:window.BrewCrewSaves?.authorizedReset()===true,view:(typeof viewSnap34==='function' ? viewSnap34(force) : undefined), cafe:S.name, city:S.city, level:S.level, money:Math.max(0,S.money), earned:S.c.earnedRun||0, rooms:S.rooms.length, franchises:S.franchises, bankrupt:S.bankrupts, dt: force?0:120, start:trackStart, ref:S.ref||startParam()||undefined, tw:tourWeek(), star:(S.flags && S.flags.starPost) || undefined, trophy:(S.flags && S.flags.trophy) || undefined, tp:Math.round(((S.tour&&S.tour.week===tourWeek())?S.tour.profit:0) + opProfit(S.fin.today)), best:Math.round(S.c.maxDayRev||0), sz:z.id, sp:Math.round(Math.max(0, z.sp - (z.rbase||0))), bd:(S.szBadge===z.id && passOwned()) ? 1 : 0, bdn:(typeof badgeCur==='function' && badgeCur()) ? badgeCur().n.slice(0,40) : undefined, gc:Math.round(S.goalCups||0), bs:(S.boss && S.boss.done) ? {w:S.boss.w, id:S.boss.id, pass:S.boss.pass, res:S.boss.res} : undefined, sold:(S.c.soldAt && Date.now()-S.c.soldAt < 86400000 ? S.c.soldAt : 0), snap:{fr:frameOwnedId(), mi:(S.mich34||{}).stars || 0, rep:+S.rep.toFixed(2), staff:S.staff.filter(x=>!x.isYou).length, kitchen:(S.kitchen||{}).tier||0, machine:room('main').upg.machine, decor:room('main').upg.decor, delivery:!!(S.delivery&&S.delivery.on)}}});
   trackStart = false;
   try{ if(force && navigator.sendBeacon) navigator.sendBeacon('/api/track', new Blob([body], {type:'application/json'})); else fetch('/api/track', {method:'POST', headers:{'content-type':'application/json'}, body, keepalive:true}).then(r=>r.json()).then(onTrack).catch(()=>{}); }catch(e){}
 }
 const ADMIN_LEG = ['Возврат НДС, о котором ты забыл','Зачисление от инвестора','Наследство двоюродной тёти','Перевод от шейхов: «на развитие кофе»','Компенсация от поставщика за кислое молоко'];
 function onTrack(r){
+  if(r?.recoveryRequired&&window.BrewCrewSaves?.active){BrewCrewSaves.requireRecovery(r);return;}
   if(r && r.ok && S && S.flags && S.flags.starPost) S.flags.starPost = false;
   if(r && r.ok && S && S.flags && S.flags.trophy) S.flags.trophy = false;
   if(!r || !r.ok || !S) return;
@@ -8332,7 +8332,7 @@ function onTrack(r){
     else if(o.op==='wipe') wipe = true;
   }
   save(); saveCloud(); structDirty = true; renderHud();
-  apiPost('/api/ack', {ids:ops.map(o=>o.id)}).then(()=>{ if(wipe){ hardReset(); toast('Аккаунт удалён администрацией'); } }).catch(()=>{});
+  apiPost('/api/ack', {ids:ops.map(o=>o.id)}).then(()=>{ if(wipe){ hardReset('admin_wipe'); toast('Аккаунт удалён администрацией'); } }).catch(()=>{});
 }
 
 /* ---------- миграция сохранений ---------- */
@@ -9870,13 +9870,11 @@ const _sezId25 = sezId;
 sezId = function(ts){ if(ts) return _sezId25(ts); const n = Date.now(); if(n - _sezC.t > 60000){ _sezC = {t:n, v:_sezId25()}; } return _sezC.v; };
 
 /* облако: сохраняем реже и только изменённые части; старые дни без подробной росписи */
-let _cloudPrev = [];
-saveCloud = function(){ if(!S || !cloudOK()) return; try{ slimHist(); }catch(e){} const js = snapshot(); const parts = []; for(let i=0;i<js.length;i+=3900) parts.push(js.slice(i,i+3900)); if(parts.length > 200) return;
-  try{ parts.forEach((p,i)=>{ if(_cloudPrev[i] !== p) tg.CloudStorage.setItem('bc3_'+i, p); }); if(_cloudPrev.length !== parts.length) tg.CloudStorage.setItem('bc3_n', String(parts.length)); _cloudPrev = parts; }catch(e){} };
+saveCloud = function(){if(!S||!cloudOK()||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;try{slimHist();}catch(e){}if(window.BrewCrewSaves?.active)BrewCrewSaves.writeCloud(snapshot());};
 function slimHist(){ const h = S && S.fin && S.fin.hist; if(!h) return; for(let i=7;i<h.length;i++){ const L = h[i].L; if(L && (L.inW || L.outW)){ delete L.inW; delete L.outW; } } }
 let _cloudGate = 0;
 const _saveCloud25 = saveCloud;
-saveCloud = function(){ const n = Date.now(); if(n - _cloudGate < 90000) return; _cloudGate = n; _saveCloud25(); };
+saveCloud = function(){if(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite())return; const n = Date.now(); if(n - _cloudGate < 90000) return; _cloudGate = n; _saveCloud25(); };
 window.addEventListener('visibilitychange', ()=>{ if(document.hidden){ _cloudGate = 0; try{ saveCloud(); }catch(e){} } });
 window.addEventListener('pagehide', ()=>{ _cloudGate = 0; try{ saveCloud(); }catch(e){} }, {capture:true});
 function eqBroke(k){ return {machine:'сломалась', terminal:'сломался', kkt:'сломалась', fridge:'сломался'}[k] || 'сломано'; }
@@ -14975,14 +14973,13 @@ var bcGuestsStyle=document.createElement('style');bcGuestsStyle.textContent='.bc
 
 })();
 
-// Restore saves only after every scene and economy hook is installed.
+// Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
-BrewCrewLegal.run(function(){
-var bcBootLocal=loadLocal(),bcBootLocalAt=Number(bcBootLocal&&bcBootLocal.savedAt)||0;
-boot(bcBootLocal);var bcBootState=S;
-if(S){ streakCheck(); refreshEntitlements(); loadFriends(); setTimeout(()=>track(), 1500); }
-loadCloud(cloud=>{ if(cloud && cloud.v===3 && S===bcBootState && (!bcBootLocal || ((cloud.savedAt||0) > bcBootLocalAt + 5000 && bcProg(cloud) >= bcProg(bcBootLocal)))){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
+BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
+ clearRuntime:function(){for(const k in RT)delete RT[k];modals=[];S=null;sheet=null;const mr=document.getElementById('modalRoot'),sr=document.getElementById('sheetRoot');if(mr)mr.innerHTML='';if(sr)sr.innerHTML='';},
+ afterRestore:function(){streakCheck();refreshEntitlements();loadFriends();setTimeout(()=>track(),1500);}
 });
+BrewCrewLegal.run(function(){BrewCrewSaves.start();});
 
 </script>
 </body>

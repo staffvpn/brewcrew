@@ -1,3 +1,4 @@
+import {guardNewCafe} from '../_recovery.js';
 import {safeAdminSnapshot} from '../_admin-assets.js';
 import { publicCafe } from '../_cafe-public.js';
 // POST /api/track — игра раз в минуту сообщает, что игрок онлайн, и его краткие показатели.
@@ -20,6 +21,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (!user || !user.id) return json({ ok: false, error: 'bad initData' }, 401);
   if (!ADMINS.includes(user.id)) { const mt = await getMaint(env); if (mt.on) return json({ ok: true, maint: true, text: mt.text }); }
   const s = body.stats || {};
+  const recoveryBlock=await guardNewCafe(env,user.id,s);if(recoveryBlock)return recoveryBlock;
   const now = Date.now();
   const dt = Math.round(num(s.dt, 120));
   const referrer = null, refId = parseRef(s.ref);

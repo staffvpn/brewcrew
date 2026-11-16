@@ -8,7 +8,7 @@
  function valid(r){return !!(r&&r.userId===userId()&&r.userId>0&&r.version===VERSION&&r.termsAccepted===true&&r.privacyRead===true&&r.adult===true&&Number.isFinite(r.recordedAt)&&typeof r.recordId==='string'&&r.recordId.length>0);}
  function receipt(){if(valid(memory))return memory;try{const r=JSON.parse(localStorage.getItem(KEY)||'null');if(valid(r))return memory=r;}catch{}return null;}
  function has(){return !!receipt();}
- function allowed(path){return path==='/api/legal'||has();}
+ function allowed(path){return path==='/api/legal'||path==='/api/recovery'||has();}
  function remember(r){if(!valid(r))throw Error('Сервер не подтвердил принятие документов. Попробуй ещё раз.');memory=r;try{localStorage.setItem(KEY,JSON.stringify(r));localStorage.setItem('bc_age18','1');}catch{}}
  const fields=()=>'<fieldset class="bc-legal"><legend>Документы Brew Crew</legend><label><input type="checkbox" id="legal-terms"><span>Принимаю <a href="terms.html" target="_blank" rel="noopener">пользовательское соглашение</a></span></label><label><input type="checkbox" id="legal-privacy"><span>Ознакомился с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a></span></label><label><input type="checkbox" id="legal-adult"><span>Подтверждаю, что мне исполнилось 18 лет</span></label><p class="bc-legal-note">Все три подтверждения обязательны. <a href="payments.html" target="_blank" rel="noopener">Покупки и возвраты</a> · <a href="https://t.me/brew_support" target="_blank" rel="noopener">Поддержка</a></p><p class="bc-legal-error" role="status" aria-live="polite"></p></fieldset>';
  async function accept(root,source){
@@ -43,7 +43,7 @@
    bind(root,go,quick,fast=>{original.call(go);if(fast){const open=document.getElementById('open');if(open&&!open.disabled)open.click();}},'start');return r;
   };
   const oldBuild=window.renderBuild;window.renderBuild=function(){if(!has())return window.renderStart();return oldBuild.apply(this,arguments);};
-  const oldBoot=window.boot;window.boot=function(data){if(data?.v===3&&!has()){restoring(data,()=>{oldBoot(data);if(typeof S!=='undefined'&&S){window.streakCheck();window.refreshEntitlements();window.loadFriends();setTimeout(()=>window.track(),1500);}});return;}return oldBoot.apply(this,arguments);};
+  const oldBoot=window.boot;window.boot=function(data){if(data?.v===3&&!has()){restoring(data,()=>{oldBoot(data);if(!window.BrewCrewSaves?.active&&typeof S!=='undefined'&&S){window.streakCheck();window.refreshEntitlements();window.loadFriends();setTimeout(()=>window.track(),1500);}});return;}return oldBoot.apply(this,arguments);};
   const oldAge=window.ageOk;window.ageOk=function(){return has()||oldAge.apply(this,arguments);};
   const oldSettings=window.renderSettings;window.renderSettings=function(p){const r=oldSettings.apply(this,arguments),card=document.createElement('div');card.className='card';card.innerHTML='<div class="t">Документы Brew Crew</div><div class="bc-legal-links"><a href="terms.html" target="_blank" rel="noopener">Соглашение</a><a href="privacy.html" target="_blank" rel="noopener">Конфиденциальность</a><a href="payments.html" target="_blank" rel="noopener">Покупки и возвраты</a></div>';p.appendChild(card);return r;};
  }

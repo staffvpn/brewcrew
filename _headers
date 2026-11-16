@@ -12,3 +12,6 @@
   Cache-Control: no-cache
 /legal/manifest.json
   Cache-Control: no-cache
+
+/save-manager.js
+  Cache-Control: no-cache
