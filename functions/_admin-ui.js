@@ -14,8 +14,8 @@ export function iconKey(data='',text=''){
 }
 export async function loadAdminIcons(){return icons;}
 export function adminMarkup(v,custom=icons){
- const kb=(v.kb||[]).map(row=>row.map(b=>{const key=iconKey(b.callback_data,b.text),fallback=ICONS[key][0],id=custom[key];return {...b,text:id?b.text:fallback+' '+b.text,...(id?{icon_custom_emoji_id:id}:{}),...(/Изъять|Отобрать|Удалить|Списать|Забанить/.test(b.text)?{style:'danger'}:/Подтвердить/.test(b.text)?{style:'success'}:{})};}));
- let text=v.text.replace(/<b>([^<]+)<\/b>/,(_,title)=>{const key=/подтвер|проверь/i.test(title)?'ok':/поиск|найти/i.test(title)?'search':/игрок|команд|профиль/i.test(title)?'players':/деньги|баланс|ресурс/i.test(title)?'money':/сезон|пропуск|значк/i.test(title)?'star':/журнал|история/i.test(title)?'history':/настрой|техработ|инструмент/i.test(title)?'settings':/предмет|инвент|выдать|каталог|имуществ/i.test(title)?'assets':'home',fallback=ICONS[key][0];return(custom[key]?'<tg-emoji emoji-id="'+custom[key]+'">'+fallback+'</tg-emoji>':fallback)+' <b>'+title+'</b>';});
+ const kb=(v.kb||[]).map(row=>row.map(b=>{const key=iconKey(b.callback_data,b.text),fallback=ICONS[key][0],id=custom[key];return {...b,text:b.text,...(id?{icon_custom_emoji_id:id}:{}),...(/Изъять|Отобрать|Удалить|Списать|Забанить/.test(b.text)?{style:'danger'}:/Подтвердить/.test(b.text)?{style:'success'}:b.callback_data==='p:find'?{style:'success'}:{})};}));
+ let text=v.text.replace(/<b>([^<]+)<\/b>/,(_,title)=>{const key=/подтвер|проверь/i.test(title)?'ok':/поиск|найти/i.test(title)?'search':/игрок|команд|профиль/i.test(title)?'players':/деньги|баланс|ресурс/i.test(title)?'money':/сезон|пропуск|значк/i.test(title)?'star':/журнал|история/i.test(title)?'history':/настрой|техработ|инструмент/i.test(title)?'settings':/предмет|инвент|выдать|каталог|имуществ/i.test(title)?'assets':'home',fallback=ICONS[key][0];return(custom[key]?'<tg-emoji emoji-id="'+custom[key]+'">'+fallback+'</tg-emoji>':'')+' <b>'+title+'</b>';});
  const bodyIcons={'👥':'players','📅':'history','☕':'home','⭐':'star','💰':'money','📈':'stats','🕒':'history','🔑':'lock','📋':'assets','➕':'give','➖':'take','✏️':'edit','✅':'ok','⏳':'history'};
  text=text.split(/(<tg-emoji\b[^>]*>.*?<\/tg-emoji>|<[^>]*>)/g).map(part=>part.startsWith('<')?part:part.replace(/👥|📅|☕|⭐️?|💰|📈|🕒|🔑|📋|➕|➖|✏️|✅|⏳/gu,emoji=>{const key=bodyIcons[emoji.replace('⭐️','⭐')];return key&&custom[key]?'<tg-emoji emoji-id="'+custom[key]+'">'+ICONS[key][0]+'</tg-emoji>':emoji;})).join('');
  return{text,kb};
@@ -42,8 +42,8 @@ export function captionPages(html,limit=850){
  if(visible||!pages.length)pages.push(current+close());return pages;
 }
 export function plainAdmin(params,keepButtonIcons=false){
- const strip=s=>s?.replace(/<tg-emoji\b[^>]*>(.*?)<\/tg-emoji>/g,'$1');
- const keyboard=markup=>markup?{inline_keyboard:markup.inline_keyboard.map(row=>row.map(({icon_custom_emoji_id,style,...b})=>({...b,...(keepButtonIcons&&icon_custom_emoji_id?{icon_custom_emoji_id}:{}),text:icon_custom_emoji_id&&!keepButtonIcons?ICONS[iconKey(b.callback_data,b.text)][0]+' '+b.text:b.text})))}:undefined;
+ const strip=s=>s?.replace(/<tg-emoji\b[^>]*>(.*?)<\/tg-emoji>/g,'');
+ const keyboard=markup=>markup?{inline_keyboard:markup.inline_keyboard.map(row=>row.map(({icon_custom_emoji_id,style,...b})=>({...b,...(keepButtonIcons&&icon_custom_emoji_id?{icon_custom_emoji_id}:{}),text:b.text})))}:undefined;
  const out={...params};if('text'in out)out.text=strip(out.text);if('caption'in out)out.caption=strip(out.caption);if(out.media)out.media={...out.media,caption:strip(out.media.caption)};if(out.reply_markup)out.reply_markup=keyboard(out.reply_markup);return out;
 }
 async function panelRequest(env,method,params,admin){
@@ -58,14 +58,18 @@ async function panelRequest(env,method,params,admin){
 }
 function pageKeyboard(kb,token,page,total){if(total<2)return kb;return [[...(page?[{text:'‹ Текст',callback_data:'p:pg:'+token+':'+(page-1),icon_custom_emoji_id:icons.back}]:[]),{text:(page+1)+' / '+total,callback_data:'p:pg:'+token+':'+page},...(page+1<total?[{text:'Текст ›',callback_data:'p:pg:'+token+':'+(page+1),icon_custom_emoji_id:icons.edit}]:[])],...kb];}
 export async function adminPanel(env,method,params,v,admin){
- const styled=adminMarkup(v),pages=captionPages(styled.text),banner=adminBanner(v,params.screen),url='https://brewcrew.pages.dev/img/'+banner;
+ const styled=adminMarkup(v),pages=captionPages(styled.text,3500);
  const token=crypto.randomUUID().replaceAll('-','').slice(0,16),kb=pageKeyboard(styled.kb,token,0,pages.length);
- const request=method==='sendMessage'?{chat_id:params.chat_id,photo:url,caption:pages[0],parse_mode:'HTML',reply_markup:{inline_keyboard:kb}}:{chat_id:params.chat_id,message_id:params.message_id,media:{type:'photo',media:url,caption:pages[0],parse_mode:'HTML'},reply_markup:{inline_keyboard:kb}};
- const result=await panelRequest(env,method==='sendMessage'?'sendPhoto':'editMessageMedia',request,admin);
+ const request={chat_id:params.chat_id,...(params.message_id?{message_id:params.message_id}:{}),text:pages[0],parse_mode:'HTML',reply_markup:{inline_keyboard:kb}};
+ let result=await panelRequest(env,method==='sendMessage'?'sendMessage':'editMessageText',request,admin);
+ // Old photo panels cannot be edited into text. Replace only that old admin panel once.
+ if(!result.ok&&method!=='sendMessage'&&/no text|can't be edited|message to edit not found/i.test(result.description||'')){
+  const {message_id,...newMessage}=request;result=await panelRequest(env,'sendMessage',newMessage,admin);
+  if(result.ok){await tgApi(env,'deleteMessage',{chat_id:params.chat_id,message_id});try{await env.DB.prepare('UPDATE admin_state SET msg_id=?1 WHERE tg_id=?2 AND msg_id=?3').bind(result.result.message_id,admin,message_id).run();}catch{}}
+ }
  if(result.ok){
   const mid=result.result?.message_id||params.message_id;
-  if(pages.length>1&&mid)await env.DB.prepare('INSERT INTO cache(key,val,at)VALUES(?1,?2,?3)').bind('admin_page_'+token,JSON.stringify({admin,chat:params.chat_id,mid,pages,kb:styled.kb,banner,until:Date.now()+3600000}),Date.now()).run();
-  // Remove the known separate header produced by the previous admin implementation.
+  if(pages.length>1&&mid)await env.DB.prepare('INSERT INTO cache(key,val,at)VALUES(?1,?2,?3)').bind('admin_page_'+token,JSON.stringify({admin,chat:params.chat_id,mid,pages,kb:styled.kb,until:Date.now()+3600000}),Date.now()).run();
   try{const row=await env.DB.prepare('SELECT val FROM cache WHERE key=?1').bind('admin_banner_'+admin).first(),old=JSON.parse(row?.val||'null');if(old&&old.chat===params.chat_id&&old.msg!==mid){await tgApi(env,'deleteMessage',{chat_id:old.chat,message_id:old.msg});await env.DB.prepare('DELETE FROM cache WHERE key=?1').bind('admin_banner_'+admin).run();}}catch{}
  }
  return result;
@@ -74,10 +78,10 @@ export async function adminPanelPage(env,cq){
  const parts=String(cq.data).split(':'),token=parts[2],page=Number(parts[3]);if(!/^[a-f0-9]{16}$/.test(token)||!Number.isInteger(page))return false;
  const row=await env.DB.prepare('SELECT val FROM cache WHERE key=?1').bind('admin_page_'+token).first();let state;try{state=JSON.parse(row?.val||'null');}catch{}
  if(!state||state.admin!==cq.from.id||state.chat!==cq.message.chat.id||state.mid!==cq.message.message_id||state.until<Date.now()||page<0||page>=state.pages.length)return false;
- const r=await panelRequest(env,'editMessageCaption',{chat_id:state.chat,message_id:state.mid,caption:state.pages[page],parse_mode:'HTML',reply_markup:{inline_keyboard:pageKeyboard(state.kb,token,page,state.pages.length)}},cq.from.id);return !!r.ok;
+ const r=await panelRequest(env,'editMessageText',{chat_id:state.chat,message_id:state.mid,text:state.pages[page],parse_mode:'HTML',reply_markup:{inline_keyboard:pageKeyboard(state.kb,token,page,state.pages.length)}},cq.from.id);return !!r.ok;
 }
 export async function adminIconsView(env,admin){
  const row=await env.DB.prepare('SELECT val FROM cache WHERE key=?1').bind('admin_icon_error_'+admin).first();let error;try{error=JSON.parse(row?.val||'null');}catch{}
  const labels={home:'Главная',players:'Игроки',search:'Поиск',money:'Деньги',assets:'Имущество',take:'Изъятие',give:'Выдача',settings:'Настройки',stats:'Статистика',news:'Новости',history:'Журнал',back:'Назад',ok:'Подтверждение',refresh:'Обновление',star:'Stars',lock:'Доступ',edit:'Редактирование'};
- return {banner:'admin/icons.png',text:'<b>Иконки tgiosicons</b>\n\n'+Object.entries(ADMIN_ICON_SET).map(([key,a])=>'<tg-emoji emoji-id="'+a.id+'">'+a.emoji+'</tg-emoji> '+labels[key]).join('\n')+(error?'\n\nTelegram отклонил оформление: '+String(error.description).replace(/[<>&]/g,'')+'\nДля пользовательских иконок может потребоваться Telegram Premium у владельца бота.':''),kb:[[{text:'Главное',callback_data:'p:home'}]]};
+ return {banner:'admin/icons.png',text:'<b>Анимированные иконки TgAndroidIcons</b>\n\n'+Object.entries(ADMIN_ICON_SET).map(([key,a])=>'<tg-emoji emoji-id="'+a.id+'">'+a.emoji+'</tg-emoji> '+labels[key]).join('\n')+(error?'\n\nTelegram отклонил оформление: '+String(error.description).replace(/[<>&]/g,'')+'\nДля пользовательских иконок может потребоваться Telegram Premium у владельца бота.':''),kb:[[{text:'Главное',callback_data:'p:home'}]]};
 }

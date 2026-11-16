@@ -1,89 +1,122 @@
-// Exact tgiosicons assets. Source: https://emoji.wivvi.net/emoji.json (2026-11-15).
-// Render the listed fallback emoji inside tg-emoji; several pack images share a Unicode emoji.
+// Verified with Telegram getStickerSet(TgAndroidIcons), 2026-11-16. Every selected document is animated.
 export const ADMIN_ICON_SET = {
   "home": {
-    "id": "6042137469204303531",
+    "id": "5967822972931542886",
     "emoji": "🏠",
-    "name": "Дом"
+    "name": "home",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "players": {
-    "id": "6032609071373226027",
+    "id": "5915556996215476302",
     "emoji": "👥",
-    "name": "Люди"
+    "name": "players",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "search": {
-    "id": "6032850693348399258",
+    "id": "5874960879434338403",
     "emoji": "🔎",
-    "name": "Поиск"
+    "name": "search",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "money": {
-    "id": "5769126056262898415",
+    "id": "5769403330761593044",
     "emoji": "👛",
-    "name": "Кошелек"
+    "name": "money",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "assets": {
-    "id": "6032644646587338669",
+    "id": "6032937473162614352",
     "emoji": "🎁",
-    "name": "Подарок"
+    "name": "assets",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "take": {
-    "id": "6039522349517115015",
+    "id": "5879896690210639947",
     "emoji": "🗑",
-    "name": "Мусорный бак"
+    "name": "take",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "give": {
-    "id": "5882207227997066107",
+    "id": "5877219383691972108",
     "emoji": "➕",
-    "name": "Добавить ещё"
+    "name": "give",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "settings": {
-    "id": "6032742198179532882",
+    "id": "5877260593903177342",
     "emoji": "⚙",
-    "name": "Настройки"
+    "name": "settings",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "stats": {
-    "id": "5936143551854285132",
+    "id": "5875291072225087249",
     "emoji": "📊",
-    "name": "Статистика график"
+    "name": "stats",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "news": {
-    "id": "6021418126061605425",
-    "emoji": "📢",
-    "name": "Рупор"
+    "id": "5886506997066502636",
+    "emoji": "📰",
+    "name": "news",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "history": {
-    "id": "6039584437564347225",
-    "emoji": "📖",
-    "name": "История"
+    "id": "5778605968208170641",
+    "emoji": "🕒",
+    "name": "history",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "back": {
-    "id": "5960671702059848143",
-    "emoji": "⬅️",
-    "name": "Назад"
+    "id": "5877629862306385808",
+    "emoji": "◀️",
+    "name": "back",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "ok": {
-    "id": "5774022692642492953",
-    "emoji": "✅",
-    "name": "Галочка"
+    "id": "5825794181183836432",
+    "emoji": "✔️",
+    "name": "ok",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "refresh": {
-    "id": "6030657343744644592",
-    "emoji": "🔁",
-    "name": "Повтор"
+    "id": "5839200986022812209",
+    "emoji": "🔄",
+    "name": "refresh",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "star": {
-    "id": "6028338546736107668",
+    "id": "5956561749070057536",
     "emoji": "⭐️",
-    "name": "Звёзды TG"
+    "name": "star",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "lock": {
-    "id": "6037249452824072506",
+    "id": "5832546462478635761",
     "emoji": "🔒",
-    "name": "Замок закрытый"
+    "name": "lock",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   },
   "edit": {
-    "id": "6039779802741739617",
+    "id": "5879841310902324730",
     "emoji": "✏️",
-    "name": "Редактировать"
+    "name": "edit",
+    "animated": true,
+    "pack": "TgAndroidIcons"
   }
 };
