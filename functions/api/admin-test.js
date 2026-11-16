@@ -39,7 +39,7 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, adminTest: true, grant });
   }
   if (body.kind === 'upgrade') {
-    if (!TEST_UPGRADES.includes(body.id) || !Number.isInteger(body.count) || body.count < 1 || body.count > 20) return json({ ok: false, error: 'unknown upgrade' }, 400);
+    if (!TEST_UPGRADES.includes(body.id) || !Number.isInteger(body.count) || body.count < 1 || body.count > (body.id==='tables'?28:20)) return json({ ok: false, error: 'unknown upgrade' }, 400);
     return json({ ok: true, adminTest: true, grant: { kind: 'upgrade', id: body.id, count: body.count } });
   }
   if (body.kind === 'premium') {

@@ -13,15 +13,20 @@ export async function onRequestPost({ request, env }) {
   const row = body.me ? await env.DB.prepare(Q + 'v.tg_id = ?1').bind(user.id).first() : await env.DB.prepare(Q + 'v.vk = ?1 AND p.banned = 0').bind(vk).first();
   if (!row) return json({ ok: false, error: 'Кофейня закрыта для гостей' }, 404);
   const mine = row.tg_id === user.id;
-  if (body.like && !mine) {
-    const key = 'like_' + user.id + '_' + row.tg_id + '_' + new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 10);
-    const r = await env.DB.prepare("INSERT OR IGNORE INTO cache (key, val, at) VALUES (?1, '1', ?2)").bind(key, Date.now()).run();
-    if (!r.meta || r.meta.changes !== 1) return json({ ok: false, error: 'Сегодня ты уже хвалил эту кофейню' });
-    await env.DB.prepare('UPDATE cafe_view SET likes = likes + 1 WHERE tg_id = ?1').bind(row.tg_id).run();
-    return json({ ok: true, likes: (row.likes || 0) + 1 });
+  const key = 'like_' + user.id + '_' + row.tg_id + '_' + new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 10);
+  if (body.like) {
+    if(mine)return json({ok:false,error:'Нельзя оставить респект своей кофейне'},400);
+    const writes=await env.DB.batch([
+      env.DB.prepare("INSERT OR IGNORE INTO cache (key, val, at) VALUES (?1, '1', ?2)").bind(key,Date.now()),
+      env.DB.prepare('UPDATE cafe_view SET likes = likes + 1 WHERE tg_id = ?1 AND changes() = 1').bind(row.tg_id)
+    ]);
+    const total=await env.DB.prepare('SELECT likes FROM cafe_view WHERE tg_id=?1').bind(row.tg_id).first();
+    if(writes[0]?.meta?.changes!==1)return json({ok:false,liked:true,likes:total?.likes||0,error:'Сегодня ты уже хвалил эту кофейню'});
+    return json({ok:true,liked:true,likes:total?.likes||0});
   }
+  const liked=!mine&&!!await env.DB.prepare('SELECT key FROM cache WHERE key=?1').bind(key).first();
   if (!mine) await env.DB.prepare('UPDATE cafe_view SET views = views + 1 WHERE tg_id = ?1').bind(row.tg_id).run();
   let data = null; try { data = JSON.parse(row.data || 'null'); } catch {}
   data=publicCafe(data||{n:row.cafe,lv:row.level,incomplete:true});
-  return json({ ok: true, mine, vk: mine ? row.vk : undefined, cafe: row.cafe, level: row.level, badge: row.badge_name || null, views: (row.views || 0) + (mine ? 0 : 1), likes: row.likes || 0, at: row.at, data });
+  return json({ ok: true, mine, liked, vk: mine ? row.vk : undefined, cafe: row.cafe, level: row.level, badge: row.badge_name || null, views: (row.views || 0) + (mine ? 0 : 1), likes: row.likes || 0, at: row.at, data });
 }

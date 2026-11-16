@@ -47,3 +47,5 @@ await paid(fixedPay);await paid(fixedPay);const fixedOps=sql.prepare("SELECT * F
 for(const sku of ['int_soviet','int_scandi','int_loft','int_neon','int_autumn','int_winter'])assert.equal(SHOP[sku].currency,'XTR');
 const cashTotal=Object.values(SHOP).filter(x=>x.currency==='GAME').reduce((a,x)=>a+x.gamePrice,0);assert(cashTotal>=150000000&&cashTotal<=250000000,'cash catalogue must span many 3m-revenue shifts');
 console.log('PASS: mixed earned-cash/Stars catalogue, signed invoices, owner/currency/amount validation, payment retry idempotency, receipt restoration, authenticated cafe directory, first three and pagination, Cyrillic and literal search, private field filtering, saved-layout availability and daily respect.');
+
+assert.equal((await call(view,{vk})).liked,true,'repeat visit knows about today’s respect');const placeSnap=publicCafe({pv:2,up:{tables:1000,machine:1000}});assert.equal(placeSnap.up.tables,28);assert.equal(placeSnap.up.machine,20);assert.equal(placeSnap.pv,2);
