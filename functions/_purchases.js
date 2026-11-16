@@ -3,7 +3,8 @@ import { STORE_ITEMS } from './_store.js';
 import { ADMINS, sezId } from './_lib.js';
 
 export function adminTestEnabled(env, userId) {
-  return env.ADMIN_TEST_PURCHASES !== '0' && ADMINS.includes(userId);
+  // Отключено 16.11: админы покупают как обычные игроки. Включить: env.ADMIN_TEST_PURCHASES === '1'.
+  return env.ADMIN_TEST_PURCHASES === '1' && ADMINS.includes(userId);
 }
 
 export async function purchaseState(env, userId) {
