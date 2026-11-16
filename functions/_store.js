@@ -1,4 +1,5 @@
-// Authoritative permanent shop catalogue. Stars only; no ruble checkout.
+// Permanent shop catalogue. GAME is earned cafe cash; XTR is Telegram Stars.
+// Historical Stars amounts remain on GAME entries for already-created invoice quotes.
 export const STORE_ITEMS = {
   "skin_floor_herr": {
     "title": "Ёлочка",
@@ -7,7 +8,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "floor",
     "skin": "herr",
-    "oldCoins": 6500
+    "oldCoins": 6500,
+    "currency": "GAME",
+    "gamePrice": 6500
   },
   "skin_floor_check": {
     "title": "Шахматка",
@@ -16,7 +19,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "floor",
     "skin": "check",
-    "oldCoins": 8200
+    "oldCoins": 8200,
+    "currency": "GAME",
+    "gamePrice": 8000
   },
   "skin_floor_terr": {
     "title": "Терраццо",
@@ -25,7 +30,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "floor",
     "skin": "terr",
-    "oldCoins": 11900
+    "oldCoins": 11900,
+    "currency": "GAME",
+    "gamePrice": 12000
   },
   "skin_floor_dark": {
     "title": "Тёмный дуб",
@@ -34,7 +41,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "floor",
     "skin": "dark",
-    "oldCoins": 7400
+    "oldCoins": 7400,
+    "currency": "GAME",
+    "gamePrice": 7500
   },
   "skin_floor_conc": {
     "title": "Бетон",
@@ -43,7 +52,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "floor",
     "skin": "conc",
-    "oldCoins": 5200
+    "oldCoins": 5200,
+    "currency": "GAME",
+    "gamePrice": 5000
   },
   "skin_floor_hex": {
     "title": "Соты",
@@ -52,7 +63,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "floor",
     "skin": "hex",
-    "oldCoins": 9800
+    "oldCoins": 9800,
+    "currency": "GAME",
+    "gamePrice": 10000
   },
   "skin_floor_pinkc": {
     "title": "Розовая шахматка",
@@ -61,7 +74,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "floor",
     "skin": "pinkc",
-    "oldCoins": 8800
+    "oldCoins": 8800,
+    "currency": "GAME",
+    "gamePrice": 9000
   },
   "skin_floor_marble": {
     "title": "Мрамор",
@@ -70,7 +85,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "floor",
     "skin": "marble",
-    "oldCoins": 16500
+    "oldCoins": 16500,
+    "currency": "GAME",
+    "gamePrice": 16500
   },
   "skin_floor_terra": {
     "title": "Терракота",
@@ -79,7 +96,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "floor",
     "skin": "terra",
-    "oldCoins": 9200
+    "oldCoins": 9200,
+    "currency": "GAME",
+    "gamePrice": 9000
   },
   "skin_wall_sage": {
     "title": "Шалфей",
@@ -88,7 +107,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "sage",
-    "oldCoins": 4200
+    "oldCoins": 4200,
+    "currency": "GAME",
+    "gamePrice": 4000
   },
   "skin_wall_clay": {
     "title": "Глина",
@@ -97,7 +118,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "clay",
-    "oldCoins": 4200
+    "oldCoins": 4200,
+    "currency": "GAME",
+    "gamePrice": 4000
   },
   "skin_wall_night": {
     "title": "Полуночная",
@@ -106,7 +129,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "night",
-    "oldCoins": 9400
+    "oldCoins": 9400,
+    "currency": "GAME",
+    "gamePrice": 9500
   },
   "skin_wall_white": {
     "title": "Белоснежная",
@@ -115,7 +140,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "white",
-    "oldCoins": 3800
+    "oldCoins": 3800,
+    "currency": "GAME",
+    "gamePrice": 4000
   },
   "skin_wall_pink": {
     "title": "Пудровая",
@@ -124,7 +151,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "pink",
-    "oldCoins": 4600
+    "oldCoins": 4600,
+    "currency": "GAME",
+    "gamePrice": 4500
   },
   "skin_wall_blue": {
     "title": "Небесная",
@@ -133,7 +162,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "blue",
-    "oldCoins": 4600
+    "oldCoins": 4600,
+    "currency": "GAME",
+    "gamePrice": 4500
   },
   "skin_wall_mustard": {
     "title": "Горчица",
@@ -142,7 +173,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "mustard",
-    "oldCoins": 5200
+    "oldCoins": 5200,
+    "currency": "GAME",
+    "gamePrice": 5000
   },
   "skin_wall_olive": {
     "title": "Олива",
@@ -151,7 +184,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "olive",
-    "oldCoins": 5200
+    "oldCoins": 5200,
+    "currency": "GAME",
+    "gamePrice": 5000
   },
   "skin_wall_stripe": {
     "title": "В полоску",
@@ -160,7 +195,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "stripe",
-    "oldCoins": 7800
+    "oldCoins": 7800,
+    "currency": "GAME",
+    "gamePrice": 8000
   },
   "skin_wall_slat": {
     "title": "Рейки",
@@ -169,7 +206,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "slat",
-    "oldCoins": 8600
+    "oldCoins": 8600,
+    "currency": "GAME",
+    "gamePrice": 8500
   },
   "skin_wall_wain": {
     "title": "Панели",
@@ -178,7 +217,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "wain",
-    "oldCoins": 9200
+    "oldCoins": 9200,
+    "currency": "GAME",
+    "gamePrice": 9000
   },
   "skin_wall_brick": {
     "title": "Кирпич",
@@ -187,7 +228,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "wall",
     "skin": "brick",
-    "oldCoins": 12500
+    "oldCoins": 12500,
+    "currency": "GAME",
+    "gamePrice": 12500
   },
   "skin_win_winA": {
     "title": "Лофт",
@@ -196,7 +239,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "win",
     "skin": "winA",
-    "oldCoins": 12000
+    "oldCoins": 12000,
+    "currency": "GAME",
+    "gamePrice": 12000
   },
   "skin_win_winB": {
     "title": "Арка",
@@ -205,7 +250,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "win",
     "skin": "winB",
-    "oldCoins": 15500
+    "oldCoins": 15500,
+    "currency": "GAME",
+    "gamePrice": 15500
   },
   "skin_win_winC": {
     "title": "Панорамное",
@@ -214,7 +261,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "win",
     "skin": "winC",
-    "oldCoins": 38000
+    "oldCoins": 38000,
+    "currency": "GAME",
+    "gamePrice": 38000
   },
   "skin_win_winE": {
     "title": "Со ставнями",
@@ -223,25 +272,31 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "win",
     "skin": "winE",
-    "oldCoins": 46000
+    "oldCoins": 46000,
+    "currency": "GAME",
+    "gamePrice": 46000
   },
   "skin_win_winD": {
     "title": "Витраж",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 100,
+    "stars": 55,
     "once": 1,
     "category": "win",
     "skin": "winD",
-    "oldCoins": 64000
+    "oldCoins": 64000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_win_winF": {
     "title": "Золотая рама",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 200,
+    "stars": 75,
     "once": 1,
     "category": "win",
     "skin": "winF",
-    "oldCoins": 120000
+    "oldCoins": 120000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_table_dark": {
     "title": "Орех",
@@ -250,7 +305,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "table",
     "skin": "dark",
-    "oldCoins": 5400
+    "oldCoins": 5400,
+    "currency": "GAME",
+    "gamePrice": 5500
   },
   "skin_table_green": {
     "title": "Малахит",
@@ -259,7 +316,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "table",
     "skin": "green",
-    "oldCoins": 7800
+    "oldCoins": 7800,
+    "currency": "GAME",
+    "gamePrice": 8000
   },
   "skin_table_white": {
     "title": "Белый",
@@ -268,7 +327,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "table",
     "skin": "white",
-    "oldCoins": 5200
+    "oldCoins": 5200,
+    "currency": "GAME",
+    "gamePrice": 5000
   },
   "skin_table_black": {
     "title": "Чёрный мрамор",
@@ -277,7 +338,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "table",
     "skin": "black",
-    "oldCoins": 9600
+    "oldCoins": 9600,
+    "currency": "GAME",
+    "gamePrice": 9500
   },
   "skin_table_pink": {
     "title": "Розовый",
@@ -286,7 +349,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "table",
     "skin": "pink",
-    "oldCoins": 6400
+    "oldCoins": 6400,
+    "currency": "GAME",
+    "gamePrice": 6500
   },
   "skin_table_blue": {
     "title": "Голубой",
@@ -295,16 +360,20 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "table",
     "skin": "blue",
-    "oldCoins": 6400
+    "oldCoins": 6400,
+    "currency": "GAME",
+    "gamePrice": 6500
   },
   "skin_table_t_marble": {
     "title": "Мрамор и латунь",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 150,
+    "stars": 59,
     "once": 1,
     "category": "table",
     "skin": "t_marble",
-    "oldCoins": 96000
+    "oldCoins": 96000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_chair_graph": {
     "title": "Графит",
@@ -313,7 +382,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "graph",
-    "oldCoins": 4600
+    "oldCoins": 4600,
+    "currency": "GAME",
+    "gamePrice": 4500
   },
   "skin_chair_cream": {
     "title": "Крем",
@@ -322,7 +393,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "cream",
-    "oldCoins": 4600
+    "oldCoins": 4600,
+    "currency": "GAME",
+    "gamePrice": 4500
   },
   "skin_chair_black": {
     "title": "Чёрные",
@@ -331,7 +404,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "black",
-    "oldCoins": 5200
+    "oldCoins": 5200,
+    "currency": "GAME",
+    "gamePrice": 5000
   },
   "skin_chair_white": {
     "title": "Белые",
@@ -340,7 +415,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "white",
-    "oldCoins": 5200
+    "oldCoins": 5200,
+    "currency": "GAME",
+    "gamePrice": 5000
   },
   "skin_chair_red": {
     "title": "Красные",
@@ -349,7 +426,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "red",
-    "oldCoins": 5600
+    "oldCoins": 5600,
+    "currency": "GAME",
+    "gamePrice": 5500
   },
   "skin_chair_green": {
     "title": "Зелёные",
@@ -358,7 +437,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "green",
-    "oldCoins": 5600
+    "oldCoins": 5600,
+    "currency": "GAME",
+    "gamePrice": 5500
   },
   "skin_chair_blue": {
     "title": "Синие",
@@ -367,7 +448,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "blue",
-    "oldCoins": 5600
+    "oldCoins": 5600,
+    "currency": "GAME",
+    "gamePrice": 5500
   },
   "skin_chair_pink": {
     "title": "Розовые",
@@ -376,7 +459,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "pink",
-    "oldCoins": 5600
+    "oldCoins": 5600,
+    "currency": "GAME",
+    "gamePrice": 5500
   },
   "skin_chair_yellow": {
     "title": "Жёлтые",
@@ -385,7 +470,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "yellow",
-    "oldCoins": 5600
+    "oldCoins": 5600,
+    "currency": "GAME",
+    "gamePrice": 5500
   },
   "skin_chair_ch_shell": {
     "title": "Скандинавские",
@@ -394,7 +481,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "ch_shell",
-    "oldCoins": 54000
+    "oldCoins": 54000,
+    "currency": "GAME",
+    "gamePrice": 54000
   },
   "skin_chair_ch_vienna": {
     "title": "Венские",
@@ -403,7 +492,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "chair",
     "skin": "ch_vienna",
-    "oldCoins": 68000
+    "oldCoins": 68000,
+    "currency": "GAME",
+    "gamePrice": 68000
   },
   "skin_bstool_black": {
     "title": "Чёрный металл",
@@ -412,7 +503,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bstool",
     "skin": "black",
-    "oldCoins": 4200
+    "oldCoins": 4200,
+    "currency": "GAME",
+    "gamePrice": 4000
   },
   "skin_bstool_white": {
     "title": "Белые",
@@ -421,7 +514,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bstool",
     "skin": "white",
-    "oldCoins": 4200
+    "oldCoins": 4200,
+    "currency": "GAME",
+    "gamePrice": 4000
   },
   "skin_bstool_red": {
     "title": "Красные",
@@ -430,7 +525,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bstool",
     "skin": "red",
-    "oldCoins": 4800
+    "oldCoins": 4800,
+    "currency": "GAME",
+    "gamePrice": 5000
   },
   "skin_bstool_mint": {
     "title": "Мятные",
@@ -439,7 +536,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bstool",
     "skin": "mint",
-    "oldCoins": 4800
+    "oldCoins": 4800,
+    "currency": "GAME",
+    "gamePrice": 5000
   },
   "skin_bstool_gold": {
     "title": "Латунь",
@@ -448,7 +547,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bstool",
     "skin": "gold",
-    "oldCoins": 7600
+    "oldCoins": 7600,
+    "currency": "GAME",
+    "gamePrice": 7500
   },
   "skin_bstool_pink": {
     "title": "Розовые",
@@ -457,7 +558,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bstool",
     "skin": "pink",
-    "oldCoins": 4800
+    "oldCoins": 4800,
+    "currency": "GAME",
+    "gamePrice": 5000
   },
   "skin_bstool_bs_ind": {
     "title": "Индустриальные",
@@ -466,7 +569,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bstool",
     "skin": "bs_ind",
-    "oldCoins": 36000
+    "oldCoins": 36000,
+    "currency": "GAME",
+    "gamePrice": 36000
   },
   "skin_bstool_bs_back": {
     "title": "Со спинкой",
@@ -475,16 +580,20 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bstool",
     "skin": "bs_back",
-    "oldCoins": 52000
+    "oldCoins": 52000,
+    "currency": "GAME",
+    "gamePrice": 52000
   },
   "skin_bstool_bs_velvet": {
     "title": "Бархат и золото",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 150,
+    "stars": 49,
     "once": 1,
     "category": "bstool",
     "skin": "bs_velvet",
-    "oldCoins": 110000
+    "oldCoins": 110000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_bar_dark": {
     "title": "Морёный дуб",
@@ -493,7 +602,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bar",
     "skin": "dark",
-    "oldCoins": 14000
+    "oldCoins": 14000,
+    "currency": "GAME",
+    "gamePrice": 14000
   },
   "skin_bar_white": {
     "title": "Белая",
@@ -502,7 +613,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bar",
     "skin": "white",
-    "oldCoins": 14000
+    "oldCoins": 14000,
+    "currency": "GAME",
+    "gamePrice": 14000
   },
   "skin_bar_green": {
     "title": "Изумруд",
@@ -511,7 +624,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bar",
     "skin": "green",
-    "oldCoins": 18000
+    "oldCoins": 18000,
+    "currency": "GAME",
+    "gamePrice": 18000
   },
   "skin_bar_navy": {
     "title": "Синяя",
@@ -520,7 +635,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bar",
     "skin": "navy",
-    "oldCoins": 18000
+    "oldCoins": 18000,
+    "currency": "GAME",
+    "gamePrice": 18000
   },
   "skin_bar_pink": {
     "title": "Розовая",
@@ -529,7 +646,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bar",
     "skin": "pink",
-    "oldCoins": 18000
+    "oldCoins": 18000,
+    "currency": "GAME",
+    "gamePrice": 18000
   },
   "skin_bar_black": {
     "title": "Чёрная",
@@ -538,7 +657,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "bar",
     "skin": "black",
-    "oldCoins": 21000
+    "oldCoins": 21000,
+    "currency": "GAME",
+    "gamePrice": 21000
   },
   "skin_mach_m_red": {
     "title": "Ретро-рычажная",
@@ -547,7 +668,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "mach",
     "skin": "m_red",
-    "oldCoins": 38000
+    "oldCoins": 38000,
+    "currency": "GAME",
+    "gamePrice": 40000
   },
   "skin_mach_m_pink": {
     "title": "Розовая ретро",
@@ -556,25 +679,31 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "mach",
     "skin": "m_pink",
-    "oldCoins": 88000
+    "oldCoins": 88000,
+    "currency": "GAME",
+    "gamePrice": 90000
   },
   "skin_mach_m_steam": {
     "title": "Стимпанк",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 250,
+    "stars": 99,
     "once": 1,
     "category": "mach",
     "skin": "m_steam",
-    "oldCoins": 175000
+    "oldCoins": 175000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_mach_m_cyber": {
     "title": "Киберпанк",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 350,
+    "stars": 149,
     "once": 1,
     "category": "mach",
     "skin": "m_cyber",
-    "oldCoins": 240000
+    "oldCoins": 240000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_grind_g_lux": {
     "title": "Розовое золото",
@@ -583,7 +712,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "grind",
     "skin": "g_lux",
-    "oldCoins": 52000
+    "oldCoins": 52000,
+    "currency": "GAME",
+    "gamePrice": 55000
   },
   "skin_grind_g_copper": {
     "title": "Медная башня",
@@ -592,16 +723,20 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "grind",
     "skin": "g_copper",
-    "oldCoins": 68000
+    "oldCoins": 68000,
+    "currency": "GAME",
+    "gamePrice": 70000
   },
   "skin_grind_g_neon": {
     "title": "Неоновая",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 150,
+    "stars": 69,
     "once": 1,
     "category": "grind",
     "skin": "g_neon",
-    "oldCoins": 92000
+    "oldCoins": 92000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_art_a_big3": {
     "title": "Большая: горное озеро",
@@ -610,16 +745,20 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "a_big3",
-    "oldCoins": 58000
+    "oldCoins": 58000,
+    "currency": "GAME",
+    "gamePrice": 58000
   },
   "skin_art_a_big4": {
     "title": "Большая: енот-воришка",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 150,
+    "stars": 49,
     "once": 1,
     "category": "art",
     "skin": "a_big4",
-    "oldCoins": 72000
+    "oldCoins": 72000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_art_a_big5": {
     "title": "Большая: кофейный круг",
@@ -628,16 +767,20 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "a_big5",
-    "oldCoins": 64000
+    "oldCoins": 64000,
+    "currency": "GAME",
+    "gamePrice": 64000
   },
   "skin_art_a_big6": {
     "title": "Большая: капучино на закате",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 150,
+    "stars": 59,
     "once": 1,
     "category": "art",
     "skin": "a_big6",
-    "oldCoins": 85000
+    "oldCoins": 85000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_art_a_big1": {
     "title": "Большая: дождливая улица",
@@ -646,7 +789,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "a_big1",
-    "oldCoins": 28000
+    "oldCoins": 28000,
+    "currency": "GAME",
+    "gamePrice": 28000
   },
   "skin_art_a_big2": {
     "title": "Большая: коты-бариста",
@@ -655,7 +800,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "a_big2",
-    "oldCoins": 34000
+    "oldCoins": 34000,
+    "currency": "GAME",
+    "gamePrice": 34000
   },
   "skin_art_posters": {
     "title": "Афиши",
@@ -664,7 +811,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "posters",
-    "oldCoins": 3200
+    "oldCoins": 3200,
+    "currency": "GAME",
+    "gamePrice": 3000
   },
   "skin_art_a_cat": {
     "title": "Кот с кофе",
@@ -673,7 +822,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "a_cat",
-    "oldCoins": 4800
+    "oldCoins": 4800,
+    "currency": "GAME",
+    "gamePrice": 5000
   },
   "skin_art_a_capy": {
     "title": "Капибара-бариста",
@@ -682,7 +833,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "a_capy",
-    "oldCoins": 6900
+    "oldCoins": 6900,
+    "currency": "GAME",
+    "gamePrice": 7000
   },
   "skin_art_a_latte": {
     "title": "Латте-сердце",
@@ -691,7 +844,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "a_latte",
-    "oldCoins": 4200
+    "oldCoins": 4200,
+    "currency": "GAME",
+    "gamePrice": 4000
   },
   "skin_art_a_sloth": {
     "title": "Ленивец и эспрессо",
@@ -700,7 +855,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "a_sloth",
-    "oldCoins": 6200
+    "oldCoins": 6200,
+    "currency": "GAME",
+    "gamePrice": 6000
   },
   "skin_art_a_moka": {
     "title": "Гейзерка",
@@ -709,7 +866,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "a_moka",
-    "oldCoins": 4200
+    "oldCoins": 4200,
+    "currency": "GAME",
+    "gamePrice": 4000
   },
   "skin_art_a_botan": {
     "title": "Кофейная ветка",
@@ -718,7 +877,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "art",
     "skin": "a_botan",
-    "oldCoins": 5400
+    "oldCoins": 5400,
+    "currency": "GAME",
+    "gamePrice": 5500
   },
   "skin_decor_garlandL": {
     "title": "Гирлянда огней",
@@ -727,7 +888,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "decor",
     "skin": "garlandL",
-    "oldCoins": 6400
+    "oldCoins": 6400,
+    "currency": "GAME",
+    "gamePrice": 6500
   },
   "skin_decor_garlandA": {
     "title": "Гирлянда листьев",
@@ -736,7 +899,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "decor",
     "skin": "garlandA",
-    "oldCoins": 3900
+    "oldCoins": 3900,
+    "currency": "GAME",
+    "gamePrice": 4000
   },
   "skin_decor_d_floorlamp": {
     "title": "Торшер",
@@ -745,7 +910,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "decor",
     "skin": "d_floorlamp",
-    "oldCoins": 22000
+    "oldCoins": 22000,
+    "currency": "GAME",
+    "gamePrice": 22000
   },
   "skin_decor_garlandF": {
     "title": "Флажки",
@@ -754,7 +921,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "decor",
     "skin": "garlandF",
-    "oldCoins": 8600
+    "oldCoins": 8600,
+    "currency": "GAME",
+    "gamePrice": 8500
   },
   "skin_decor_garlandW": {
     "title": "Тёплые лампочки",
@@ -763,25 +932,31 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "decor",
     "skin": "garlandW",
-    "oldCoins": 9800
+    "oldCoins": 9800,
+    "currency": "GAME",
+    "gamePrice": 10000
   },
   "skin_decor_garlandH": {
     "title": "Гирлянда-сердечки",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 35,
+    "stars": 19,
     "once": 1,
     "category": "decor",
     "skin": "garlandH",
-    "oldCoins": 12500
+    "oldCoins": 12500,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_decor_garlandN": {
     "title": "Неоновая лента",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 75,
+    "stars": 39,
     "once": 1,
     "category": "decor",
     "skin": "garlandN",
-    "oldCoins": 24000
+    "oldCoins": 24000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_lamp_lampL": {
     "title": "Лампы Эдисона",
@@ -790,7 +965,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "lamp",
     "skin": "lampL",
-    "oldCoins": 8800
+    "oldCoins": 8800,
+    "currency": "GAME",
+    "gamePrice": 9000
   },
   "skin_lamp_lampS": {
     "title": "Плетёные абажуры",
@@ -799,7 +976,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "lamp",
     "skin": "lampS",
-    "oldCoins": 8800
+    "oldCoins": 8800,
+    "currency": "GAME",
+    "gamePrice": 9000
   },
   "skin_sign_wood": {
     "title": "Деревянная",
@@ -808,7 +987,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "sign",
     "skin": "wood",
-    "oldCoins": 5400
+    "oldCoins": 5400,
+    "currency": "GAME",
+    "gamePrice": 5500
   },
   "skin_sign_black": {
     "title": "Чёрная",
@@ -817,7 +998,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "sign",
     "skin": "black",
-    "oldCoins": 5400
+    "oldCoins": 5400,
+    "currency": "GAME",
+    "gamePrice": 5500
   },
   "skin_sign_white": {
     "title": "Белая",
@@ -826,7 +1009,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "sign",
     "skin": "white",
-    "oldCoins": 5400
+    "oldCoins": 5400,
+    "currency": "GAME",
+    "gamePrice": 5500
   },
   "skin_sign_gold": {
     "title": "С лампочками",
@@ -835,7 +1020,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "sign",
     "skin": "gold",
-    "oldCoins": 12800
+    "oldCoins": 12800,
+    "currency": "GAME",
+    "gamePrice": 13000
   },
   "skin_sign_neonP": {
     "title": "Розовый неон",
@@ -844,7 +1031,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "sign",
     "skin": "neonP",
-    "oldCoins": 16500
+    "oldCoins": 16500,
+    "currency": "GAME",
+    "gamePrice": 16500
   },
   "skin_sign_neonB": {
     "title": "Голубой неон",
@@ -853,52 +1042,64 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "sign",
     "skin": "neonB",
-    "oldCoins": 16500
+    "oldCoins": 16500,
+    "currency": "GAME",
+    "gamePrice": 16500
   },
   "skin_sign_neonG": {
     "title": "Зелёный неон",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 75,
+    "stars": 39,
     "once": 1,
     "category": "sign",
     "skin": "neonG",
-    "oldCoins": 32000
+    "oldCoins": 32000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_sign_marquee": {
     "title": "Бегущие огни",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 100,
+    "stars": 49,
     "once": 1,
     "category": "sign",
     "skin": "marquee",
-    "oldCoins": 48000
+    "oldCoins": 48000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_sign_rainbow": {
     "title": "Радужный неон",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 150,
+    "stars": 69,
     "once": 1,
     "category": "sign",
     "skin": "rainbow",
-    "oldCoins": 75000
+    "oldCoins": 75000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_sign_led": {
     "title": "Бегущая строка",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 150,
+    "stars": 79,
     "once": 1,
     "category": "sign",
     "skin": "led",
-    "oldCoins": 95000
+    "oldCoins": 95000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_sign_flip": {
     "title": "Перекидное табло",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 150,
+    "stars": 79,
     "once": 1,
     "category": "sign",
     "skin": "flip",
-    "oldCoins": 110000
+    "oldCoins": 110000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_font_serif": {
     "title": "Курсив с засечками",
@@ -907,7 +1108,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "font",
     "skin": "serif",
-    "oldCoins": 2400
+    "oldCoins": 2400,
+    "currency": "GAME",
+    "gamePrice": 2500
   },
   "skin_font_script": {
     "title": "Рукописный",
@@ -916,7 +1119,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "font",
     "skin": "script",
-    "oldCoins": 3600
+    "oldCoins": 3600,
+    "currency": "GAME",
+    "gamePrice": 3500
   },
   "skin_font_mono": {
     "title": "Печатная машинка",
@@ -925,7 +1130,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "font",
     "skin": "mono",
-    "oldCoins": 2400
+    "oldCoins": 2400,
+    "currency": "GAME",
+    "gamePrice": 2500
   },
   "skin_font_slab": {
     "title": "Афишный",
@@ -934,7 +1141,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "font",
     "skin": "slab",
-    "oldCoins": 2400
+    "oldCoins": 2400,
+    "currency": "GAME",
+    "gamePrice": 2500
   },
   "skin_font_round": {
     "title": "Круглый",
@@ -943,7 +1152,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "font",
     "skin": "round",
-    "oldCoins": 2400
+    "oldCoins": 2400,
+    "currency": "GAME",
+    "gamePrice": 2500
   },
   "skin_room_wide": {
     "title": "Расширение вправо",
@@ -952,7 +1163,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "room",
     "skin": "wide",
-    "oldCoins": 250000
+    "oldCoins": 250000,
+    "currency": "GAME",
+    "gamePrice": 250000
   },
   "skin_room_deep": {
     "title": "Расширение вниз",
@@ -961,7 +1174,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "room",
     "skin": "deep",
-    "oldCoins": 600000
+    "oldCoins": 600000,
+    "currency": "GAME",
+    "gamePrice": 600000
   },
   "skin_uni_green": {
     "title": "Зелёная",
@@ -970,7 +1185,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "uni",
     "skin": "green",
-    "oldCoins": 9800
+    "oldCoins": 9800,
+    "currency": "GAME",
+    "gamePrice": 10000
   },
   "skin_uni_wine": {
     "title": "Бордовая",
@@ -979,7 +1196,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "uni",
     "skin": "wine",
-    "oldCoins": 9800
+    "oldCoins": 9800,
+    "currency": "GAME",
+    "gamePrice": 10000
   },
   "skin_uni_navy": {
     "title": "Синяя",
@@ -988,7 +1207,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "uni",
     "skin": "navy",
-    "oldCoins": 9800
+    "oldCoins": 9800,
+    "currency": "GAME",
+    "gamePrice": 10000
   },
   "skin_uni_mustard": {
     "title": "Горчичная",
@@ -997,7 +1218,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "uni",
     "skin": "mustard",
-    "oldCoins": 9800
+    "oldCoins": 9800,
+    "currency": "GAME",
+    "gamePrice": 10000
   },
   "skin_uni_pink": {
     "title": "Розовая",
@@ -1006,7 +1229,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "uni",
     "skin": "pink",
-    "oldCoins": 9800
+    "oldCoins": 9800,
+    "currency": "GAME",
+    "gamePrice": 10000
   },
   "skin_uni_purple": {
     "title": "Фиолетовая",
@@ -1015,7 +1240,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "uni",
     "skin": "purple",
-    "oldCoins": 9800
+    "oldCoins": 9800,
+    "currency": "GAME",
+    "gamePrice": 10000
   },
   "skin_uni_white": {
     "title": "Светлая",
@@ -1024,7 +1251,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "uni",
     "skin": "white",
-    "oldCoins": 12400
+    "oldCoins": 12400,
+    "currency": "GAME",
+    "gamePrice": 12500
   },
   "skin_barf_slat": {
     "title": "Рейки",
@@ -1033,7 +1262,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "barf",
     "skin": "slat",
-    "oldCoins": 85000
+    "oldCoins": 85000,
+    "currency": "GAME",
+    "gamePrice": 85000
   },
   "skin_barf_tile": {
     "title": "Плитка «кабанчик»",
@@ -1042,70 +1273,86 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "barf",
     "skin": "tile",
-    "oldCoins": 95000
+    "oldCoins": 95000,
+    "currency": "GAME",
+    "gamePrice": 95000
   },
   "skin_barf_marble": {
     "title": "Мраморная столешница",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 200,
+    "stars": 79,
     "once": 1,
     "category": "barf",
     "skin": "marble",
-    "oldCoins": 160000
+    "oldCoins": 160000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_barf_led": {
     "title": "С подсветкой",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 200,
+    "stars": 89,
     "once": 1,
     "category": "barf",
     "skin": "led",
-    "oldCoins": 180000
+    "oldCoins": 180000,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "lux_x_cat": {
     "title": "Золотой кот удачи",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 120,
+    "stars": 79,
     "once": 1,
     "category": "lux",
     "skin": "x_cat",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "lux_x_gram": {
     "title": "Граммофон",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 150,
+    "stars": 69,
     "once": 1,
     "category": "lux",
     "skin": "x_gram",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "lux_x_chand": {
     "title": "Хрустальная люстра",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 250,
+    "stars": 119,
     "once": 1,
     "category": "lux",
     "skin": "x_chand",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "lux_clock": {
     "title": "Коллекционные часы",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 90,
+    "stars": 49,
     "once": 1,
     "category": "lux",
     "skin": "clock",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "lux_d_aquarium": {
     "title": "Панорамный аквариум",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 180,
+    "stars": 99,
     "once": 1,
     "category": "lux",
     "skin": "d_aquarium",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "skin_backfloor_check": {
     "title": "Шахматная плитка",
@@ -1114,7 +1361,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "backfloor",
     "skin": "check",
-    "oldCoins": 8200
+    "oldCoins": 8200,
+    "currency": "GAME",
+    "gamePrice": 8000
   },
   "skin_backfloor_terra": {
     "title": "Терракотовая плитка",
@@ -1123,7 +1372,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "backfloor",
     "skin": "terra",
-    "oldCoins": 12000
+    "oldCoins": 12000,
+    "currency": "GAME",
+    "gamePrice": 12000
   },
   "skin_backfloor_conc": {
     "title": "Бетон",
@@ -1132,7 +1383,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "backfloor",
     "skin": "conc",
-    "oldCoins": 10000
+    "oldCoins": 10000,
+    "currency": "GAME",
+    "gamePrice": 10000
   },
   "skin_backfloor_dark": {
     "title": "Тёмное дерево",
@@ -1141,7 +1394,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "backfloor",
     "skin": "dark",
-    "oldCoins": 14000
+    "oldCoins": 14000,
+    "currency": "GAME",
+    "gamePrice": 14000
   },
   "skin_backfloor_hex": {
     "title": "Шестигранная плитка",
@@ -1150,7 +1405,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "backfloor",
     "skin": "hex",
-    "oldCoins": 16000
+    "oldCoins": 16000,
+    "currency": "GAME",
+    "gamePrice": 16000
   },
   "skin_barmat_sink": {
     "title": "Резиновый коврик у мойки",
@@ -1159,7 +1416,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "barmat",
     "skin": "sink",
-    "oldCoins": 12500
+    "oldCoins": 12500,
+    "currency": "GAME",
+    "gamePrice": 12500
   },
   "skin_barmat_coffee": {
     "title": "Резиновый коврик у кофемолки",
@@ -1168,7 +1427,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "barmat",
     "skin": "coffee",
-    "oldCoins": 14500
+    "oldCoins": 14500,
+    "currency": "GAME",
+    "gamePrice": 14500
   },
   "int_loft": {
     "title": "Интерьер «Флагман»",
@@ -1177,7 +1438,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "style",
     "skin": "int_loft",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "GAME",
+    "gamePrice": 200000
   },
   "int_scandi": {
     "title": "Интерьер «Фика»",
@@ -1186,7 +1449,9 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "style",
     "skin": "int_scandi",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "GAME",
+    "gamePrice": 150000
   },
   "int_soviet": {
     "title": "Интерьер «Столовая №1»",
@@ -1195,33 +1460,41 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "style",
     "skin": "int_soviet",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "GAME",
+    "gamePrice": 75000
   },
   "int_neon": {
     "title": "Интерьер «Не спим»",
     "desc": "Полный стиль зала: стены, пол, стойки и мебель.",
-    "stars": 150,
+    "stars": 99,
     "once": 1,
     "category": "style",
     "skin": "int_neon",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "int_autumn": {
     "title": "Интерьер «Листопад»",
     "desc": "Полный стиль зала: стены, пол, стойки и мебель.",
-    "stars": 75,
+    "stars": 59,
     "once": 1,
     "category": "style",
     "skin": "int_autumn",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
   },
   "int_winter": {
     "title": "Интерьер «Снежный»",
     "desc": "Полный стиль зала: стены, пол, стойки и мебель.",
-    "stars": 75,
+    "stars": 59,
     "once": 1,
     "category": "style",
     "skin": "int_winter",
-    "oldCoins": 0
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
   }
 };

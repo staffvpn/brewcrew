@@ -84,9 +84,14 @@ export const SHOP = {
 
 // Подарки: что можно подарить и есть ли это уже у получателя
 // Preserve descriptive premium entries and the permanent catalogue metadata.
-for (const [sku,p] of Object.entries(STORE_ITEMS)) Object.assign(SHOP[sku],{once:1,category:p.category,skin:p.skin,oldCoins:p.oldCoins});
+for (const [sku,p] of Object.entries(STORE_ITEMS)) Object.assign(SHOP[sku],{once:1,category:p.category,skin:p.skin,oldCoins:p.oldCoins,currency:p.currency,gamePrice:p.gamePrice,...(p.currency==='XTR'?{stars:p.stars}:{}),...(p.category==='style'?{title:p.title}:{} )});
 for (const [sku,p] of Object.entries(SHOP)) if (sku.startsWith('frame_') || ['flagship','uniform','music'].includes(sku)) p.once=1;
-export const GIFTABLE = id => !!SHOP[id] && !SHOP[id].sub && id !== 'rename' && id !== 'flagship' && id !== 'starter';
+// Optional services and collections remain in Stars; everyday uniforms and music use cafe cash.
+for (const p of Object.values(SHOP)) if(!p.currency){p.currency='XTR';p.gamePrice=0;}
+for (const [sku,stars] of Object.entries({frame_coffee_copper:29,frame_coffee_moon:59,frame_coffee_cream:39,flagship:399,sub_owner:99,pass:149,pass15:349,rename:25}))SHOP[sku].stars=stars;
+Object.assign(SHOP.uniform,{currency:'GAME',gamePrice:35000});
+Object.assign(SHOP.music,{currency:'GAME',gamePrice:50000});
+export const GIFTABLE = id => !!SHOP[id] && SHOP[id].currency!=='GAME' && !SHOP[id].sub && id !== 'rename' && id !== 'flagship' && id !== 'starter';
 export async function giftCheck(env, from, to, item) {
   if (!GIFTABLE(item)) return { ok: false, error: 'Это нельзя подарить' };
   if (!to || to === from) return { ok: false, error: 'Выбери другую кофейню' };

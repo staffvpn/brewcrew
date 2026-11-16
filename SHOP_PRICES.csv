@@ -1,157 +1,157 @@
-sku,category,item,previous_game_rubles,previous_stars,telegram_stars
-skin_floor_herr,floor,Ёлочка,6500,,25
-skin_floor_check,floor,Шахматка,8200,,25
-skin_floor_terr,floor,Терраццо,11900,,35
-skin_floor_dark,floor,Тёмный дуб,7400,,25
-skin_floor_conc,floor,Бетон,5200,,15
-skin_floor_hex,floor,Соты,9800,,35
-skin_floor_pinkc,floor,Розовая шахматка,8800,,25
-skin_floor_marble,floor,Мрамор,16500,,50
-skin_floor_terra,floor,Терракота,9200,,35
-skin_wall_sage,wall,Шалфей,4200,,15
-skin_wall_clay,wall,Глина,4200,,15
-skin_wall_night,wall,Полуночная,9400,,35
-skin_wall_white,wall,Белоснежная,3800,,10
-skin_wall_pink,wall,Пудровая,4600,,15
-skin_wall_blue,wall,Небесная,4600,,15
-skin_wall_mustard,wall,Горчица,5200,,15
-skin_wall_olive,wall,Олива,5200,,15
-skin_wall_stripe,wall,В полоску,7800,,25
-skin_wall_slat,wall,Рейки,8600,,25
-skin_wall_wain,wall,Панели,9200,,35
-skin_wall_brick,wall,Кирпич,12500,,35
-skin_win_winA,win,Лофт,12000,,35
-skin_win_winB,win,Арка,15500,,50
-skin_win_winC,win,Панорамное,38000,,75
-skin_win_winE,win,Со ставнями,46000,,100
-skin_win_winD,win,Витраж,64000,,100
-skin_win_winF,win,Золотая рама,120000,,200
-skin_table_dark,table,Орех,5400,,15
-skin_table_green,table,Малахит,7800,,25
-skin_table_white,table,Белый,5200,,15
-skin_table_black,table,Чёрный мрамор,9600,,35
-skin_table_pink,table,Розовый,6400,,25
-skin_table_blue,table,Голубой,6400,,25
-skin_table_t_marble,table,Мрамор и латунь,96000,,150
-skin_chair_graph,chair,Графит,4600,,15
-skin_chair_cream,chair,Крем,4600,,15
-skin_chair_black,chair,Чёрные,5200,,15
-skin_chair_white,chair,Белые,5200,,15
-skin_chair_red,chair,Красные,5600,,15
-skin_chair_green,chair,Зелёные,5600,,15
-skin_chair_blue,chair,Синие,5600,,15
-skin_chair_pink,chair,Розовые,5600,,15
-skin_chair_yellow,chair,Жёлтые,5600,,15
-skin_chair_ch_shell,chair,Скандинавские,54000,,100
-skin_chair_ch_vienna,chair,Венские,68000,,100
-skin_bstool_black,bstool,Чёрный металл,4200,,15
-skin_bstool_white,bstool,Белые,4200,,15
-skin_bstool_red,bstool,Красные,4800,,15
-skin_bstool_mint,bstool,Мятные,4800,,15
-skin_bstool_gold,bstool,Латунь,7600,,25
-skin_bstool_pink,bstool,Розовые,4800,,15
-skin_bstool_bs_ind,bstool,Индустриальные,36000,,75
-skin_bstool_bs_back,bstool,Со спинкой,52000,,100
-skin_bstool_bs_velvet,bstool,Бархат и золото,110000,,150
-skin_bar_dark,bar,Морёный дуб,14000,,35
-skin_bar_white,bar,Белая,14000,,35
-skin_bar_green,bar,Изумруд,18000,,50
-skin_bar_navy,bar,Синяя,18000,,50
-skin_bar_pink,bar,Розовая,18000,,50
-skin_bar_black,bar,Чёрная,21000,,50
-skin_mach_m_red,mach,Ретро-рычажная,38000,,75
-skin_mach_m_pink,mach,Розовая ретро,88000,,150
-skin_mach_m_steam,mach,Стимпанк,175000,,250
-skin_mach_m_cyber,mach,Киберпанк,240000,,350
-skin_grind_g_lux,grind,Розовое золото,52000,,65
-skin_grind_g_copper,grind,Медная башня,68000,,65
-skin_grind_g_neon,grind,Неоновая,92000,,150
-skin_art_a_big3,art,Большая: горное озеро,58000,,100
-skin_art_a_big4,art,Большая: енот-воришка,72000,,150
-skin_art_a_big5,art,Большая: кофейный круг,64000,,100
-skin_art_a_big6,art,Большая: капучино на закате,85000,,150
-skin_art_a_big1,art,Большая: дождливая улица,28000,,75
-skin_art_a_big2,art,Большая: коты-бариста,34000,,75
-skin_art_posters,art,Афиши,3200,,10
-skin_art_a_cat,art,Кот с кофе,4800,,15
-skin_art_a_capy,art,Капибара-бариста,6900,,25
-skin_art_a_latte,art,Латте-сердце,4200,,15
-skin_art_a_sloth,art,Ленивец и эспрессо,6200,,25
-skin_art_a_moka,art,Гейзерка,4200,,15
-skin_art_a_botan,art,Кофейная ветка,5400,,15
-skin_decor_garlandL,decor,Гирлянда огней,6400,,25
-skin_decor_garlandA,decor,Гирлянда листьев,3900,,10
-skin_decor_d_floorlamp,decor,Торшер,22000,,50
-skin_decor_garlandF,decor,Флажки,8600,,25
-skin_decor_garlandW,decor,Тёплые лампочки,9800,,35
-skin_decor_garlandH,decor,Гирлянда-сердечки,12500,,35
-skin_decor_garlandN,decor,Неоновая лента,24000,,75
-skin_lamp_lampL,lamp,Лампы Эдисона,8800,,25
-skin_lamp_lampS,lamp,Плетёные абажуры,8800,,25
-skin_sign_wood,sign,Деревянная,5400,,15
-skin_sign_black,sign,Чёрная,5400,,15
-skin_sign_white,sign,Белая,5400,,15
-skin_sign_gold,sign,С лампочками,12800,,35
-skin_sign_neonP,sign,Розовый неон,16500,,50
-skin_sign_neonB,sign,Голубой неон,16500,,50
-skin_sign_neonG,sign,Зелёный неон,32000,,75
-skin_sign_marquee,sign,Бегущие огни,48000,,100
-skin_sign_rainbow,sign,Радужный неон,75000,,150
-skin_sign_led,sign,Бегущая строка,95000,,150
-skin_sign_flip,sign,Перекидное табло,110000,,150
-skin_font_serif,font,Курсив с засечками,2400,,10
-skin_font_script,font,Рукописный,3600,,10
-skin_font_mono,font,Печатная машинка,2400,,10
-skin_font_slab,font,Афишный,2400,,10
-skin_font_round,font,Круглый,2400,,10
-skin_room_wide,room,Расширение вправо,250000,,250
-skin_room_deep,room,Расширение вниз,600000,,500
-skin_uni_green,uni,Зелёная,9800,,35
-skin_uni_wine,uni,Бордовая,9800,,35
-skin_uni_navy,uni,Синяя,9800,,35
-skin_uni_mustard,uni,Горчичная,9800,,35
-skin_uni_pink,uni,Розовая,9800,,35
-skin_uni_purple,uni,Фиолетовая,9800,,35
-skin_uni_white,uni,Светлая,12400,,35
-skin_barf_slat,barf,Рейки,85000,,150
-skin_barf_tile,barf,Плитка «кабанчик»,95000,,150
-skin_barf_marble,barf,Мраморная столешница,160000,,200
-skin_barf_led,barf,С подсветкой,180000,,200
-lux_x_cat,lux,Золотой кот удачи,0,120,120
-lux_x_gram,lux,Граммофон,0,150,150
-lux_x_chand,lux,Хрустальная люстра,0,250,250
-lux_clock,lux,Коллекционные часы,0,90,90
-lux_d_aquarium,lux,Панорамный аквариум,0,180,180
-skin_backfloor_check,backfloor,Шахматная плитка,8200,,25
-skin_backfloor_terra,backfloor,Терракотовая плитка,12000,,35
-skin_backfloor_conc,backfloor,Бетон,10000,,35
-skin_backfloor_dark,backfloor,Тёмное дерево,14000,,35
-skin_backfloor_hex,backfloor,Шестигранная плитка,16000,,50
-skin_barmat_sink,barmat,Резиновый коврик у мойки,12500,,35
-skin_barmat_coffee,barmat,Резиновый коврик у кофемолки,14500,,50
-int_loft,style,Интерьер «Заводской лофт»,0,75,75
-int_scandi,style,Интерьер «Фика»,0,100,100
-int_soviet,style,Интерьер «Столовая №1»,0,50,50
-int_neon,style,Интерьер «Не спим»,0,150,150
-int_autumn,style,Интерьер «Листопад»,0,,75
-int_winter,style,Интерьер «Снежный»,0,,75
-frame_coffee_copper,premium,Медная кофейня,,1000,150
-frame_coffee_moon,premium,Лунный кофе,,1000,250
-frame_coffee_cream,premium,Ванильные искры,,1000,200
-sub_owner,premium,Подписка «Владелец»,,150,150
-rename,premium,Новое название кофейни,,50,50
-pass,premium,Пропуск сезона,,200,200
-pass15,premium,Пропуск сезона +15 ступеней,,500,500
-frame_fire,premium,Рамка «Огонь»,,1000,1000
-frame_bulbs,premium,Рамка «Огни кинотеатра»,,1000,1000
-frame_spark,premium,Рамка «Золотые искры»,,1000,1000
-frame_aurora,premium,Рамка «Северное сияние»,,1000,1000
-frame_cat,premium,Рамка «Кот на вывеске»,,1000,1000
-flagship,premium,Флагман района,,5000,1500
-uniform,premium,Форма персонала,,100,100
-music,premium,Музыка в зале,,75,75
-starter,premium,Набор «Первый месяц»,,49,49
-cash_s,premium,Конверт от инвестора,,25,25
-cash_m,premium,Мама дала в долг без процентов,,60,60
-cash_l,premium,Чемодан из девяностых,,150,150
-cash_xl,premium,Спонсор из Дубая,,350,350
+sku,category,item,currency,price,previous_game_rubles,previous_stars
+skin_floor_herr,floor,Ёлочка,GAME,6500,6500,25
+skin_floor_check,floor,Шахматка,GAME,8000,8200,25
+skin_floor_terr,floor,Терраццо,GAME,12000,11900,35
+skin_floor_dark,floor,Тёмный дуб,GAME,7500,7400,25
+skin_floor_conc,floor,Бетон,GAME,5000,5200,15
+skin_floor_hex,floor,Соты,GAME,10000,9800,35
+skin_floor_pinkc,floor,Розовая шахматка,GAME,9000,8800,25
+skin_floor_marble,floor,Мрамор,GAME,16500,16500,50
+skin_floor_terra,floor,Терракота,GAME,9000,9200,35
+skin_wall_sage,wall,Шалфей,GAME,4000,4200,15
+skin_wall_clay,wall,Глина,GAME,4000,4200,15
+skin_wall_night,wall,Полуночная,GAME,9500,9400,35
+skin_wall_white,wall,Белоснежная,GAME,4000,3800,10
+skin_wall_pink,wall,Пудровая,GAME,4500,4600,15
+skin_wall_blue,wall,Небесная,GAME,4500,4600,15
+skin_wall_mustard,wall,Горчица,GAME,5000,5200,15
+skin_wall_olive,wall,Олива,GAME,5000,5200,15
+skin_wall_stripe,wall,В полоску,GAME,8000,7800,25
+skin_wall_slat,wall,Рейки,GAME,8500,8600,25
+skin_wall_wain,wall,Панели,GAME,9000,9200,35
+skin_wall_brick,wall,Кирпич,GAME,12500,12500,35
+skin_win_winA,win,Лофт,GAME,12000,12000,35
+skin_win_winB,win,Арка,GAME,15500,15500,50
+skin_win_winC,win,Панорамное,GAME,38000,38000,75
+skin_win_winE,win,Со ставнями,GAME,46000,46000,100
+skin_win_winD,win,Витраж,XTR,55,64000,100
+skin_win_winF,win,Золотая рама,XTR,75,120000,200
+skin_table_dark,table,Орех,GAME,5500,5400,15
+skin_table_green,table,Малахит,GAME,8000,7800,25
+skin_table_white,table,Белый,GAME,5000,5200,15
+skin_table_black,table,Чёрный мрамор,GAME,9500,9600,35
+skin_table_pink,table,Розовый,GAME,6500,6400,25
+skin_table_blue,table,Голубой,GAME,6500,6400,25
+skin_table_t_marble,table,Мрамор и латунь,XTR,59,96000,150
+skin_chair_graph,chair,Графит,GAME,4500,4600,15
+skin_chair_cream,chair,Крем,GAME,4500,4600,15
+skin_chair_black,chair,Чёрные,GAME,5000,5200,15
+skin_chair_white,chair,Белые,GAME,5000,5200,15
+skin_chair_red,chair,Красные,GAME,5500,5600,15
+skin_chair_green,chair,Зелёные,GAME,5500,5600,15
+skin_chair_blue,chair,Синие,GAME,5500,5600,15
+skin_chair_pink,chair,Розовые,GAME,5500,5600,15
+skin_chair_yellow,chair,Жёлтые,GAME,5500,5600,15
+skin_chair_ch_shell,chair,Скандинавские,GAME,54000,54000,100
+skin_chair_ch_vienna,chair,Венские,GAME,68000,68000,100
+skin_bstool_black,bstool,Чёрный металл,GAME,4000,4200,15
+skin_bstool_white,bstool,Белые,GAME,4000,4200,15
+skin_bstool_red,bstool,Красные,GAME,5000,4800,15
+skin_bstool_mint,bstool,Мятные,GAME,5000,4800,15
+skin_bstool_gold,bstool,Латунь,GAME,7500,7600,25
+skin_bstool_pink,bstool,Розовые,GAME,5000,4800,15
+skin_bstool_bs_ind,bstool,Индустриальные,GAME,36000,36000,75
+skin_bstool_bs_back,bstool,Со спинкой,GAME,52000,52000,100
+skin_bstool_bs_velvet,bstool,Бархат и золото,XTR,49,110000,150
+skin_bar_dark,bar,Морёный дуб,GAME,14000,14000,35
+skin_bar_white,bar,Белая,GAME,14000,14000,35
+skin_bar_green,bar,Изумруд,GAME,18000,18000,50
+skin_bar_navy,bar,Синяя,GAME,18000,18000,50
+skin_bar_pink,bar,Розовая,GAME,18000,18000,50
+skin_bar_black,bar,Чёрная,GAME,21000,21000,50
+skin_mach_m_red,mach,Ретро-рычажная,GAME,40000,38000,75
+skin_mach_m_pink,mach,Розовая ретро,GAME,90000,88000,150
+skin_mach_m_steam,mach,Стимпанк,XTR,99,175000,250
+skin_mach_m_cyber,mach,Киберпанк,XTR,149,240000,350
+skin_grind_g_lux,grind,Розовое золото,GAME,55000,52000,65
+skin_grind_g_copper,grind,Медная башня,GAME,70000,68000,65
+skin_grind_g_neon,grind,Неоновая,XTR,69,92000,150
+skin_art_a_big3,art,Большая: горное озеро,GAME,58000,58000,100
+skin_art_a_big4,art,Большая: енот-воришка,XTR,49,72000,150
+skin_art_a_big5,art,Большая: кофейный круг,GAME,64000,64000,100
+skin_art_a_big6,art,Большая: капучино на закате,XTR,59,85000,150
+skin_art_a_big1,art,Большая: дождливая улица,GAME,28000,28000,75
+skin_art_a_big2,art,Большая: коты-бариста,GAME,34000,34000,75
+skin_art_posters,art,Афиши,GAME,3000,3200,10
+skin_art_a_cat,art,Кот с кофе,GAME,5000,4800,15
+skin_art_a_capy,art,Капибара-бариста,GAME,7000,6900,25
+skin_art_a_latte,art,Латте-сердце,GAME,4000,4200,15
+skin_art_a_sloth,art,Ленивец и эспрессо,GAME,6000,6200,25
+skin_art_a_moka,art,Гейзерка,GAME,4000,4200,15
+skin_art_a_botan,art,Кофейная ветка,GAME,5500,5400,15
+skin_decor_garlandL,decor,Гирлянда огней,GAME,6500,6400,25
+skin_decor_garlandA,decor,Гирлянда листьев,GAME,4000,3900,10
+skin_decor_d_floorlamp,decor,Торшер,GAME,22000,22000,50
+skin_decor_garlandF,decor,Флажки,GAME,8500,8600,25
+skin_decor_garlandW,decor,Тёплые лампочки,GAME,10000,9800,35
+skin_decor_garlandH,decor,Гирлянда-сердечки,XTR,19,12500,35
+skin_decor_garlandN,decor,Неоновая лента,XTR,39,24000,75
+skin_lamp_lampL,lamp,Лампы Эдисона,GAME,9000,8800,25
+skin_lamp_lampS,lamp,Плетёные абажуры,GAME,9000,8800,25
+skin_sign_wood,sign,Деревянная,GAME,5500,5400,15
+skin_sign_black,sign,Чёрная,GAME,5500,5400,15
+skin_sign_white,sign,Белая,GAME,5500,5400,15
+skin_sign_gold,sign,С лампочками,GAME,13000,12800,35
+skin_sign_neonP,sign,Розовый неон,GAME,16500,16500,50
+skin_sign_neonB,sign,Голубой неон,GAME,16500,16500,50
+skin_sign_neonG,sign,Зелёный неон,XTR,39,32000,75
+skin_sign_marquee,sign,Бегущие огни,XTR,49,48000,100
+skin_sign_rainbow,sign,Радужный неон,XTR,69,75000,150
+skin_sign_led,sign,Бегущая строка,XTR,79,95000,150
+skin_sign_flip,sign,Перекидное табло,XTR,79,110000,150
+skin_font_serif,font,Курсив с засечками,GAME,2500,2400,10
+skin_font_script,font,Рукописный,GAME,3500,3600,10
+skin_font_mono,font,Печатная машинка,GAME,2500,2400,10
+skin_font_slab,font,Афишный,GAME,2500,2400,10
+skin_font_round,font,Круглый,GAME,2500,2400,10
+skin_room_wide,room,Расширение вправо,GAME,250000,250000,250
+skin_room_deep,room,Расширение вниз,GAME,600000,600000,500
+skin_uni_green,uni,Зелёная,GAME,10000,9800,35
+skin_uni_wine,uni,Бордовая,GAME,10000,9800,35
+skin_uni_navy,uni,Синяя,GAME,10000,9800,35
+skin_uni_mustard,uni,Горчичная,GAME,10000,9800,35
+skin_uni_pink,uni,Розовая,GAME,10000,9800,35
+skin_uni_purple,uni,Фиолетовая,GAME,10000,9800,35
+skin_uni_white,uni,Светлая,GAME,12500,12400,35
+skin_barf_slat,barf,Рейки,GAME,85000,85000,150
+skin_barf_tile,barf,Плитка «кабанчик»,GAME,95000,95000,150
+skin_barf_marble,barf,Мраморная столешница,XTR,79,160000,200
+skin_barf_led,barf,С подсветкой,XTR,89,180000,200
+lux_x_cat,lux,Золотой кот удачи,XTR,79,0,120
+lux_x_gram,lux,Граммофон,XTR,69,0,150
+lux_x_chand,lux,Хрустальная люстра,XTR,119,0,250
+lux_clock,lux,Коллекционные часы,XTR,49,0,90
+lux_d_aquarium,lux,Панорамный аквариум,XTR,99,0,180
+skin_backfloor_check,backfloor,Шахматная плитка,GAME,8000,8200,25
+skin_backfloor_terra,backfloor,Терракотовая плитка,GAME,12000,12000,35
+skin_backfloor_conc,backfloor,Бетон,GAME,10000,10000,35
+skin_backfloor_dark,backfloor,Тёмное дерево,GAME,14000,14000,35
+skin_backfloor_hex,backfloor,Шестигранная плитка,GAME,16000,16000,50
+skin_barmat_sink,barmat,Резиновый коврик у мойки,GAME,12500,12500,35
+skin_barmat_coffee,barmat,Резиновый коврик у кофемолки,GAME,14500,14500,50
+int_loft,style,Интерьер «Флагман»,GAME,200000,0,75
+int_scandi,style,Интерьер «Фика»,GAME,150000,0,100
+int_soviet,style,Интерьер «Столовая №1»,GAME,75000,0,50
+int_neon,style,Интерьер «Не спим»,XTR,99,0,150
+int_autumn,style,Интерьер «Листопад»,XTR,59,0,75
+int_winter,style,Интерьер «Снежный»,XTR,59,0,75
+frame_coffee_copper,premium,Медная кофейня,XTR,29,,150
+frame_coffee_moon,premium,Лунный кофе,XTR,59,,250
+frame_coffee_cream,premium,Ванильные искры,XTR,39,,200
+sub_owner,premium,Подписка «Владелец»,XTR,99,,150
+rename,premium,Новое название кофейни,XTR,25,,50
+pass,premium,Пропуск сезона,XTR,149,,200
+pass15,premium,Пропуск сезона +15 ступеней,XTR,349,,500
+frame_fire,premium,Рамка «Огонь»,XTR,1000,,1000
+frame_bulbs,premium,Рамка «Огни кинотеатра»,XTR,1000,,1000
+frame_spark,premium,Рамка «Золотые искры»,XTR,1000,,1000
+frame_aurora,premium,Рамка «Северное сияние»,XTR,1000,,1000
+frame_cat,premium,Рамка «Кот на вывеске»,XTR,1000,,1000
+flagship,premium,Флагман района,XTR,399,,1500
+uniform,premium,Форма персонала,GAME,35000,,100
+music,premium,Музыка в зале,GAME,50000,,75
+starter,premium,Набор «Первый месяц»,XTR,49,,49
+cash_s,premium,Конверт от инвестора,XTR,25,,25
+cash_m,premium,Мама дала в долг без процентов,XTR,60,,60
+cash_l,premium,Чемодан из девяностых,XTR,150,,150
+cash_xl,premium,Спонсор из Дубая,XTR,350,,350

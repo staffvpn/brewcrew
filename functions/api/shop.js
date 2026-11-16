@@ -1,2 +1,2 @@
 import {json,SHOP} from '../_lib.js';
-export async function onRequestGet(){return json({ok:true,currency:'XTR',rublePayments:false,items:Object.entries(SHOP).map(([sku,p])=>({sku,title:p.title,stars:p.stars,category:p.category||null,id:p.skin||null}))});}
+export async function onRequestGet(){return json({ok:true,currency:'MIXED',currencies:['GAME','XTR'],rublePayments:false,items:Object.entries(SHOP).map(([sku,p])=>({sku,title:p.title,currency:p.currency,price:p.currency==='GAME'?p.gamePrice:p.stars,gamePrice:p.gamePrice||0,stars:p.currency==='XTR'?p.stars:0,category:p.category||null,id:p.skin||null}))});}

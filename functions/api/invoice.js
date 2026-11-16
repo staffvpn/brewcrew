@@ -10,6 +10,7 @@ export async function onRequestPost({ request, env }) {
   if (!body || typeof body !== 'object' || typeof body.item !== 'string') return json({ok:false},400);
   const item = Object.hasOwn(SHOP, body.item) ? SHOP[body.item] : null;
   if (!item) return json({ ok: false, error: 'unknown item' }, 400);
+  if(item.currency==='GAME')return json({ok:false,error:'Этот предмет покупается за игровые деньги в магазине'},400);
   if (item.once && env.DB && !body.gift) { const had = await env.DB.prepare('SELECT 1 x FROM purchases WHERE tg_id = ?1 AND item = ?2 AND refunded = 0').bind(user.id, body.item).first(); if (had) return json({ ok: false, error: 'Этот набор уже куплен' }); }
   // подарок другому игроку: проверяем получателя и что у него этого ещё нет
   let g = 0, gName = '';

@@ -18,7 +18,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // оплата звёздами: подтверждаем счёт и записываем покупку
   if (upd.pre_checkout_query) {
     const q = upd.pre_checkout_query; let ok = false;
-    if(env.WEBHOOK_SECRET){try{const p=await paymentPayload(env,q,q.from.id);ok=!!p&&(!p.g||(GIFTABLE(p.i)&&p.g!==p.u));}catch{}}
+    if(env.WEBHOOK_SECRET){try{const p=await paymentPayload(env,q,q.from.id);ok=!!p&&(!p.g||((GIFTABLE(p.i)||p.n&&SHOP[p.i].currency==='GAME')&&p.g!==p.u));}catch{}}
     await tgApi(env, 'answerPreCheckoutQuery', ok ? { pre_checkout_query_id: q.id, ok: true } : { pre_checkout_query_id: q.id, ok: false, error_message: 'Товар не найден, попробуй ещё раз из игры' });
     return json({ ok: true });
   }
@@ -34,7 +34,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     const p=msg.successful_payment,pl=await paymentPayload(env,p,msg.from.id);
     if(!pl)return json({ok:false,error:'invalid payment'},400);
     const item=pl.i,gift=Number(pl.g)||0,owner=gift||msg.from.id,now=Date.now();
-    if(gift&&!GIFTABLE(item))return json({ok:false},400);
+    if(gift&&!GIFTABLE(item)&&!(pl.n&&SHOP[item].currency==='GAME'))return json({ok:false},400);
     const exp=item==='sub_owner'?(p.subscription_expiration_date?p.subscription_expiration_date*1000:now+30*86400000):null;
     const writes=[env.DB.prepare('INSERT OR IGNORE INTO purchases (charge_id,tg_id,item,stars,created_at,expires_at,gift_from) VALUES (?1,?2,?3,?4,?5,?6,?7)').bind(p.telegram_payment_charge_id,owner,item,p.total_amount,now,exp,gift?msg.from.id:null)];
     if(SHOP[item].cash)writes.push(env.DB.prepare("INSERT INTO admin_ops (tg_id,op,amount,text,created_at,by_admin) SELECT ?1,'cash',?2,?3,?4,0 WHERE changes()=1").bind(owner,SHOP[item].cash,SHOP[item].title,now));
