@@ -29,6 +29,9 @@ h=harness({local:{[KEY]:'{broken'},cloud:{bc3_n:'1',bc3_0:raw}});await h.m.start
 const fresh=JSON.stringify(state({created:222,level:1,c:{earnedRun:0}}));
 h=harness({local:{[KEY]:fresh,bc_save_previous:raw}});await h.m.start();assert.equal(h.booted.level,12);
 h=harness({local:{[KEY]:fresh}});await h.m.start();assert.equal(h.m.status,'recovery');assert.equal(h.store.get(KEY),fresh);
+// Legacy keys are read without deleting or downgrading the original progress.
+for(const legacy of ['brewcrew_v3','brewcrew_v3_bak']){h=harness({local:{[KEY]:fresh,[legacy]:raw}});assert.equal(h.m.peekLocal().level,12);await h.m.start();assert.equal(h.booted.level,12);assert.equal(h.store.get(legacy),raw);}
+h=harness({local:{brewcrew_v3:raw},cloud:{bc3_n:'1',bc3_0:JSON.stringify(state({level:1,c:{earnedRun:0},savedAt:Date.now()+10000}))}});await h.m.start();assert.equal(h.booted.level,12,'a newer low-progress cloud must not undo legacy recovery');
 // Startup/migration failure tries another intact copy, retaining the selected original.
 const broken=state({savedAt:Date.now()+1000,c:{breakBoot:true}});
 h=harness({local:{[KEY]:JSON.stringify(broken)},cloud:{bc3_n:'1',bc3_0:raw},badBoot:true});await h.m.start();assert.equal(h.booted.level,12);assert(!h.booted.c.breakBoot);

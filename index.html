@@ -8244,7 +8244,7 @@ function usePromo(code){
 }
 
 /* ---------- покупки: пропуск сезона ---------- */
-function refreshEntitlements(){ if(!tg || !tg.initData) return; apiPost('/api/purchases').then(r=>{ if(r && r.ok){ S.ent = {sub:r.sub, interiors:r.interiors, tips:r.tips, renames:r.renames||0, passes:r.passes||[], frames:r.frames||[], extras:r.extras||[], lux:r.lux||[], at:Date.now()}; (r.lux||[]).forEach(function(id){S.skinOwned=S.skinOwned||{};S.skinOwned['lux:'+id]=1;var k=skinS();if(k.lux[id]===undefined)k.lux[id]=1;}); applySkins(); mergeInteriors(); passWatch(true); save(); structDirty = true; } }).catch(()=>{}); }
+function refreshEntitlements(){ if(!tg || !tg.initData) return; apiPost('/api/purchases').then(r=>{ if(r && r.ok){ S.ent = {sub:r.sub, interiors:r.interiors, tips:r.tips, renames:r.renames||0, passes:r.passes||[], frames:r.frames||[], extras:r.extras||[], lux:r.lux||[], at:Date.now()}; (r.lux||[]).forEach(function(id){S.skinOwned=S.skinOwned||{};S.skinOwned['lux:'+id]=1;var k=skinS();if(k.lux[id]===undefined)k.lux[id]=1;}); applySkins(); mergeInteriors(); passWatch(true); bcRepairClaimedPass(); save(); structDirty = true; } }).catch(()=>{}); }
 function passWatch(force){
   if(!S || !S.ent || !S.ent.passes) return; if(!force && Math.random() > 0.02) return;
   S.passSeen = S.passSeen || [];
@@ -14511,6 +14511,15 @@ shopPanel=function(p){
   else {var b=el('<button class="u6alt">'+(has?'Поставить':'Открыть пропуск')+'</button>');b.onclick=function(){if(!has){openSheet('hall','season');return;}skinS().mach=BC_GOLD_MACHINE;applySkins();save();renderSheet();};act.appendChild(b);}
   var grid=p.querySelector('.u6grid');if(grid)grid.prepend(card);
 };
+/* Rebuild permanent rewards from recorded claims; never replay spent consumables. */
+function bcRepairClaimedPass(){
+ if(!S||!passOwned()||!S.sz||S.sz.id!==sezId())return;
+ var info=sezInfo(),claims=S.sz.claimed&&S.sz.claimed.p||[];
+ claims.forEach(function(n){if(!Number.isInteger(n)||n<1||n>SZ_TIERS)return;var rw=szReward('p',n);if(['style','pet','drink','goldm','neon','courier','badge'].indexOf(rw.k)<0)return;
+  if(rw.k==='goldm'){S.goldMachine=true;bcOwnGoldMachine(false);}else szApplyUnlock(rw,info,true);
+ });bcAssetEnforce();applySkins();mergeInteriors();
+}
+window.bcRepairClaimedPass=bcRepairClaimedPass;
 /* A server-issued full-season entitlement completes both tracks once per season. */
 var bcFullPassWatch=passWatch;
 passWatch=function(force){

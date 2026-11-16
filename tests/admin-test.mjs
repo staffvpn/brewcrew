@@ -39,3 +39,9 @@ assert((await call({kind:'upgrade',id:'ware',count:1},ADMINS[0])).ok,'admin dish
 assert((await call({kind:'upgrade',id:'tables',count:28},ADMINS[0])).ok);assert.equal((await call({kind:'upgrade',id:'tables',count:29},ADMINS[0])).status,400);
 
 assert.equal((await call({kind:'skin',category:'floor',id:'marble'},ADMINS[0],{ADMIN_TEST_PURCHASES:undefined})).status,403,'admin tests remain opt-in by deployment configuration');
+
+// A paid pass survives local entitlement loss; earned permanent rewards recover from the owner's server snapshot.
+sql.prepare('INSERT INTO purchases(charge_id,tg_id,item,stars,created_at)VALUES(?,?,?,?,?)').run('ordinary-pass',123,'pass',299,Date.now());
+sql.prepare('INSERT INTO cache(key,val,at)VALUES(?,?,?)').run('admin_inventory_123',JSON.stringify({owned:['reward_gold','reward_pet']}),Date.now());
+const restoredPass=await call({},123,{},purchases);assert.equal(restoredPass.passes.length,1);assert.equal(restoredPass.passes[0].id,'ordinary-pass');assert.deepEqual(restoredPass.rewards,['reward_gold','reward_pet']);assert.equal((await call({},124,{},purchases)).rewards.length,0);
+sql.prepare('INSERT INTO cache(key,val,at)VALUES(?,?,?)').run('admin_entitlements_123',JSON.stringify({reward_gold:1}),Date.now());assert.deepEqual((await call({},123,{},purchases)).rewards,['reward_pet'],'recovery must respect an explicit administrator revocation');
