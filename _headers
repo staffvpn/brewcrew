@@ -2,3 +2,13 @@
   Cache-Control: no-cache
 /
   Cache-Control: no-cache
+/legal-gate.js
+  Cache-Control: no-cache
+/privacy.html
+  Cache-Control: no-cache
+/terms.html
+  Cache-Control: no-cache
+/payments.html
+  Cache-Control: no-cache
+/legal/manifest.json
+  Cache-Control: no-cache

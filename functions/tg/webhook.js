@@ -70,7 +70,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     await env.DB.prepare("INSERT INTO cache (key, val, at) VALUES ('rel10_off', ?1, ?2) ON CONFLICT(key) DO UPDATE SET val = ?1, at = ?2").bind(off ? '1' : '0', Date.now()).run();
     await tgApi(env, 'sendMessage', { chat_id: chat, text: off ? 'Обновление 10 выключено. Игроки вернутся к прежней игре в течение 10 минут (или сразу после перезапуска игры). Пост об обновлении не выйдет. Включить обратно: /rel10on' : 'Обновление 10 включено (после 1 декабря 12:00 МСК — у всех, до этого — только у админов). Выключить: /rel10off' });
   } else if (text.startsWith('/paysupport')) {
-    await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Проблема с покупкой? Напиши, что купил и когда, мы разберёмся и при необходимости вернём звёзды.' });
+    await tgApi(env, 'sendMessage', { chat_id: chat, text: 'Вопрос по покупке или возврату? Напиши в @brew_support: товар, дату, сумму и идентификатор операции из истории Stars. Проверим выдачу и основания для возврата. Условия: https://brewcrew.pages.dev/payments.html' });
   } else if (text.startsWith('/start') || text.startsWith('/play')) {
     try { const rid = parseRef(text.split(' ')[1]); if (rid && env.DB && msg.from) await bindReferrer(env, msg.from, rid, 'bot'); } catch {}
     await tgApi(env, 'sendMessage', { chat_id: chat,

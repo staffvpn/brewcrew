@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta name="brewcrew-build" content="v15-economy-balance-20261116">
+<meta name="brewcrew-build" content="v15-legal-gate-20261116">
 <meta charset="utf-8">
+<script src="legal-gate.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -6252,9 +6253,8 @@ const CAFE_NAMES = ['Без молока','Пенка','Зерно и точка
 
 function startParam(){ try{ const p = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || new URLSearchParams(location.search).get('tgWebAppStartParam') || ''; return /^ref_\d{3,15}$/.test(p) ? p : ''; }catch(e){ return ''; } }
 function ageOk(){ try{ return localStorage.getItem('bc_age18')==='1'; }catch(e){ return false; } }
-function ageGate(next){ if(ageOk()) return next(); const v = el(`<div class="veil" style="z-index:150"><div class="modal"><div class="eyebrow">Только для взрослых</div><h2>Тебе есть 18?</h2><p>В игре грубый юмор, шутки про алкоголь и крепкие выражения. Продолжая, ты подтверждаешь, что тебе 18 лет или больше, и соглашаешься с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a>.</p><button class="btn big" id="age18">Мне есть 18</button><button class="btn ghost" id="age17">Мне нет 18</button></div></div>`); document.body.appendChild(v); v.querySelector('#age18').onclick = () => { try{ localStorage.setItem('bc_age18','1'); }catch(e){} v.remove(); next(); }; v.querySelector('#age17').onclick = () => { v.querySelector('.modal').innerHTML = '<h2>Тогда до встречи</h2><p>Возвращайся, когда исполнится 18. Кофейня подождёт.</p>'; }; }
+function ageGate(next){ if(ageOk()) return next(); const v = el(`<div class="veil" style="z-index:150"><div class="modal"><div class="eyebrow">Только для взрослых</div><h2>Тебе есть 18?</h2><p>В игре грубый юмор, шутки про алкоголь и крепкие выражения. Возраст и документы подтверждаются отдельно. <a href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>.</p><button class="btn big" id="age18">Мне есть 18</button><button class="btn ghost" id="age17">Мне нет 18</button></div></div>`); document.body.appendChild(v); v.querySelector('#age18').onclick = () => { try{ localStorage.setItem('bc_age18','1'); }catch(e){} v.remove(); next(); }; v.querySelector('#age17').onclick = () => { v.querySelector('.modal').innerHTML = '<h2>Тогда до встречи</h2><p>Возвращайся, когда исполнится 18. Кофейня подождёт.</p>'; }; }
 function renderStart(){
-  if(!ageOk()){ ageGate(renderStart); return; }
   const app = $('#app'); app.innerHTML = ''; app.className = 'startapp';
   let name = randomName(), cityId = 'spb';
   const ref = startParam();
@@ -6266,7 +6266,7 @@ function renderStart(){
     <input class="field" id="own" maxlength="16" placeholder="Или впиши своё" autocomplete="off">
     <div class="d" id="nmst" style="min-height:16px"></div>
     <button class="btn big" id="go">Дальше: обставить зал</button>
-    <div class="empty" style="font-size:12px">Кофейня работает круглосуточно, даже когда игра закрыта. Только для 18+. <a href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a></div>
+    <div class="empty" style="font-size:12px">Кофейня работает по выбранному графику, в том числе когда игра закрыта. Только для 18+. <a href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a></div>
   </div>`);
   app.appendChild(w);
   const bn = w.querySelector('#bn'), st = w.querySelector('#nmst'); let checkT = 0;
@@ -6524,7 +6524,7 @@ const INTERIORS = {
 function renamesLeft(){ return Math.max(0, ((S.ent && S.ent.renames) || 0) - (S.renamesUsed || 0)); }
 function hasInterior(k){ return !!(S.ent && S.ent.interiors && S.ent.interiors.includes(k)); }
 function roomTheme(id){ const k = (S.interior||{})[id]; if(k && INTERIORS[k] && hasInterior(k)) return INTERIORS[k].theme; return roomDef(id).theme; }
-function apiPost(path, data){ return fetch(path, {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData: tg && tg.initData}, data||{}))}).then(r=>r.json()); }
+function apiPost(path, data){ if(window.BrewCrewLegal&&!BrewCrewLegal.allowed(path))return Promise.resolve({ok:false,legalRequired:true});return fetch(path, {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(Object.assign({initData: tg && tg.initData}, data||{}))}).then(r=>r.json()); }
 function refreshEntitlements(){ if(!tg || !tg.initData) return; apiPost('/api/purchases').then(r=>{ if(r && r.ok){ S.ent = {sub:r.sub, interiors:r.interiors, tips:r.tips, renames:r.renames||0, at:Date.now()}; save(); structDirty = true; } }).catch(()=>{}); }
 function buyStars(item){
   if(!tg || !tg.openInvoice) return;
@@ -14914,13 +14914,19 @@ onTrack=function(r){if(!r||!r.ok||!S||!Array.isArray(r.ops))return bcEconomyTrac
 };
 var bcEconomyOpsNew=newState;newState=function(){var ops=S&&S.c&&S.c.economyOps,next=bcEconomyOpsNew.apply(this,arguments);if(ops)next.c.economyOps=JSON.parse(JSON.stringify(ops));return next;};
 
+var bcLegalCheckout=MODAL15.bc_checkout;
+MODAL15.bc_checkout=function(box,m,btn){bcLegalCheckout.apply(this,arguments);var p=BC_STORE[m.sku];if(p&&p.sub)box.append(el('<p class="d">Подписка: '+nf(p.stars)+' Stars каждые 30 дней, с автопродлением. Управление и отмена — в подписках Telegram.</p>'));box.append(el('<p class="d"><a href="payments.html" target="_blank" rel="noopener">Условия покупок и возвратов</a></p>'));};
+
 })();
 
 // Restore saves only after every scene and economy hook is installed.
+BrewCrewLegal.install();
+BrewCrewLegal.run(function(){
 var bcBootLocal=loadLocal(),bcBootLocalAt=Number(bcBootLocal&&bcBootLocal.savedAt)||0;
 boot(bcBootLocal);var bcBootState=S;
 if(S){ streakCheck(); refreshEntitlements(); loadFriends(); setTimeout(()=>track(), 1500); }
 loadCloud(cloud=>{ if(cloud && cloud.v===3 && S===bcBootState && (!bcBootLocal || (cloud.savedAt||0) > bcBootLocalAt + 5000)){ for(const k in RT) delete RT[k]; modals = []; $('#modalRoot').innerHTML=''; boot(cloud); refreshEntitlements(); } });
+});
 
 </script>
 </body>

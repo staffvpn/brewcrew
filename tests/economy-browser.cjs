@@ -1,9 +1,10 @@
+const {acceptLegal}=require('./legal-fixture.cjs');
 // Real game runtime: cash ledger, multi-shift payroll/tax, progression and offline.
 const {chromium}=require('playwright'),fs=require('fs'),assert=require('assert');
 (async()=>{const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']}),p=await browser.newPage({viewport:{width:390,height:844}}),errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.text().startsWith('CALIBRATION')||m.type()==='error')console.log(m.text().slice(0,1200));});
 await p.addInitScript(()=>{localStorage.setItem('bc_age18','1');window.Telegram={WebApp:{initData:'fixture',initDataUnsafe:{user:{id:12345}},ready(){},expand(){},onEvent(){},setHeaderColor(){},setBackgroundColor(){},disableVerticalSwipes(){},enableClosingConfirmation(){},BackButton:{show(){},hide(){},onClick(){}},HapticFeedback:{impactOccurred(){},notificationOccurred(){},selectionChanged(){}}}};});
 await p.route('**/telegram-web-app.js*',r=>r.fulfill({contentType:'text/javascript',body:''}));await p.route('**/api/**',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,adminTest:false,ops:[],maint:{on:false},interiors:[],skins:[],extras:[],passes:[],lux:[],top:[]})}));
-await p.goto('http://127.0.0.1:8770/');await p.locator('#own').fill('Экономика');await p.locator('#quick').click();await p.getByRole('button',{name:'Поехали',exact:true}).click();await p.waitForTimeout(700);
+await p.goto('http://127.0.0.1:8770/');await p.locator('#own').fill('Экономика');await acceptLegal(p);await p.locator('#quick').click();await p.getByRole('button',{name:'Поехали',exact:true}).click();await p.waitForTimeout(700);
 const result=await p.evaluate(async()=>{
  const check=(ok,m)=>{if(!ok)throw Error(m);},near=(a,b,m)=>check(Math.abs(a-b)<.01,m+': '+a+' != '+b);
  while(modals.length)closeModal();HOOK.quiet=true;HOOK.event=()=>{};HOOK.modal=()=>{};HOOK.toast=()=>{};Math.random=()=>.5;
