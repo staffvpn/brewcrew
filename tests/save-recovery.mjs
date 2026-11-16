@@ -56,3 +56,7 @@ const probe=async data=>recovery({env,request:new Request('https://test/api/reco
 console.log('PASS save recovery: delayed/error/empty cloud, existing account protection, corrupt/migration backups, run selection, owner-bound reset, atomic cloud banks and interrupted/queued writes, authenticated read-only recovery, SQL reset guard and preserved rescue record.');
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert(!html.includes("tg.CloudStorage.setItem('bc3_'+i"),'legacy writers must not bypass the atomic save protocol');
+
+// Full server fallback restores whole records, including consumable inventory and claimed reward markers.
+const rich=state({sz:{id:'2026-11',sp:6400,claimed:{f:[1,2],p:[1,5,20]}},inv:[{uid:'old-reward',k:'money',v:12000}],ach:{first:true},passSeen:['paid-pass'],ref:'r_17'});
+h=harness({info:{ok:true,exists:true,level:12,saves:[rich]}});await h.m.start();assert.equal(h.m.status,'ready');assert.equal(JSON.stringify(h.booted),JSON.stringify(rich));

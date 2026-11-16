@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta name="brewcrew-build" content="v15-names-pet-refunds-20261116">
+<meta name="brewcrew-build" content="v15-full-account-recovery-20261116">
 <meta charset="utf-8">
 <script src="legal-gate.js"></script>
 <script src="save-manager.js"></script>
@@ -6197,7 +6197,7 @@ function ambientTick(){
 function snapshot(){ S.savedAt = Date.now(); S.sound = soundOn; const copy = Object.assign({}, S); return JSON.stringify(copy, (k,v)=> k==='distract' ? undefined : v); }
 function save(){if(!S||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;const raw=snapshot();if(window.BrewCrewSaves?.active){BrewCrewSaves.writeLocal(S,raw);return;}try{localStorage.setItem(KEY,raw);}catch(e){}}
 function cloudOK(){ return tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'); }
-function saveCloud(){if(!S||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;if(window.BrewCrewSaves?.active){BrewCrewSaves.writeCloud(snapshot());return;} }
+function saveCloud(){if(!S||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;if(window.BrewCrewSaves?.active){BrewCrewSaves.writeCloud(snapshot());BrewCrewSaves.writeServer(snapshot(),true);return;} }
 function loadLocal(){if(window.BrewCrewSaves?.active)return BrewCrewSaves.peekLocal();try{const data=[KEY,'brewcrew_v3','brewcrew_v3_bak'].map(k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}).filter(s=>s?.v===3);return data.sort((a,b)=>(Number(b.level)||0)-(Number(a.level)||0)||(Number(b.day)||0)-(Number(a.day)||0))[0]||null;}catch(e){return null;}}
 function loadCloud(cb){ if(!cloudOK()) return cb(null);
   try{ tg.CloudStorage.getItem('bc3_n', (err, n)=>{ n = parseInt(n,10); if(err || !n) return cb(null); const keys = Array.from({length:n},(_,i)=>'bc3_'+i); const out = {}; let left = Math.ceil(n/50);
@@ -7396,7 +7396,7 @@ function renderOwner(p){
 const FR = {loaded:0, friends:[], inviter:null, unclaimed:0, id:null};
 let CFG = {bot:null, app:null, channel:null};
 function loadConfig(){ fetch('/api/config').then(r=>r.json()).then(c=>{ if(c && c.ok) CFG = c; structDirty = true; }).catch(()=>{}); }
-function loadFriends(claim){ if(!tg || !tg.initData) return Promise.resolve(null); return apiPost('/api/friends', claim?{claim:true}:{}).then(r=>{ if(r && r.ok){ FR.loaded = Date.now(); FR.friends = r.friends||[]; FR.inviter = r.inviter; FR.unclaimed = r.unclaimed||0; FR.id = r.id; if(r.granted){ const sum = r.granted*150000; income(sum); toast('Награда за друзей: +'+fmt(sum)+' ₽'); sfx('level'); save(); } structDirty = true; } return r; }).catch(()=>null); }
+function loadFriends(claim,append){ if(!tg || !tg.initData) return Promise.resolve(null); return apiPost('/api/friends', Object.assign(claim?{claim:true}:{},{offset:append?FR.friends.length:0})).then(r=>{ if(r && r.ok){ FR.loaded = Date.now(); FR.friends = append?FR.friends.concat(r.friends||[]):r.friends||[];FR.total=r.total==null?FR.friends.length:r.total;FR.paid=r.paid==null?FR.friends.filter(f=>f.ref_paid).length:r.paid;FR.more=!!r.more; FR.inviter = r.inviter; FR.unclaimed = r.unclaimed||0; FR.id = r.id; if(r.granted){ const sum = r.granted*150000; income(sum); toast('Награда за друзей: +'+fmt(sum)+' ₽'); sfx('level'); save(); } structDirty = true; } return r; }).catch(()=>null); }
 function myId(){ return (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) || FR.id; }
 function inviteLink(){ const id = myId(); if(!CFG.bot || !id) return ''; return `https://t.me/${CFG.bot}?start=ref_${id}`; }
 function withLink(fn){ if(inviteLink()) return fn(inviteLink()); fetch('/api/config').then(r=>r.json()).then(c=>{ if(c && c.ok) CFG = c; const u = inviteLink(); if(u) fn(u); else toast('Не получилось сделать ссылку. Открой игру из Telegram'); }).catch(()=>toast('Нет связи, попробуй ещё раз')); }
@@ -7415,14 +7415,14 @@ function friendRow(f, label){
 }
 function renderDistrict(p){
   if(tg && tg.initData && Date.now() - FR.loaded > 120000){ FR.loaded = Date.now(); loadFriends(); }
-  const paid = FR.friends.filter(f=>f.ref_paid).length, wait = FR.friends.length - paid;
-  const fc = el(`<div class="card note kraft"><div class="t">Друзья по району</div><div class="d">Позови друга: он начнёт с +100 000 ₽, а когда дойдёт до 3 уровня, тебе придёт +150 000 ₽. Деньги начисляются сами.</div><div class="refstat"><div><b class="num">${FR.friends.length}</b><span>пригласил</span></div><div><b class="num">${fmt(paid*150000)} ₽</b><span>бонусов получено</span></div><div><b class="num">${wait}</b><span>ждут 3 уровня</span></div></div><div class="friends"></div><div class="row wrap"><button class="btn">Позвать друга</button><button class="btn ghost cpl">Скопировать ссылку</button></div></div>`);
+  const paid = FR.paid==null?FR.friends.filter(f=>f.ref_paid).length:FR.paid, total=FR.total==null?FR.friends.length:FR.total, wait=total-paid;
+  const fc = el(`<div class="card note kraft"><div class="t">Друзья по району</div><div class="d">Позови друга: он начнёт с +100 000 ₽, а когда дойдёт до 3 уровня, тебе придёт +150 000 ₽. Деньги начисляются сами.</div><div class="refstat"><div><b class="num">${total}</b><span>пригласил</span></div><div><b class="num">${fmt(paid*150000)} ₽</b><span>бонусов получено</span></div><div><b class="num">${wait}</b><span>ждут 3 уровня</span></div></div><div class="friends"></div><div class="row wrap"><button class="btn">Позвать друга</button><button class="btn ghost cpl">Скопировать ссылку</button></div></div>`);
   fc.querySelector('.cpl').onclick = copyInvite;
   const fl = fc.querySelector('.friends');
   if(FR.inviter) fl.appendChild(friendRow(FR.inviter, 'пригласил тебя'));
-  FR.friends.forEach(f=>fl.appendChild(friendRow(f)));
+  FR.friends.forEach(f=>fl.appendChild(friendRow(f)));if(FR.more){const more=el('<button class="btn ghost">Ещё приглашённые</button>');more.onclick=async()=>{more.disabled=true;await loadFriends(false,true);renderSheet();};fl.appendChild(more);}
   if(!FR.inviter && !FR.friends.length) fl.appendChild(el(`<div class="d">${tg&&tg.initData?'Пока никого. Соседний зал пустует.':'Друзья появятся, когда игра открыта в Telegram.'}</div>`));
-  fc.querySelector('.btn').onclick = invite;
+  fc.querySelector('.row.wrap > .btn').onclick = invite;
   p.appendChild(fc);
   renderTour(p);
   p.appendChild(el(`<div class="h chalk">Конкуренты</div>`));
@@ -9886,7 +9886,7 @@ const _sezId25 = sezId;
 sezId = function(ts){ if(ts) return _sezId25(ts); const n = Date.now(); if(n - _sezC.t > 60000){ _sezC = {t:n, v:_sezId25()}; } return _sezC.v; };
 
 /* облако: сохраняем реже и только изменённые части; старые дни без подробной росписи */
-saveCloud = function(){if(!S||!cloudOK()||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;try{slimHist();}catch(e){}if(window.BrewCrewSaves?.active)BrewCrewSaves.writeCloud(snapshot());};
+saveCloud = function(){if(!S||!cloudOK()||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;try{slimHist();}catch(e){}if(window.BrewCrewSaves?.active){const raw=snapshot();BrewCrewSaves.writeCloud(raw);BrewCrewSaves.writeServer(raw,true);}};
 function slimHist(){ const h = S && S.fin && S.fin.hist; if(!h) return; for(let i=7;i<h.length;i++){ const L = h[i].L; if(L && (L.inW || L.outW)){ delete L.inW; delete L.outW; } } }
 let _cloudGate = 0;
 const _saveCloud25 = saveCloud;

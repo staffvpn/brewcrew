@@ -7,11 +7,13 @@ export async function onRequestPost({ request, env }) {
   const user = await verifyInitData(body.initData, env.BOT_TOKEN);
   if (!user || !user.id) return json({ ok: false }, 401);
   const me = await env.DB.prepare('SELECT referrer FROM players WHERE tg_id = ?1').bind(user.id).first();
-  const friends = (await env.DB.prepare(`SELECT ${COLS} FROM players WHERE referrer = ?1 ORDER BY created_at DESC LIMIT 50`).bind(user.id).all()).results || [];
+  const requested=Number(body.offset);const offset=Number.isFinite(requested)?Math.max(0,Math.min(100000,Math.floor(requested))):0;
+  const totals=await env.DB.prepare('SELECT COUNT(*) total,SUM(CASE WHEN ref_paid=1 THEN 1 ELSE 0 END) paid FROM players WHERE referrer=?1').bind(user.id).first();
+  const friends = (await env.DB.prepare(`SELECT ${COLS} FROM players WHERE referrer = ?1 ORDER BY created_at DESC,tg_id DESC LIMIT 50 OFFSET ?2`).bind(user.id,offset).all()).results || [];
   let inviter = null;
   if (me && me.referrer) inviter = await env.DB.prepare(`SELECT ${COLS} FROM players WHERE tg_id = ?1`).bind(me.referrer).first();
   const parse = x => { if (x) { try { x.snap = x.snap ? JSON.parse(x.snap) : null; } catch { x.snap = null; } } return x; };
   friends.forEach(parse); parse(inviter);
-  const paid = friends.filter(f => f.ref_paid).length;
-  return json({ ok: true, id: user.id, inviter, friends, paid, earned: paid * 150000, unclaimed: 0, granted: 0 });
+  const paid = Number(totals?.paid)||0;const total=Number(totals?.total)||0;
+  return json({ ok: true, id: user.id, inviter, friends, total, more:offset+friends.length<total, paid, earned: paid * 150000, unclaimed: 0, granted: 0 });
 }

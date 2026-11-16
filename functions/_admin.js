@@ -443,6 +443,7 @@ export async function ackOps(env, id, ids) {
   if (wiped && wiped.n) await env.DB.batch([
     env.DB.prepare('DELETE FROM players WHERE tg_id = ?1').bind(id),
     env.DB.prepare('DELETE FROM days WHERE tg_id = ?1').bind(id),
-    env.DB.prepare('DELETE FROM reminders WHERE tg_id = ?1').bind(id)
+    env.DB.prepare('DELETE FROM reminders WHERE tg_id = ?1').bind(id),
+    env.DB.prepare('DELETE FROM cache WHERE key IN (?1,?2)').bind('full_save_'+id+'_current','full_save_'+id+'_previous')
   ]);
 }
