@@ -195,4 +195,4 @@ export const TEST_SKINS = {
     "int_winter"
   ]
 };
-export const TEST_UPGRADES = ["machine","register","menu","tables","showcase","decor","sign","clean","sink","storage","safety","pets","ware"];
+export const TEST_UPGRADES = ["machine","register","menu","tables","showcase","decor","sign","clean","sink","storage","safety","ware"];

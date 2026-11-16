@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta name="brewcrew-build" content="v15-save-recovery-20261116">
+<meta name="brewcrew-build" content="v15-names-pet-refunds-20261116">
 <meta charset="utf-8">
 <script src="legal-gate.js"></script>
 <script src="save-manager.js"></script>
@@ -993,7 +993,6 @@ const UPG = [
   {id:'sink', n:'Мойка', base:9000, eff:L=>sinkLine(L)},
   {id:'storage', n:'Склад и холодильник', base:10000, eff:L=>'Вместимость +'+Math.round(25*L)+'%, молоко живёт дольше'},
   {id:'safety', n:'Безопасность', base:6000, eff:L=>L<1?'Нет огнетушителя':L<3?'Огнетушитель':L<6?'Сигнализация · камеры с 6 ур.':L<10?'Камеры · охранник с 10 ур.':'Камеры и охранник'},
-  {id:'pets', n:'Питомцы', base:40000, eff:L=>'Гостей +'+(2*L)+'%, '+petsLine(L)}
 ];
 const MAXL = 20;
 function f2(x){ return x.toFixed(2).replace('.',','); }
@@ -1047,8 +1046,23 @@ const LEGENDS = [
   {name:'Вечный стажёр Гоша', sex:'m', role:'Кассир', quirk:'none', legend:'Работает за полставки и раз в день случайно делает что-то гениальное.', mult:1},
   {name:'Бариста-бариста', sex:'m', role:'Бариста', quirk:'none', legend:'Так и представляется. Молчит, не отвлекается, скорость ×1,6.', mult:1.6}
 ];
-const NAMES_M = ['Гоша','Артём','Лёха','Денис','Толик','Рустам','Саня','Жора','Боря','Кеша','Митя','Стас','Гена','Ваня','Егор','Тимур','Влад','Паша','Костя','Макс','Дима','Олег','Серёга','Никита'];
-const NAMES_F = ['Марина','Карина','Вика','Света','Ника','Полина','Ульяна','Даша','Лиза','Зоя','Мила','Оля','Аня','Женя','Соня','Катя','Настя','Юля','Алина','Таня','Лена','Ира','Маша','Вера'];
+const NAMES_M = ['Гоша','Артём','Лёха','Денис','Толик','Рустам','Александр','Жора','Боря','Кеша','Митя','Стас','Гена','Ваня','Егор','Тимур','Влад','Паша','Костя','Макс','Дима','Олег','Серёга','Никита'];
+const NAMES_F = ['Марина','Карина','Вика','Света','Ника','Полина','Ульяна','Даша','Лиза','Зоя','Мила','Оля','Аня','Евгения','Соня','Катя','Настя','Юля','Алина','Таня','Лена','Ира','Маша','Вера'];
+// Ordinary staff use the gender of their role artwork; named story characters keep their identity.
+const STAFF_VISUAL_SEX={'Бариста':'f','Кассир':'f','Официант':'m','Мойщица':'f','Повар':'m'};
+function normalizeStaffName(s,used){
+ if(!s||s.isYou)return s;
+ const special=!!(s.legendId||s.prize||s.szLeg||s.som34),sex=(special||s.nameGenderFixed)?(s.sex==='f'?'f':'m'):(STAFF_VISUAL_SEX[s.role]||(s.sex==='f'?'f':'m'));
+ const own=sex==='f'?NAMES_F:NAMES_M,other=sex==='f'?NAMES_M:NAMES_F,old=String(s.name||'');
+ s.sex=sex;
+ if(!special&&(!old||other.includes(old)||(sex==='m'&&old==='Женя')||(sex==='f'&&old==='Саня'))){
+  used=used||new Set((S?.staff||[]).concat(S?.cands||[]).filter(x=>x!==s).map(x=>x.name));
+  let n=0;for(const ch of String(s.id||old))n=(n*31+ch.charCodeAt(0))>>>0;
+  const available=own.filter(x=>!used.has(x));s.name=(available.length?available:own)[n%(available.length||own.length)];used.add(s.name);
+ }
+ return s;
+}
+function normalizeStaffNames(){if(!S)return;const list=(S.staff||[]).concat(S.cands||[]),used=new Set(list.map(x=>x.name));list.forEach(x=>normalizeStaffName(x,used));}
 const NAMES = ['Гоша','Марина','Артём','Лёха','Карина','Вика','Денис','Толик','Света','Ника','Рустам','Полина','Саня','Жора','Ульяна','Боря','Кеша','Даша','Митя','Лиза','Стас','Зоя','Гена','Мила','Оля','Ваня','Егор','Аня','Тимур','Женя','Влад','Соня'];
 
 /* ---------- прочие данные ---------- */
@@ -1095,7 +1109,7 @@ function newState(name, city, carry){
   return s;
 }
 function blankFin(){ return {rev:0, card:0, cogs:0, supply:0, wages:0, rent:0, util:0, acq:0, tax:0, spoil:0, fines:0, repairs:0, other:0, invest:0, why:{}, last:[], guests:0, comm:0, del:0}; }
-function newRoom(id){ const u = {}; UPG.forEach(x=>u[x.id]=0); return {id, upg:u, eq:{machine:100, terminal:100, kkt:100, fridge:100}, broken:{}, noCheck:false}; }
+function newRoom(id){ const u = {pets:0}; UPG.forEach(x=>u[x.id]=0); return {id, upg:u, eq:{machine:100, terminal:100, kkt:100, fridge:100}, broken:{}, noCheck:false}; }
 function roomDef(id){ if(id && id.startsWith('rv_')){ const r = RIVALS.find(x=>'rv_'+x.id===id); return {id, n:'Бывш. «'+r.n+'»', cost:0, rent:6000, mult:1.4, d:'Выкупленное помещение конкурента.', theme:RIVAL_ROOM_THEME[r.type]}; } return ROOMS.find(r=>r.id===id); }
 function room(id){ return S.rooms.find(r=>r.id===id); }
 function staffIn(id){ return S.staff.filter(s=>s.room===id); }
@@ -1385,13 +1399,13 @@ function fmtR(n){ n = Math.round(n); return (n<0?'−':'')+Math.abs(n).toLocaleS
 function makeStaff(role, opts){
   opts = opts || {};
   const used = new Set(S.staff.map(s=>s.name).concat(S.cands.map(s=>s.name)));
-  let spr = null, sex = chance(0.5) ? 'm' : 'f';
-  if(HOOK.pickSpr){ const r0 = HOOK.pickSpr(role, opts.sex); spr = r0.spr; sex = r0.sex; }
+  let spr = null, sex = opts.sex==='m'||opts.sex==='f'?opts.sex:(STAFF_VISUAL_SEX[role]||(chance(0.5)?'m':'f'));
+  if(HOOK.pickSpr){ const r0 = HOOK.pickSpr(role, sex); spr = r0.spr; sex = r0.sex; }
   const list = sex==='f' ? NAMES_F : NAMES_M;
   let name = pick(list), g = 0; while(used.has(name) && g++<50) name = pick(list);
   let quirk = opts.quirk || (chance(0.33) ? pick(Object.keys(QUIRKS).filter(k=>k!=='none')) : 'none');
   const s = {id:'s'+Math.random().toString(36).slice(2,9), name, role, room:null, lvl:1, rank:0, shifts:0, mood:75, pat:100, fatigue:0, quirk,
-    contract:'white', sched:'5/2', off:[5,6], phase:0, today:'off', consec:0, absences:0, recentAbs:0, legendId:0, spr, sex, examAt:0, promise:0, notice:0, lastConflict:-99};
+    contract:'white', sched:'5/2', off:[5,6], phase:0, today:'off', consec:0, absences:0, recentAbs:0, legendId:0, spr, sex, nameGenderFixed:opts.sex==='m'||opts.sex==='f', examAt:0, promise:0, notice:0, lastConflict:-99};
   return s;
 }
 function makeLegend(){
@@ -4905,7 +4919,7 @@ const SEXPOOL = {
   'Мойщица':{m:[30,31,32], f:[29,30,31,32]},
   'Повар':{m:[0,2,4,5,25,26,27,28], f:[1,3,6]}};
 const sexOf = i => FEM.has(i) ? 'f' : 'm';
-HOOK.pickSpr = (role, sex) => { sex = sex || (role==='Мойщица' ? 'f' : (Math.random()<0.5?'m':'f')); const p = (SEXPOOL[role]||{m:POOL.guest,f:POOL.guest})[sex]; return {spr:pick(p), sex}; };
+HOOK.pickSpr = (role, sex) => { sex = sex || (role==='Мойщица' ? 'f' : (Math.random()<0.5?'m':'f')); const p = (SEXPOOL[role]||{m:POOL.guest,f:POOL.guest})[sex].filter(i=>sexOf(i)===sex); return {spr:pick(p), sex}; };
 function nameSex(n){ const L = LEGENDS.find(l=>l.name===n); if(L) return L.sex; return NAMES_F.includes(n) ? 'f' : 'm'; }
 // редкость гостей и питомцев
 const RARITY = {};
@@ -4919,7 +4933,7 @@ function petH(i){ const c = META[i][0]; return c==='dog' ? 27 : c==='cat' ? 23 :
 function staffSpr(s){
   if(s.isYou){ if(s.spr==null || s.spr<21 || s.spr>24) s.spr = 23; return s.spr; }
   if(!s.sex) s.sex = nameSex(s.name);
-  if(s.spr==null || sexOf(s.spr)!==s.sex || !(SEXPOOL[s.role]||{})[s.sex] || !SEXPOOL[s.role][s.sex].includes(s.spr)){ const p = (SEXPOOL[s.role]||{})[s.sex] || ROLE_SPR[s.role]; s.spr = s.legendId ? p[(s.legendId*3) % p.length] : pick(p); }
+  if(s.spr==null || sexOf(s.spr)!==s.sex || !(SEXPOOL[s.role]||{})[s.sex] || !SEXPOOL[s.role][s.sex].includes(s.spr)){ const p = ((SEXPOOL[s.role]||{})[s.sex] || ROLE_SPR[s.role]).filter(i=>sexOf(i)===s.sex); s.spr = s.legendId ? p[(s.legendId*3) % p.length] : pick(p); }
   return s.spr; }
 const REG_SPR = {mihalych:59, zina:60, gleb:45, anya:51, oleg:50, tima:52, sema:65, vera:63};
 
@@ -6597,6 +6611,7 @@ function bar(v, col){ return `<span class="bar"><i style="width:${clamp(v,0,100)
 function moodCol(v){ return v<30?'var(--bad)':v<60?'var(--caramel)':'var(--good)'; }
 
 function buyUpg(u, id, n){
+  if(!u||u.id==='pets')return;
   const rm = room(id); let k = 0;
   while(k < n && rm.upg[u.id] < bcUpgradeCap(u,id)){ const c = upCost(u, rm.upg[u.id], id); if(S.money < c) break; spend(c, 'invest', 'Улучшение: '+u.n); rm.upg[u.id]++; addXp(6); k++; }
   if(!k) return;
@@ -7189,6 +7204,7 @@ function renderBroken(e){if(window.BrewCrewSaves?.active){BrewCrewSaves.failed(e
   const w = el(`<div class="start"><div class="logo">Brew Crew</div><div class="note kraft"><p>Старое сохранение не открылось в новой версии. Можно начать заново: пустое помещение, новый бюджет.</p></div><button class="btn big">Начать заново</button></div>`);
   w.querySelector('button').onclick = hardReset; app.appendChild(w); }
 function migrate(){
+  S.rooms.forEach(r=>{if(r.upg.pets==null)r.upg.pets=0;});
   const hours=S.hours;S.hours=hours&&Number.isFinite(hours.open)&&Number.isFinite(hours.close)&&hours.open>=0&&hours.open<hours.close&&hours.close<=24?{open:hours.open,close:hours.close}:{open:0,close:24};
   if(!S.story){ S.story = storyInit(); startSeason(1); }
   S.interior = S.interior || {};
@@ -14982,11 +14998,27 @@ var bcGuestsStyle=document.createElement('style');bcGuestsStyle.textContent='.bc
 
 })();
 
+// Retired pet upgrades are refunded at their original level prices, once per saved cafe.
+function refundRetiredPetUpgrades(){
+ if(!S)return 0;S.c=S.c||{};if(S.c.petUpgradeRefund)return 0;
+ let amount=0;const levels=[];
+ for(const r of S.rooms||[]){const L=Math.max(0,Math.min(20,Math.floor(Number(r.upg.pets)||0)));if(!L)continue;levels.push({room:r.id,level:L});
+  for(let i=0;i<L;i++)amount+=Math.round(100000*Math.pow(1.5,i)*Math.pow(1.9,Math.floor(i/5))*roomMult(r.id)/100)*100;
+  r.upg.pets=0;
+ }
+ S.c.petUpgradeRefund={version:1,amount,levels,at:Date.now(),notified:amount===0};
+ if(amount){ledgerize(S);income(amount,'refunds','Возврат за удалённое улучшение «Питомцы»');}
+ return amount;
+}
+// Repair old staff/candidate names in place before the cafe is rendered or saved.
+var bcNameMigrate=migrate;migrate=function(){var result=bcNameMigrate.apply(this,arguments);normalizeStaffNames();refundRetiredPetUpgrades();return result;};
+var bcNameHire=hire;hire=function(candidate){normalizeStaffName(candidate);return bcNameHire.apply(this,arguments);};
+
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
  clearRuntime:function(){for(const k in RT)delete RT[k];modals=[];S=null;sheet=null;const mr=document.getElementById('modalRoot'),sr=document.getElementById('sheetRoot');if(mr)mr.innerHTML='';if(sr)sr.innerHTML='';},
- afterRestore:function(){streakCheck();refreshEntitlements();loadFriends();setTimeout(()=>track(),1500);}
+ afterRestore:function(){var refund=S.c.petUpgradeRefund;if(refund&&refund.amount&&!refund.notified){refund.notified=true;toast('Возврат за «Питомцев»: +'+fmt(refund.amount)+' ₽');}streakCheck();refreshEntitlements();loadFriends();setTimeout(()=>track(),1500);}
 });
 BrewCrewLegal.run(function(){BrewCrewSaves.start();});
 
