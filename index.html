@@ -6381,7 +6381,6 @@ function attention(){
   if(S.fin.taxDueDay - S.day <= 2 && S.money < S.fin.taxAcc) out.push(['money', 'Скоро налог, а денег не хватает', true]);
   if(S.story && S.story.dl) out.push(['story', S.story.dl.label+': осталось '+Math.max(0,S.story.dl.by-S.day)+' дн.', true]);
   const tl = (S.tasks||[]).filter(t=>!t.done && !t.failed).length; if(tl) out.push(['tasks', 'Задания дня: осталось '+tl, false]);
-  if(S.rivals.some(r=>r.status==='sale')) out.push(['district', 'Конкурент продаёт помещение', false]);
   { const wn = S.staff.filter(x=>x.wish).length; if(wn) out.push(['team', 'Сотрудники чего-то хотят: '+wn, false]); }
   if(daysSinceInventory() >= 7) out.push(['stock', 'Инвентаризацию не делали '+daysSinceInventory()+' дн.', daysSinceInventory()>=10]);
   if(S.tips && S.tips.jar >= tipJarCap()*0.8) out.push(['money', 'Банка чаевых почти полная', false]);
