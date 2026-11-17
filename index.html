@@ -3,9 +3,12 @@
 <head>
 <meta name="brewcrew-build" content="v15-full-account-recovery-20261116">
 <meta charset="utf-8">
+<script src="preview-sandbox.js"></script>
+<script src="maintenance-clock.js"></script>
 <script src="legal-gate.js"></script>
 <script src="save-manager.js"></script>
 <script src="cash-journal.js"></script>
+<script src="badge-art.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -3482,7 +3485,7 @@ function szMigrate50(){
   for(const tr of ['f','p']){ const m = Math.min(tier, Math.round(old[tr] * 50 / 30)); z.claimed[tr] = Array.from({length:m}, (_, i)=>i+1);
     if(tr==='p' && !passOwned()) continue;
     for(let n=1; n<=m; n++){ const rw = szReward(tr, n); if(!CONSUMABLE2.includes(rw.k)) szApplyUnlock(rw, info, true); } }
-  (S.badgeList||[]).forEach(b=>{ if(/^sz(10|20)_/.test(b.id)) b.dead = true; }); S.badgeList = (S.badgeList||[]).filter(b=>!b.dead);
+  // Already earned badges survive changes to the season reward ladder.
   if(S.badgeOn && !(S.badgeList||[]).some(b=>b.id===S.badgeOn)) S.badgeOn = (S.badgeList[0]||{}).id || null;
 }
 
@@ -3670,7 +3673,7 @@ function goldenCheck(f){
 goldenCheck = withIncome('tasks', goldenCheck);
 
 /* ---------- продажа сети: сезонное и купленное переезжает с владельцем ---------- */
-const CARRY_KEYS = ['sz','szHist','inv','badgeList','badgeOn','badges','szStyles','szPet','szDrink','szBadge','goldMachine','neonSign','szCourier','vip','passSeen','promos','promoStyles','interior','ent','remind','ref','spends','goalCups','goalMs','goalPrize','verSeen'];
+const CARRY_KEYS = ['sz','szHist','inv','badgeList','badgeOn','badgeSlots','badges','szStyles','szPet','szDrink','szBadge','goldMachine','neonSign','szCourier','vip','passSeen','promos','promoStyles','interior','ent','remind','ref','spends','goalCups','goalMs','goalPrize','verSeen'];
 const _sellFr18 = sellFranchise;
 sellFranchise = function(cityId){ const keep = {}; CARRY_KEYS.forEach(k=>{ if(S[k] !== undefined) keep[k] = S[k]; }); const decor = (S.decor && S.decor.items || []).filter(x=>{ const d = decorDef(x.id); return d && d.season; });
   const sh = _sellFr18(cityId); if(!sh) return sh; Object.assign(S, keep); S.decor = {items:decor}; if(S.spends){ delete S.spends.buyout; } S.owned = []; return sh; };
@@ -6161,8 +6164,8 @@ function ambientTick(){
 
 /* ---------- сохранение ---------- */
 function snapshot(){ S.savedAt = Date.now(); S.sound = soundOn; const copy = Object.assign({}, S); return JSON.stringify(copy, (k,v)=> k==='distract' ? undefined : v); }
-function save(){if(!S||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;const raw=snapshot();if(window.BrewCrewSaves?.active){BrewCrewSaves.writeLocal(S,raw);return;}try{localStorage.setItem(KEY,raw);}catch(e){}}
-function cloudOK(){ return tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'); }
+function save(){if(window.BrewCrewFreeze?.blocked())return;if(!S||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;const raw=snapshot();if(window.BrewCrewSaves?.active){BrewCrewSaves.writeLocal(S,raw);return;}try{localStorage.setItem(KEY,raw);}catch(e){}}
+function cloudOK(){ return !window.BrewCrewLab && tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'); }
 function saveCloud(){if(!S||(window.BrewCrewSaves?.active&&!BrewCrewSaves.canWrite()))return;if(window.BrewCrewSaves?.active){BrewCrewSaves.writeCloud(snapshot());BrewCrewSaves.writeServer(snapshot(),true);return;} }
 function loadLocal(){if(window.BrewCrewSaves?.active)return BrewCrewSaves.peekLocal();try{const data=[KEY,'brewcrew_v3','brewcrew_v3_bak'].map(k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}).filter(s=>s?.v===3);return data.sort((a,b)=>(Number(b.level)||0)-(Number(a.level)||0)||(Number(b.day)||0)-(Number(a.day)||0))[0]||null;}catch(e){return null;}}
 function loadCloud(cb){ if(!cloudOK()) return cb(null);
@@ -7088,6 +7091,7 @@ function checkPatience(s){ if(s.pat > 0) return; s.pat = 40; s.mood = clamp(s.mo
 let lastT = performance.now(), hudT = 0, saveT = 0, cloudT = 0, achT = 0, ambT = 0, entT = 0;
 function frame(t){
   const dt = Math.min(0.1, (t - lastT)/1000); lastT = t;
+  if(window.BrewCrewFreeze?.blocked()){requestAnimationFrame(frame);return;}
   hideBoot();
   try{
   if(S && $('#sMoney')){
@@ -8380,7 +8384,7 @@ function renderInv(p){
   // значки
   const bl = S.badgeList || [];
   p.appendChild(el(`<div class="h chalk">Значки · ${bl.length}</div>`));
-  if(!bl.length) p.appendChild(el(`<div class="empty">Значки дают за 10, 20 и 30 ступени сезона, за пропуск и за тройку лидеров. Выбранный значок виден рядом с названием кофейни и в рейтингах.</div>`));
+  if(!bl.length) p.appendChild(el(`<div class="empty">Значки дают за 15, 30 и 50 ступени сезона, пропуск и достижения. Выбери до трёх — они появятся над полкой слева в зале. Нажми на значок, чтобы узнать его историю.</div>`));
   const wrap = el(`<div class="badges"></div>`);
   bl.forEach(b=>{ const on = S.badgeOn===b.id; const x = el(`<button class="badge15 ${on?'on':''} ${/^Золото|^top_/.test(b.n)||b.id.startsWith('top_')?'gold':/^Серебро/.test(b.n)?'silver':/^Бронза/.test(b.n)?'bronze':''}"><b>${esc(b.n)}</b><span>${esc(b.d||'')}</span><i>${on?'Показывается':'Показывать'}</i></button>`);
     x.onclick = () => { S.badgeOn = on ? null : b.id; save(); renderSheet(); renderHud(); }; wrap.appendChild(x); });
@@ -10944,7 +10948,7 @@ function viewSnap34(force){ if(!S) return undefined; const now = Date.now(); if(
 
 function shotView34(d, mode){ if(!d || !S) return null; const realS = S, realRT = RT.main; let out = null;
   try{ const f = JSON.parse(snapshot());
-    f.name = d.n || 'Кофейня'; f.mich34 = {stars:d.mi || 0, next:0, hist:[]}; f.wear34 = {main:100}; f.prem34 = null; f.level = d.lv || 1; f.rep = d.rp || 3; f.incidents = []; f.mods = []; f.pending = []; f.rivals = []; f.rival = null; f.crownWeek = null; f.closedUntil = 0; f.isOpen = true;
+    f.badgeList=d.bg||[];f.badgeSlots=f.badgeList.map(b=>b.id);f.badgeOn=f.badgeSlots[0]||null;f.name = d.n || 'Кофейня'; f.mich34 = {stars:d.mi || 0, next:0, hist:[]}; f.wear34 = {main:100}; f.prem34 = null; f.level = d.lv || 1; f.rep = d.rp || 3; f.incidents = []; f.mods = []; f.pending = []; f.rivals = []; f.rival = null; f.crownWeek = null; f.closedUntil = 0; f.isOpen = true;
     f.gm = mode === 'bf' ? 8*60 : mode === 'nb' ? 23.5*60 : 14*60; f.weather = 'sun';
     const m = f.rooms.find(r => r.id === 'main'); m.upg = Object.assign({}, m.upg, d.up || {}); m.broken = {};
     f.interior = Object.assign({}, f.interior, {main: d.it || undefined}); f.szStyles = d.it ? [d.it] : []; f.promoSt = d.it ? [d.it] : [];
@@ -11498,8 +11502,8 @@ function isAdm942(){ try{ return [929887068, 432943377].includes(Number(myId()))
 function mtApply942(m){ const on = !!(m && m.on); MT942.text = (m && m.text) || 'Сейчас идут технические работы. Скоро вернёмся, следи за новостями в канале.';
   MT942.adm = isAdm942();
   if(MT942.adm){ mtBadge942(on); MT942.on = false; return; }
-  if(on && !MT942.on){ MT942.on = true; try{ save(); }catch(e){} mtShow942(); }
-  else if(!on && MT942.on){ MT942.on = false; try{ if(S) S.savedAt = Date.now(); lastT = performance.now(); }catch(e){} mtHide942(); mtDone942(); }
+  if(on && !MT942.on){try{save();}catch(e){}MT942.on=true;mtShow942();}
+  else if(!on && MT942.on){MT942.on=false;try{if(S){BrewCrewFreeze.reconcile(S);S.savedAt=Date.now();}lastT=performance.now();}catch(e){}mtHide942();mtDone942();}
   else if(on) mtShow942(); }
 function mtShow942(){ let o = document.getElementById('mt942');
   if(!o){ o = el(`<div id="mt942"><div class="mt942b"><img class="mt942p" src="img/maint_on.jpg" alt="Технические работы"><p class="mt942t"></p><button class="btn mt942c">Открыть канал</button><div class="d">Кофейня на паузе: деньги, гости и время стоят, пока мы чиним. Как закончим, игра продолжится сама.</div></div></div>`);
@@ -11514,7 +11518,7 @@ function mtBadge942(on){ let b = document.getElementById('mt942a'); if(!on){ if(
   if(!b){ b = el(`<div id="mt942a">Техработы включены: игроки видят заглушку</div>`); document.body.appendChild(b); } }
 /* пауза: время не идёт, офлайн-доход за техработы не начисляется, на сервер ничего не уходит */
 const _adv942 = advanceGameMinutes; advanceGameMinutes = function(){ if(MT942.on) return; return _adv942.apply(this, arguments); };
-const _catch942 = catchUp; catchUp = function(){ if(MT942.on){ try{ S.savedAt = Date.now(); }catch(e){} return; } return _catch942.apply(this, arguments); };
+const _catch942 = catchUp; catchUp = function(){if(window.BrewCrewFreeze&&S)BrewCrewFreeze.reconcile(S); if(MT942.on){ try{ S.savedAt = Date.now(); }catch(e){} return; } return _catch942.apply(this, arguments); };
 const _track942 = track; track = function(){ if(MT942.on) return; return _track942.apply(this, arguments); };
 const _cloud942 = saveCloud; saveCloud = function(){ if(MT942.on) return; return _cloud942.apply(this, arguments); };
 /* конфиг приходит при запуске; дальше проверяем раз в минуту */
@@ -14587,7 +14591,7 @@ openSheet=function(k,tab){if(tab==='visit'){tab='guests';bcGuestPane='visit';}re
 if(hallTab==='visit')hallTab='guests';
 
 function bcVisitState(d){
- var f=JSON.parse(JSON.stringify(S));f.active='main';f.name=d.n||'Кофейня';f.level=d.lv||1;f.rep=d.rp||3;f.day=d.day||1;f.gm=d.gm||840;f.weather=d.weather||'sun';f.isOpen=d.open!==false;f.closedUntil=0;
+ var f=JSON.parse(JSON.stringify(S));f.badgeList=d.bg||[];f.badgeSlots=f.badgeList.map(b=>b.id);f.badgeOn=f.badgeSlots[0]||null;f.active='main';f.name=d.n||'Кофейня';f.level=d.lv||1;f.rep=d.rp||3;f.day=d.day||1;f.gm=d.gm||840;f.weather=d.weather||'sun';f.isOpen=d.open!==false;f.closedUntil=0;
  f.incidents=[];f.mods=[];f.pending=[];f.rivals=[];f.rival=null;f.crownWeek=null;f.neonSign=null;f.spends={};f.mich34={stars:d.mi||0};f.wear34={main:100};f.prem34=null;f.dishes={main:0};f.meters={chaos:0};f.kitchen={tier:d.kt||0};
  var main=f.rooms.find(function(r){return r.id==='main';});main.upg=Object.assign({},d.up);if(d.pv!==2)main.upg.tables=bcLegacyPlaces(main.upg.tables,(d.so||[]).includes('room:wide'),(d.so||[]).includes('room:wide')&&(d.so||[]).includes('room:deep'));main.broken={};f.rooms=[main];
  f.skin=JSON.parse(JSON.stringify(d.sk||{floor:'oak',wall:'cream',win:'win',table:'light',chair:'walnut',decor:{}}));f.skinOwned={};(d.so||[]).forEach(function(k){f.skinOwned[k]=1;});Object.keys(f.skin).forEach(function(k){if(typeof f.skin[k]==='string')f.skinOwned[k+':'+f.skin[k]]=1;});
@@ -15079,13 +15083,39 @@ html body .sheet[data-k="hall"] #hallnav .chipbtn[data-t="season"][aria-pressed=
 html body #hallnav .bc-season-copy{display:flex;flex-direction:column;gap:3px;text-align:left}html body #hallnav .bc-season-copy small{font:500 10px/1.2 "Golos Text",sans-serif;color:inherit}
 .bc-task-events .h{margin-top:0}.bc-task-events>.card{width:100%;box-sizing:border-box}
 `;document.head.appendChild(style);})();
+var bcBadgeView=viewSnap34;viewSnap34=function(){const d=bcBadgeView.apply(this,arguments);if(d)d.bg=bcBadgeSlots().map(id=>(S.badgeList||[]).find(b=>b.id===id)).filter(Boolean).map(b=>({id:String(b.id).slice(0,100),n:String(b.n).slice(0,100),d:String(b.d||'').slice(0,240),at:Number(b.at)||0}));return d;};
+// Three permanent badge slots. Only badges already earned can be equipped.
+function bcBadgeSlots(){
+ S.badgeList=S.badgeList||[];const ids=new Set(S.badgeList.map(b=>b.id));
+ if(!Array.isArray(S.badgeSlots))S.badgeSlots=[S.badgeOn,...S.badgeList.map(b=>b.id)].filter((id,i,a)=>ids.has(id)&&a.indexOf(id)===i).slice(0,3);
+ S.badgeSlots=Array.from({length:3},(_,i)=>ids.has(S.badgeSlots[i])&&S.badgeSlots.indexOf(S.badgeSlots[i])===i?S.badgeSlots[i]:null);
+ S.badgeOn=S.badgeSlots.find(Boolean)||null;return S.badgeSlots;
+}
+function bcBadgeChoose(id,slot){if(!(S.badgeList||[]).some(b=>b.id===id)||!Number.isInteger(slot)||slot<0||slot>2)return;const slots=bcBadgeSlots();for(let i=0;i<3;i++)if(slots[i]===id)slots[i]=null;slots[slot]=id;bcBadgeSlots();save();renderHud();structDirty=true;}
+function bcBadgeOpen(id){if((S.badgeList||[]).some(b=>b.id===id))queueModal({kind:'bc_badge',id},true);}
+MODAL15.bc_badge=function(box,m,btn){const b=(S.badgeList||[]).find(b=>b.id===m.id);if(!b){box.append(btn('Закрыть',closeModal));return;}
+ box.classList.add('bc-badge-modal');box.append(el('<div class="bc-badge-large">'+BrewCrewBadgeArt.art(b)+'</div>'));const title=document.createElement('h2');title.textContent=b.n;const desc=document.createElement('p');desc.textContent=b.d||'Памятный значок кофейни';box.append(title,desc);if(b.at){const when=document.createElement('p');when.className='d';when.textContent='Получен '+new Date(b.at).toLocaleDateString('ru-RU');box.append(when);}
+ const slots=bcBadgeSlots(),at=slots.indexOf(b.id),row=el('<div class="row wrap"></div>');
+ for(let i=0;i<3;i++){const old=(S.badgeList||[]).find(b=>b.id===slots[i]);row.append(btn((at===i?'Надет: ':'Место ')+(i+1),()=>{bcBadgeChoose(b.id,i);closeModal();bcBadgeOpen(b.id);},at===i?'':'ghost'));}
+ box.append(el('<p class="d">Три значка висят над полкой слева. Выбери место: значок на нём будет заменён.</p>'),row);
+ if(at>=0)box.append(btn('Снять значок',()=>{slots[at]=null;bcBadgeSlots();save();renderHud();closeModal();},'ghost'));
+ box.append(btn('Закрыть',closeModal,'ghost'));
+};
+const bcBadgeImages=new Map();function bcBadgeImage(b){if(!bcBadgeImages.has(b.id)){const im=new Image();im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(BrewCrewBadgeArt.art(b));bcBadgeImages.set(b.id,im);}return bcBadgeImages.get(b.id);}
+var bcBadgeRoom=drawRoom;drawRoom=function(id){const r=bcBadgeRoom.apply(this,arguments);if(id==='main'&&S){const slots=bcBadgeSlots();ctx.save();ctx.setTransform(scale,0,0,scale,-OX*scale,0);slots.forEach((id,i)=>{const b=(S.badgeList||[]).find(b=>b.id===id);if(!b)return;const im=bcBadgeImage(b);if(im.complete&&im.naturalWidth)ctx.drawImage(im,8+i*20,6,16,16);});ctx.restore();}return r;};
+function bcBadgeRibbon(){const old=document.getElementById('bc-badge-ribbon'),scene=document.getElementById('scene');if(!scene||!S||S.active!=='main'){old?.remove();return;}const slots=bcBadgeSlots();if(!slots.some(Boolean)){old?.remove();return;}let root=old;if(!root){root=el('<div id="bc-badge-ribbon" role="group" aria-label="Значки кофейни"></div>');scene.append(root);}root.replaceChildren();const c=cv.getBoundingClientRect(),sc=scene.getBoundingClientRect(),unit=c.width/VW;
+ root.style.cssText='position:absolute;z-index:12;display:flex;left:'+(c.left-sc.left+(6-OX)*unit)+'px;top:'+(c.top-sc.top+2*c.height/H)+'px;';slots.forEach((id,i)=>{const b=(S.badgeList||[]).find(b=>b.id===id),button=document.createElement('button');button.className='bc-badge-hit';button.style.cssText='width:'+20*unit+'px;height:'+28*c.height/H+'px;';button.setAttribute('aria-label',b?b.n:'Пустое место '+(i+1));button.disabled=!b;button.onclick=e=>{e.stopPropagation();if(b)bcBadgeOpen(id);};root.append(button);});}
+var bcBadgeHud=renderHud;renderHud=function(){const r=bcBadgeHud.apply(this,arguments);bcBadgeRibbon();return r;};
+var bcBadgeInv=renderInv;renderInv=function(p){bcBadgeSlots();bcBadgeInv.apply(this,arguments);const buttons=p.querySelectorAll('.badge15');buttons.forEach((button,i)=>{const b=S.badgeList[i];if(!b)return;button.classList.toggle('on',S.badgeSlots.includes(b.id));button.insertAdjacentHTML('afterbegin',BrewCrewBadgeArt.art(b));button.querySelector('i').textContent=S.badgeSlots.includes(b.id)?'Надет · место '+(S.badgeSlots.indexOf(b.id)+1):'Посмотреть и надеть';button.onclick=()=>bcBadgeOpen(b.id);});};
+(function(){const style=document.createElement('style');style.textContent='.bc-medallion{width:48px;height:48px;flex:none}.badge15 .bc-medallion{display:block;margin:0 auto 6px}.bc-badge-hit{padding:0;border:0;background:transparent;cursor:pointer}.bc-badge-hit:focus-visible{outline:2px solid #fff3b6;border-radius:50%}.bc-badge-large .bc-medallion{width:80px;height:80px}.bc-badge-modal{margin-top:auto!important;background:#fff5df!important;color:#493322!important;border-radius:24px 24px 0 0!important}.bc-badge-modal .d{color:#765c42!important}.veil:has(.bc-badge-modal){align-items:flex-end!important;padding-bottom:0!important}#hbdg{display:none!important}';document.head.append(style);})();
+
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
  clearRuntime:function(){for(const k in RT)delete RT[k];modals=[];S=null;sheet=null;const mr=document.getElementById('modalRoot'),sr=document.getElementById('sheetRoot');if(mr)mr.innerHTML='';if(sr)sr.innerHTML='';},
  afterRestore:function(){const hallRefund=S.c.hall2Retired;if(hallRefund&&hallRefund.amount&&!hallRefund.notified){hallRefund.notified=true;toast('Возврат за второй зал: +'+fmt(hallRefund.amount)+' ₽');}var refund=S.c.petUpgradeRefund;if(refund&&refund.amount&&!refund.notified){refund.notified=true;toast('Возврат за «Питомцев»: +'+fmt(refund.amount)+' ₽');}refreshEntitlements();loadFriends();setTimeout(()=>track(),1500);}
 });
-BrewCrewLegal.run(function(){BrewCrewSaves.start();});
+Promise.resolve(window.BrewCrewLab?.ready).then(function(){return BrewCrewFreeze.prepare();}).then(function(){BrewCrewLegal.run(function(){BrewCrewSaves.start();});});
 
 </script>
 </body>

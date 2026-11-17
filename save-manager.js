@@ -1,7 +1,7 @@
 /* Recover existing cafes before allowing creation. Never equate a storage error with an empty account. */
 (function(){'use strict';
  const PREFIX='bc_save_',PART=3900,LIMIT=200;let hooks=null,status='loading',generation=0,selectedBank=null,selectedMeta=null,cloudWritable=false,cloudQueue=null,cloudBusy=false,epoch=0;
- const tg=()=>window.Telegram?.WebApp,cloud=()=>tg()?.CloudStorage;
+ const tg=()=>window.Telegram?.WebApp,cloud=()=>window.BrewCrewLab?null:tg()?.CloudStorage;
  const id=()=>Number(tg()?.initDataUnsafe?.user?.id)||0;
  const key=()=>hooks?.key||'brewcrew_max13';
  function get(k){try{return localStorage.getItem(k);}catch{return null;}}

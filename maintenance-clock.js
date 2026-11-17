@@ -1,0 +1,18 @@
+/* A pause changes elapsed game time, never the contents of a player's inventory. */
+(function(){'use strict';let intervals=[],current=null,on=false,uncertain=true,offset=0,gateResolve=null,timer=null;const timeout=window.setTimeout.bind(window),interval=window.setInterval.bind(window),isAdmin=()=>[929887068,432943377].includes(Number(window.Telegram?.WebApp?.initDataUnsafe?.user?.id)),exempt=()=>!!window.BrewCrewLab||isAdmin();
+ const handles=new Map(),cancel=window.clearTimeout.bind(window);const clear=id=>{cancel(handles.get(id)??id);handles.delete(id);};window.clearTimeout=clear;window.clearInterval=clear;
+ const blocked=()=>!exempt()&&(on||uncertain);
+ // Pause scheduled game callbacks too. The status poll below uses the native clock.
+ window.setInterval=(fn,ms,...args)=>interval(typeof fn==='function'?()=>{if(!blocked())fn(...args);}:fn,ms);
+ window.setTimeout=(fn,ms,...args)=>{if(typeof fn!=='function')return timeout(fn,ms);let id;const run=()=>{if(blocked()){handles.set(id,timeout(run,250));return;}handles.delete(id);fn(...args);};id=timeout(run,ms);handles.set(id,id);return id;};
+ function paused(from,to=Date.now()){if(exempt()||!Number.isFinite(from))return 0;const list=intervals.concat(on&&current?[{from:current,to:to+offset}]:[]).map(p=>[Math.max(from,p.from-offset),Math.min(to,p.to-offset)]).filter(p=>p[1]>p[0]).sort((a,b)=>a[0]-b[0]);let total=0,last=-Infinity;for(const[a,b]of list){total+=Math.max(0,b-Math.max(a,last));last=Math.max(last,b);}return total;}
+ function overlay(text){let e=document.getElementById('bc-pause-gate');if(!e){e=document.createElement('div');e.id='bc-pause-gate';e.style.cssText='position:fixed;inset:0;z-index:999998;background:#261b14;color:#fff1d6;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:28px;font:16px/1.6 sans-serif';document.body.append(e);}e.textContent=text;}
+ function reconcile(s){if(!s)return;const from=Number(s.savedAt)||Date.now(),n=paused(from);if(!n)return;for(const k of ['nextEv','nextAbsurd','candsAt'])if(Number.isFinite(s[k]))s[k]+=n;for(const i of s.incidents||[])if(Number.isFinite(i.at))i.at+=n;for(const st of s.staff||[])for(const k of ['breakUntil','praiseAt'])if(st[k]>from)st[k]+=n;s.savedAt=from+n;}
+ async function poll(){if(window.BrewCrewLab){uncertain=false;on=false;return true;}try{const r=await fetch('/api/maintenance',{cache:'no-store',signal:AbortSignal.timeout(10000)}),d=await r.json();if(!r.ok||!d.ok)throw Error();offset=Number.isFinite(d.now)?d.now-Date.now():0;const m=d.maint||{on:false,periods:[]};intervals=m.periods||[];current=m.since||m.at;on=!!m.on;uncertain=false;
+ if(!exempt()&&on)overlay(m.text||'Технические работы. Кофейня сохранена и стоит на паузе.');else{document.getElementById('bc-pause-gate')?.remove();if(typeof window.mtApply942==='function')window.mtApply942(m);if(gateResolve){gateResolve();gateResolve=null;}}
+ if(!exempt()&&on&&typeof window.mtApply942==='function')window.mtApply942(m);return true;
+ }catch{uncertain=true;if(!exempt())overlay('Проверяем состояние игры. Кофейня сохранена; расчёты приостановлены до восстановления связи.');return false;}}
+ const api=window.BrewCrewFreeze={blocked,paused,reconcile,prepare:async()=>{if(window.BrewCrewLab){uncertain=false;return;}await poll();if(blocked())await new Promise(resolve=>gateResolve=resolve);},poll};
+ // Start after the document exists; keep checking while the gameplay timers are paused.
+ document.addEventListener('DOMContentLoaded',()=>{timer=interval(poll,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll();});},{once:true});
+})();

@@ -1,0 +1,11 @@
+/* Loaded before all save readers. Preview hosts always use the sandbox, even without ?lab=1. */
+(function(){'use strict';const u=new URL(location.href),preview=u.hostname.endsWith('.brewcrew.pages.dev')&&u.hostname!=='brewcrew.pages.dev';if(!preview&&u.searchParams.get('lab')!=='1')return;
+ const nativeFetch=window.fetch.bind(window),prefix='bc_lab_v1_';
+ for(const method of ['getItem','setItem','removeItem']){const native=Storage.prototype[method];Storage.prototype[method]=function(key,...args){return native.call(this,prefix+key,...args);};}
+ const lab=window.BrewCrewLab={ready:null};
+ window.fetch=async(input,options={})=>{const r=new Request(input instanceof Request?input:new URL(input,location.href),options);if(new URL(r.url).origin!==location.origin)throw Error('Внешние запросы отключены в тестовой версии');const headers=new Headers(r.headers);headers.set('x-brewcrew-lab','1');return nativeFetch(new Request(r,{headers}));};
+ lab.ready=new Promise(resolve=>{document.addEventListener('DOMContentLoaded',async()=>{const root=document.createElement('div');root.id='bc-lab-gate';root.style.cssText='position:fixed;inset:0;z-index:999999;background:#261b14;color:#fff1d6;display:grid;place-content:center;padding:28px;text-align:center';root.textContent='Проверяем доступ к тестовой кофейне…';document.body.append(root);
+  try{const r=await window.fetch('/api/lab',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({initData:window.Telegram?.WebApp?.initData})}),d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'Нет доступа');root.remove();const bar=document.createElement('div');bar.id='bc-lab-label';bar.textContent='ТЕСТОВАЯ КОФЕЙНЯ · прогресс игроков не меняется';bar.style.cssText='position:fixed;bottom:74px;left:4px;right:4px;z-index:90;padding:5px;border-radius:8px;text-align:center;background:#654b98;color:white;font:700 10px sans-serif;pointer-events:none';document.body.append(bar);resolve();}
+  catch(e){root.textContent=e.message+' · Открой ссылку через Telegram под аккаунтом администратора.';}
+ },{once:true});});
+})();
