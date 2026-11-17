@@ -15132,6 +15132,7 @@ var bcSeasonObjectProps=sceneUpgradeProps;sceneUpgradeProps=function(st,u,items,
 var bcSeasonInv=renderInv;renderInv=function(p){bcSeasonInv.apply(this,arguments);const owned=decorOwned().filter(it=>['pled','garland','tree','plaque','mug30'].includes(it.id));if(!owned.length)return;const card=el('<div class="card bc-season-placed"><div class="t">Сезонные предметы в зале</div></div>');for(const it of owned){const d=decorDef(it.id),line=document.createElement('p');line.className='d';line.textContent=d.n+' · '+({pled:'плед на левом стуле у первого столика, огоньки вдоль стены',garland:'огоньки вдоль стены',tree:'на задней стойке',plaque:'на стене за баром',mug30:'на передней стойке'}[it.id])+' · '+d.d;card.append(line);}p.append(card);};
 (function(){const style=document.createElement('style');style.textContent='.bc-season-badge{width:100%;background:transparent;border:0;color:inherit;text-align:left;display:flex;align-items:center;gap:6px;padding:8px 0;border-top:1px solid #d8bf8c;cursor:pointer;font-size:11px;line-height:1.4}.bc-season-badge svg{width:32px;height:32px;flex:none}.bc-season-item-hint{font-size:11px!important;line-height:1.4!important}.bc-season-placed p{line-height:1.5}';document.head.append(style);})();
 
+document.title=(window.BrewCrewLab?'Админская':'Оригинал')+' · Brew Crew';
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,

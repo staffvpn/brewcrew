@@ -12,9 +12,9 @@ export async function sandbox({request,env}){
   if(path==='/api/config'||path==='/api/maintenance')return json({ok:true,lab:true,ready:!!env.DB&&!!env.BOT_TOKEN,apiOrigin:'https://brewcrew.pages.dev',maint:{on:false,periods:[]},now:Date.now()});
   return json({ok:true,lab:true,top:[],sps:[],total:0,season:sezId()});
  }
- if(!env.DB||!env.BOT_TOKEN)return json({ok:false,error:'Тестовый сервер ещё не настроен'},503);
- let b;try{b=await request.json();}catch{return json({ok:false},400);}
- const user=await verifyInitData(b?.initData,env.BOT_TOKEN);if(!user||!ADMINS.includes(user.id))return json({ok:false,error:'Тестовая кофейня доступна только администраторам'},403);
+ if(!env.DB||!env.BOT_TOKEN)return json({ok:false,error:'Админская ещё не настроена'},503);
+ let b;try{b=await request.json();}catch{return json({ok:false,error:'Админская не получила данные входа. Повтори открытие через бота.'},400);}
+ const user=await verifyInitData(b?.initData,env.BOT_TOKEN);if(!user)return json({ok:false,error:'Не удалось подтвердить вход Telegram. Открой Админскую кнопкой в /admin.'},401);if(!ADMINS.includes(user.id))return json({ok:false,error:'Админская доступна только двум администраторам игры',userId:user.id},403);
  const key='lab_v1_'+user.id,read=async()=>{const r=await env.DB.prepare('SELECT val FROM cache WHERE key=?1').bind(key).first();try{return JSON.parse(r?.val||'{}');}catch{return{};}},write=async d=>env.DB.prepare('INSERT INTO cache(key,val,at) VALUES(?1,?2,?3) ON CONFLICT(key) DO UPDATE SET val=excluded.val,at=excluded.at').bind(key,JSON.stringify(d),Date.now()).run();
  if(path==='/api/lab')return json({ok:true,lab:true,userId:user.id});
  if(path==='/api/recovery'){const d=await read();return json({ok:true,lab:true,exists:!!d.save,saves:d.save?[d.save]:[],cafe:d.save?.name,level:d.save?.level});}
@@ -25,7 +25,7 @@ export async function sandbox({request,env}){
  if(path==='/api/purchases')return json(ent);
  if(path==='/api/admin-test'){
   if(b.kind==='status')return json({ok:true,adminTest:true,lab:true});
-  if(b.gift||b.to||b.tg_id)return json({ok:false,error:'В тестовой версии нельзя выдавать предметы игрокам'},400);
+  if(b.gift||b.to||b.tg_id)return json({ok:false,error:'В Админской нельзя выдавать предметы игрокам'},400);
   if(b.kind==='premium'&&SHOP[b.item]){d.items=[...new Set(owned.concat(b.item))];await write(d);return json({ok:true,adminTest:true,grant:{kind:'premium',item:b.item},entitlements:{...ent,interiors:[...new Set(ent.interiors.concat(b.item.startsWith('int_')?[b.item]:[]))],frames:[...new Set(ent.frames.concat(b.item.startsWith('frame_')?[b.item]:[]))],lux:[...new Set(ent.lux.concat(b.item.startsWith('lux_')?[b.item.slice(4)]:[]))],extras:[...new Set(ent.extras.concat(['uniform','music','flagship','starter'].includes(b.item)?[b.item]:[]))],skins:ent.skins.concat(SHOP[b.item].category&&SHOP[b.item].skin?[{category:SHOP[b.item].category,id:SHOP[b.item].skin,at:Date.now()}]:[])}});}
   if(b.kind==='skin')return json({ok:true,adminTest:true,grant:{kind:'skin',category:b.category,id:b.id}});
   if(b.kind==='upgrade')return json({ok:true,adminTest:true,grant:{kind:'upgrade',id:b.id,count:b.count}});
@@ -37,7 +37,7 @@ export async function sandbox({request,env}){
   if(b.action==='append'){if(!Array.isArray(b.rows)||b.rows.length>100||!b.rows.every(validCashEvent))return json({ok:false},400);let seq=rows[0]?.serverId||0;for(const row of b.rows)if(!rows.some(x=>x.id===row.id))rows.unshift({...row,serverId:++seq});rows=rows.slice(0,500);await env.DB.prepare('INSERT INTO cache(key,val,at) VALUES(?1,?2,?3) ON CONFLICT(key) DO UPDATE SET val=excluded.val,at=excluded.at').bind(ledgerKey,JSON.stringify(rows),Date.now()).run();return json({ok:true,accepted:b.rows.map(r=>r.id)});}
   const q=String(b.q||'').toLowerCase();rows=b.currency==='XTR'?[]:rows.filter(r=>(!b.cursor||r.serverId<b.cursor)&&(b.direction!=='in'||r.delta>0)&&(b.direction!=='out'||r.delta<0)&&(r.reason+' '+JSON.stringify(r.parts||[])).toLowerCase().includes(q));return json({ok:true,rows:rows.slice(0,50),more:rows.length>50,cursor:rows[Math.min(50,rows.length)-1]?.serverId||0});
  }
- if(['/api/invoice','/api/gift','/api/visit','/api/remind','/api/promo','/api/cron'].includes(path))return json({ok:false,error:'Платежи, рассылки и действия с игроками отключены в тестовой версии'},403);
+ if(['/api/invoice','/api/gift','/api/visit','/api/remind','/api/promo','/api/cron'].includes(path))return json({ok:false,error:'Платежи, рассылки и действия с игроками отключены в Админской'},403);
  // Reads and unsupported game systems get empty sandbox data, never live account data.
  return json({ok:true,lab:true,ops:[],top:[],friends:[],cafes:[],rows:[],exists:false});
 }
