@@ -11279,17 +11279,16 @@ closeDay = function(){ try{ wearDay931(); michDay931(); crisisDay931();
 
 /* ===== 9.3.2: чистка интерфейса ===== */
 
-/* «Сюжет» переезжает в «Гости»: отдельной вкладки больше нет */
+/* Story content and its alerts are not part of the Guests section. */
 { const i = HALL_TABS.findIndex(t => t[0] === 'story'); if(i >= 0) HALL_TABS.splice(i, 1); }
 let storyJump935 = false;
 const _openSheet935 = openSheet;
-openSheet = function(k, tabKey){ if(tabKey === 'story'){ tabKey = 'guests'; storyJump935 = true; } return _openSheet935.call(this, k, tabKey); };
+openSheet = function(k, tabKey){ if(tabKey === 'story')tabKey='tasks'; return _openSheet935.call(this, k, tabKey); };
 const _attention935 = attention;
-attention = function(){ return _attention935.apply(this, arguments).map(a => a[0] === 'story' ? ['guests', a[1], a[2]] : a).filter(a => !/закрыться на час/i.test(a[1] || '')); };
+attention = function(){ return _attention935.apply(this, arguments).filter(a => a[0]!=='story'&&!/закрыться на час/i.test(a[1] || '')); };
 const _renderGuests935 = renderGuests;
-renderGuests = function(p){ _renderGuests935.apply(this, arguments); try{ const h = el(`<div class="h chalk" id="story935">Сюжет</div>`); p.appendChild(h); renderStory(p);
-  if(storyJump935){ storyJump935 = false; setTimeout(() => { try{ h.scrollIntoView({block:'start'}); }catch(e){} }, 30); } }catch(e){ console.error(e); } };
-if(hallTab === 'story') hallTab = 'guests';
+renderGuests = function(p){return _renderGuests935.apply(this,arguments);};
+if(hallTab === 'story') hallTab = 'tasks';
 
 /* «Закрыться на час» — из Дел в Настройки */
 const _renderTasks935 = renderTasks;
@@ -14677,13 +14676,11 @@ function bcCafeDirectory(p){
 var bcVisitSheet=renderSheet;
 renderSheet=function(){var p=document.getElementById('panel');if(sheet==='hall'&&hallTab==='guests'&&bcGuestPane==='visit'&&!storyJump935&&p&&p.querySelector('.bc-cafe-search')){structDirty=false;return;}return bcVisitSheet.apply(this,arguments);};
 renderGuests=function(p){ S.bookNew=0;
- if(storyJump935)bcGuestPane='cafe';
  var tabs=el('<div class="bc-guests-nav" role="tablist" aria-label="Гости"><button class="chipbtn" role="tab" data-guest-pane="visit">В гости</button><button class="chipbtn" role="tab" data-guest-pane="cafe">Гости кофейни</button></div>'),body=el('<div class="bc-guests-body" role="tabpanel"></div>');p.append(tabs,body);
  tabs.querySelectorAll('button').forEach(function(b){var active=b.dataset.guestPane===bcGuestPane;b.classList.toggle('on',active);b.setAttribute('aria-selected',String(active));b.onclick=function(){bcGuestPane=b.dataset.guestPane;structDirty=true;renderSheet();};});
  if(bcGuestPane==='visit'){bcCafeDirectory(body);return;}
  renderReviews(body);sub='book';renderMore(body);S.bookNew=0;
- var h=el('<h3 id="story935">Истории кофейни</h3>');body.append(h);renderStory(body);
- if(storyJump935){storyJump935=false;setTimeout(function(){if(h.isConnected)h.scrollIntoView({block:'start'});},30);}
+
 };
 var bcGuestOpen=openSheet;
 openSheet=function(k,tab){if(tab==='visit'){tab='guests';bcGuestPane='visit';}return bcGuestOpen.call(this,k,tab);};
