@@ -9,6 +9,8 @@
 <script src="save-manager.js"></script>
 <script src="cash-journal.js"></script>
 <script src="badge-art.js"></script>
+<script src="staff-skin-art.js"></script>
+<script src="blogger-nikita-art.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -1052,11 +1054,11 @@ const LEGENDS = [
 ];
 const NAMES_M = ['Гоша','Артём','Лёха','Денис','Толик','Рустам','Александр','Жора','Боря','Кеша','Митя','Стас','Гена','Ваня','Егор','Тимур','Влад','Паша','Костя','Макс','Дима','Олег','Серёга','Никита'];
 const NAMES_F = ['Марина','Карина','Вика','Света','Ника','Полина','Ульяна','Даша','Лиза','Зоя','Мила','Оля','Аня','Евгения','Соня','Катя','Настя','Юля','Алина','Таня','Лена','Ира','Маша','Вера'];
-// Ordinary staff use the gender of their role artwork; named story characters keep their identity.
+// Staff with both appearance sets keep their identity; named story characters keep their names.
 const STAFF_VISUAL_SEX={'Бариста':'f','Кассир':'f','Официант':'m','Мойщица':'f','Повар':'m'};
 function normalizeStaffName(s,used){
  if(!s||s.isYou)return s;
- const special=!!(s.legendId||s.prize||s.szLeg||s.som34),sex=(special||s.nameGenderFixed)?(s.sex==='f'?'f':'m'):(STAFF_VISUAL_SEX[s.role]||(s.sex==='f'?'f':'m'));
+ const special=!!(s.legendId||s.prize||s.szLeg||s.som34),mixed=['Бариста','Кассир','Официант'].includes(s.role),sex=(s.name==='Шеф Ноябрина'||s.szLeg==='2026-11')?'f':(special||s.nameGenderFixed||mixed)?(s.sex==='f'?'f':'m'):(STAFF_VISUAL_SEX[s.role]||(s.sex==='f'?'f':'m'));
  const own=sex==='f'?NAMES_F:NAMES_M,other=sex==='f'?NAMES_M:NAMES_F,old=String(s.name||'');
  s.sex=sex;
  if(!special&&(!old||other.includes(old)||(sex==='m'&&old==='Женя')||(sex==='f'&&old==='Саня'))){
@@ -1408,7 +1410,7 @@ function fmtR(n){ n = Math.round(n); return (n<0?'−':'')+Math.abs(n).toLocaleS
 function makeStaff(role, opts){
   opts = opts || {};
   const used = new Set(S.staff.map(s=>s.name).concat(S.cands.map(s=>s.name)));
-  let spr = null, sex = opts.sex==='m'||opts.sex==='f'?opts.sex:(STAFF_VISUAL_SEX[role]||(chance(0.5)?'m':'f'));
+  let spr = null, sex = opts.sex==='m'||opts.sex==='f'?opts.sex:(['Бариста','Кассир','Официант'].includes(role)?(chance(0.5)?'m':'f'):(STAFF_VISUAL_SEX[role]||(chance(0.5)?'m':'f')));
   if(HOOK.pickSpr){ const r0 = HOOK.pickSpr(role, sex); spr = r0.spr; sex = r0.sex; }
   const list = sex==='f' ? NAMES_F : NAMES_M;
   let name = pick(list), g = 0; while(used.has(name) && g++<50) name = pick(list);
@@ -11690,7 +11692,7 @@ function tintSheet(kind,a,b){
     var id=g.getImageData(0,0,c.width,c.height), d=id.data;
     var coat=kind==='g'?COATS[a]:null, hair=HAIRS[b], cap=kind==='b'?(typeof a==='string'?UNIC[a.slice(1)]:CAPS[a]):null;
     var body=new Uint8Array(c.width*c.height);
-    for(var nm in CM){ var cl=CM[nm], top=nm.indexOf('slip')>0?0:Math.floor(cl.h*0.5);
+    for(var nm in CM){ if(window.BrewCrewStaffArt&&window.BrewCrewStaffArt.clips[nm])continue; var cl=CM[nm], top=nm.indexOf('slip')>0?0:Math.floor(cl.h*0.5);
       for(var fi=0;fi<cl.f.length;fi++){ var fx=cl.f[fi][0], fy=cl.f[fi][1];
         for(var yy=fy+top;yy<fy+cl.h;yy++) body.fill(1,yy*c.width+fx,yy*c.width+fx+cl.w); } }
     for(var i=0;i<d.length;i+=4){
@@ -11969,7 +11971,7 @@ function drawStaffNew(e,kind,alpha){
   var now=track(e), H=65, sh=sheetFor(e), x=e.x, y=e.y-barLift(e), d=e._d||'south', mm=md(d), f;
   if(bcPhonePose(e,kind,sh,x,y,H,now,alpha))return;
   var has=function(n){ return !!CM[kind+'_'+n]; };
-  if(e._moving){ var cl=dclip(kind+'_walk:',d,e); if(cl){ blit(sh,cl[0],Math.floor((e._dist||0)/4.6),x,y,H,cl[1],alpha); return; } }
+  if(e._moving){ var cl=dclip(bcSkinWalkPrefix(kind),d,e); if(cl){ blit(sh,cl[0],Math.floor((e._dist||0)/4.6),x,y,H,cl[1],alpha); return; } }
   var busy=false; try{ busy=rt(S.active).jobs.length>0; }catch(err){}
   if(kind==='washer'&&!e._dis){
     if(e.washing&&has('wash:north')){ blit(sh,'washer_wash:north',pp(CM['washer_wash:north'].f.length,Math.floor((now+e._ph)*6)),x,y,H,false,alpha); return; }
@@ -12047,7 +12049,7 @@ function street(now){
     var pxp=sp>0 ? OX+((now*speed+p*34)%(OW+22))-11 : OX+OW-((now*speed+p*34)%(OW+22))+11;
     if(typeof GUESTS!=='undefined') drawSprite(GUESTS[(p*5+2)%GUESTS.length], pxp, OY+OH*0.80+p*2, 14, sp<0, 0, 0.9); }
   try{ var smk=workingStaff(S.active).filter(function(x){return x.distract&&x.distract.kind==='smoke';}).slice(0,2);
-    smk.forEach(function(sx_,k){ var kind=KIND[sx_.role]||'barista', nm=kind+'_idle:south'; if(!CM[nm]) nm='barista_idle:south';
+    smk.forEach(function(sx_,k){ var kind=bcStaffVariant(sx_)||KIND[sx_.role]||'barista', nm=kind+'_idle:south'; if(!CM[nm]) nm='barista_idle:south';
       var px=OX+OW*0.3+k*OW*0.34, py=OY+OH*0.86;
       blit(CA,nm,Math.floor(now*2.4+k),px,py,24,k%2===1,0.95);
       ctx.fillStyle='rgba(235,235,235,.55)'; for(var i=0;i<3;i++){ var tt=(now*0.5+i*0.33)%1; ctx.beginPath(); ctx.arc(px+5+Math.sin(now*2+i)*1.5, py-18-tt*10, 1+tt*1.6, 0, 6.3); ctx.fill(); } });
@@ -12906,7 +12908,7 @@ if(typeof staffModal!=='undefined'){ var _sm7=staffModal; window.staffModal=func
   try{ Array.prototype.forEach.call(box.querySelectorAll('.card'),function(c){ var t=c.querySelector('.t'); if(t&&/Трансферное окно/.test(t.textContent)) c.remove(); });
     var s=S.staff.find(function(x){return x.id===m.sid;}); if(!s) return;
     var head=box.firstElementChild, spr=head&&head.querySelector('.spr');
-    if(spr){ var kind=s.isYou?'barista':(KIND[s.role]||'barista'); var w=document.createElement('div'); w.className='u7p'; w.appendChild(portrait(kind,84)); spr.replaceWith(w); head.classList.add('u7st'); head.classList.remove('row');
+    if(spr){ var kind=bcStaffVariant(s)||(s.isYou?'barista':(KIND[s.role]||'barista')); var w=document.createElement('div'); w.className='u7p'; w.appendChild(portrait(kind,84)); spr.replaceWith(w); head.classList.add('u7st'); head.classList.remove('row');
       var dd=head.querySelector('.d'); if(dd){ var kv=document.createElement('div'); kv.className='u7kv';
         kv.innerHTML='<div><b>×'+staffSpeed(s).toFixed(2).replace('.',',')+'</b><s>скорость</s></div><div><b>'+s.shifts+'</b><s>смен</s></div><div><b>'+s.absences+'</b><s>прогулов</s></div><div><b>'+fmt(shiftPay(s))+' ₽</b><s>за смену</s></div>';
         dd.remove(); head.insertAdjacentElement('afterend',kv); } }
@@ -14183,7 +14185,7 @@ var bgOriginalMove=moveTo;
 window.moveTo=function(e,tx,ty,sp,dt){
   if(!bgSpecial(e)){
     var x=e.x,y=e.y,result=bgOriginalMove(e,tx,ty,sp,dt);
-    if(S&&S.active==='main'&&!e.isPet&&(e.spr!=null||e._role)&&!bgActorClear(x,y,e.x,e.y,[VIPRUN,LZRUN].filter(function(p){return p&&p!==e;}))){e.x=x;e.y=y;e.walk=false;return false;}return result;
+    if(S&&S.active==='main'&&!e.isPet&&(e.spr!=null||e._role)&&!bgActorClear(x,y,e.x,e.y,bgSpecialActors(e))){e.x=x;e.y=y;e.walk=false;return false;}return result;
   }
   if(!S||S.active!=='main'||e.h2)return bgOriginalMove(e,tx,ty,sp,dt);
   var rw=RW(),doorY=DOOR[1],speed=sp*.85,delta=Math.min(.1,Math.max(0,dt));
@@ -14894,6 +14896,115 @@ var bcEconomyOpsNew=newState;newState=function(){var ops=S&&S.c&&S.c.economyOps,
 
 var bcLegalCheckout=MODAL15.bc_checkout;
 MODAL15.bc_checkout=function(box,m,btn){bcLegalCheckout.apply(this,arguments);var p=BC_STORE[m.sku];if(p&&p.sub)box.append(el('<p class="d">Подписка: '+nf(p.stars)+' Stars каждые 30 дней, с автопродлением. Управление и отмена — в подписках Telegram.</p>'));box.append(el('<p class="d"><a href="payments.html" target="_blank" rel="noopener">Условия покупок и возвратов</a></p>'));};
+
+/* Staff appearance follows identity in the room, portraits, work and breaks. */
+var BC_STAFF_SHEET=new Image(),BC_STAFF_DRAW=null;
+var BC_STAFF_SKINS=window.BrewCrewStaffArt||{clips:{}};
+Object.assign(CM,BC_STAFF_SKINS.clips);
+BC_STAFF_SHEET.onload=function(){PORT={};structDirty=true;if(S)renderPanel();};
+BC_STAFF_SHEET.src=BC_STAFF_SKINS.src||'';
+window.bcStaffVariant=function(s){
+ if(!s||s.isYou)return null;
+ if(s.name==='Шеф Ноябрина'||s.szLeg==='2026-11')return 'noyabrina';
+ if(s.role==='Бариста'&&s.sex==='f')return 'barista_f';
+ if(s.role==='Кассир'&&s.sex==='m')return 'cashier_m';
+ if(s.role==='Официант'&&s.sex==='f')return 'waiter_f';
+ return null;
+};
+function bcSkinWalkPrefix(kind){return BC_STAFF_DRAW&&CM[BC_STAFF_DRAW+'_walk:south']?BC_STAFF_DRAW+'_walk:':kind+'_walk:';}
+function bcSkinClip(name,variant){
+ if(BC_STAFF_SKINS.clips[name])return name;
+ if(!variant||! /^(barista|cashier|waiter)_/.test(name))return null;
+ var mapped=variant+'_'+name.slice(name.indexOf('_')+1);
+ return BC_STAFF_SKINS.clips[mapped]?mapped:null;
+}
+var bcIdentitySheet=sheetFor;
+sheetFor=function(e){return BC_STAFF_DRAW&&BC_STAFF_SHEET.naturalWidth?BC_STAFF_SHEET:bcIdentitySheet.apply(this,arguments);};
+var bcStaffArtBlit=blit;
+blit=function(sheet,name,idx,cx,fy,H,mirror,alpha){
+ var mapped=bcSkinClip(name,BC_STAFF_DRAW);
+ if(mapped&&BC_STAFF_SHEET.naturalWidth)return bcStaffArtBlit(BC_STAFF_SHEET,mapped,idx,cx,fy,H,mirror,alpha);
+ return bcStaffArtBlit.apply(this,arguments);
+};
+var bcIdentityDrawStaff=drawStaff;
+window.drawStaff=function(s,p,id){var before=BC_STAFF_DRAW;BC_STAFF_DRAW=bcStaffVariant(s);try{return bcIdentityDrawStaff.apply(this,arguments);}finally{BC_STAFF_DRAW=before;}};
+var bcIdentityStaffSpr=staffSpr;
+window.staffSpr=function(s){var spr=bcIdentityStaffSpr.apply(this,arguments);__sprK=bcStaffVariant(s)||__sprK;return spr;};
+// Trim transparent padding in cards; world sprites retain their shared foot anchor.
+var bcIdentityPortURL=portURL,bcIdentityPortrait=portrait;
+portURL=function(kind){
+ var c=BC_STAFF_SKINS.clips[kind+'_idle:south'];if(!c)return bcIdentityPortURL.apply(this,arguments);
+ if(!BC_STAFF_SHEET.naturalWidth)return null;
+ var key='staff:'+kind;if(PORT[key])return PORT[key];
+ var b=c.crop||[0,0,c.w,c.h],canvas=document.createElement('canvas');canvas.width=b[2]*3;canvas.height=b[3]*3;
+ var g=canvas.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(BC_STAFF_SHEET,c.f[0][0]+b[0],c.f[0][1]+b[1],b[2],b[3],0,0,canvas.width,canvas.height);
+ return PORT[key]=canvas.toDataURL();
+};
+portrait=function(kind,h){if(!BC_STAFF_SKINS.clips[kind+'_idle:south'])return bcIdentityPortrait.apply(this,arguments);var im=document.createElement('img');im.src=portURL(kind)||'';im.style.height=h+'px';im.style.width='auto';im.style.imageRendering='pixelated';return im;};
+function bcStaffAppearanceMigrate(){
+ if(!S)return;
+ (S.staff||[]).concat(S.cands||[]).forEach(function(s){
+  if(s.name==='Шеф Ноябрина'||s.szLeg==='2026-11'){s.sex='f';s.nameGenderFixed=true;}
+ });
+}
+var bcAppearanceMigrate=migrate;
+migrate=function(){var out=bcAppearanceMigrate.apply(this,arguments);bcStaffAppearanceMigrate();return out;};
+// A small read-only view supports visual regression checks without mutating a cafe.
+window.BrewCrewStaffSkins={variant:bcStaffVariant,ready:function(){return !!BC_STAFF_SHEET.naturalWidth;},clip:function(name){return BC_STAFF_SKINS.clips[name]||null;}};
+
+/* Nikita and Filya: artwork and test-only walks, with no story or rewards yet. */
+var NK_ART=window.BrewCrewNikitaArt||{clips:{}},NK_IMAGE=new Image(),NKRUN=null;
+NK_IMAGE.onload=function(){structDirty=true;if(S)renderPanel();};NK_IMAGE.src=NK_ART.src||'';
+function nkReady(){return !!NK_IMAGE.naturalWidth;}
+function nkClip(m,walking){
+ var direction=md(m._d||'south'),dir=direction[0],mirror=direction[1],prefix=(m._kind||'nikita')+'_'+(walking?'walk:':'idle:');
+ if(!NK_ART.clips[prefix+dir])dir=dir==='north-east'?'north':dir==='south-east'?'south':dir;
+ var c=NK_ART.clips[prefix+dir]||NK_ART.clips[(m._kind||'nikita')+'_idle:'+dir]||NK_ART.clips[(m._kind||'nikita')+'_idle:south'];
+ return c?{clip:c,mirror:mirror}:null;
+}
+function nkDraw(m){
+ if(!m||!nkReady())return false;track(m);var selected=nkClip(m,m._moving),q=selected&&selected.clip;if(!q)return false;
+ var frame=m._moving?Math.floor((m._dist||0)/4.4)%q.f.length:Math.floor((performance.now()/1000+(m._ph||0))*2)%q.f.length;
+ var point=q.f[frame],sc=(m._kind==='filya'?21:64)/70*(q.k||1);ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(Math.round(m.x*2)/2,Math.round(m.y*2)/2);if(selected.mirror)ctx.scale(-1,1);
+ ctx.drawImage(NK_IMAGE,point[0],point[1],q.w,q.h,-q.ax*sc,-q.ay*sc,q.w*sc,q.h*sc);ctx.restore();return true;
+}
+function nkCanPreview(){return !!(window.BrewCrewLab&&bcAdminTest);}
+function nkStartPreview(){
+ if(!nkCanPreview()||!S||!nkReady()||NKRUN||S.active!=='main'||typeof bcVisitClose!=='undefined'&&bcVisitClose)return false;
+ closeModal();openSheet(null);fitRoom();
+ NKRUN={id:'nikita-preview',_kind:'nikita',_specialGuest:true,x:DOOR[0],y:DOOR[1],h:64,t:0,walk:false,stage:'in',stop:0,wait:0};
+ NKRUN.cat={id:'filya-preview',_kind:'filya',_specialGuest:true,isPet:true,x:DOOR[0]+19,y:DOOR[1],h:21,t:0,walk:false,stage:'in'};
+ structDirty=true;return true;
+}
+function nkTick(dt){
+ var m=NKRUN;if(!m||!S||S.active!=='main'||typeof bcVisitClose!=='undefined'&&bcVisitClose||modals.length||sheet)return;
+ dt=Math.min(.1,Math.max(0,Number(dt)||0));m.t+=dt;nkFollowCat(m,dt);
+ var route=[[RW()-28,BAR_BOT+90],[30,H-38],[RW()-28,H-38],[90,BAR_BOT+40]];
+ if(m.stage==='out'){if(!m.departed&&moveTo(m,DOOR[0]+14,DOOR[1],46,dt))m.departed=true;if(m.departed&&m.cat.x>RW()+10)NKRUN=null;return;}
+ if(m.wait>0){m.wait=Math.max(0,m.wait-dt);m.walk=false;if(!m.wait){m.stop++;if(m.stop>=route.length)m.stage='out';}return;}
+ var target=route[m.stop];if(target&&moveTo(m,target[0],target[1],44,dt)){m.stage='tour';m.walk=false;m.wait=3;}
+}
+function nkFollowCat(m,dt){
+ var cat=m.cat;if(!cat)return;cat.t+=dt;cat.stage=m.stage;if(!m.departed&&(Math.hypot(cat.x-m.x,cat.y-m.y)<18||cat.x>RW()-4&&m.x>RW()-25)){cat.walk=false;return;}var dx=m.x-(m._followX==null?m.x:m._followX),dy=m.y-(m._followY==null?m.y:m._followY),len=Math.hypot(dx,dy);m._followX=m.x;m._followY=m.y;
+ if(len>.01){m._followDir=[dx/len,dy/len];}var dir=m._followDir||[-1,0],target=m.departed?[DOOR[0]+14,DOOR[1]]:[m.x-dir[0]*17-dir[1]*7,m.y-dir[1]*17+dir[0]*7];
+ if(!m.departed&&Math.hypot(cat.x-m.x,cat.y-m.y)<21&&Math.hypot(cat.x-target[0],cat.y-target[1])<7){cat.walk=false;return;}
+ moveTo(cat,target[0],target[1],54,dt);
+}
+var nkPeople=bgPeople;bgPeople=function(e){var people=nkPeople.apply(this,arguments);if(NKRUN&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)){if(NKRUN!==e)people.push(NKRUN);if(NKRUN.cat&&NKRUN.cat!==e)people.push(NKRUN.cat);}return people;};
+function bgSpecialActors(e){return [VIPRUN,LZRUN].concat(NKRUN&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)?[NKRUN,NKRUN.cat]:[]).filter(function(p){return p&&p!==e;});}
+var nkOriginalDraw=draw;draw=function(){var value=nkOriginalDraw.apply(this,arguments);nkTick(DRAW_DT);return value;};
+var nkUpgradeProps=sceneUpgradeProps;sceneUpgradeProps=function(st,u,items,now,r){nkUpgradeProps.apply(this,arguments);if(NKRUN&&!st.outdoor&&S&&S.active==='main'&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)){var actor=NKRUN,cat=NKRUN.cat;items.push({y:actor.y,f:function(){shadow(actor.x,actor.y,9);nkDraw(actor);}});if(cat)items.push({y:cat.y,f:function(){shadow(cat.x,cat.y,5);nkDraw(cat);}});}};window.sceneUpgradeProps=sceneUpgradeProps;
+var nkRenderMore=renderMore;renderMore=function(p){
+ nkRenderMore.apply(this,arguments);if(sub!=='book')return;var grid=p.querySelector('.vip-grid');if(!grid||grid.querySelector('[data-blogger="nikita"]'))return;
+ var card=el('<button class="vip-tile met" data-blogger="nikita"><img src="img/bloggers/nikita-icon.png" alt="Никита с котом Филей"><b>Никита</b><span>Блогер · с котом Филей</span><i>Событие появится позже</i></button>');card.onclick=function(){queueModal({kind:'nikita_card'},true);};grid.appendChild(card);
+};
+MODAL15.nikita_card=function(box,m,btn){
+ box.append(el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png" alt="Никита и Филя"><div><div class="eyebrow">Особый гость · блогер</div><h2>Никита и Филя</h2><p>Никита приходит со своим вислоухим котом Филей. Филя гуляет рядом.</p><p>История их визита появится позже.</p></div></div>'));
+ if(nkCanPreview())box.append(btn('Посмотреть прогулку',function(){if(!nkStartPreview())toast(nkReady()?'Прогулка уже идёт':'Персонаж ещё загружается');},'primary'));
+ box.append(btn('Закрыть',closeModal,'ghost'));
+};
+window.nikitaDraw=nkDraw;
+window.BrewCrewNikita={geometry:function(){return {width:RW(),height:H};},ready:nkReady,startPreview:nkStartPreview,stopPreview:function(){NKRUN=null;},actor:function(){return NKRUN;},clip:function(name){return NK_ART.clips[name]||null;},stepPreview:function(dt){if(nkCanPreview())nkTick(dt);}};
 
 var bcGuestsStyle=document.createElement('style');bcGuestsStyle.textContent='.bc-guests-nav{display:flex;gap:8px;margin:0 0 16px}.bc-guests-nav button{flex:1;min-height:42px}.bc-guests-nav button[aria-selected=true]{background:#714d31!important;color:#fff4e1!important}html body .sheet #panel .bc-cafe-row{display:grid!important;grid-template-columns:42px minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;text-align:left!important;padding:12px!important;min-height:74px!important}.u6sum:empty{display:none!important}.bc-cafe-avatar{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:13px;background:#e9d4ae;color:#6b492b;font-size:22px;font-weight:800}html body .sheet #panel .bc-cafe-meta{display:block!important;min-width:0;text-align:left!important}html body .sheet #panel .bc-cafe-meta .t{overflow-wrap:anywhere;text-align:left!important;margin:0!important;font-size:15px!important}html body .sheet #panel .bc-cafe-meta .d{margin:5px 0 0!important;font-size:11px!important;text-align:left!important;line-height:1.4!important}html body .sheet #panel .bc-cafe-row>.btn{align-self:center!important;justify-self:end!important;flex:none;width:auto!important;min-height:42px;margin:0!important;padding:9px 13px}.bc-guests-body h3{margin:8px 0 10px}';document.head.appendChild(bcGuestsStyle);
 

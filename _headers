@@ -28,3 +28,9 @@
 
 /badge-art.js
   Cache-Control: no-cache
+
+/staff-skin-art.js
+  Cache-Control: no-cache
+
+/blogger-nikita-art.js
+  Cache-Control: no-cache
