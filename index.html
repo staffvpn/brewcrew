@@ -1304,8 +1304,15 @@ function sellOne(roomId, opt){
 
 /* ---------- поток гостей и пропускная способность ---------- */
 function hourCurve(h){ if(h<6) return 0.12; if(h<7) return 0.5; if(h<8) return 1.6; if(h<10) return 2.6; if(h<12) return 1.1; if(h<13) return 1.6; if(h<14) return 2.2; if(h<17) return 0.9; if(h<18) return 1.4; if(h<19) return 2.0; if(h<21) return 0.9; return 0.4; }
-function youNeeded(roomId){ if(roomId!=='main') return false; const now = Date.now(), a = absNow(); const w = S.staff.filter(s=>!s.isYou && s.room===roomId && (s.today==='work'||s.today==='sub') && !s.away && !(s.breakUntil && s.breakUntil > now) && !(s.lateUntil && s.lateUntil > a) && !(s.distract && s.distract.kind==='smoke')); return !w.some(s=>s.role==='Бариста') || !w.some(s=>s.role==='Кассир'); }
-function workingStaff(roomId){ return S.staff.filter(s=>s.room===roomId && (s.isYou ? youNeeded(roomId) && !(S.youAwayUntil > Date.now()) : true) && (s.today==='work' || s.today==='sub') && !s.away && !(s.lateUntil && s.lateUntil > absNow()) && !(s.breakUntil && s.breakUntil > Date.now())); }
+function staffPresent(s,roomId,now,a){
+ if(s.room!==roomId||!['work','sub'].includes(s.today))return false;
+ if(s.lateUntil>a||s.breakUntil>now)return false;
+ if(s.away&&!(s.awayUntil&&s.awayUntil<=a)&&!(s.breakUntil&&s.breakUntil<=now&&!s.awayUntil))return false;
+ if(s.distract&&s.distract.kind==='smoke'&&!(Number.isFinite(s.distract.until)&&s.distract.until<=now))return false;
+ return true;
+}
+function youNeeded(roomId){if(roomId!=='main')return false;const now=Date.now(),a=absNow();return !S.staff.some(s=>!s.isYou&&s.role==='Бариста'&&staffPresent(s,roomId,now,a));}
+function workingStaff(roomId){const now=Date.now(),a=absNow(),ownerNeeded=youNeeded(roomId);return S.staff.filter(s=>staffPresent(s,roomId,now,a)&&(!s.isYou||(ownerNeeded&&!(S.youAwayUntil>now))));}
 function staffSpeed(s){
   let f = (1 + 0.06*(s.lvl-1)) * (0.6 + s.mood*0.005) * (1 + 0.1*s.rank) * (1 - Math.max(0, s.fatigue-50)*0.006);
   if(s.isYou) f *= 0.55;
