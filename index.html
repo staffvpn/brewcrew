@@ -12097,6 +12097,7 @@ function vipWrap(orig,who,getM,getImg){ return function(){ var m=null; try{ m=ge
   vipChar(m,who); }; }
 if(typeof drawVip!=='undefined') window.drawVip=vipWrap(drawVip,'masha',function(){return VIPRUN;},function(){return MASHA_IMG;});
 if(typeof drawLiza!=='undefined') window.drawLiza=vipWrap(drawLiza,'liza',function(){return LZRUN;},function(){return LIZA_IMG;});
+window.leraDraw=function(m){ try{ if(!ready()||!CM['masha_terrier_walk:south']) return false; vipChar(m,'masha_terrier'); return true; }catch(err){ return false; } };
 window.drawSprite=function(i,cx,fy,h,flip,rot,alpha){
   var e=CUR; CUR=null;
   if(e&&CA.naturalWidth&&ready()&&e.x!=null){
@@ -14310,12 +14311,12 @@ sceneUpgradeProps=function(st,u,items,now,r){
 
 /* Existing heroines keep their game faces; the new guest remains a draft. */
 VIPS.forEach(function(v){if(BG_ICONS[v.id])v.img=BG_ICONS[v.id];});
-var BG_NEW_BLOGGER={id:'masha_terrier',n:'Лера',title:'Лера с терьером',role:'Блогер · с терьером',img:BG_ICONS.masha_terrier,draft:true};
+var BG_NEW_BLOGGER={id:'masha_terrier',n:'Лера',title:'Лера',role:'Миксолог · «Просвет»',img:BG_ICONS.masha_terrier,draft:false};window.LERA_ICON=BG_ICONS.masha_terrier;
 var bgRenderMore=renderMore;
 renderMore=function(p){
   bgRenderMore.apply(this,arguments);if(sub!=='book')return;var grid=p.querySelector('.vip-grid');if(!grid||grid.querySelector('[data-blogger="masha_terrier"]'))return;
-  var v=BG_NEW_BLOGGER,card=el('<button class="vip-tile met" data-blogger="masha_terrier"><img src="'+v.img+'" alt="Лера с терьером"><b>Лера</b><span>Блогер · с терьером</span><i>Событие появится позже</i></button>');
-  card.onclick=function(){queueModal({kind:'bg_new_blogger'},true);};grid.appendChild(card);
+  var v=BG_NEW_BLOGGER,card=el('<button class="vip-tile met" data-blogger="masha_terrier"><img src="'+v.img+'" alt="Лера"><b>Лера</b><span>Миксолог · «Просвет»</span><i>'+(S.lera&&S.lera.met?('Визитов: '+S.lera.n+' из 5'):'Зайдёт сама')+'</i></button>');
+  card.onclick=function(){queueModal({kind:'lera_card'},true);};grid.appendChild(card);
 };
 MODAL15.bg_new_blogger=function(box,m,btn){var v=BG_NEW_BLOGGER;box.append(el('<div class="vip-card"><img src="'+v.img+'" alt="Лера с терьером"><div><div class="eyebrow">Особый гость · блогер</div><h2>Лера с терьером</h2><p>Светлое каре, кепка и верный терьер на руках.</p><p>История её визита появится позже.</p></div></div>'),btn('Закрыть',closeModal,'ghost'));};
 
@@ -15017,6 +15018,111 @@ var bcNameHire=hire;hire=function(candidate){normalizeStaffName(candidate);retur
 // Repair impossible unstarted sale tasks from older saves without resetting earned progress.
 function repairSaleTasks(){if(!S)return;const choices=available('main').filter(m=>!m.side&&!m.season);for(const t of S.tasks||[]){if(t.kind!=='sell'||t.done||t.failed||t.prog>0)continue;const old=MENU.find(m=>m.id===t.item);if(old&&isUnlocked(old.id)&&(!old.nb34||S.c.nb34)&&(!old.bf34||S.c.bf34))continue;const m=choices.find(m=>!(S.tasks||[]).some(x=>x!==t&&x.item===m.id));if(!m)continue;t.previousItem=t.item;t.item=m.id;t.label='Продать '+t.goal+': '+m.n.toLowerCase();}}
 var bcSaleTaskMigrate=migrate;migrate=function(){const result=bcSaleTaskMigrate.apply(this,arguments);repairSaleTasks();return result;};
+/* ===== Лера, миксолог кофейни «Просвет»: 5 визитов, стажировка, фирменный напиток ===== */
+(function(){
+var LR_LINK='https://t.me/spartgallery', LR_PHOTO='img/lera_drink.jpg';
+var LRRUN=null; window.__lrRun=function(){return LRRUN;};
+MENU.push({id:'devil_apple', n:'Яблоко дьявола', price:690, w:0.6, need:{beans:18, cups:1}, coffee:1, unlock:{t:'Рецепт Леры', f:function(S){return !!(S.lera&&S.lera.drink);}}});
+
+function lrState(){ if(!S.lera) S.lera={n:0, next:Date.now()+RI(3,8)*60000, nextDay:0, drink:false, task:null, intern:null}; return S.lera; }
+window.lrState=lrState;
+function lrOpen(){ try{ if(tg&&tg.openTelegramLink) tg.openTelegramLink(LR_LINK); else window.open(LR_LINK,'_blank'); }catch(e){} }
+function lrStaff(){ var w=S.staff.filter(function(s){return !s.isYou&&!s.trainNext&&s.today!=='training';}); var b=w.filter(function(s){return s.role==='Бариста';}); var l=b.length?b:w; return l.sort(function(a,c){return (c.lvl||0)-(a.lvl||0);})[0]||null; }
+
+var VISITS=[
+  {hi:'Эспрессо. Двойной.', h:'Лера из «Просвета»', tag:'Особый гость · миксолог',
+   p:['Миксолог кофейни «Просвет». Пришла с фоксом, взяла двойной эспрессо и выпила в два глотка.','«Пережат. Основа решает всё. Завтра будет лучше».'],
+   tour:[['bar','Бар узкий. Работать можно.'],['win','Свет хороший. Чашки видно.']]},
+  {hi:'Сегодня тоник.', h:'Слои', tag:'Лера · визит 2 из 5',
+   p:['Лера ставит на бар бутылку томатного тоника и стакан со льдом.','«Тоник, лёд, сверху эспрессо по ложке. Медленно. Слои не встречаются».'],
+   tour:[['bar','Ложку держи ниже. Вот так.'],['tab','Медленно. Слои не встречаются.']]},
+  {hi:'Лёд принесла.', h:'Лёд и пена', tag:'Лера · визит 3 из 5',
+   p:['Томатно-огуречный лёд и земляничная пена с болгарским перцем. Фокс следит за пеной.','«Сегодня 30 кофейных. Проверю».'],
+   tour:[['bar','Пена держит форму. Перец слышно.'],['floor','Темп поднимаем.']]},
+  {hi:'Мне нужен твой бариста.', h:'Стажировка в «Просвете»', tag:'Лера · визит 4 из 5', tour:[['bar','Посмотрю, как работает.'],['win','Договорились.']]},
+  {hi:'Сегодня собираю сама.', h:'Яблоко дьявола', tag:'Лера · визит 5 из 5', tour:[['bar','Тоник. Соус. Лёд. Эспрессо. Пена. Бекон.'],['tab','Это теперь твоё.']]}
+];
+var LR_LAYERS=['Томатный тоник','Земляничный соус','Томатно-огуречный лёд','Эспрессо','Земляничная пена с болгарским перцем','Чипс из бекона'];
+
+function lrStops(v){
+  var by=BAR_BOT+16, tables=[]; try{ tables=bcPlacesTables(); }catch(e){}
+  var t=tables.length?pick(tables):{x:120,y:BAR_BOT+90};
+  var P={bar:{x:168,y:by,dur:4.5,flipTo:'up'}, win:{x:40,y:BAR_BOT+40,dur:4}, tab:{x:t.x+22,y:t.y+6,dur:4}, floor:{x:R(70,220),y:BAR_BOT+R(60,130),dur:3.5}};
+  if(v===1||v===2||v===4){
+    /* учит: заходит за стойку через проход у правого края бара и встаёт рядом с бариста */
+    var gx=BAR_X1+16, gy=BAR_BOT+22, ry=FEET, bx=150;
+    try{ var bs=S.staff.filter(function(s){return s.role==='Бариста'&&s.room==='main'&&s.today==='work';}).map(function(s){return rt('main').staff[s.id];}).filter(Boolean); if(bs.length) bx=bs.sort(function(a,c){return c.x-a.x;})[0].x; }catch(e){}
+    var sx=Math.min(BAR_X1-14, bx+26), T=VISITS[v].tour;
+    return [{x:gx,y:gy,dur:0},{x:gx,y:ry,dur:0,lin:1},{x:sx,y:ry,dur:4.5,lin:1,say:T[0][1],face:-1},{x:sx,y:ry,dur:4,lin:1,say:T[1][1],face:-1},{x:gx,y:ry,dur:0,lin:1},{x:gx,y:gy,dur:0,lin:1}];
+  }
+  return VISITS[v].tour.map(function(x){ var p=Object.assign({},P[x[0]]); p.say=x[1]; return p; });
+}
+function lrLin(m,x,y,sp,dt){ var dx=x-m.x, dy=y-m.y, d=Math.hypot(dx,dy), st=sp*dt; if(d<=st||d<0.5){ m.x=x; m.y=y; return true; } m.x+=dx/d*st; m.y+=dy/d*st; if(Math.abs(dx)>.5) m.flip=dx<0; return false; }
+function leraTick(dt){
+  if(!S||typeof bcVisitClose!=='undefined'&&bcVisitClose) return;
+  var v=lrState();
+  if(!LRRUN){
+    if(v.task) lrTaskCheck();
+    if(v.n>=5||Date.now()<v.next||S.day<v.nextDay) return;
+    if(VIPRUN||LZRUN||S.active!=='main'||sheet||modals.length||!isWorking()||document.hidden) return;
+    LRRUN={stage:'in', v:v.n, x:DOOR[0], y:DOOR[1], t:0, flip:true, _ph:Math.random()};
+    bubble2(0,0,VISITS[v.n].hi,3000,LRRUN); return;
+  }
+  var m=LRRUN; m.t+=dt;
+  if(m.stage==='in'){ m.walk=true; if(moveTo(m,150,QUEUE_Y+46,44,dt)){ m.walk=false; m.stage='ask'; queueModal({kind:'lera', v:m.v},true); } return; }
+  if(m.stage==='tour'){
+    if(!m.route){ m.route=lrStops(m.v); m.ri=0; }
+    var st=m.route[m.ri]; if(!st){ m.stage='out'; return; }
+    if(!m.at){ m.walk=true; if(st.lin?lrLin(m,st.x,st.y,40,dt):moveTo(m,st.x,st.y,46,dt)){ m.walk=false; m.at=true; m.wait=0; m.flip=st.face?st.face<0:st.x<150; if(st.say) bubble2(0,0,st.say,2600,m); } return; }
+    m.wait+=dt; if(m.wait>=st.dur){ m.at=false; m.ri++; } return;
+  }
+  if(m.stage==='out'){ m.walk=true; m.flip=false; if(moveTo(m,DOOR[0]+14,DOOR[1],50,dt)) LRRUN=null; }
+}
+function lrDone(){ var v=lrState(), m=LRRUN; v.n=Math.max(v.n,(m?m.v:v.n)+1); v.met=true; v.next=Date.now()+30*60000; v.nextDay=S.day+RI(2,3); if(m){ m.stage='tour'; m.route=null; m.at=false; } save(); }
+
+function lrTaskCheck(){ var t=S.lera.task; if(!t) return;
+  if(t.done>=t.need){ S.lera.task=null; S.rep=Math.min(5,(S.rep||3)+0.1); toast('Лера: «'+t.need+'. Принято». Рейтинг +0,1'); save(); return; }
+  if(S.day>t.day){ S.lera.task=null; toast('Лера: «Не дотянули. В следующий раз»'); save(); } }
+var _sellLr=sellOne; sellOne=function(){ var r=_sellLr.apply(this,arguments); try{ var t=S.lera&&S.lera.task; if(t&&r&&r.item&&r.item.coffee&&S.day===t.day){ t.done++; if(t.done>=t.need) lrTaskCheck(); } }catch(e){} return r; };
+
+var _drawLr=draw; draw=function(){ _drawLr(); try{ leraTick(DRAW_DT); }catch(e){ console.error(e); } };
+var _supLr=sceneUpgradeProps; sceneUpgradeProps=function(st,u,items,now,r){ _supLr.apply(this,arguments);
+  if(!LRRUN||st.outdoor||!S||S.active!=='main'||(typeof bcVisitClose!=='undefined'&&bcVisitClose)) return;
+  if(lrBehind(LRRUN)) return;
+  items.push({y:LRRUN.y, f:function(){ var m=LRRUN; if(!m) return; shadow(m.x,m.y,9); if(window.leraDraw) window.leraDraw(m); }}); };
+/* за стойкой рисуем вместе с персоналом: до кухни и бара, чтобы стойка её закрывала */
+function lrBehind(m){ return m && m.y<=FEET+4; }
+var _skfLr=sceneKitchenFront; sceneKitchenFront=function(){ try{ var m=LRRUN; if(lrBehind(m)&&S&&S.active==='main'&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)&&window.leraDraw){ shadow(m.x,m.y,9); window.leraDraw(m); } }catch(e){} return _skfLr.apply(this,arguments); };
+window.sceneUpgradeProps=sceneUpgradeProps;
+
+function head(tag,h,ps){ var icon=window.LERA_ICON||''; return el('<div class="vip-card">'+(icon?'<img src="'+icon+'" alt="Лера">':'')+'<div><div class="eyebrow">'+esc(tag)+'</div><h2>'+esc(h)+'</h2>'+ps.map(function(p){return '<p>'+esc(p)+'</p>';}).join('')+'</div></div>'); }
+function slides(){ return el('<div class="lr-sl"><div class="lr-tr"><figure><img src="'+LR_PHOTO+'" alt="Яблоко дьявола"></figure><figure class="lr-rc"><b>Яблоко дьявола</b><ol>'+LR_LAYERS.slice().reverse().map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ol><span>Сверху вниз. Без алкоголя.</span></figure></div><div class="lr-dt"><i class="on"></i><i></i></div></div>'); }
+function wireSlides(w){ var tr=w.querySelector('.lr-tr'), d=w.querySelectorAll('.lr-dt i'); tr.addEventListener('scroll',function(){ var k=Math.round(tr.scrollLeft/tr.clientWidth); d.forEach(function(x,i){x.classList.toggle('on',i===k);}); }); }
+
+MODAL15.lera=function(box,m,btn){
+  var k=m.v, V=VISITS[k];
+  if(k===3){ var s=lrStaff();
+    if(!s){ box.append(head(V.tag,V.h,['Лера смотрит на пустой бар.','«Команды нет. Начни с команды. Зайду позже».']), btn('Принято',function(){ closeModal(); lrDone(); })); return; }
+    box.append(head(V.tag,V.h,['«'+s.name+' на день со мной в «Просвет». Вернётся другим человеком».','Завтра '+s.name+' пропустит смену и вернётся на уровень выше.']),
+      btn('Пусть едет',function(){ s.trainNext=true; S.lera.intern=s.id; toast(s.name+' завтра на стажировке у Леры'); closeModal(); lrDone(); }),
+      btn('Не сегодня',function(){ closeModal(); if(LRRUN) bubble2(0,0,'Тогда в другой раз.',2400,LRRUN); lrDone(); },'ghost')); return; }
+  if(k===4){ box.append(head(V.tag,V.h,['Лера собирает свой фирменный напиток слой за слоем и ставит его перед тобой.','«Рецепт оставляю. Теперь он в твоём меню: 690 ₽».'])); var w=slides(); box.append(w); wireSlides(w);
+    box.append(btn('Добавить в меню',function(){ S.lera.drink=true; try{ isUnlocked('devil_apple'); }catch(e){} toast('В меню: Яблоко дьявола, 690 ₽'); closeModal(); lrDone(); })); return; }
+  box.append(head(V.tag,V.h,V.p));
+  if(k===0) box.append(btn('Канал Леры',lrOpen,'ghost'), btn('Принято',function(){ closeModal(); lrDone(); }));
+  if(k===1){ var b=lrStaff(); box.append(btn(b?'Повторить за Лерой':'Запомнить',function(){ if(b) b.mood=clamp((b.mood||50)+15,0,100); addMod('traffic',1.05,24,'Слои от Леры'); toast('Гостей +5% на сутки'+(b?', '+b.name+' в настроении':'')); closeModal(); lrDone(); }), btn('Не сейчас',function(){ closeModal(); lrDone(); },'ghost')); }
+  if(k===2) box.append(btn('Принято',function(){ S.lera.task={day:S.day, need:30, done:0}; toast('Задание Леры: 30 кофейных сегодня'); closeModal(); lrDone(); }));
+};
+MODAL15.lera_card=function(box,m,btn){ var v=lrState();
+  box.append(head('Особый гость · миксолог','Лера',['Миксолог кофейни «Просвет». Ходит с фоксом, пьёт эспрессо в два глотка, говорит коротко.', v.met?('Визитов: '+v.n+' из 5'+(v.task?' · задание: '+v.task.done+' из '+v.task.need+' кофейных':'')):'Ещё не заходила. Зайдёт сама.']));
+  if(v.drink){ var w=slides(); box.append(w); wireSlides(w); }
+  box.append(btn('Канал Леры',lrOpen,'ghost'), btn('Закрыть',closeModal,'ghost'));
+};
+var css=document.createElement('style'); css.textContent='.lr-sl{margin:10px 0 4px}.lr-tr{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:0;border-radius:12px;scrollbar-width:none}.lr-tr::-webkit-scrollbar{display:none}.lr-tr figure{flex:0 0 100%;margin:0;scroll-snap-align:center;aspect-ratio:2/3;max-height:52vh;background:#efe4d2;border-radius:12px;overflow:hidden}.lr-tr figure img{width:100%;height:100%;object-fit:cover;display:block}.lr-rc{display:flex;flex-direction:column;justify-content:center;padding:18px;box-sizing:border-box;color:#3a2412}.lr-rc b{font-size:20px;margin-bottom:10px}.lr-rc ol{margin:0;padding-left:20px;font-size:15px;line-height:1.7}.lr-rc span{margin-top:12px;font-size:12px;opacity:.7}.lr-dt{display:flex;justify-content:center;gap:6px;margin-top:8px}.lr-dt i{width:6px;height:6px;border-radius:3px;background:#c9b48e;opacity:.5}.lr-dt i.on{opacity:1;background:#7a4a24}';
+document.head.appendChild(css);
+window.leraForce=function(k){ var v=lrState(); v.n=k-1; v.next=0; v.nextDay=0; };
+})();
+
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
