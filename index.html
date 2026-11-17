@@ -3030,7 +3030,7 @@ const DECOR = [
   {id:'easel', n:'Картина неизвестного художника', slot:'floor', price:1000000, d:'Рейтинг сам растёт по чуть-чуть: «у них искусство». Пока не объявится автор.', fx:{repDay:0.01}},
   {id:'photo', n:'Фотозона с неоном', slot:'floor', price:1200000, d:'Гостей +4%, блогеры заходят чаще. Хорошие и «а можно бесплатно».', fx:{traffic:1.04}},
   {id:'toilet', n:'Золотой унитаз', slot:'floor', price:3000000, d:'Абсолютно бесполезен. Гостей +6%: все хотят посмотреть. Однажды его попробуют украсть.', fx:{traffic:1.06}},
-  {id:'pled', n:'Плед и гирлянда', slot:'counter', price:0, season:true, d:'Памятный предмет сезона «Осенняя хандра». Очередь терпеливее на 5%.', fx:{patience:1.05}},
+  {id:'pled', n:'Плед и гирлянда', slot:'counter', price:0, season:true, d:'Ноябрьский подарок: плед на стуле у первого столика и тёплая гирлянда вдоль стены. Гости терпеливее на 5%.', fx:{patience:1.05}},
   {id:'tree', n:'Ёлка до потолка', slot:'floor', price:0, season:true, d:'Памятный предмет сезона «Новогодняя запара». Гостей +3%.', fx:{traffic:1.03}},
   {id:'garland', n:'Гирлянда сезона', slot:'counter', price:0, season:true, d:'Памятный предмет сезона. Гостей +2%.', fx:{traffic:1.02}}
 ];
@@ -3410,7 +3410,7 @@ function szReward(track, n){
       15:{k:'drink', t:'Напиток сезона: '+info.drink, d:'Высокая наценка, только у владельцев пропуска'},
       20:{k:'goldm', t:'Золотая кофемашина', d:'Напитки на 3% быстрее'},
       25:{k:'neon', t:'Неоновая вывеска с названием кофейни', d:'Гостей +5%'},
-      30:{k:'badge', t:'Значок «Владелец сезона»', d:'Рядом с названием кофейни'},
+      30:{k:'badge', t:'Значок «Владелец сезона»', d:'Круглый медальон над полкой слева'},
       35:{k:'courier', t:'Личный курьер', d:'Доставка быстрее, рейтинг доставки не падает'},
       40:{k:'money', v:Math.round(b*5/1000)*1000, t:'Перевод от инвестора', d:'Пять дней прибыли'},
       45:{k:'staff', v:25, t:'Легенда 25 уровня', d:'В команду, когда применишь'},
@@ -15108,6 +15108,28 @@ function bcBadgeRibbon(){const old=document.getElementById('bc-badge-ribbon'),sc
 var bcBadgeHud=renderHud;renderHud=function(){const r=bcBadgeHud.apply(this,arguments);bcBadgeRibbon();return r;};
 var bcBadgeInv=renderInv;renderInv=function(p){bcBadgeSlots();bcBadgeInv.apply(this,arguments);const buttons=p.querySelectorAll('.badge15');buttons.forEach((button,i)=>{const b=S.badgeList[i];if(!b)return;button.classList.toggle('on',S.badgeSlots.includes(b.id));button.insertAdjacentHTML('afterbegin',BrewCrewBadgeArt.art(b));button.querySelector('i').textContent=S.badgeSlots.includes(b.id)?'Надет · место '+(S.badgeSlots.indexOf(b.id)+1):'Посмотреть и надеть';button.onclick=()=>bcBadgeOpen(b.id);});};
 (function(){const style=document.createElement('style');style.textContent='.bc-medallion{width:48px;height:48px;flex:none}.badge15 .bc-medallion{display:block;margin:0 auto 6px}.bc-badge-hit{padding:0;border:0;background:transparent;cursor:pointer}.bc-badge-hit:focus-visible{outline:2px solid #fff3b6;border-radius:50%}.bc-badge-large .bc-medallion{width:80px;height:80px}.bc-badge-modal{margin-top:auto!important;background:#fff5df!important;color:#493322!important;border-radius:24px 24px 0 0!important}.bc-badge-modal .d{color:#765c42!important}.veil:has(.bc-badge-modal){align-items:flex-end!important;padding-bottom:0!important}#hbdg{display:none!important}';document.head.append(style);})();
+
+function bcSeasonItemThumb(id){const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.imageSmoothingEnabled=false;if(id==='pled'){g.fillStyle='#a94e3d';g.fillRect(10,22,28,17);g.fillStyle='#e0b786';for(let x=12;x<38;x+=6)g.fillRect(x,22,2,17);for(let y=25;y<39;y+=5)g.fillRect(10,y,28,1);}g.strokeStyle='#72583a';g.beginPath();g.moveTo(4,9);g.quadraticCurveTo(24,23,44,9);g.stroke();for(let i=0;i<5;i++){g.fillStyle='#ffe5a0';g.fillRect(6+i*8,12+Math.round(Math.sin(i/4*Math.PI)*5),3,4);}return '<img class="bc-reward-art" src="'+c.toDataURL()+'" alt="'+(id==='pled'?'Клетчатый плед и тёплые огоньки':'Тёплая гирлянда')+'" width="48" height="48">';}
+// Milestone badges accompany the existing rewards; no cash/items/claims are replaced.
+function bcMilestoneBadge(track,n){const info=sezInfo();if(track==='f'&&[15,30,50].includes(n))return{id:'sz'+n+'_'+info.id,n:({15:'Бронза',30:'Серебро',50:'Золото'})[n]+' сезона «'+info.n+'»',d:'Дошёл до '+n+' ступени'};if(track==='p'&&n===50)return{id:'goldown_'+info.id,n:'Золотой владелец «'+info.n+'»',d:'50 ступень пропуска'};return null;}
+var bcVisibleSeason=renderSeason;renderSeason=function(p){bcVisibleSeason.apply(this,arguments);badgeTick();p.querySelectorAll('.sz-row').forEach(row=>{const n=Number(row.querySelector('b.num').textContent);for(const track of ['f','p']){const cell=row.querySelector('.sz-cell.'+track),b=bcMilestoneBadge(track,n);if(!cell)continue;
+ if(b&&!cell.querySelector('.bc-season-badge')){const extra=el('<div class="bc-season-badge">'+BrewCrewBadgeArt.art(b)+'<span></span></div>');extra.querySelector('span').textContent=b.n+' · дополнительно';extra.title=b.d+' · можно надеть над полкой слева';extra.onclick=()=>{if((S.badgeList||[]).some(x=>x.id===b.id))bcBadgeOpen(b.id);else toast(b.d+' — значок появится автоматически');};cell.append(extra);}
+ const rw=szReward(track,n);if(['badge','veteran'].includes(rw.k)){const id=(rw.k==='veteran'?'vet_':'owner_')+sezId(),art=cell.querySelector('.bc-reward-art');if(art){const tmp=el(BrewCrewBadgeArt.art({id}));tmp.classList.add('bc-reward-art');art.replaceWith(tmp);}}
+ if(rw.k==='item'){const item=sezInfo().item,old=cell.querySelector('.bc-reward-art');if(old&&['pled','garland'].includes(item))old.replaceWith(el(bcSeasonItemThumb(item)));const hint=el('<p class="d bc-season-item-hint"></p>');hint.textContent=({pled:'Плед на стуле и огоньки на стене. Терпение +5%. Инвентарь → Применить.',garland:'Огоньки вдоль стены. Гостей +2%. Инвентарь → Применить.'}[item]||decorDef(item)?.d+' Инвентарь → Применить.');cell.append(hint);}
+ }});};
+var bcMilestoneClaim=szClaim;szClaim=function(){const result=bcMilestoneClaim.apply(this,arguments);if(!result)badgeTick();return result;};
+function bcSeasonGarland(now){const left=8,right=OX+VW-8,y=26;ctx.save();ctx.strokeStyle='#72583a';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(left,y);for(let x=left;x<=right;x+=2)ctx.lineTo(x,y+Math.sin((x-left)/(right-left)*Math.PI)*2.5);ctx.stroke();for(let x=left+3,i=0;x<right;x+=13,i++){const yy=y+Math.sin((x-left)/(right-left)*Math.PI)*2.5;rect(x,yy,1,2,'#72583a');EL(x+.5,yy+3,1.2,1.7,Math.sin(now*1.6+i)>-.5?'#ffe5a0':'#ccac6c');}ctx.restore();}
+function bcSeasonPled(x,y){RR(x-5,y-15,11,17,1,'#a94e3d');for(let i=0;i<3;i++)rect(x-4+i*4,y-15,1.2,17,'#e0b786');for(let i=0;i<4;i++)rect(x-5,y-13+i*4,11,.9,'#e0b786');for(let i=0;i<5;i++)rect(x-4+i*2,y+2,.8,2,'#e0b786');}
+function bcSeasonObjects(st,items,now){if(!S||S.active!=='main'||st.outdoor)return;const owned=decorOwned().filter(it=>decorDef(it.id)?.season);if(owned.some(it=>['pled','garland'].includes(it.id)))items.push({y:1,f:()=>bcSeasonGarland(now)});
+ const first=TABLES[0];if(first&&owned.some(it=>it.id==='pled'))items.push({y:first.y+3,f:()=>bcSeasonPled(first.x-23,first.y+3)});
+ // Keep earlier earned seasonal objects visible too, on their own surfaces.
+ if(owned.some(it=>it.id==='tree')&&S.interior?.main!=='int_winter')items.push({y:106,f:()=>drawDecor({id:'tree'},190,105,now)});
+ if(owned.some(it=>it.id==='plaque'))items.push({y:1,f:()=>drawDecor({id:'plaque'},140,64,now)});
+ if(owned.some(it=>it.id==='mug30'))items.push({y:BAR_FACE+1,f:()=>drawDecor({id:'mug30'},112,BAR_TOP+6,now)});
+}
+var bcSeasonObjectProps=sceneUpgradeProps;sceneUpgradeProps=function(st,u,items,now,r){bcSeasonObjectProps.apply(this,arguments);bcSeasonObjects(st,items,now);};window.sceneUpgradeProps=sceneUpgradeProps;
+var bcSeasonInv=renderInv;renderInv=function(p){bcSeasonInv.apply(this,arguments);const owned=decorOwned().filter(it=>['pled','garland','tree','plaque','mug30'].includes(it.id));if(!owned.length)return;const card=el('<div class="card bc-season-placed"><div class="t">Сезонные предметы в зале</div></div>');for(const it of owned){const d=decorDef(it.id),line=document.createElement('p');line.className='d';line.textContent=d.n+' · '+({pled:'плед на левом стуле у первого столика, огоньки вдоль стены',garland:'огоньки вдоль стены',tree:'на задней стойке',plaque:'на стене за баром',mug30:'на передней стойке'}[it.id])+' · '+d.d;card.append(line);}p.append(card);};
+(function(){const style=document.createElement('style');style.textContent='.bc-season-badge{display:flex;align-items:center;gap:6px;padding:8px 0;border-top:1px solid #d8bf8c;cursor:pointer;font-size:11px;line-height:1.4}.bc-season-badge svg{width:32px;height:32px;flex:none}.bc-season-item-hint{font-size:11px!important;line-height:1.4!important}.bc-season-placed p{line-height:1.5}';document.head.append(style);})();
 
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
