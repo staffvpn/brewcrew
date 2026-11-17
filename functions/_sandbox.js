@@ -7,13 +7,9 @@ import {onRequestGet as catalog} from './api/shop.js';
 export function isPreview(request){const u=new URL(request.url);return request.headers.get('x-brewcrew-lab')==='1'||(u.hostname.endsWith('.brewcrew.pages.dev')&&u.hostname!=='brewcrew.pages.dev');}
 export async function sandbox({request,env}){
  const url=new URL(request.url),path=url.pathname;
- // Preview secrets need not be copied. Delegate only to the live server's isolated lab dispatcher.
- if((!env.DB||!env.BOT_TOKEN)&&url.hostname.endsWith('.brewcrew.pages.dev')&&url.hostname!=='brewcrew.pages.dev'&&(request.method==='POST'||path==='/api/config')){
-  try{const headers=new Headers({'x-brewcrew-lab':'1'});if(request.headers.has('content-type'))headers.set('content-type',request.headers.get('content-type'));return await fetch(new Request('https://brewcrew.pages.dev'+path,{method:request.method,headers,body:request.method==='POST'?await request.text():undefined,redirect:'error'}));}catch{return json({ok:false,error:'Тестовый сервер временно недоступен'},503);}
- }
  if(request.method==='GET'){
   if(path==='/api/shop')return catalog();
-  if(path==='/api/config'||path==='/api/maintenance')return json({ok:true,lab:true,ready:!!env.DB&&!!env.BOT_TOKEN,maint:{on:false,periods:[]},now:Date.now()});
+  if(path==='/api/config'||path==='/api/maintenance')return json({ok:true,lab:true,ready:!!env.DB&&!!env.BOT_TOKEN,apiOrigin:'https://brewcrew.pages.dev',maint:{on:false,periods:[]},now:Date.now()});
   return json({ok:true,lab:true,top:[],sps:[],total:0,season:sezId()});
  }
  if(!env.DB||!env.BOT_TOKEN)return json({ok:false,error:'Тестовый сервер ещё не настроен'},503);
@@ -45,3 +41,5 @@ export async function sandbox({request,env}){
  // Reads and unsupported game systems get empty sandbox data, never live account data.
  return json({ok:true,lab:true,ops:[],top:[],friends:[],cafes:[],rows:[],exists:false});
 }
+
+export function labOrigin(request){try{const raw=request.headers.get('origin'),u=new URL(raw);return u.protocol==='https:'&&u.hostname.endsWith('.brewcrew.pages.dev')&&u.hostname!=='brewcrew.pages.dev'&&u.origin===raw?raw:null;}catch{return null;}}
