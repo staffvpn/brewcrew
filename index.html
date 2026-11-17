@@ -1413,7 +1413,7 @@ function makeStaff(role, opts){
   let name = pick(list), g = 0; while(used.has(name) && g++<50) name = pick(list);
   let quirk = opts.quirk || (chance(0.33) ? pick(Object.keys(QUIRKS).filter(k=>k!=='none')) : 'none');
   const s = {id:'s'+Math.random().toString(36).slice(2,9), name, role, room:null, lvl:1, rank:0, shifts:0, mood:75, pat:100, fatigue:0, quirk,
-    contract:'white', sched:'5/2', off:[5,6], phase:0, today:'off', consec:0, absences:0, recentAbs:0, legendId:0, spr, sex, nameGenderFixed:opts.sex==='m'||opts.sex==='f', examAt:0, promise:0, notice:0, lastConflict:-99};
+    contract:'white', sched:'daily', off:[], phase:0, today:'off', consec:0, absences:0, recentAbs:0, legendId:0, spr, sex, nameGenderFixed:opts.sex==='m'||opts.sex==='f', examAt:0, promise:0, notice:0, lastConflict:-99};
   return s;
 }
 function makeLegend(){
@@ -1431,29 +1431,16 @@ function refreshCands(){
   const legP = 0.01 + 0.002*perk('agency');
   if(S.day - (S.legendCandDay==null ? -99 : S.legendCandDay) >= 7 && chance(legP)){ const l = makeLegend(); if(l){ S.cands.push(l); S.legendCandDay = S.day; } }
 }
-function pickOffDays(role, roomId){
-  const same = S.staff.filter(x=>x.room===roomId && x.role===role && x.sched==='5/2');
-  let best = [5,6], bestScore = -1;
-  for(let d=0; d<7; d++){ const pair = [d, (d+1)%7];
-    const score = pair.reduce((a,wd)=>a + same.filter(x=>!x.off.includes(wd)).length, 0) - (same.length===0 && (d===5)?-2:0);
-    if(score > bestScore){ bestScore = score; best = pair; } }
-  return best;
-}
-function coverage(roomId, role){ return [0,1,2,3,4,5,6].map(wd=>{ const d = S.day + ((wd - weekday() + 7) % 7); return S.staff.filter(x=>x.room===roomId && x.role===role && x.today!=='sub' && scheduledToday(x, d)).length; }); }
 function hire(c, roomId, contract){
   c.room = roomId; c.contract = contract || 'white';
-  c.off = pickOffDays(c.role, roomId);
+  c.off = [];
   S.staff.push(c); S.cands = S.cands.filter(x=>x!==c);
   if(S.isOpen) c.today = 'work';
 }
 function shiftPay(s){ return Math.round(ROLES[s.role].rate * hoursOpen() * RANK_PAY[s.rank] * (s.contract==='white'?1.3:1) * (s.legendId===4?0.5:1) * (s.rateMul||1) * (S.level>=8 && S.level<18 ? 0.9 : 1) / 10) * 10; }
 function hireCost(s){ return shiftPay(s) * 2; }
-function scheduledToday(s, d){
-  d = d===undefined ? S.day : d; const wd = weekday(d);
-  if(s.sched==='every') return true;
-  if(s.sched==='2/2') return ((d + s.phase) % 4) < 2;
-  return !s.off.includes(wd);
-}
+// Staff no longer have a weekly rota; explicit leave/training is handled by openDay.
+function scheduledToday(){ return true; }
 const ABSENCE_REASONS = [
   ['заболел, температура 38', 'ill'], ['проспал', 'late'], ['«умерла бабушка». Третья за этот год', 'lie'], ['застрял в лифте', 'odd'],
   ['ушёл в запой', 'drink'], ['задержали до выяснения', 'police'], ['уехал на дачу и забыл, что сегодня смена', 'lie'], ['кот съел ключи от квартиры', 'odd'],
@@ -1462,7 +1449,7 @@ const ABSENCE_REASONS = [
 ];
 const QUIT_REASONS = {
   money:['нашёл работу на 70 ₽ в час дороже','говорит, что на эти деньги можно только выжить','взял ипотеку, нужна зарплата побольше'],
-  burn:['выгорел. Говорит, что ему снится запах молока','устал от графика и людей','хочет полгода лежать'],
+  burn:['выгорел. Говорит, что ему снится запах молока','устал от работы и людей','хочет полгода лежать'],
   conflict:['не может работать с коллегой','говорит, что в команде токсично'],
   poach:['конкуренты предложили больше','его переманили в сетевую кофейню'],
   life:['переезжает на другой конец страны','поступил в магистратуру','уходит в декрет','уезжает зимовать в Таиланд'],
@@ -1507,7 +1494,7 @@ function closeDay(){
     spend(pay,'wages','Смена: '+s.name+' · '+s.role+' · '+(bcPayrollEnsure().staff[s.id]?.minutes||0)+' мин.');
     if(s.today==='work' || s.today==='sub' || s.today==='training'){
       if(s.today!=='sub'){ s.shifts++; s.consec++; if(s.recentAbs>0 && s.shifts%5===0) s.recentAbs = 0; }
-      s.fatigue = clamp(s.fatigue + (s.consec>5 ? 16 : 8) * (hoursOpen()>14 ? 1.4 : 1) * (s.quirk==='workaholic'?2:1) * focusMul('fatigue'), 0, 100);
+      s.fatigue = clamp(s.fatigue + 8 * (hoursOpen()>14 ? 1.4 : 1) * (s.quirk==='workaholic'?2:1) * focusMul('fatigue'), 0, 100);
       if(unpaid){ s.mood = clamp(s.mood-15,0,100); }
     } else if(s.today==='off' || s.today==='absent'){ s.consec = 0; s.fatigue = 0; s.mood = 100; s.pat = 100; s.restDay = S.day + 1; }
     if(s.fatigue > 70) s.mood = clamp(s.mood-5,0,100);
@@ -1733,7 +1720,7 @@ function inspectionResult(kind, mode){
   if(kind==='san'){ if(S.meters.chaos>45){ viol++; why.push('грязно'); } if(dirtLevel(S.active)>0.45){ viol++; why.push('срач в зале и гора посуды'); } if(S.flags.medbad){ viol += 2; why.push('санкнижки куплены в переходе'); S.flags.medbad = 0; } if(S.flags.expired){ viol++; why.push('просрочка'); } if(S.flags.goose){ viol++; why.push('гусь на кухне'); } if(rm.upg.clean<2){ viol += 0.5; } }
   if(kind==='tax'){ if(S.fin.noCheck>0){ viol += 2; why.push('продажи без чеков на '+fmtR(S.fin.noCheck)); } }
   if(kind==='fire'){ if(rm.upg.safety<1){ viol += 2; why.push('нет огнетушителя'); } else if(rm.upg.safety<3 && chance(0.3)){ viol++; why.push('загромождён выход'); } }
-  if(kind==='labor'){ const grey = S.staff.filter(s=>s.contract==='grey'); if(grey.length){ viol += grey.length; why.push('неоформленные: '+grey.map(s=>s.name).join(', ')); } if(S.staff.some(s=>s.sched==='every')){ viol += 0.5; why.push('без выходных'); } }
+  if(kind==='labor'){ const grey = S.staff.filter(s=>s.contract==='grey'); if(grey.length){ viol += grey.length; why.push('неоформленные: '+grey.map(s=>s.name).join(', ')); } }
   if(viol < 1 && chance(0.15)) { viol = 1; why.push('нашли, к чему придраться'); }
   let fine = 0, txt = '', fx = {};
   const base = kind==='tax' ? Math.max(10000, S.fin.noCheck*0.5) : kind==='labor' ? 10000*Math.max(1, Math.round(viol)) : RI(FINES[kind][0]/1000, FINES[kind][1]/1000)*1000;
@@ -1782,10 +1769,10 @@ def('promise_broken', {cat:'staff', t:'Обещание не выполнено'
 def('conflict', {cat:'staff', t:'Ссора в команде', x:'{s} и {s2} орут друг на друга за стойкой. Причина: {reason}.', o:[
   {t:'Поддержать: {s}', fx:{mood:12, mood2:-25}, out:'{s} доволен. {s2} затаил обиду.'},
   {t:'Поддержать: {s2}', fx:{mood:-25, mood2:12}, out:'{s2} доволен. {s} затаил обиду.'},
-  {t:'Развести по разным сменам', fx:{split:1}, out:'Теперь они не пересекаются. Почти.'},
+  {t:'Помочь договориться', fx:{split:1}, out:'Выслушали друг друга и договорились работать спокойно.'},
   {t:'Помирить премией обоим: 6 000 ₽', fx:{m:-6000, mood:8, mood2:8}, out:'Помирились. До следующего сырника.'},
   {t:'Уволить обоих', fx:{fire:1, fire2:1, moodAll:-10}, out:'Тишина. Очень много тишины.'}]});
-const CONFLICT_REASONS = ['кто-то съел чужой сырник','кто моет питчеры','музыка в зале','график на выходные','ревность','чаевые','один назвал другого «стажёром»','кто-то переставил кофемолку на 2 миллиметра'];
+const CONFLICT_REASONS = ['кто-то съел чужой сырник','кто моет питчеры','музыка в зале','кто убирает после смены','ревность','чаевые','один назвал другого «стажёром»','кто-то переставил кофемолку на 2 миллиметра'];
 def('poach', {cat:'staff', t:'Переманивают', x:'Конкуренты зовут к себе и обещают ставку на 40% выше. {s} пришёл посоветоваться.', o:[
   {t:'Поднять ставку на 30%', fx:{raise:1.3, mood:15}, out:'{s} остаётся.'},
   {t:'Пожелать удачи', fx:{fire:1, rival:[0]}, out:'{s} ушёл к конкурентам.'},
@@ -1979,7 +1966,7 @@ function applyFx(fx, inc){
     if(fx.dayoff){ st.today = 'off'; }
     if(fx.sub){ const sub = makeStaff(st.role, {quirk:'none'}); sub.name = 'Подмена '+sub.name; sub.today = 'sub'; sub.room = st.room; sub.lvl = Math.max(1, st.lvl-2); sub.subPay = shiftPay(st)*2; S.staff.push(sub); S.c.subs++; chips.push(['Подмена за '+fmtR(sub.subPay), false]); }
     if(fx.selfwork){ const sub = makeStaff(st.role, {quirk:'none'}); sub.name = 'Ты'; sub.today = 'sub'; sub.room = st.room; sub.lvl = 2; sub.subPay = 0; sub.isYou = true; S.staff.push(sub); }
-    if(fx.split){ if(st2){ st2.off = st.off.map(d=>(d+2)%7); st2.sched = st.sched; st2.phase = st.phase+2; st.lastConflict = S.day; st2.lastConflict = S.day; } }
+    if(fx.split){ if(st2){ st.mood=clamp(st.mood+10,0,100);st2.mood=clamp(st2.mood+10,0,100);st.lastConflict=S.day;st2.lastConflict=S.day; } }
     if(fx.complainGrey && st.contract==='grey' && chance(0.6)){ S.flags.complaint = 1; chips.push([st.name+' пообещал'+he(st,'','а')+' нажаловаться в трудовую', false]); }
     if(fx.fire){ if(fx.quit) S.c.quits++; else S.c.fired++; if(st.contract==='grey' && !fx.quit && chance(0.4)) S.flags.complaint = 1; removeStaff(st.id); chips.push([st.name+' больше не работает', false]); }
   }
@@ -2101,7 +2088,7 @@ function applyBuild(choice){
   ledgerize(S);MONEY_CTX={out:'invest',why:'Открытие кофейни: оборудование и ремонт'};S.money -= total;MONEY_CTX=null; S.fin.today.invest = (S.fin.today.invest||0) + total; S.build = choice;
   return total;
 }
-function makeYou(){ const y = makeStaff('Бариста', {quirk:'none'}); Object.assign(y, {name:'Ты', isYou:true, room:'main', lvl:2, today:'work', sched:'every', contract:'white'}); return y; }
+function makeYou(){ const y = makeStaff('Бариста', {quirk:'none'}); Object.assign(y, {name:'Ты', isYou:true, room:'main', lvl:2, today:'work', sched:'daily', contract:'white'}); return y; }
 function initState(){
   S.staff.push(makeYou());
   refreshCands(); rollWeather(); newTasks();
@@ -2590,37 +2577,6 @@ function dirtPatience(id){ return 1 - 0.45*dirtLevel(id); }
 function dirtWalk(id){ return 1 - 0.35*Math.max(0, dirtLevel(id) - 0.3); }
 const DIRT_LABEL = v => v < 0.15 ? 'чисто' : v < 0.35 ? 'терпимо' : v < 0.6 ? 'срач' : v < 0.8 ? 'свинарник' : 'вызывайте СЭС';
 
-/* ---------- график: выходные распределяются ровно ---------- */
-function balanceSchedule(roomId){
-  let changed = 0;
-  for(const role of Object.keys(ROLES)){
-    const list = S.staff.filter(s=>s.room===roomId && s.role===role && !s.isYou && s.today!=='sub' && s.sched==='5/2');
-    if(list.length < 2) continue;
-    const cover = [0,0,0,0,0,0,0];
-    const sorted = list.slice().sort((a,b)=>(b.legendId?1:0)-(a.legendId?1:0) || b.lvl-a.lvl);
-    for(const s of sorted){
-      let best = null, bestScore = -1e9;
-      for(let d=0; d<7; d++){ const pair = [d, (d+1)%7]; const tmp = cover.slice(); for(let w=0; w<7; w++) if(!pair.includes(w)) tmp[w]++;
-        const min = Math.min(...tmp), spread = Math.max(...tmp) - min; const score = min*10 - spread + (pair.includes(5)||pair.includes(6) ? -0.3 : 0);
-        if(score > bestScore){ bestScore = score; best = pair; } }
-      if(String(s.off) !== String(best)){ s.off = best; changed++; }
-      for(let w=0; w<7; w++) if(!best.includes(w)) cover[w]++;
-    }
-    const tt = S.staff.filter(s=>s.room===roomId && s.role===role && !s.isYou && s.sched==='2/2');
-    tt.forEach((s,i)=>{ const ph = (i%2)*2; if(s.phase !== ph){ s.phase = ph; changed++; } });
-  }
-  return changed;
-}
-function scheduleHoles(roomId){
-  const out = [];
-  for(const role of ['Бариста','Кассир','Мойщица','Повар','Официант']){
-    const n = S.staff.filter(s=>s.room===roomId && s.role===role && !s.isYou && s.today!=='sub').length; if(n < 2) continue;
-    const cov = coverage(roomId, role); const need = Math.ceil(n/2);
-    cov.forEach((c,wd)=>{ if(c < need) out.push({role, wd, c, n}); });
-  }
-  return out;
-}
-
 /* ---------- приоритет: основной или на подхвате ---------- */
 function staffPrio(s){ return (s.prio==='help' ? 0 : 1000) + (s.legendId || s.prize ? 500 : 0) + staffSpeed(s)*100; }
 
@@ -2975,7 +2931,7 @@ function addTension(a, b, v, reason){
   if(S.tension[k] >= 100 && S.isOpen && !S.incidents.some(i=>i.id==='beef') && !(S.beefCd > absNow())){ S.beefCd = absNow() + 240; pushIncident('beef', {sid:a, sid2:b, reason: S.tReason[k] || pick(BEEF_REASONS)}); }
 }
 function tensionDecay(){ for(const k in (S.tension||{})){ S.tension[k] = Math.max(0, S.tension[k] - 12); if(!S.tension[k]) delete S.tension[k]; } }
-const BEEF_REASONS = ['стаканы: «опять всё на мойке»','питчер с молоком в раковине','кто громче включил музыку','чаевые поделили нечестно','кто последний брал темпер','график выходных','чужой йогурт в холодильнике'];
+const BEEF_REASONS = ['стаканы: «опять всё на мойке»','питчер с молоком в раковине','кто громче включил музыку','чаевые поделили нечестно','кто последний брал темпер','кто выносит мусор','чужой йогурт в холодильнике'];
 
 /* ---------- касса: фальшивки, сдача, кражи ---------- */
 function cashier(id){ const ws = workingStaff(id||'main'); return ws.find(s=>s.role==='Кассир' && !s.isYou) || ws.find(s=>s.isYou) || null; }
@@ -3920,7 +3876,7 @@ def('a_bets2', {cat:'story', t:'Коллекторы за сотрудником
 def('a_romance', {cat:'story', t:'Служебный роман', x:'{s} и {s2} держатся за руки в подсобке. Все уже знают.', pre:inc=>{ const o = S.staff.filter(x=>x.id!==inc.sid && x.room===(S.staff.find(y=>y.id===inc.sid)||{}).room && x.today!=='sub'); if(!o.length) return false; inc.sid2 = pick(o).id; return true; }, o:[
  {t:'Порадоваться за них', fx:{mood:15, mood2:15, soul:2, st:{next:[14,'a_wedding']}}, out:'Атмосфера в команде теплее.'},
  {t:'Запретить отношения на работе', fx:{mood:-20, mood2:-20, pathos:2}, out:'Теперь они встречаются у мусорных баков.'},
- {t:'Развести по разным сменам', fx:{split:1}, out:'Видятся реже. Скучают сильнее.'}]});
+ {t:'Договориться о рабочих границах', fx:{split:1}, out:'Договорились: за стойкой сначала работа, потом личное.'}]});
 def('a_wedding', {cat:'story', t:'Свадьба в кофейне', x:'{s} просит устроить свадьбу прямо в кофейне в выходной.', o:[
  {t:'Устроить за свой счёт', fx:{m:-40000, moodAll:20, soul:5, rep:2}, out:'Лучший вечер в истории кофейни. Видео разошлось по району.'},
  {t:'Сдать зал за деньги', fx:{m:30000, moodAll:-5}, out:'Свадьба прошла. Молодые обиделись на счёт.'},
@@ -4745,7 +4701,7 @@ function tGet(inc){ return tension(inc.sid, inc.sid2); }
 
 def('beef', {cat:'staff', t:'{s} и {s2} на ножах', x:'Причина: {reason}. Орут на всю кухню, гости в очереди снимают сторис. Ещё немного — и кто-то кинет питчер.', o:[
  {t:'Вызвать обоих на ковёр', fx:(S, inc)=>{ HOOK.modal({kind:'carpet', a:inc.sid, b:inc.sid2, reason:inc.reason}); return {fx:{}, out:'Оба стоят у тебя в кабинете и смотрят в разные стены'}; }},
- {t:'Развести по разным сменам', fx:(S, inc)=>{ tSet(inc, tGet(inc) - 60); [inc.sid, inc.sid2].forEach(id=>{ const s = S.staff.find(x=>x.id===id); if(s) s.mood = clamp(s.mood-5,0,100); }); return {fx:{}, out:'Теперь они видятся только в общем чате. Там и ругаются'}; }},
+ {t:'Помочь спокойно обсудить конфликт', fx:(S, inc)=>{ tSet(inc, tGet(inc) - 60); [inc.sid, inc.sid2].forEach(id=>{ const s = S.staff.find(x=>x.id===id); if(s) s.mood = clamp(s.mood-5,0,100); }); return {fx:{}, out:'Обсудили претензии и договорились не ссориться при гостях'}; }},
  {t:'Купить мир: пицца на всех', fx:(S, inc)=>{ tSet(inc, tGet(inc) - 70); return {fx:{m:-6000, moodAll:3}, out:'Пицца решает то, что не решают тренинги. Пока жуют — не ругаются'}; }},
  {t:'Пусть сами разбираются', fx:(S, inc)=>{ if(chance(0.5)){ tSet(inc, tGet(inc) - 40); return {fx:{}, out:'Покурили вместе за углом. Вернулись почти друзьями'}; }
    [inc.sid, inc.sid2].forEach(id=>{ const s = S.staff.find(x=>x.id===id); if(s) s.mood = clamp(s.mood-20,0,100); }); S.c.fights = (S.c.fights||0) + 1; return {fx:{chaos:3, rep:-1}, out:'Разобрались. Питчер погнут, у кого-то фингал, гость снял всё на видео'}; }}],
@@ -6647,10 +6603,6 @@ function staffStatus(s){
 function renderTeam(p, id){
   const list = staffIn(id).filter(s=>s.today!=='sub' || true);
   p.appendChild(el(`<div class="h">Команда · ${esc(roomDef(id).n)}</div>`));
-  // покрытие недели
-  const roles = Object.keys(ROLES).filter(r=>list.some(s=>s.role===r && !s.isYou) || r==='Бариста' || r==='Кассир');
-  const cov = el(`<div class="card"><div class="t">Кто выходит на неделе</div><div class="cov"><span></span>${WEEKDAYS.map((d,i)=>`<b class="${i===weekday()?'today':''}">${d}</b>`).join('')}${roles.map(r=>{ const c = coverage(id, r); return `<span>${r}</span>`+c.map(v=>`<i class="${v===0?'zero':v===1?'one':''}">${v}</i>`).join(''); }).join('')}</div><div class="d">Ноль — в этот день на точке никого. Поменять график можно в карточке сотрудника.</div></div>`);
-  { const holes = scheduleHoles(id); const bal = el(`<div class="card"><div class="row wrap"><span class="t">График</span><span class="sp"></span><button class="btn ghost">Выровнять график</button></div>${holes.length ? `<div class="d" style="color:var(--bad)">${holes.slice(0,3).map(h=>WEEKDAYS[h.wd]+': '+h.role.toLowerCase()+' '+h.c+' из '+h.n).join(' · ')}. Людей мало, будет жопа</div>` : '<div class="d">Выходные распределены ровно</div>'}</div>`); bal.querySelector('button').onclick = () => { const n = balanceSchedule(id); toast(n ? 'Выходные перекроены: '+n+' человек получили новый график. Ворчат, но ровно' : 'И так ровно. Больше не трогай'); sfx('tap'); save(); renderPanel(); }; p.appendChild(bal); }
   const you = list.find(s=>s.isYou);
   if(you){ const on = youNeeded(id); p.appendChild(el(`<div class="card staff badge-card you"><div class="lanyard"></div><div class="spr" style="${sprStyle(staffSpr(you),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row wrap"><span class="t">Ты</span><span class="tag">Владелец</span><span class="stamp ${on?'red':'green'}">${on?'ЗА СТОЙКОЙ':'ОТДЫХАЕШЬ'}</span></div><div class="d">${on?'Пока в команде нет бариста или кассира, ты работаешь сам: медленнее, но бесплатно. Тапай по гостю у кассы, по кофемашине и по гостям у выдачи, чтобы ускорить работу.':'Команда справляется без тебя. Если бариста или кассир не выйдет, ты снова встанешь за стойку.'}</div></div></div>`)); }
   const crew = list.filter(s=>!s.isYou);
@@ -6661,7 +6613,7 @@ function renderTeam(p, id){
     const card = el(`<button class="card staff badge-card${(s.legendId || s.prize) ? ' legend' : ''}"><div class="lanyard"></div>${stamp}<div class="spr" style="${sprStyle(staffSpr(s),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0">
       <div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl}</span>${(s.legendId || s.prize)?'<span class="tag gold">Легенда</span>':''}${s.role==='Бариста'?(s.prio==='help'?'<span class="tag">На подхвате</span>':'<span class="tag g">Основной</span>'):''}${freshFault(s)?'<span class="tag warn">Косяк</span>':''}${s.quirk!=='none'?`<span class="tag">${qN(s)}</span>`:''}${s.contract==='grey'?'<span class="tag warn">В серую</span>':''}<span class="tag ${cls}">${txt}</span></div>
       <div class="mood">Состояние ${bar(staffState(s), moodCol(staffState(s)))}<span class="st ${staffState(s)<45?'bad':''}">${stateLabel(staffState(s))}</span></div>${s.wish?`<div class="wishline">${esc(WISHES[s.wish.k].t)} · ${Math.max(0,s.wish.by-S.day)} дн.</div>`:''}
-      <div class="d">${s.today==='sub'?'Подмена на сегодня':s.sched==='every'?'Без выходных':s.sched==='2/2'?'2 через 2':'5/2, выходные: '+s.off.map(d=>WEEKDAYS[d]).join(', ')} · ${fmt(s.today==='sub'?s.subPay:shiftPay(s))} ₽ за смену · смен ${s.shifts}</div></div></button>`);
+      <div class="d">${s.today==='sub'?'Подмена на сегодня · ':''}${fmt(s.today==='sub'?s.subPay:shiftPay(s))} ₽ за смену · смен ${s.shifts}</div></div></button>`);
     card.onclick = () => { if(s.today!=='sub') queueModal({kind:'staff', sid:s.id}, true); };
     p.appendChild(card);
   });
@@ -6799,15 +6751,16 @@ function renderFin(p){
 
 /* ---------- события ---------- */
 function renderEvents(p){
-  p.appendChild(el(`<div class="h chalk">События</div>`));
-  if(!S.incidents.length) p.appendChild(el(`<div class="empty">Пока тихо. Нерешённые события через 20 минут решаются сами, и почти всегда хуже, чем решил бы ты.</div>`));
-  S.incidents.slice().reverse().forEach(inc=>{
+  const events=el('<section class="bc-task-events" aria-label="События"></section>');
+  events.appendChild(el(`<div class="h chalk">События</div>`));
+  S.incidents.slice().sort((a,b)=>b.at-a.at||b.uid-a.uid).forEach(inc=>{
     const d = evDef(inc); if(!d) return; const left = Math.max(0, 20 - (Date.now()-inc.at)/60000);
     const tag = {absurd:'Абсурд', inspect:'Проверка', staff:'Команда', break:'Поломка', money:'Деньги'}[d.cat] || 'Событие';
     const card = el(`<button class="card sticker s${inc.uid%4} ${left<5?'hot':''}" style="text-align:left"><div class="row"><span class="tag">${tag}</span><span class="t">${esc(fillText(d.t, inc))}</span><span class="sp"></span><span class="tag num">${Math.ceil(left)} мин</span></div><div class="d">${esc(fillText(d.x, inc))}</div></button>`);
     card.onclick = () => queueModal({kind:'inc', uid:inc.uid}, true);
-    p.appendChild(card);
+    events.appendChild(card);
   });
+  if(S.incidents.some(inc=>evDef(inc)))p.appendChild(events);
   const mods = activeMods();
   if(mods.length){ const st = stats(S.active), mt = modMul('traffic'); p.appendChild(el(`<div class="h">Действуют сейчас</div>`)); if(Math.abs(mt-1) >= 0.05 && st.lambda > 0) p.appendChild(el(`<div class="card"><div class="t">Гостей за игровой час: ${fmt(st.lambda/mt*840)} → <b class="num">${fmt(st.lambda*840)}</b></div><div class="d">Итог всех бонусов и штрафов к потоку: ${mt>=1?'+':'−'}${Math.round(Math.abs(mt-1)*100)}%${mt >= 2.5 ? ' (это потолок, больше не складывается)' : ''}</div></div>`)); mods.forEach(m=>p.appendChild(el(`<div class="card"><div class="row"><span class="t">${esc(m.label)}</span><span class="sp"></span><span class="tag num">${(m.until-absNow())/60 > 2000 ? 'постоянно' : Math.ceil((m.until-absNow())/60)+' игр. ч'}</span></div></div>`))); }
 }
@@ -7028,21 +6981,8 @@ function showModal(){
     box.append(el(`<div class="eyebrow">День первый</div>`), el(`<h2>Двери открыты</h2>`), el(`<p>Команды пока нет, так что ты сам стоишь на кассе и сам варишь кофе. Медленно, но бесплатно.</p>`),
       el(`<ol class="introl"><li><b>Найми бариста и кассира.</b> Зал → Команда. Новые кандидаты каждые 5 минут.</li><li><b>Выбери позицию дня.</b> Зал → Меню. Её берут втрое чаще.</li><li><b>Тапай по гостям</b> у кассы и на выдаче, и по кофемашине, чтобы работать быстрее.</li><li><b>Три задания каждый день</b> — во вкладке «Дела». Там же события.</li></ol>`), btn('Поехали', ()=>{ closeModal(); openSheet('hall','team'); }));
   }
-  else if(m.kind==='streak'){ box.append(el(`<div class="eyebrow">С возвращением</div>`), el(`<h2>${m.n} ${m.n===1?'день':m.n<5?'дня':'дней'} подряд</h2>`), el(`<p>Команда рада тебя видеть. Бонус за серию: +${fmt(m.bonus)} ₽.</p>`), btn('К делу', closeModal)); }
   else if(m.kind==='note'){ box.append(el(`<div class="eyebrow">${m.text?'Новости':'Последствия'}</div>`), el(`<h2>${esc(m.title)}</h2>`)); if(m.text) box.append(el(`<p>${esc(m.text)}</p>`)); box.append(chipsEl(m.chips), btn('Понятно', closeModal)); }
   else if(m.kind==='staff') staffModal(box, m, btn);
-  else if(m.kind==='sched'){
-    const s = S.staff.find(x=>x.id===m.sid); if(!s){ closeModal(); return; }
-    box.append(el(`<div class="eyebrow">График</div>`), el(`<h2>${esc(s.name)}</h2>`));
-    const opts = el(`<div class="opts"></div>`);
-    [['5/2','5 через 2'],['2/2','2 через 2'],['every','Без выходных: быстрее устаёт, трудовая не одобрит']].forEach(([k,n])=>{ const b = el(`<button class="opt" aria-pressed="${s.sched===k}">${n}</button>`); b.onclick = () => { s.sched = k; if(k==='2/2') s.phase = (s.phase||0); save(); $('#modalRoot').innerHTML=''; showModal(); }; opts.appendChild(b); });
-    box.appendChild(opts);
-    if(s.sched==='5/2'){ const days = el(`<div class="days">${WEEKDAYS.map((d,i)=>`<button class="chipbtn" aria-pressed="${s.off.includes(i)}" data-d="${i}">${d}</button>`).join('')}</div>`);
-      days.querySelectorAll('button').forEach(b=>b.onclick=()=>{ const d = +b.dataset.d; if(s.off.includes(d)) s.off = s.off.filter(x=>x!==d); else { s.off.push(d); if(s.off.length>2) s.off.shift(); } save(); $('#modalRoot').innerHTML=''; showModal(); });
-      box.append(el(`<div class="d">Выходные (два дня):</div>`), days); }
-    if(s.sched==='2/2'){ const b = btn('Сдвинуть цикл на день', ()=>{ s.phase = (s.phase+1)%4; save(); $('#modalRoot').innerHTML=''; showModal(); }, 'ghost'); box.appendChild(b); box.appendChild(el(`<div class="d">Работает: ${[0,1,2,3,4,5,6].filter(k=>scheduledToday(s, S.day+k)).map(k=>WEEKDAYS[weekday(S.day+k)]).join(', ')}</div>`)); }
-    box.appendChild(btn('Готово', ()=>{ closeModal(); }));
-  }
   else if(m.kind==='rival'){
     const r = S.rivals.find(x=>x.id===m.rid), b = RIVALS.find(x=>x.id===m.rid);
     if(r.status!=='sale'){ closeModal(); return; }
@@ -7135,9 +7075,8 @@ function staffModal(box, m, btn){
   if(ti.can){ const b = el(`<button class="btn num" data-cost="${ti.cost}">Обучить: ${fmt(ti.cost)} ₽<small>Следующую смену на курсах, уровень +1</small></button>`); b.onclick = () => { if(S.money<ti.cost) return; spend(ti.cost,'other','Обучение: '+s.name); s.trainNext = true; toast(s.name+' пойдёт на курсы в следующую смену'); sfx('buy'); redraw(); }; acts.appendChild(b); }
   else acts.appendChild(el(`<button class="btn ghost" disabled>Обучение<small>${esc(ti.t)}</small></button>`));
   if(s.rank<3){ const b = el(`<button class="btn ${pi.can?'':'ghost'}" ${pi.can?'':'disabled'}>Повысить до «${RANKS[s.rank+1]}»<small>${esc(pi.cool?'Пересдача позже':pi.t)}</small></button>`); b.onclick = () => { const r = tryPromote(s); toast(r.t); sfx(r.ok?'level':'bad'); achCheck(); redraw(); }; acts.appendChild(b); }
-  act('График', s.sched==='every'?'Без выходных':s.sched==='2/2'?'2 через 2':'5/2: '+s.off.map(d=>WEEKDAYS[d]).join(', '), ()=>{ modals.splice(0,1,{kind:'sched', sid:s.id}); }, 'ghost');
   if(s.contract==='grey'){ const oc = shiftPay(s)*2; act('Оформить официально', fmt(oc)+' ₽, ставка +30%', ()=>{ if(S.money<oc) return; spend(oc,'other','Оформление: '+s.name); s.contract='white'; s.mood = clamp(s.mood+10,0,100); }, 'ghost', S.money<oc); }
-  if(S.rooms.length>1){ act('Перевести в другой зал', 'В следующий по списку', ()=>{ const ids = S.rooms.map(r=>r.id); s.room = ids[(ids.indexOf(s.room)+1)%ids.length]; s.off = pickOffDays(s.role, s.room); syncScene(S.active); toast(s.name+' теперь в зале «'+roomDef(s.room).n+'»'); }, 'ghost'); }
+  if(S.rooms.length>1){ act('Перевести в другой зал', 'В следующий по списку', ()=>{ const ids = S.rooms.map(r=>r.id); s.room = ids[(ids.indexOf(s.room)+1)%ids.length]; s.off = []; syncScene(S.active); toast(s.name+' теперь в зале «'+roomDef(s.room).n+'»'); }, 'ghost'); }
   const fire = el(`<button class="btn ghost">Уволить<small>${s.contract==='grey'?'Может нажаловаться в трудовую':'По соглашению сторон'}</small></button>`);
   fire.onclick = () => { if(!fire.dataset.sure){ fire.dataset.sure = '1'; fire.firstChild.textContent = 'Точно уволить?'; return; } applyFx({fire:1}, {sid:s.id}); S.staff.filter(x=>x.room===s.room).forEach(x=>x.mood = clamp(x.mood-4,0,100)); toast(s.name+' '+he(s,'уволен','уволена')); sfx('bad'); achCheck(); save(); closeModal(); };
   acts.appendChild(fire);
@@ -7240,14 +7179,6 @@ function migrate(){
   if(S.restock===undefined) S.restock = true; S.restockAt = S.restockAt || 0.35;
   for(const k in STOCK) if(STOCK[k].perish && !Array.isArray(S.stock[k])) S.stock[k] = [];
   if(S.autoOrder) S.restock = true;
-}
-function streakCheck(){
-  const d = new Date(Date.now()+3*3600000).toISOString().slice(0,10);
-  const y = new Date(Date.now()+3*3600000-86400000).toISOString().slice(0,10);
-  const st = S.streak || {last:'', n:0};
-  if(st.last === d) return;
-  st.n = st.last === y ? st.n + 1 : 1; st.last = d; S.streak = st;
-  if(st.n >= 2){ const bonus = Math.round(Math.max(10000, avgRev()*0.1) * Math.min(st.n, 7) / 1000) * 1000; income(bonus); queueModal({kind:'streak', n:st.n, bonus}); }
 }
 try{ if(tg && tg.isVersionAtLeast && tg.isVersionAtLeast('8.0') && tg.requestFullscreen && !tg.isFullscreen && /Android|iPhone|iPad/i.test(navigator.userAgent)) tg.requestFullscreen(); }catch(e){}
 function applySafe(){ if(!tg) return; const s = tg.safeAreaInset || {}, c = tg.contentSafeAreaInset || {}; const r = document.documentElement.style;
@@ -9773,40 +9704,9 @@ onTrack = function(r){ try{ if(r && r.ok && S && Array.isArray(r.ops)) for(const
 /* ---------- календарь смен ---------- */
 function mskDayStr(t){ return new Date((t||Date.now()) + 3*3600000).toISOString().slice(0, 10); }
 function dayDiff(a, b){ return Math.round((Date.parse(b) - Date.parse(a)) / 86400000); }
-function streakState(){ S.streak = S.streak || {last:null, n:0, best:0, got:{}}; return S.streak; }
-function streakReward(n){
-  if(n % 30 === 0) return {t:'Месяц на смене', d:'Именная кружка владельца на стойку: +2% гостей навсегда.', fx:()=>{ addDecor('mug30'); }};
-  if(n % 14 === 0) return {t:'Две недели подряд', d:'Значок «Две недели на смене» и сутки +10% гостей.', fx:()=>{ badgeAdd('streak14', 'Две недели на смене', 'Календарь смен'); addMod('traffic', 1.1, 24, 'Две недели подряд: гостей +10%'); }};
-  if(n % 7 === 0) return {t:'Неделя подряд', d:'В резюме сегодня — кандидат высокого уровня.', fx:()=>{ const c = makeStaff(pick(['Бариста','Кассир','Официант']), {quirk:'none'}); c.lvl = Math.max(6, Math.min(14, S.level)); c.interviewed = true; c.cv = null; S.cands.unshift(c); }};
-  if(n % 3 === 0) return {t:'Третий день подряд', d:'Хозтовары и молоко на складе до полного.', fx:()=>{ for(const k of ['hoz','milk']){ if(!STOCK[k]) continue; const need = Math.max(0, stockCap(k) - stockQty(k)); if(!need) continue; if(STOCK[k].perish){ if(!Array.isArray(S.stock[k])) S.stock[k] = []; S.stock[k].push({q:need, exp:S.day + STOCK[k].perish}); } else S.stock[k] = (S.stock[k]||0) + need; } }};
-  const v = Math.max(20000, Math.round(Math.max(100000, dayBase()) * (0.15 + Math.min(0.35, n*0.02)) / 1000) * 1000);
-  return {t:'День '+n, d:'+'+fmt(v)+' ₽ на кассу.', fx:()=>income(v, 'events', 'Календарь смен, день '+n)};
-}
-function streakCheck(){
-  if(!S || S.level < 1) return; const st = streakState(); const today = mskDayStr();
-  if(st.last === today) return;
-  const gap = st.last ? dayDiff(st.last, today) : 1;
-  if(gap === 2 && st.n >= 3 && !st.offered){ st.offered = today; const cost = Math.max(30000, Math.round(dayBase()*0.4/1000)*1000); queueModal({kind:'streakfix', cost}); return; }
-  st.n = gap === 1 || gap === 2 && st.fixed === today ? st.n + 1 : 1; st.last = today; st.offered = null; st.best = Math.max(st.best, st.n);
-  const rw = streakReward(st.n); try{ rw.fx(); }catch(e){ console.error(e); }
-  queueModal({kind:'streak', n:st.n, t:rw.t, d:rw.d}); save();
-}
 DECOR.push({id:'mug30', n:'Именная кружка владельца', slot:'counter', price:0, season:true, d:'Тридцать дней на смене подряд. Гостей +2% навсегда.', fx:{traffic:1.02}});
 const _drawDecor25 = drawDecor;
 drawDecor = function(it, x, y, now){ if(it.id==='mug30'){ RR(x-5, y-12, 10, 12, 2, '#f4efe6'); rect(x+5, y-9, 3, 6, '#f4efe6'); rect(x-5, y-8, 10, 2, '#b5652a'); txt('30', x, y-2.5, '800 4px "Golos Text",sans-serif', '#5a3c26', 'center'); return; } return _drawDecor25(it, x, y, now); };
-MODAL15.streak = (box, m, btn) => { const st = streakState(); const days = [];
-  for(let i=1;i<=7;i++){ const n = Math.floor((st.n-1)/7)*7 + i; days.push(`<div class="stk ${n<=st.n?'on':''} ${n%7===0?'big':''}"><b>${n}</b><span>${n%30===0?'кружка':n%14===0?'значок':n%7===0?'легенда':n%3===0?'склад':'касса'}</span></div>`); }
-  box.append(el(`<div class="eyebrow">Календарь смен</div>`), el(`<h2>${esc(m.t)}</h2>`), el(`<p>${esc(m.d)}</p>`), el(`<div class="stk-row">${days.join('')}</div>`), el(`<p class="lz-fx">Заходи каждый день: 3-й день — склад, 7-й — сильный кандидат, 14-й — значок, 30-й — именная кружка. Пропустишь день — серия начнётся заново.</p>`), btn('Отлично', closeModal)); };
-MODAL15.streakfix = (box, m, btn) => { const st = streakState();
-  box.append(el(`<div class="eyebrow">Календарь смен</div>`), el(`<h2>Вчера смена пропущена</h2>`), el(`<p>Серия ${st.n} дней вот-вот сгорит. Можно закрыть пропуск: вызвать подмену на вчера.</p>`));
-  box.append(btn('Закрыть пропуск · '+fmt(m.cost)+' ₽', ()=>{ if(S.money < m.cost){ toast('Не хватает денег'); return; } spend(m.cost, 'wages', 'Подмена за пропущенный день'); st.fixed = mskDayStr(); closeModal(); setTimeout(streakCheck, 300); }, S.money < m.cost ? 'ghost' : ''),
-    btn('Начать заново', ()=>{ st.n = 0; st.last = null; closeModal(); setTimeout(streakCheck, 300); }, 'ghost')); };
-function streakCard(){ const st = streakState(); const next = [3,7,14,30].map(k=>Math.ceil((st.n+1)/k)*k).sort((a,b)=>a-b)[0];
-  return el(`<div class="card"><div class="row"><span class="t">Календарь смен</span><span class="sp"></span><span class="tag num">${st.n} дн. подряд</span></div><div class="d">Следующая особая награда — на ${next}-й день. Рекорд: ${st.best} дн.</div></div>`); }
-const _renderTasks25 = renderTasks;
-renderTasks = function(p){ _renderTasks25(p); try{ p.prepend(streakCard()); }catch(e){} };
-setTimeout(()=>{ try{ streakCheck(); }catch(e){ console.error(e); } }, 6000);
-setInterval(()=>{ try{ if(!modals.length) streakCheck(); }catch(e){} }, 5*60000);
 // премия запоминается для сплетен
 const _giveBonus25 = giveBonus;
 giveBonus = function(s, wish){ S.c.lastBonusDay = S.day; return _giveBonus25(s, wish); };
@@ -11264,7 +11164,7 @@ const _reviewTick931 = reviewTick;
 reviewTick = function(){ if(!chance(0.4)) return; return _reviewTick931.apply(this, arguments); };
 const STAFF_REV = {
   good:['Лучшее место, где я работал. Платят вовремя, выходные — святое.', 'Ухожу на повышение, но буду скучать по этой команде.', 'Хозяин помнит, как зовут всех, даже мойщицу. Редкость.', 'Научили варить кофе так, что меня теперь зовут везде.'],
-  mid:['Нормально. Кофе хороший, смены длинные.', 'Работать можно, если не боишься очередей.', 'Команда хорошая, график не очень.'],
+  mid:['Нормально. Кофе хороший, смены длинные.', 'Работать можно, если не боишься очередей.', 'Команда хорошая, заботы не хватает.'],
   bad:['Задерживали зарплату и смотрели, как будто так и надо.', 'Три смены подряд без выходных. Кофе вкусный, люди — нет.', 'Сказали, что я незаменим, и заменили через неделю.', 'Уставал так, что засыпал на мешках с зерном.']};
 const _removeStaff931 = removeStaff;
 removeStaff = function(id){ try{ const s = S.staff.find(x => x.id === id); if(s && !s.isYou && !s.sold && (s.shifts || 0) >= 5 && chance(0.45)){
@@ -11627,9 +11527,6 @@ document.addEventListener('visibilitychange', () => { if(!document.hidden) mtPol
 
 /* облегчение интерфейса: прячем лишнее, укорачиваем тексты */
 function liteTeam(p){
-  // покрытие недели и график — под одну кнопку
-  const covs = Array.from(p.querySelectorAll('.card')).filter(c=>{ const t = c.querySelector('.t'); return t && /Кто выходит на неделе|^График$/.test(t.textContent.trim()); });
-  if(covs.length){ const b = el(`<div class="card"><div class="row"><span class="t">График недели</span><span class="sp"></span><button class="btn ghost">Показать</button></div></div>`); covs[0].before(b); covs.forEach(c=>c.style.display='none'); b.querySelector('button').onclick = () => { covs.forEach(c=>c.style.display=''); b.remove(); }; }
   // карточки сотрудников: только роль и уровень, строка смены короче
   p.querySelectorAll('.card.staff').forEach(c=>{
     c.querySelectorAll('.tag').forEach(t=>{ const x = t.textContent.trim(); if(/^(Стажёр|Специалист|Старший|Управляющий зала|Основной|На подхвате|На смене|Без странностей|Характер: \?)$/.test(x)) t.remove(); });
@@ -12715,7 +12612,7 @@ function sumFor(k){
     if(k==='team'){ var w=workingStaff(id).length; return '<b>'+w+'</b> на смене'; }
     if(k==='market'){ return 'кандидаты и продажа'; }
     if(k==='tasks'){ var d=(S.tasks||[]).filter(function(t){return t.done;}).length; return '<b>'+d+'</b> из '+((S.tasks||[]).length||5); }
-    if(k==='season'){ return 'ступень <b>'+((S.season&&S.season.tier)||0)+'</b>'; }
+    if(k==='season'){ return 'ступень <b>'+szTier(szState())+'</b> из '+SZ_TIERS; }
     if(k==='inv'){ return 'награды сезона'; }
     if(k==='stock'){ var l=lowStock(); return l.length?('<b>'+l.length+'</b> заканчивается'):'запас в норме'; }
     if(k==='money'){ var r=(S.fin&&S.fin.today&&S.fin.today.rev)||0; return 'сегодня <b>'+nf(r)+' ₽</b>'; }
@@ -12738,7 +12635,7 @@ function heroFor(k){
     if(k==='stock'){ var l=lowStock();
       return HERO('склад', l.length?('Заканчивается: '+l.length):'Всё в порядке', l.length?l.join(', '):'Запасов хватает на смену'); }
     if(k==='owner'){ return HERO('уровень владельца', String(S.level), 'опыт владельца: '+(S.ox||0)); }
-    if(k==='season'){ var s=S.season||{}; return HERO('сезон', 'Ступень '+(s.tier||0), (s.pts||0)+' очков'); }
+    if(k==='season'){ var z=szState(); return HERO(sezInfo().n, 'Ступень '+szTier(z)+' из '+SZ_TIERS, z.sp+' очков'); }
   }catch(e){}
   return '';
 }
@@ -15161,11 +15058,32 @@ BrewCrewCash.init({state:function(){return typeof S==='undefined'?null:S;},save:
 var bcCashNew=newState;newState=function(){const before=S,next=bcCashNew.apply(this,arguments);BrewCrewCash.carry(before,next);return next;};
 var bcCashFin=renderFin;renderFin=function(p){bcCashFin.apply(this,arguments);BrewCrewCash.render(p);const nav=p.querySelector('.finnav'),journal=p.querySelector('.bc-cash-history');if(nav&&journal){const jump=el('<button class="btn ghost">История операций ↓</button>');jump.onclick=()=>journal.scrollIntoView({block:'start',behavior:'smooth'});nav.after(jump);}};
 var bcCashOffline=simulateOffline;simulateOffline=function(){BrewCrewCash.beginOffline();try{return bcCashOffline.apply(this,arguments);}finally{BrewCrewCash.endOffline();}};
+// Keep current events first, then the existing task order; empty events take no space.
+var bcPriorityTasks=renderTasks;renderTasks=function(p){bcPriorityTasks.apply(this,arguments);const events=p.querySelector('.bc-task-events');if(events)p.prepend(events);};
+function bcSeasonButton(){
+ const b=document.querySelector('#hallnav [data-t="season"]');if(!b)return;
+ const info=sezInfo(),id=sezId(),end=new Date(Date.UTC(+id.slice(0,4),+id.slice(5,7),1)-3*3600000-1);
+ const date=end.toLocaleDateString('ru-RU',{day:'numeric',month:'long',timeZone:'Europe/Moscow'});
+ if(!b.querySelector('.bc-season-copy')){const badge=b.querySelector('.tb'),icon=b.querySelector('svg');b.innerHTML='<span class="bc-season-copy"><span>Сезон</span><small></small></span>';if(icon)b.prepend(icon);if(badge)b.appendChild(badge);}
+ b.querySelector('small').textContent='До '+date;b.title=info.n+' · до '+date;b.setAttribute('aria-label','Сезон: '+info.n+', до '+date);
+}
+let bcTasksPreviousState=null,bcTasksPreviousEvents=new Set();
+var bcSeasonSheet=renderSheet;renderSheet=function(){const r=bcSeasonSheet.apply(this,arguments);bcSeasonButton();if(sheet==='hall'&&hallTab==='tasks'){
+ if(bcTasksPreviousState!==S){bcTasksPreviousState=S;bcTasksPreviousEvents=new Set();}
+ const events=S.incidents.filter(i=>evDef(i)),fresh=events.some(i=>!bcTasksPreviousEvents.has(i.uid));
+ bcTasksPreviousEvents=new Set(events.map(i=>i.uid));const p=document.querySelector('#panel');if(fresh&&p)p.scrollTop=0;
+}return r;};
+(function(){const style=document.createElement('style');style.textContent=`
+html body .sheet[data-k="hall"] #hallnav .chipbtn[data-t="season"]{grid-column:span 2;flex-direction:row!important;gap:10px!important;background:linear-gradient(135deg,#f6da8c,#e9b955)!important;color:#513516!important;border:1px solid #c89737!important;box-shadow:inset 0 1px 0 #fff4ce,0 2px 5px #6a441522}
+html body .sheet[data-k="hall"] #hallnav .chipbtn[data-t="season"][aria-pressed="true"]{background:#67491f!important;color:#fff1c3!important;box-shadow:inset 0 0 0 2px #f2ca68}
+html body #hallnav .bc-season-copy{display:flex;flex-direction:column;gap:3px;text-align:left}html body #hallnav .bc-season-copy small{font:500 10px/1.2 "Golos Text",sans-serif;color:inherit}
+.bc-task-events .h{margin-top:0}.bc-task-events>.card{width:100%;box-sizing:border-box}
+`;document.head.appendChild(style);})();
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
  clearRuntime:function(){for(const k in RT)delete RT[k];modals=[];S=null;sheet=null;const mr=document.getElementById('modalRoot'),sr=document.getElementById('sheetRoot');if(mr)mr.innerHTML='';if(sr)sr.innerHTML='';},
- afterRestore:function(){const hallRefund=S.c.hall2Retired;if(hallRefund&&hallRefund.amount&&!hallRefund.notified){hallRefund.notified=true;toast('Возврат за второй зал: +'+fmt(hallRefund.amount)+' ₽');}var refund=S.c.petUpgradeRefund;if(refund&&refund.amount&&!refund.notified){refund.notified=true;toast('Возврат за «Питомцев»: +'+fmt(refund.amount)+' ₽');}streakCheck();refreshEntitlements();loadFriends();setTimeout(()=>track(),1500);}
+ afterRestore:function(){const hallRefund=S.c.hall2Retired;if(hallRefund&&hallRefund.amount&&!hallRefund.notified){hallRefund.notified=true;toast('Возврат за второй зал: +'+fmt(hallRefund.amount)+' ₽');}var refund=S.c.petUpgradeRefund;if(refund&&refund.amount&&!refund.notified){refund.notified=true;toast('Возврат за «Питомцев»: +'+fmt(refund.amount)+' ₽');}refreshEntitlements();loadFriends();setTimeout(()=>track(),1500);}
 });
 BrewCrewLegal.run(function(){BrewCrewSaves.start();});
 
