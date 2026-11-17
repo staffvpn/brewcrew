@@ -1054,18 +1054,66 @@ const LEGENDS = [
 ];
 const NAMES_M = ['Гоша','Артём','Лёха','Денис','Толик','Рустам','Александр','Жора','Боря','Кеша','Митя','Стас','Гена','Ваня','Егор','Тимур','Влад','Паша','Костя','Макс','Дима','Олег','Серёга','Никита'];
 const NAMES_F = ['Марина','Карина','Вика','Света','Ника','Полина','Ульяна','Даша','Лиза','Зоя','Мила','Оля','Аня','Евгения','Соня','Катя','Настя','Юля','Алина','Таня','Лена','Ира','Маша','Вера'];
+// NPC names are resolved from identity; player and review author names are untouched.
+const PERSON_NAME_SEX=new Map();
+function personNameKey(s){return String(s||'').toLowerCase().replace(/ё/g,'е');}
+for(const n of NAMES_M.concat(['Виктор','Витя','Сергей','Алексей','Анатолий','Роман','Валерий','Валера','Михаил','Миша','Михалыч','Иван','Евгений','Дмитрий','Данил','Даниил','Борис','Константин','Николай','Коля','Павел','Пётр','Петя','Юрий','Юра','Василий','Вася','Лев','Семён','Сёма','Эдуард','Артур','Арсений','Арсен','Гордей','Глеб','Ярослав','Игорь','Максим','Владимир','Вадим','Вячеслав']))PERSON_NAME_SEX.set(personNameKey(n),'m');
+for(const n of NAMES_F.concat(['Анна','Анастасия','Екатерина','Елена','Валентина','Валя','Елизавета','Светлана','Дарья','Мария','Софья','София','Виктория','Лидия','Лилия','Лиля','Оксана','Ксения','Ксюша','Яна','Жанна','Татьяна','Зина','Зинаида','Люда','Людмила','Рита','Маргарита','Ася','Алиса','Лера','Валерия','Ноябрина','Галина','Галя','Любовь','Люба','Надежда','Надя','Алёна','Нина','Ольга','Александра']))PERSON_NAME_SEX.set(personNameKey(n),'f');
+function personNameSex(name){
+ const words=personNameKey(name).match(/[а-я]+/g)||[];
+ if(words.some(w=>['мама','бабушка','тетя','студентка'].includes(w)))return 'f';
+ if(words.some(w=>['дед','дедушка','дядя'].includes(w)))return 'm';
+ for(const word of words){const sex=PERSON_NAME_SEX.get(word);if(sex)return sex;}
+ return null;
+}
+function staffIdentitySex(s){
+ if(s.name==='Шеф Ноябрина'||s.szLeg==='2026-11')return 'f';
+ const named=LEGENDS.find(l=>l.name===s.name);if(named)return named.sex;
+ const prize=PRIZE_NAMES.find(l=>l[0]===s.name);if(prize)return prize[1];
+ if(s.som34||s.name==='Виктор')return 'm';
+ const hint=personNameSex(s.name);
+ if((s.prize||s.szLeg||s.flag34||s.legendId)&&hint)return hint;
+ if(s.sex==='m'||s.sex==='f')return s.sex;
+ if(hint)return hint;
+ if(Number.isInteger(s.spr)&&META[s.spr])return sexOf(s.spr);
+ return STAFF_VISUAL_SEX[s.role]||'m';
+}
+function explicitPersonName(name,sex){
+ return String(name||'').replace(/(^|\s)(Женя|Саша|Саня)$/i,(_,prefix,n)=>prefix+(/^женя$/i.test(n)?(sex==='f'?'Евгения':'Евгений'):(sex==='f'?'Александра':'Александр')));
+}
+function normalizeGuestName(g){
+ if(!g||g.isPet||g._specialGuest||g._role||!Number.isInteger(g.spr)||!META[g.spr])return g;
+ const def=g.reg&&REGULARS.find(r=>r.id===g.reg);
+ if(def){g.name=def.n;g.sex=def.sex;if(REG_SPR[def.id]!=null)g.spr=REG_SPR[def.id];}
+ else{
+  g.sex=sexOf(g.spr);const hint=personNameSex(g.name),pool=g.sex==='f'?NAMES_F:NAMES_M;
+  if(!g.name||hint&&hint!==g.sex)g.name=pool[Math.abs(Number(g.gid)||g.spr)%pool.length];
+  else g.name=explicitPersonName(g.name,g.sex);
+ }
+ const expected=g.sex==='f'?'guest':([59,61,62].includes(g.spr)?'elder':'guestm');
+ if(g._body&&g._body!==expected)delete g._body;
+ return g;
+}
+function normalizeGuestNames(){
+ if(!S)return;
+ for(const saved of S.regs||[]){const def=REGULARS.find(r=>r.id===saved.id);if(def){saved.sex=def.sex;if(REG_SPR[def.id]!=null)saved.spr=REG_SPR[def.id];}}
+ for(const r of Object.values(RT||{}))for(const g of (r.guests||[]).concat(r.crowd||[]))normalizeGuestName(g);
+}
+
 // Staff with both appearance sets keep their identity; named story characters keep their names.
 const STAFF_VISUAL_SEX={'Бариста':'f','Кассир':'f','Официант':'m','Мойщица':'f','Повар':'m'};
 function normalizeStaffName(s,used){
  if(!s||s.isYou)return s;
- const special=!!(s.legendId||s.prize||s.szLeg||s.som34),mixed=['Бариста','Кассир','Официант'].includes(s.role),sex=(s.name==='Шеф Ноябрина'||s.szLeg==='2026-11')?'f':(special||s.nameGenderFixed||mixed)?(s.sex==='f'?'f':'m'):(STAFF_VISUAL_SEX[s.role]||(s.sex==='f'?'f':'m'));
- const own=sex==='f'?NAMES_F:NAMES_M,other=sex==='f'?NAMES_M:NAMES_F,old=String(s.name||'');
+ const special=!!(s.legendId||s.prize||s.szLeg||s.som34||s.flag34),sex=staffIdentitySex(s);
+ const own=sex==='f'?NAMES_F:NAMES_M,old=String(s.name||'');
  s.sex=sex;
- if(!special&&(!old||other.includes(old)||(sex==='m'&&old==='Женя')||(sex==='f'&&old==='Саня'))){
+ if(!special&&(!old||personNameSex(old)&&personNameSex(old)!==sex)){
   used=used||new Set((S?.staff||[]).concat(S?.cands||[]).filter(x=>x!==s).map(x=>x.name));
   let n=0;for(const ch of String(s.id||old))n=(n*31+ch.charCodeAt(0))>>>0;
-  const available=own.filter(x=>!used.has(x));s.name=(available.length?available:own)[n%(available.length||own.length)];used.add(s.name);
+  const available=own.filter(x=>!used.has(x));s.name=(old.startsWith('Подмена ')?'Подмена ':'')+(available.length?available:own)[n%(available.length||own.length)];used.add(s.name);
  }
+ s.name=explicitPersonName(s.name,sex);if(s.flag34)s.name=s.name.replace(/Флагманск(?:ий|ая)$/,'Флагманск'+(sex==='f'?'ая':'ий'));
+ const currentPay=S&&S.c&&S.c.payroll&&S.c.payroll.staff&&S.c.payroll.staff[s.id];if(currentPay)currentPay.name=s.name;
  return s;
 }
 function normalizeStaffNames(){if(!S)return;const list=(S.staff||[]).concat(S.cands||[]),used=new Set(list.map(x=>x.name));list.forEach(x=>normalizeStaffName(x,used));}
@@ -1078,14 +1126,14 @@ const PATHS = {soul:'Душевная кофейня', pathos:'Пафосная 
 const PATH_BONUS = {soul:'гости терпеливее, постоянные гости приводят друзей чаще', pathos:'чек +20%', chaos:'гостей +20%'};
 const LOCK_LEVEL = 12;
 const REGULARS = [
-  {id:'mihalych', n:'Дед Михалыч', pool:'old', hour:[8,10], d:'Сидит у окна с открытия. Пьёт американо и молчит.'},
-  {id:'zina', n:'Бабушка Зина', pool:'old', hour:[11,13], d:'Приносит пирожки и критикует пенку.'},
-  {id:'gleb', n:'Глеб с ноутбуком', pool:'guest', hour:[10,16], d:'Айтишник. Сидит долго, берёт много.'},
-  {id:'anya', n:'Студентка Аня', pool:'guest', hour:[13,18], d:'Готовится к сессии. Лучше всех знает меню.'},
-  {id:'oleg', n:'Бизнесмен Олег', pool:'guest', hour:[8,9], d:'Раф с собой за две минуты. Иначе уходит.'},
-  {id:'tima', n:'Курьер Тимур', pool:'guest', hour:[12,20], d:'Забегает погреться между заказами.'},
-  {id:'sema', n:'Художник Сёма', pool:'guest', hour:[15,21], d:'Платит наличными и рисует на салфетках.'},
-  {id:'vera', n:'Вера Павловна', pool:'old', hour:[9,12], d:'Учительница на пенсии. Ставит оценки бариста.'}
+  {id:'mihalych', sex:'m', n:'Дед Михалыч', pool:'old', hour:[8,10], d:'Сидит у окна с открытия. Пьёт американо и молчит.'},
+  {id:'zina', sex:'f', n:'Бабушка Зина', pool:'old', hour:[11,13], d:'Приносит пирожки и критикует пенку.'},
+  {id:'gleb', sex:'m', n:'Глеб с ноутбуком', pool:'guest', hour:[10,16], d:'Айтишник. Сидит долго, берёт много.'},
+  {id:'anya', sex:'f', n:'Студентка Аня', pool:'guest', hour:[13,18], d:'Готовится к сессии. Лучше всех знает меню.'},
+  {id:'oleg', sex:'m', n:'Бизнесмен Олег', pool:'guest', hour:[8,9], d:'Раф с собой за две минуты. Иначе уходит.'},
+  {id:'tima', sex:'m', n:'Курьер Тимур', pool:'guest', hour:[12,20], d:'Забегает погреться между заказами.'},
+  {id:'sema', sex:'m', n:'Художник Сёма', pool:'guest', hour:[15,21], d:'Платит наличными и рисует на салфетках.'},
+  {id:'vera', sex:'f', n:'Вера Павловна', pool:'old', hour:[9,12], d:'Учительница на пенсии. Ставит оценки бариста.'}
 ];
 const RIVALS = [
   {id:'chain', n:'Кофе Хаус Плюс', owner:'менеджер сети Арсений', type:'chain', stub:0.35, d:'Сетевая кофейня через дорогу: акции и скидки.'},
@@ -3819,7 +3867,7 @@ def('s6_viktor', {cat:'story', who:'viktor', t:'Возвращение Викт�
  {t:'Показать расписку и выгнать', req:S=>sflag('kept'), fx:{st:{rel:{viktor:-30}, karma:1, season:10}}, out:'Виктор бледнеет при виде расписки и уходит. Говорят, Палыч уже знает, что он в районе.'},
  {t:'Выкупить его претензию', fx:S=>({fx:{m:-Math.round(Math.max(300000, avgRev()*5)/1000)*1000, st:{rel:{viktor:20}, season:10}}, out:'Виктор берёт деньги и обещает исчезнуть навсегда. В который раз.'})},
  {t:'Сдать его Палычу', fx:{st:{karma:-3, rel:{palych:30, viktor:-100}, f:{viktor_gone:1}, season:10}}, out:'Один звонок. Виктора больше никто не видел.'},
- {t:'Взять его бариста', fx:S=>{ const v = makeStaff('Бариста', {quirk:'genius'}); v.name = 'Виктор'; v.lvl = 7; v.rank = 1; v.shifts = 20; hire(v, 'main', 'grey'); return {fx:{st:{rel:{viktor:40}, karma:2, season:10}}, out:'Виктор надевает фартук: «Я ведь всегда хотел просто варить кофе»'}; }}]});
+ {t:'Взять его бариста', fx:S=>{ const v = makeStaff('Бариста', {quirk:'genius',sex:'m'}); v.name = 'Виктор'; v.lvl = 7; v.rank = 1; v.shifts = 20; hire(v, 'main', 'grey'); return {fx:{st:{rel:{viktor:40}, karma:2, season:10}}, out:'Виктор надевает фартук: «Я ведь всегда хотел просто варить кофе»'}; }}]});
 
 /* --- генератор бесконечных сезонов --- */
 const GEN_VILLAINS = [
@@ -5662,7 +5710,7 @@ function spawnGuest(id, reg, company){
   if(!reg && id==='main' && S.day >= 3 && S.shopperDay !== S.day && chance(0.01)){ g.secret = true; S.shopperDay = S.day; }
   g.gid = ++GID; if(!reg && !g.secret){ const kr = Math.random(); g.kind = g.h===SPR_KID ? 'norm' : kr < 0.22 ? 'slow' : kr < 0.37 ? 'fast' : 'norm'; if(g.kind==='slow' && chance(0.12)){ g.dumb = true; g.q = pickLine(DUMB_LINES, 'dumb'); } } else g.kind = 'norm';
   if(!reg && !company && S.level >= 4 && chance(0.06) && r.queue.length < 4){ const n = RI(2,3); for(let i=0;i<n;i++) setTimeout(()=>spawnGuest(id, null, true), 300 + i*350); }
-  g.orders = 0;
+  g.orders = 0;normalizeGuestName(g);
   r.guests.push(g); r.queue.push(g);
   if(id===S.active) sfx('door');
 }
@@ -11003,7 +11051,7 @@ frameOwnedId = function(){ if(S && S.c && S.c.signFrame === 'flag' && ext34('fla
 function flag34Apply(){ if(!S || !ext34('flagship') || S.c.flag34) return; S.c.flag34 = S.day; S.c.signFrame = 'flag';
   badgeAdd('flagship', 'Флагман района', 'Самая большая кофейня района');
   try{ const me = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {}; const nm = String(me.first_name || 'Хозяин').slice(0, 20);
-    const s = makeStaff('Бариста', {quirk:'none'}); s.name = nm+' Флагманский'; s.prize = true; s.legendId = 0; s.lvl = 40; s.rank = 3; s.shifts = 200; s.mood = 95; s.flag34 = true; hire(s, 'main', 'white'); syncScene('main'); }catch(e){ console.error(e); }
+    const sex=personNameSex(nm)||'m',s = makeStaff('Бариста', {quirk:'none',sex}); s.name = nm+(sex==='f'?' Флагманская':' Флагманский'); s.prize = true; s.legendId = 0; s.lvl = 40; s.rank = 3; s.shifts = 200; s.mood = 95; s.flag34 = true; hire(s, 'main', 'white'); syncScene('main'); }catch(e){ console.error(e); }
   queueModal({kind:'note', title:'Ты — Флагман района', text:'Золотая вывеска уже висит, имя в рейтингах и дуэлях золотое, в команду вышел легендарный бариста с твоим именем. Гости других кофеен теперь иногда рассказывают о тебе.'});
   save(); try{ track(true); }catch(e){} }
 const _refreshEnt34 = refreshEntitlements;
@@ -11665,7 +11713,7 @@ var CUR=null, _wp=walkPose, _ds=drawSprite, _dst=drawStaff;
 var SEATQ=[];
 window.walkPose=function(e){ CUR=e; return _wp(e); };
 window.drawStaff=function(s,p,id){
-  p._role=s.role; p._sid=s.id; p._cup=!!p.cup; p._vi=p.k||0; p._you=!!s.isYou; p._dis=s.distract?s.distract.kind:null;
+  p._role=s.role; p._sex=s.sex; p._sid=s.id; p._cup=!!p.cup; p._vi=p.k||0; p._you=!!s.isYou; p._dis=s.distract?s.distract.kind:null;
   var c=p.cup; p.cup=false;
   try { return _dst(s,p,id); } finally { p.cup=c; }
 };
@@ -11711,6 +11759,7 @@ function tintSheet(kind,a,b){
 var KIND={'Бариста':'barista','Кассир':'cashier','Официант':'waiter','Мойщица':'washer','Повар':'cook'};
 var OLDSPR={59:1,60:1,61:1,62:1,63:1};
 function bodyOf(e){
+  normalizeGuestName(e);
   if(e._body) return e._body;
   var i=e.spr|0, fem=(typeof FEM!=='undefined')&&FEM.has(i), b='guest';
   if(OLDSPR[i]&&!fem&&CM['elder_walk:south']) b='elder';
@@ -11989,7 +12038,7 @@ function drawStaffNew(e,kind,alpha){
   }
   blit(sh,kind+'_idle:south',Math.floor((now+e._ph)*2.4),x,y,H,false,alpha);
 }
-if(typeof drawMop!=='undefined'){ var _dm=drawMop; window.drawMop=function(p,now){ if(!ready()||!CM['washer_mop:south']) return _dm(p,now); }; }
+if(typeof drawMop!=='undefined'){ var _dm=drawMop; window.drawMop=function(p,now){ if(p._bcStaffVariant==='washer_f'&&p.job&&p.job.kind==='mess'&&!p._moving&&!p._dis)return _dm(p,now);if(!ready()||!CM['washer_mop:south']) return _dm(p,now); }; }
 /* --- блогеры --- */
 function vipChar(m,who){ var now=track(m), Hh=64, cl;
   if(m._moving){ cl=dclip(who+'_walk:',m._d||'south',m)||[who+'_walk:south',false]; blit(CA,cl[0],Math.floor((m._dist||0)/4.4),m.x,m.y,Hh,cl[1]); }
@@ -12005,6 +12054,7 @@ window.leraDraw=function(m){ try{ if(!ready()||!CM['masha_terrier_walk:south']) 
 window.drawSprite=function(i,cx,fy,h,flip,rot,alpha){
   var e=CUR; CUR=null;
   if(e&&CA.naturalWidth&&ready()&&e.x!=null){
+    if(e._role==='Повар'&&e._sex==='f')return _ds(i,cx,fy,h,flip,rot,alpha);
     if(e._role==='Бариста'){ drawBaristaNew(e,alpha); return; }
     if(e._role&&KIND[e._role]&&CM[KIND[e._role]+'_idle:south']){ drawStaffNew(e,KIND[e._role],alpha); return; }
     if(!e._role&&e.state&&e.spr!=null&&!e.isPet){ drawGuestNew(e,alpha); return; }
@@ -12908,7 +12958,7 @@ if(typeof staffModal!=='undefined'){ var _sm7=staffModal; window.staffModal=func
   try{ Array.prototype.forEach.call(box.querySelectorAll('.card'),function(c){ var t=c.querySelector('.t'); if(t&&/Трансферное окно/.test(t.textContent)) c.remove(); });
     var s=S.staff.find(function(x){return x.id===m.sid;}); if(!s) return;
     var head=box.firstElementChild, spr=head&&head.querySelector('.spr');
-    if(spr){ var kind=bcStaffVariant(s)||(s.isYou?'barista':(KIND[s.role]||'barista')); var w=document.createElement('div'); w.className='u7p'; w.appendChild(portrait(kind,84)); spr.replaceWith(w); head.classList.add('u7st'); head.classList.remove('row');
+    if(spr&&!(s.role==='Повар'&&s.sex==='f')){ var kind=bcStaffVariant(s)||(s.isYou?'barista':(KIND[s.role]||'barista')); var w=document.createElement('div'); w.className='u7p'; w.appendChild(portrait(kind,84)); spr.replaceWith(w); head.classList.add('u7st'); head.classList.remove('row');
       var dd=head.querySelector('.d'); if(dd){ var kv=document.createElement('div'); kv.className='u7kv';
         kv.innerHTML='<div><b>×'+staffSpeed(s).toFixed(2).replace('.',',')+'</b><s>скорость</s></div><div><b>'+s.shifts+'</b><s>смен</s></div><div><b>'+s.absences+'</b><s>прогулов</s></div><div><b>'+fmt(shiftPay(s))+' ₽</b><s>за смену</s></div>';
         dd.remove(); head.insertAdjacentElement('afterend',kv); } }
@@ -14908,13 +14958,15 @@ window.bcStaffVariant=function(s){
  if(s.name==='Шеф Ноябрина'||s.szLeg==='2026-11')return 'noyabrina';
  if(s.role==='Бариста'&&s.sex==='f')return 'barista_f';
  if(s.role==='Кассир'&&s.sex==='m')return 'cashier_m';
+ if(s.role==='Кассир'&&s.sex==='f')return 'cashier_f';
+ if(s.role==='Мойщица'&&s.sex==='f')return 'washer_f';
  if(s.role==='Официант'&&s.sex==='f')return 'waiter_f';
  return null;
 };
 function bcSkinWalkPrefix(kind){return BC_STAFF_DRAW&&CM[BC_STAFF_DRAW+'_walk:south']?BC_STAFF_DRAW+'_walk:':kind+'_walk:';}
 function bcSkinClip(name,variant){
  if(BC_STAFF_SKINS.clips[name])return name;
- if(!variant||! /^(barista|cashier|waiter)_/.test(name))return null;
+ if(!variant||! /^(barista|cashier|waiter|washer)_/.test(name))return null;
  var mapped=variant+'_'+name.slice(name.indexOf('_')+1);
  return BC_STAFF_SKINS.clips[mapped]?mapped:null;
 }
@@ -14927,9 +14979,9 @@ blit=function(sheet,name,idx,cx,fy,H,mirror,alpha){
  return bcStaffArtBlit.apply(this,arguments);
 };
 var bcIdentityDrawStaff=drawStaff;
-window.drawStaff=function(s,p,id){var before=BC_STAFF_DRAW;BC_STAFF_DRAW=bcStaffVariant(s);try{return bcIdentityDrawStaff.apply(this,arguments);}finally{BC_STAFF_DRAW=before;}};
+window.drawStaff=function(s,p,id){var before=BC_STAFF_DRAW;BC_STAFF_DRAW=bcStaffVariant(s);p._bcStaffVariant=BC_STAFF_DRAW;try{return bcIdentityDrawStaff.apply(this,arguments);}finally{BC_STAFF_DRAW=before;}};
 var bcIdentityStaffSpr=staffSpr;
-window.staffSpr=function(s){var spr=bcIdentityStaffSpr.apply(this,arguments);__sprK=bcStaffVariant(s)||__sprK;return spr;};
+window.staffSpr=function(s){var spr=bcIdentityStaffSpr.apply(this,arguments);__sprK=s&&s.role==='Повар'&&s.sex==='f'?null:bcStaffVariant(s)||__sprK;return spr;};
 // Trim transparent padding in cards; world sprites retain their shared foot anchor.
 var bcIdentityPortURL=portURL,bcIdentityPortrait=portrait;
 portURL=function(kind){
@@ -15023,7 +15075,7 @@ function refundRetiredPetUpgrades(){
  return amount;
 }
 // Repair old staff/candidate names in place before the cafe is rendered or saved.
-var bcNameMigrate=migrate;migrate=function(){var result=bcNameMigrate.apply(this,arguments);normalizeStaffNames();refundRetiredPetUpgrades();return result;};
+var bcNameMigrate=migrate;migrate=function(){var result=bcNameMigrate.apply(this,arguments);normalizeStaffNames();normalizeGuestNames();refundRetiredPetUpgrades();return result;};
 var bcNameHire=hire;hire=function(candidate){normalizeStaffName(candidate);return bcNameHire.apply(this,arguments);};
 
 // Repair impossible unstarted sale tasks from older saves without resetting earned progress.
