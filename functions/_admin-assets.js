@@ -12,7 +12,7 @@ ADMIN_ASSETS.push({id:'reward_gold',kind:'reward',title:'Золотая кофе
 for(const[id,title,max]of [['money','Деньги в кассе',1e12],['xp','Опыт',1e9],['sp','Очки сезона',1e7],['level','Уровень',60],['rep','Рейтинг',5]])ADMIN_ASSETS.push({id,kind:'resource',title,max,group:'resources'});
 for(const[id,title]of Object.entries({beans:'Зерно · граммы',milk:'Молоко · миллилитры',cups:'Стаканы · штуки',syrup:'Сироп · миллилитры',tea:'Чай · порции',desserts:'Десерты · штуки',matcha:'Матча · граммы',sandwiches:'Сэндвичи · штуки',pastry:'Круассаны · штуки',hoz:'Хозтовары · наборы',food:'Кухня · порции'}))ADMIN_ASSETS.push({id,kind:'stock',title,max:100000,group:'resources'});
 for(const id of TEST_UPGRADES)ADMIN_ASSETS.push({id,kind:'upgrade',title:({machine:'Кофемашина',register:'Касса',tables:'Столы',decor:'Уют',storage:'Хранение',sign:'Вывеска',showcase:'Витрина',menu:'Меню',ware:'Посуда',vent:'Вентиляция',delivery:'Доставка',clean:'Чистота',sink:'Мойка',safety:'Безопасность'})[id]||id,max:id==='tables'?28:20,group:'upgrades'});
-for(const[id,title]of Object.entries({hall2:'Зона отдыха',proj:'Проектор',sofa:'Кинодиван',kitchen:'Кухня',buyout:'Собственное помещение',roaster:'Обжарка'}))ADMIN_ASSETS.push({id,kind:'feature',title,group:'features'});
+for(const[id,title]of Object.entries({kitchen:'Кухня',buyout:'Собственное помещение',roaster:'Обжарка'}))ADMIN_ASSETS.push({id,kind:'feature',title,group:'features'});
 export function safeAdminSnapshot(raw){
  if(!raw||typeof raw!=='object')return null;
  const str=(x,n=80)=>typeof x==='string'?x.slice(0,n):'',number=(x,max=1e12)=>Math.max(0,Math.min(max,Number(x)||0));

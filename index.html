@@ -2721,8 +2721,8 @@ const CHAPTERS = [
     ['Рейтинг 3,5', ()=>S.rep >= 3.5], ['Выручка за день 30 000 ₽', ()=>(S.c.maxDayRev||0) >= 30000]], reward:{m:150000, t:'150 000 ₽'}},
   {n:'Попасть в гид кофеен', d:'Проверяющие гида любят чистоту, скорость и улыбки. Покажи им всё сразу.', goals:[
     ['Уровень 6', ()=>S.level >= 6], ['Рейтинг 4,2', ()=>S.rep >= 4.2], ['Нанять мойщицу', ()=>S.staff.some(s=>s.role==='Мойщица')], ['Одна золотая смена', ()=>(S.c.golden||0) >= 1]], reward:{m:500000, mod:['traffic',1.2,24,'Вы в гиде кофеен: гостей +20%'], t:'500 000 ₽ и сутки +20% гостей'}},
-  {n:'Второй зал', d:'Тесно. Пора расширяться и держать два зала сразу.', goals:[
-    ['Уровень 8', ()=>S.level >= 8], ['Открыть второй зал', ()=>!!room('hall2')], ['Выручка за день 300 000 ₽', ()=>(S.c.maxDayRev||0) >= 300000]], reward:{m:1500000, t:'1,5 млн ₽'}},
+  {n:'Развитие кофейни', d:'Развивай основной зал и открывай новые места для гостей.', goals:[
+    ['Уровень 8', ()=>S.level >= 8], ['Улучшить места до 20 уровня', ()=>room('main').upg.tables>=20], ['Выручка за день 300 000 ₽', ()=>(S.c.maxDayRev||0) >= 300000]], reward:{m:1500000, t:'1,5 млн ₽'}},
   {n:'Кофейня года района', d:'Стань местом, о котором говорит весь район. Три идеальные смены подряд — и ты легенда.', goals:[
     ['Уровень 16', ()=>S.level >= 16], ['Рейтинг 4,6', ()=>S.rep >= 4.6], ['Стать «Кофейней недели»', ()=>(S.c.weekStars||0) >= 1], ['Полная кухня', ()=>S.kitchen && S.kitchen.tier >= 3]], reward:{m:5000000, legend:15, t:'5 млн ₽ и легенда 15 уровня'}},
   {n:'Франшиза', d:'Продай сеть и начни заново в новом помещении, уже с опытом.', goals:[
@@ -8378,7 +8378,7 @@ for(const k of ['decor','district']){ const i = HALL_TABS.findIndex(t=>t[0]===k)
 TAB_N.district = 'Гости'; TAB_N.decor = 'Улучшения';
 const _attention15 = attention;
 attention = function(){ const out = _attention15().map(a=>a[0]==='district' ? ['guests', a[1], a[2]] : a[0]==='decor' ? ['up', a[1], a[2]] : a);
-  if(S.bookNew) out.push(['guests', 'Новых в книге гостей: '+S.bookNew, false]); return out; };
+  return out; };
 const _renderGuests14 = renderGuests;
 renderGuests = function(p){ repCard(p); _renderGuests14(p); S.bookNew = 0; p.appendChild(el(`<div class="h chalk">Район</div>`)); renderDistrict(p); };
 const _renderUpgrades14 = renderUpgrades;
@@ -9018,7 +9018,7 @@ renderUpgrades = function(p, id){
 };
 // меню: ночной сеанс
 const _renderMore19 = renderMore;
-renderMore = function(p){ if(sub==='menu'){ const c = cineState(); p.appendChild(el(`<div class="card"><div class="row"><span class="t">Ночной киносеанс</span><span class="sp"></span><span class="tag num">${fmt(CINE_TICKET)} ₽</span></div><div class="d">${cineReady() ? 'Только с 22:00 до 6:00, в зоне отдыха. '+(c.on ? 'Сейчас идёт «'+esc(c.film)+'».' : 'Следующий сеанс — в чётный час ночью.') : 'Нужны зона отдыха, проектор и кинодиван. Купить — в улучшениях зоны отдыха.'}</div></div>`)); } return _renderMore19(p); };
+renderMore = function(p){return _renderMore19(p);};
 
 /* ---------- ситуации в кино ---------- */
 const CINE_COND = S => !!(S.cine && S.cine.on);
@@ -12256,7 +12256,7 @@ function backBar(u,now){
   var kt=(S.kitchen&&S.kitchen.tier)||0;
   if(kt>=1||hasRole('Повар')){
     pimg('hood2', 268, 66, 40); pimg('rail', 268, 84, 12);
-    pimg('stove', 268, 146.5, 47);
+    // Lower cabinet stove removed; the cook's countertop artwork remains.
     var busy=false; try{ busy=rt(S.active).jobs.length>0; }catch(e){}
     if(busy&&now!=null) for(var k=0;k<3;k++){ var pp=(now*0.6+k*0.37)%1; ctx.fillStyle='rgba(255,255,255,'+(0.3*(1-pp))+')'; ctx.beginPath(); ctx.arc(254+k*6+Math.sin(now*2+k)*1.5, 92-pp*13, 1.5+pp*1.7, 0, 6.3); ctx.fill(); }
   }
@@ -14677,7 +14677,7 @@ function bcCafeDirectory(p){
 }
 var bcVisitSheet=renderSheet;
 renderSheet=function(){var p=document.getElementById('panel');if(sheet==='hall'&&hallTab==='guests'&&bcGuestPane==='visit'&&!storyJump935&&p&&p.querySelector('.bc-cafe-search')){structDirty=false;return;}return bcVisitSheet.apply(this,arguments);};
-renderGuests=function(p){
+renderGuests=function(p){ S.bookNew=0;
  if(storyJump935)bcGuestPane='cafe';
  var tabs=el('<div class="bc-guests-nav" role="tablist" aria-label="Гости"><button class="chipbtn" role="tab" data-guest-pane="visit">В гости</button><button class="chipbtn" role="tab" data-guest-pane="cafe">Гости кофейни</button></div>'),body=el('<div class="bc-guests-body" role="tabpanel"></div>');p.append(tabs,body);
  tabs.querySelectorAll('button').forEach(function(b){var active=b.dataset.guestPane===bcGuestPane;b.classList.toggle('on',active);b.setAttribute('aria-selected',String(active));b.onclick=function(){bcGuestPane=b.dataset.guestPane;structDirty=true;renderSheet();};});
@@ -15130,11 +15130,38 @@ document.head.appendChild(css);
 window.leraForce=function(k){ var v=lrState(); v.n=k-1; v.next=0; v.nextDay=0; };
 })();
 
+// Retire the second hall without deleting its staff or charging its upkeep again.
+const retiredHallDef=ROOMS.find(r=>r.id==='hall2');
+if(retiredHallDef)ROOMS.splice(ROOMS.indexOf(retiredHallDef),1);
+{const i=SUBS.findIndex(t=>t[0]==='rooms');if(i>=0)SUBS.splice(i,1);if(sub==='rooms')sub='menu';}
+function retireSecondHall(){
+ if(!S)return 0;S.c=S.c||{};let amount=0;
+ const owned=(S.rooms||[]).concat(S.sublet||[],S.closedRooms||[]).find(r=>r.id==='hall2');
+ if(!S.c.hall2Retired){
+  if(owned){amount=1500000;const catalog=UPG.concat([{id:'pets',base:40000}]);for(const u of catalog){const L=Math.max(0,Math.min(20,Math.floor(Number(owned.upg&&owned.upg[u.id])||0)));for(let i=0;i<L;i++)amount+=Math.round(u.base*2.5*Math.pow(1.5,i)*Math.pow(1.9,Math.floor(i/5))*1.3/100)*100;}}
+  if(S.cine&&S.cine.proj)amount+=8000000;if(S.cine&&S.cine.sofa)amount+=3000000;
+  S.c.hall2Retired={version:1,amount,upgrades:owned&&owned.upg||{},at:Date.now(),notified:amount===0};
+  if(amount){ledgerize(S);income(amount,'refunds','Возврат за удалённый второй зал и его улучшения');}
+ }
+ S.staff.forEach(s=>{if(s.room==='hall2')s.room='main';});
+ for(const field of ['rooms','sublet','closedRooms'])if(Array.isArray(S[field]))S[field]=S[field].filter(r=>r.id!=='hall2');
+ if(S.active==='hall2')S.active='main';if(S.cine)S.cine={...S.cine,on:false,proj:false,sofa:false};
+ for(const item of S.decor&&S.decor.items||[])if(item.loc==='h2'||item.loc==='hall2')item.loc='main';
+ if(S.spends){delete S.spends.hall2;delete S.spends.proj;delete S.spends.sofa;}
+ if(S.owned)S.owned=S.owned.filter(id=>id!=='hall2');if(S.interior)delete S.interior.hall2;
+ delete RT.hall2;if(S.dishes)delete S.dishes.hall2;if(S.dirtL)delete S.dirtL.hall2;
+ return amount;
+}
+var bcHallRetireMigrate=migrate;migrate=function(){retireSecondHall();return bcHallRetireMigrate.apply(this,arguments);};
+var bcHallRetireMore=renderMore;renderMore=function(p){if(sub==='rooms')return;return bcHallRetireMore.apply(this,arguments);};
+var bcHallRetireUpgrade=renderUpgrades;renderUpgrades=function(p,id){if(id==='hall2')return;bcHallRetireUpgrade.apply(this,arguments);for(const h of p.querySelectorAll('.h'))if(h.textContent.trim()==='Залы')h.remove();};
+var bcHallRetireGrant=applyGrant;applyGrant=function(k){if(['hall2','proj','sofa'].includes(k))return 'Второй зал удалён из игры';return bcHallRetireGrant.apply(this,arguments);};
+var bcHallRetireBuy=buyUpg;buyUpg=function(u,id,n){if(id==='hall2')return;return bcHallRetireBuy.apply(this,arguments);};
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
  clearRuntime:function(){for(const k in RT)delete RT[k];modals=[];S=null;sheet=null;const mr=document.getElementById('modalRoot'),sr=document.getElementById('sheetRoot');if(mr)mr.innerHTML='';if(sr)sr.innerHTML='';},
- afterRestore:function(){var refund=S.c.petUpgradeRefund;if(refund&&refund.amount&&!refund.notified){refund.notified=true;toast('Возврат за «Питомцев»: +'+fmt(refund.amount)+' ₽');}streakCheck();refreshEntitlements();loadFriends();setTimeout(()=>track(),1500);}
+ afterRestore:function(){const hallRefund=S.c.hall2Retired;if(hallRefund&&hallRefund.amount&&!hallRefund.notified){hallRefund.notified=true;toast('Возврат за второй зал: +'+fmt(hallRefund.amount)+' ₽');}var refund=S.c.petUpgradeRefund;if(refund&&refund.amount&&!refund.notified){refund.notified=true;toast('Возврат за «Питомцев»: +'+fmt(refund.amount)+' ₽');}streakCheck();refreshEntitlements();loadFriends();setTimeout(()=>track(),1500);}
 });
 BrewCrewLegal.run(function(){BrewCrewSaves.start();});
 
