@@ -68,7 +68,7 @@ async function vHome(env) {
     [B('Покупки','p:buy'),B('Сезон и пропуск','p:sz')],
     [B('Журнал действий','p:log')],
     [B('Техработы','p:mt'),B('Настройки','p:ops')],
-    [{text:'Оригинал',web_app:{url:'https://brewcrew.pages.dev/'}},{text:'Админская',web_app:{url:'https://staging.brewcrew.pages.dev/'}}],
+    [{text:'Админская',web_app:{url:'https://staging.brewcrew.pages.dev/'}}],
     [B('Обновить','p:home')]
   ]};
 }

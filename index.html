@@ -1094,7 +1094,7 @@ const RIVALS = [
 /* ================= состояние ================= */
 let S = null;
 function newState(name, city, carry){
-  const s = {v:3, name, city, money:START_CAPITAL + (carry&&carry.perks? (carry.perks.capital||0)*250000 : 0), xp:0, level:1, rep:3.0,
+  const s = {v:3, name, city, money:START_CAPITAL, xp:0, level:1, rep:3.0,
     meters:{soul:10, pathos:10, chaos:5}, path:null,
     day:1, gm:9*60, hours:{open:0, close:24}, isOpen:false,
     rooms:[newRoom('main')], active:'main', staff:[], cands:[],
@@ -1108,8 +1108,8 @@ function newState(name, city, carry){
     c:{earnedRun:0, sold:0, byItem:{}, guests:0, angry:0, fights:0, fines:0, finesSum:0, inspections:0, passed:0, fired:0, quits:0, absences:0, absurd:0, geese:0, daysNoFine:0, praised:0, scolded:0, bought:0, maxDayRev:0, subs:0, conflicts:0, breakdowns:0, regularsMax:0, promoted:0},
     seen:{g:[], p:[]}, ach:{}, shares:0, perks:{}, franchises:0, bankrupts:0, cityLog:[city],
     weather:'cloud', task:null, kitchen:{tier:0, build:null}, reviews:[], delivery:null, loyalty:null, tour:null, evLast:{}, restock:true, restockAt:0.35, rush:null, supplier:'normal', tips:{jar:0, since:1}, shrink:{}, shrinkLog:[], invDay:1, focus:null, corp:null, adsCd:{}, sound:true, savedAt:Date.now(), created:Date.now(), noInspectUntil:0, flags:{}};
-  if(carry){ Object.assign(s, {ach:carry.ach, seen:carry.seen, shares:carry.shares, perks:carry.perks, franchises:carry.franchises, bankrupts:carry.bankrupts, cityLog:carry.cityLog.concat(city), sound:carry.sound});
-    if(carry.perks.autoorder) s.autoOrder = true; }
+  if(carry){ Object.assign(s, {ach:carry.ach, seen:carry.seen, shares:carry.shares, perks:{}, franchises:carry.franchises, bankrupts:carry.bankrupts, cityLog:carry.cityLog.concat(city), sound:carry.sound});
+  }
   return s;
 }
 function blankFin(){ return {rev:0, card:0, cogs:0, supply:0, wages:0, rent:0, util:0, acq:0, tax:0, spoil:0, fines:0, repairs:0, other:0, invest:0, why:{}, last:[], guests:0, comm:0, del:0}; }
@@ -1131,8 +1131,7 @@ function holiday(){ const d = new Date(); const m = d.getMonth()+1, day = d.getD
 function holidayEvents(){ const h = holiday(); return h && EV['h_'+h.id] ? ['h_'+h.id] : []; }
 function isHalloween(){ const d = new Date(); const m = d.getMonth(), day = d.getDate(); return (m===9 && day>=24) || (m===10 && day<=2); }
 function city(){ return CITIES[S.city] || CITIES.msk; }
-function perk(k){ return S.perks[k]||0; }
-function shareMult(){ return 1 + 0.03*S.shares; }
+function perk(k){const pk=PERKS.find(p=>p.id===k);return pk?Math.max(0,Math.min(pk.max,Math.floor(Number(S?.perks?.[k])||0))):0;}
 
 /* ---------- модификаторы (временные эффекты событий) ---------- */
 function addMod(k, mul, hours, label){ S.mods.push({k, mul, until:absNow()+Math.round(hours*60), label}); HOOK.struct(); }
@@ -1178,7 +1177,7 @@ function orderStock(k, packs, mode){
   packs = Math.min(packs, Math.floor(free / st.pack));
   if(packs < 1) return mode==='shop' ? 'В руках столько не унести или на складе нет места' : 'На складе нет места: всё, что влезет, уже едет';
   const mul = mode==='shop' ? 2 : mode==='express' ? 1.35 : (packs>=5 ? 0.92 : 1);
-  const price = Math.round(st.price * packs * supplyMul() * mul);
+  const price = Math.round(st.price * packs * supplyMul() * mul * (bcOwnerAutoOrdering&&perk('autoorder')?0.95:1));
   const limit = S.debt.stage>=1 || mode==='shop' ? 0 : 50000;
   if(S.money - price < -limit) return S.debt.stage>=1 ? 'Поставщики работают только по предоплате, а денег не хватает' : 'Не хватает денег';
   spend(price,'supply','Закупка: '+st.n+' · '+packs+' уп. ('+(st.pack*packs)+' '+(st.unit||'ед.')+') · '+({shop:'самовывоз',express:'срочная доставка',normal:'обычная доставка'}[mode]||mode));
@@ -1214,8 +1213,7 @@ function spoilCheck(){
   }
 }
 function autoOrder(){
-  const mgr = S.staff.some(s=>s.rank===3);
-  if(S.restock === false && !S.autoOrder && !mgr) return;
+  if(S.restock === false) return;
   const th = S.restockAt || 0.35;
   for(const k in STOCK){
     if(k==='matcha' && !isUnlocked('matcha')) continue;
@@ -2031,12 +2029,11 @@ function doService(r){ const c = serviceCost(r); if(!canSpend(c)) return false; 
 function franchiseNeed(){ return 30000000 * Math.pow(3, S.franchises); }
 function franchiseShares(){ const e = S.c.earnedRun || 0; return e < franchiseNeed() ? 0 : Math.floor(10 * Math.sqrt(e / franchiseNeed())); }
 const PERKS = [
-  {id:'capital', n:'Стартовый капитал', d:'+250 000 ₽ на старте за уровень', cost:L=>2+L*2, max:10},
   {id:'supplier', n:'Свой поставщик', d:'Закупки −3% за уровень', cost:L=>3+L*2, max:10},
   {id:'word', n:'Сарафанное радио', d:'Гостей +3% за уровень', cost:L=>3+L*3, max:15},
   {id:'agency', n:'Кадровое агентство', d:'Чаще приходят легендарные кандидаты', cost:L=>4+L*3, max:8},
   {id:'lawyer', n:'Свой юрист', d:'Штрафы −10% за уровень', cost:L=>3+L*2, max:6},
-  {id:'autoorder', n:'Автозаказ с первого дня', d:'Договор с поставщиком сразу', cost:()=>6, max:1}
+  {id:'autoorder', n:'Оптовый дозаказ', d:'Автоматические закупки дешевле на 5%. Ручные покупки — по обычной цене.', cost:()=>6, max:1}
 ];
 function sellFranchise(cityId){
   const sh = franchiseShares(); if(!sh) return false;
@@ -3030,7 +3027,7 @@ const DECOR = [
   {id:'easel', n:'Картина неизвестного художника', slot:'floor', price:1000000, d:'Рейтинг сам растёт по чуть-чуть: «у них искусство». Пока не объявится автор.', fx:{repDay:0.01}},
   {id:'photo', n:'Фотозона с неоном', slot:'floor', price:1200000, d:'Гостей +4%, блогеры заходят чаще. Хорошие и «а можно бесплатно».', fx:{traffic:1.04}},
   {id:'toilet', n:'Золотой унитаз', slot:'floor', price:3000000, d:'Абсолютно бесполезен. Гостей +6%: все хотят посмотреть. Однажды его попробуют украсть.', fx:{traffic:1.06}},
-  {id:'pled', n:'Плед и гирлянда', slot:'counter', price:0, season:true, d:'Ноябрьский подарок: плед на стуле у первого столика и тёплая гирлянда вдоль стены. Гости терпеливее на 5%.', fx:{patience:1.05}},
+  {id:'pled', n:'Тёплая гирлянда ноября', slot:'counter', price:0, season:true, d:'Ноябрьский подарок: тёплые огоньки вдоль стены. Гости терпеливее на 5%.', fx:{patience:1.05}},
   {id:'tree', n:'Ёлка до потолка', slot:'floor', price:0, season:true, d:'Памятный предмет сезона «Новогодняя запара». Гостей +3%.', fx:{traffic:1.03}},
   {id:'garland', n:'Гирлянда сезона', slot:'counter', price:0, season:true, d:'Памятный предмет сезона. Гостей +2%.', fx:{traffic:1.02}}
 ];
@@ -3573,8 +3570,7 @@ function callService(id){
 
 /* ---------- автозаказ: видит пустую полку ---------- */
 function autoOrder(){
-  const mgr = S.staff.some(s=>s.rank===3);
-  if(S.restock === false && !S.autoOrder && !mgr) return;
+  if(S.restock === false) return;
   const th = S.restockAt || 0.35;
   for(const k in STOCK){
     if(k==='matcha' && !isUnlocked('matcha')) continue;
@@ -6068,6 +6064,7 @@ cv.addEventListener('pointerdown', e => {
   for(const k in (r.dirty||{})){ if(k[0]==='s'){ const s0 = slotOf(id, +k.slice(1)); if(s0 && s0[2]!=='out'){ const cx = s0[2]==='wall' ? 8 : s0[0], cy = s0[2]==='wall' ? s0[1]-24 : BAR_TOP-4; if(Math.abs(x-cx)<16 && Math.abs(y-cy)<14){ cleanDirty(id, k); tapFx(cx, cy-8); sfx('tap'); addXp(1); return; } } continue; } const tb = k[0]==='t' ? TABLES[+k.slice(1)] : null; if(tb && Math.abs(x-tb.x)<22 && y>tb.y-26 && y<tb.y+12){ cleanDirty(id, k); tapFx(tb.x, tb.y-16); sfx('tap'); addXp(2); taskProg('clean', 1); return; } }
   if(TIPJAR && Math.abs(x-TIPJAR.x)<9 && Math.abs(y-TIPJAR.y)<10){ sfx('tap'); queueModal({kind:'tips'}, true); return; }
   for(const v of EV_SPOTS){ if(x>v.x-16 && x<v.x+16 && y>v.y-52 && y<v.y+4){ sfx('tap'); queueModal({kind:'inc', uid:v.uid}, true); return; } }
+  if(bcTapServiceGuest(id,r,x,y))return;
   let best = null;
   for(const s of workingStaff(id)){ const p = r.staff[s.id]; if(!p || p.x>W+4) continue; const m = META[staffSpr(s)]; const w = m[3]*STAFF_H/m[4]; if(x>p.x-w/2-4 && x<p.x+w/2+4 && y>p.y-62 && y<p.y+4){ if(!best || p.y > best.p.y) best = {s,p}; } }
   if(best){ sfx('tap'); if(best.s.isYou){ toast('Это ты. Тапай по гостю у кассы, по кофемашине и по гостям на выдаче — так работа идёт быстрее'); return; } queueModal({kind:'staff', sid:best.s.id}, true); return; }
@@ -6836,18 +6833,15 @@ function renderMore(p){
   }
   else if(sub==='fr'){
     const need = franchiseNeed(), e = S.c.earnedRun||0, sh = franchiseShares();
-    p.appendChild(el(`<div class="card"><div class="t">Опыт владельца: ${S.shares}</div><div class="d">Это твой опыт как хозяина. Каждое очко навсегда даёт +3% к доходу во всех будущих кофейнях. Сейчас доход ×${shareMult().toFixed(2).replace('.',',')}. Опыт дают достижения и продажа сети. Его можно потратить на вечные бонусы ниже.</div></div>`));
+    p.appendChild(el(`<div class="card"><div class="t">Опыт владельца: ${S.shares}</div><div class="d">Очки дают достижения, главы и продажа кофейни. Это отдельная валюта для бонусов ниже: опыт игрового уровня не расходуется. Непотраченные очки сохраняются при продаже кофейни.</div></div>`));
     const fr = el(`<div class="card"><div class="t">Продать сеть и начать заново</div><div class="d">Когда сеть заработает ${fmt(need)} ₽, её можно продать. Залы, команда и деньги уйдут покупателю, а ты получишь опыт и начнёшь заново в новом помещении с новым сюжетом.</div>
       <div class="mood">Заработано ${bar(e/need*100,'var(--caramel)')}<span class="num">${fmt(e)}</span></div>
-      <div class="d">За продажу сейчас: <b>${sh}</b> опыта. Продано сетей: ${S.franchises}.</div><div class="d">Новая точка открывается с нуля: команда, улучшения, договоры и деньги обнуляются. С тобой остаются значки, вечные бонусы и вещи с пропуска. Плюс 600 000 ₽ на открытие и +3% гостей навсегда за каждую проданную сеть (до +15%).</div>
+      <div class="d">За продажу сейчас: <b>${sh?sh+Math.floor(S.level/10):0}</b> опыта${sh?' (включая '+Math.floor(S.level/10)+' за уровень владельца)':''}. Продано сетей: ${S.franchises}.</div><div class="d">Новая точка открывается с нуля: команда, улучшения, договоры и деньги обнуляются. С тобой остаются значки, непотраченный опыт и вещи с пропуска. Купленные за опыт бонусы закончатся вместе с этой кофейней. Плюс 600 000 ₽ на открытие и +3% гостей навсегда за каждую проданную сеть (до +15%).</div>
       <div class="row">${btnHtml('Продать сеть', 0, sh<=0)}</div></div>`);
     fr.querySelector('button').onclick = () => { if(sh>0) queueModal({kind:'franchise'}, true); };
     p.appendChild(fr);
-    p.appendChild(el(`<div class="h">Вечные бонусы</div>`));
-    PERKS.forEach(pk=>{ const L = perk(pk.id), c = pk.cost(L), max = L>=pk.max;
-      const card = el(`<div class="card up"><div><div class="t">${pk.n} <span class="tag num">${L}/${pk.max}</span></div><div class="eff">${pk.d}</div></div>${max?'<span class="tag">Максимум</span>':`<button class="btn" ${S.shares<c?'disabled':''}>${c} опыта</button>`}</div>`);
-      const b = card.querySelector('button'); if(b) b.onclick = () => { if(S.shares < c) return; S.shares -= c; S.perks[pk.id] = L+1; if(pk.id==='autoorder') S.autoOrder = true; sfx('buy'); save(); renderSheet(); };
-      p.appendChild(card); });
+    renderCafePerks(p);
+
   }
 }
 
@@ -7025,7 +7019,7 @@ function showModal(){
   }
   else if(m.kind==='franchise'){
     const sh = franchiseShares();
-    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} опыта?</h2>`), el(`<p>Залы, команда, деньги и улучшения уйдут новому владельцу. Останутся опыт владельца, вечные бонусы, достижения и гостевая книга. Новое помещение будет ждать сразу после продажи.</p>`));
+    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh+Math.floor(S.level/10)} опыта?</h2>`), el(`<p>Залы, команда, деньги и улучшения уйдут новому владельцу. Останутся непотраченный опыт владельца, достижения, значки и вещи с пропуска. Купленные за опыт бонусы будут сброшены. Новое помещение будет ждать сразу после продажи.</p>`));
     const opts = el(`<div class="opts"></div>`);
     const nm = el(`<div class="d" style="margin:6px 0 4px">Новая кофейня — новое название. Старая уйдёт из рейтинга сезона.</div>`);
     const inp = el(`<input class="field" maxlength="16" placeholder="Название новой кофейни" value="${esc(randomName())}" style="width:100%;margin-bottom:8px">`);
@@ -7976,7 +7970,7 @@ function drawDecor(it, x, y, now){
   else if(id==='easel'){ ctx.strokeStyle = '#7a5232'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x-8, y); ctx.lineTo(x, y-34); ctx.lineTo(x+8, y); ctx.stroke(); RR(x-11, y-32, 22, 18, 1, '#f4efe6'); EL(x-4, y-25, 5, 4, '#e0574a'); EL(x+4, y-21, 4, 3, '#3a7ac8'); rect(x-8, y-18, 14, 1.5, '#e8a548'); }
   else if(id==='photo'){ const g = 0.5 + 0.3*Math.sin(now*2); glow2(x, y-26, 22, '255,120,190', 0.25*g + 0.1); ctx.strokeStyle = `rgba(255,130,200,${0.7+0.3*g})`; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(x, y-26, 12, 0, 7); ctx.stroke(); rect(x-1, y-14, 2, 14, '#2a2a2e'); }
   else if(id==='toilet'){ glow2(x, y-10, 16, '255,214,90', 0.25); RR(x-6, y-22, 12, 9, 2, '#e8be46'); EL(x, y-10, 9, 4, '#f2cf5a'); RR(x-4, y-10, 8, 10, 2, '#d8a83a'); rect(x-2, y-21, 2, 7, 'rgba(255,255,230,.7)'); }
-  else if(id==='pled'){ RR(x-10, y-6, 20, 6, 1, '#b8463a'); for(let j=0;j<4;j++) rect(x-9 + j*5, y-6, 1.2, 6, '#e8d4a0'); for(let j=0;j<6;j++) EL(x-12 + j*5, y-10 + Math.sin(j)*1.5, 1.4, 1.4, Math.sin(now*3+j) > 0 ? '#ffd25a' : '#8a6a3a'); }
+  else if(id==='pled'){for(let j=0;j<8;j++)EL(x-14+j*4,y-4-Math.sin(j*.8)*2,1.4,1.4,Math.sin(now*3+j)>0?'#ffe5a0':'#9b8050');}
   else if(id==='tree'){ ctx.fillStyle = '#2f6b3a'; for(let j=0;j<3;j++){ ctx.beginPath(); ctx.moveTo(x, y-46 + j*10); ctx.lineTo(x-14 + j*-2, y-26 + j*10); ctx.lineTo(x+14 + j*2, y-26 + j*10); ctx.closePath(); ctx.fill(); } rect(x-2, y-6, 4, 6, '#6a4224'); for(let j=0;j<8;j++) EL(x - 10 + (j*7)%20, y - 40 + j*4, 1.4, 1.4, Math.sin(now*4+j) > 0 ? ['#ff5a5a','#ffd25a','#5ad2ff'][j%3] : '#1e3a22'); txt('*', x, y-46, '800 10px sans-serif', '#ffd25a', 'center'); }
   else if(id==='garland'){ for(let j=0;j<8;j++) EL(x-14 + j*4, y-4 - Math.sin(j*0.8)*2, 1.4, 1.4, Math.sin(now*3+j) > 0 ? ['#ff5a5a','#ffd25a','#5ad2ff'][j%3] : '#555'); }
 }
@@ -11150,15 +11144,14 @@ const _renderUpgrades931 = renderUpgrades;
 renderUpgrades = function(p, id){ _renderUpgrades931.apply(this, arguments); try{ const rid = id || S.active || 'main'; p.appendChild(wearCard931(rid)); if(rid === 'main'){ p.appendChild(michCard931()); p.appendChild(premCard931()); } }catch(e){ console.error(e); } };
 
 /* ---------- новый виток: звёзды владельца при продаже сети ---------- */
-PERKS.push({id:'loyal34', n:'Верные гости', d:'Рейтинг новой кофейни +0,1 на старте за уровень', cost:L=>3+L*2, max:5},
+PERKS.push({id:'loyal34', n:'Верные гости', d:'Гости ждут заказ на 5% дольше за каждый уровень', cost:L=>3+L*2, max:5},
   {id:'train34', n:'Наставник', d:'Сотрудники работают быстрее на 2% за уровень', cost:L=>3+L*2, max:10});
 const _sellFr931 = sellFranchise;
 sellFranchise = function(cityId){ const lvl = S.level, mich = S.mich34, prem = S.prem34, badges = S.badgeList, bon = Math.floor(lvl / 10), stars = (S.ownerStars34 || 0);
   const r = _sellFr931.apply(this, arguments); if(!r) return r;
   try{ S.shares += bon; S.ownerStars34 = stars + bon; if(badges) S.badgeList = badges; delete S.prem34; delete S.mich34;
     S.money += 600000; S.fin.today.why = S.fin.today.why || {};
-    const L = perk('loyal34'); if(L) S.rep = Math.min(5, S.rep + 0.1*L);
-    setTimeout(() => { try{ queueModal({kind:'note', title:'Новый виток', text:'Новая точка с нуля: команда, улучшения, договоры и деньги прошлой кофейни остались в прошлом. Ты получил +600 000 ₽ на открытие, гостей +'+Math.min(15, 3*(S.franchises||0))+'% навсегда за проданные сети и +'+bon+' звёзд владельца за '+lvl+' уровень (их тратят в Опыте). С тобой остались значки, вечные бонусы и вещи с пропуска.'}); }catch(e){} }, 800); }catch(e){ console.error(e); }
+    setTimeout(() => { try{ queueModal({kind:'note', title:'Новый виток', text:'Новая точка с нуля: команда, улучшения, договоры и деньги прошлой кофейни остались в прошлом. Ты получил +600 000 ₽ на открытие, гостей +'+Math.min(15, 3*(S.franchises||0))+'% навсегда за проданные сети и +'+bon+' звёзд владельца за '+lvl+' уровень (их тратят в Опыте). С тобой остались значки, непотраченный опыт и вещи с пропуска. Бонусы за опыт для новой кофейни нужно открыть заново.'}); }catch(e){} }, 800); }catch(e){ console.error(e); }
   return r; };
 const _staffSpeed931 = staffSpeed;
 staffSpeed = function(s){ let v = _staffSpeed931.apply(this, arguments); try{ const L = perk('train34'); if(L) v *= 1 + 0.02*L; if(s && !s.isYou && s.mood >= 85 && (s.fatigue || 0) < 30) v *= 1.08; }catch(e){} return v; };
@@ -15088,7 +15081,7 @@ var bcBadgeView=viewSnap34;viewSnap34=function(){const d=bcBadgeView.apply(this,
 function bcBadgeSlots(){
  S.badgeList=S.badgeList||[];const ids=new Set(S.badgeList.map(b=>b.id));
  if(!Array.isArray(S.badgeSlots))S.badgeSlots=[S.badgeOn,...S.badgeList.map(b=>b.id)].filter((id,i,a)=>ids.has(id)&&a.indexOf(id)===i).slice(0,3);
- S.badgeSlots=Array.from({length:3},(_,i)=>ids.has(S.badgeSlots[i])&&S.badgeSlots.indexOf(S.badgeSlots[i])===i?S.badgeSlots[i]:null);
+ for(let i=0;i<3;i++)if(!ids.has(S.badgeSlots[i])||S.badgeSlots.indexOf(S.badgeSlots[i])!==i)S.badgeSlots[i]=null;S.badgeSlots.length=3;
  S.badgeOn=S.badgeSlots.find(Boolean)||null;return S.badgeSlots;
 }
 function bcBadgeChoose(id,slot){if(!(S.badgeList||[]).some(b=>b.id===id)||!Number.isInteger(slot)||slot<0||slot>2)return;const slots=bcBadgeSlots();for(let i=0;i<3;i++)if(slots[i]===id)slots[i]=null;slots[slot]=id;bcBadgeSlots();save();renderHud();structDirty=true;}
@@ -15098,7 +15091,7 @@ MODAL15.bc_badge=function(box,m,btn){const b=(S.badgeList||[]).find(b=>b.id===m.
  const slots=bcBadgeSlots(),at=slots.indexOf(b.id),row=el('<div class="row wrap"></div>');
  for(let i=0;i<3;i++){const old=(S.badgeList||[]).find(b=>b.id===slots[i]);row.append(btn((at===i?'Надет: ':'Место ')+(i+1),()=>{bcBadgeChoose(b.id,i);closeModal();bcBadgeOpen(b.id);},at===i?'':'ghost'));}
  box.append(el('<p class="d">Три значка висят над полкой слева. Выбери место: значок на нём будет заменён.</p>'),row);
- if(at>=0)box.append(btn('Снять значок',()=>{slots[at]=null;bcBadgeSlots();save();renderHud();closeModal();},'ghost'));
+ if(at>=0)box.append(btn('Снять значок',()=>{bcBadgeRemove(at,b.id);closeModal();},'ghost'));
  box.append(btn('Закрыть',closeModal,'ghost'));
 };
 const bcBadgeImages=new Map();function bcBadgeImage(b){if(!bcBadgeImages.has(b.id)){const im=new Image();im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(BrewCrewBadgeArt.art(b));bcBadgeImages.set(b.id,im);}return bcBadgeImages.get(b.id);}
@@ -15109,28 +15102,45 @@ var bcBadgeHud=renderHud;renderHud=function(){const r=bcBadgeHud.apply(this,argu
 var bcBadgeInv=renderInv;renderInv=function(p){bcBadgeSlots();bcBadgeInv.apply(this,arguments);const buttons=p.querySelectorAll('.badge15');buttons.forEach((button,i)=>{const b=S.badgeList[i];if(!b)return;button.classList.toggle('on',S.badgeSlots.includes(b.id));button.insertAdjacentHTML('afterbegin',BrewCrewBadgeArt.art(b));button.querySelector('i').textContent=S.badgeSlots.includes(b.id)?'Надет · место '+(S.badgeSlots.indexOf(b.id)+1):'Посмотреть и надеть';button.onclick=()=>bcBadgeOpen(b.id);});};
 (function(){const style=document.createElement('style');style.textContent='.bc-medallion{width:48px;height:48px;flex:none}.badge15 .bc-medallion{display:block;margin:0 auto 6px}.bc-badge-hit{padding:0;border:0;background:transparent;cursor:pointer}.bc-badge-hit:focus-visible{outline:2px solid #fff3b6;border-radius:50%}.bc-badge-large .bc-medallion{width:80px;height:80px}.bc-badge-modal{margin-top:auto!important;background:#fff5df!important;color:#493322!important;border-radius:24px 24px 0 0!important}.bc-badge-modal .d{color:#765c42!important}.veil:has(.bc-badge-modal){align-items:flex-end!important;padding-bottom:0!important}#hbdg{display:none!important}';document.head.append(style);})();
 
-function bcSeasonItemThumb(id){const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.imageSmoothingEnabled=false;if(id==='pled'){g.fillStyle='#a94e3d';g.fillRect(10,22,28,17);g.fillStyle='#e0b786';for(let x=12;x<38;x+=6)g.fillRect(x,22,2,17);for(let y=25;y<39;y+=5)g.fillRect(10,y,28,1);}g.strokeStyle='#72583a';g.beginPath();g.moveTo(4,9);g.quadraticCurveTo(24,23,44,9);g.stroke();for(let i=0;i<5;i++){g.fillStyle='#ffe5a0';g.fillRect(6+i*8,12+Math.round(Math.sin(i/4*Math.PI)*5),3,4);}return '<img class="bc-reward-art" src="'+c.toDataURL()+'" alt="'+(id==='pled'?'Клетчатый плед и тёплые огоньки':'Тёплая гирлянда')+'" width="48" height="48">';}
+function bcSeasonItemThumb(id){const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.strokeStyle='#72583a';g.beginPath();g.moveTo(4,9);g.quadraticCurveTo(24,23,44,9);g.stroke();for(let i=0;i<5;i++){g.fillStyle='#ffe5a0';g.fillRect(6+i*8,12+Math.round(Math.sin(i/4*Math.PI)*5),3,4);}return '<img class="bc-reward-art" src="'+c.toDataURL()+'" alt="'+'Тёплая гирлянда'+'" width="48" height="48">';}
 var bcSeasonDecorView=viewSnap34;viewSnap34=function(){const d=bcSeasonDecorView.apply(this,arguments);if(d)d.sd=decorOwned().filter(it=>['pled','garland','tree','plaque','mug30'].includes(it.id)).map(it=>it.id);return d;};
 // Milestone badges accompany the existing rewards; no cash/items/claims are replaced.
 function bcMilestoneBadge(track,n){const info=sezInfo();if(track==='f'&&[15,30,50].includes(n))return{id:'sz'+n+'_'+info.id,n:({15:'Бронза',30:'Серебро',50:'Золото'})[n]+' сезона «'+info.n+'»',d:'Дошёл до '+n+' ступени'};if(track==='p'&&n===50)return{id:'goldown_'+info.id,n:'Золотой владелец «'+info.n+'»',d:'50 ступень пропуска'};return null;}
 var bcVisibleSeason=renderSeason;renderSeason=function(p){bcVisibleSeason.apply(this,arguments);badgeTick();p.querySelectorAll('.sz-row').forEach(row=>{const n=Number(row.querySelector('b.num').textContent);for(const track of ['f','p']){const cell=row.querySelector('.sz-cell.'+track),b=bcMilestoneBadge(track,n);if(!cell)continue;
  if(b&&!cell.querySelector('.bc-season-badge')){const extra=el('<button type="button" class="bc-season-badge">'+BrewCrewBadgeArt.art(b)+'<span></span></button>');extra.querySelector('span').textContent=b.n+' · дополнительно';extra.title=b.d+' · можно надеть над полкой слева';extra.onclick=()=>{if((S.badgeList||[]).some(x=>x.id===b.id))bcBadgeOpen(b.id);else toast(b.d+' — значок появится автоматически');};cell.append(extra);}
  const rw=szReward(track,n);if(['badge','veteran'].includes(rw.k)){const id=(rw.k==='veteran'?'vet_':'owner_')+sezId(),art=cell.querySelector('.bc-reward-art');if(art){const tmp=el(BrewCrewBadgeArt.art({id}));tmp.classList.add('bc-reward-art');art.replaceWith(tmp);}}
- if(rw.k==='item'){const item=sezInfo().item,old=cell.querySelector('.bc-reward-art');if(old&&['pled','garland'].includes(item))old.replaceWith(el(bcSeasonItemThumb(item)));const hint=el('<p class="d bc-season-item-hint"></p>');hint.textContent=({pled:'Плед на стуле и огоньки на стене. Терпение +5%. Инвентарь → Применить.',garland:'Огоньки вдоль стены. Гостей +2%. Инвентарь → Применить.'}[item]||decorDef(item)?.d+' Инвентарь → Применить.');cell.append(hint);}
+ if(rw.k==='item'){const item=sezInfo().item,old=cell.querySelector('.bc-reward-art');if(old&&['pled','garland'].includes(item))old.replaceWith(el(bcSeasonItemThumb(item)));const hint=el('<p class="d bc-season-item-hint"></p>');hint.textContent=({pled:'Огоньки вдоль стены. Терпение +5%. Инвентарь → Применить.',garland:'Огоньки вдоль стены. Гостей +2%. Инвентарь → Применить.'}[item]||decorDef(item)?.d+' Инвентарь → Применить.');cell.append(hint);}
  }});};
 var bcMilestoneClaim=szClaim;szClaim=function(){const result=bcMilestoneClaim.apply(this,arguments);if(!result)badgeTick();return result;};
 function bcSeasonGarland(now){const left=8,right=OX+VW-8,y=26;ctx.save();ctx.strokeStyle='#72583a';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(left,y);for(let x=left;x<=right;x+=2)ctx.lineTo(x,y+Math.sin((x-left)/(right-left)*Math.PI)*2.5);ctx.stroke();for(let x=left+3,i=0;x<right;x+=13,i++){const yy=y+Math.sin((x-left)/(right-left)*Math.PI)*2.5;rect(x,yy,1,2,'#72583a');EL(x+.5,yy+3,1.2,1.7,Math.sin(now*1.6+i)>-.5?'#ffe5a0':'#ccac6c');}ctx.restore();}
-function bcSeasonPled(x,y){RR(x-5,y-15,11,17,1,'#a94e3d');for(let i=0;i<3;i++)rect(x-4+i*4,y-15,1.2,17,'#e0b786');for(let i=0;i<4;i++)rect(x-5,y-13+i*4,11,.9,'#e0b786');for(let i=0;i<5;i++)rect(x-4+i*2,y+2,.8,2,'#e0b786');}
+
 function bcSeasonObjects(st,items,now){if(!S||S.active!=='main'||st.outdoor)return;const owned=decorOwned().filter(it=>decorDef(it.id)?.season);if(owned.some(it=>['pled','garland'].includes(it.id)))items.push({y:1,f:()=>bcSeasonGarland(now)});
- const first=TABLES[0];if(first&&owned.some(it=>it.id==='pled'))items.push({y:first.y+3,f:()=>bcSeasonPled(first.x-23,first.y+3)});
  // Keep earlier earned seasonal objects visible too, on their own surfaces.
  if(owned.some(it=>it.id==='tree')&&S.interior?.main!=='int_winter')items.push({y:106,f:()=>drawDecor({id:'tree'},190,105,now)});
  if(owned.some(it=>it.id==='plaque'))items.push({y:1,f:()=>drawDecor({id:'plaque'},140,64,now)});
  if(owned.some(it=>it.id==='mug30'))items.push({y:BAR_FACE+1,f:()=>drawDecor({id:'mug30'},112,BAR_TOP+6,now)});
 }
 var bcSeasonObjectProps=sceneUpgradeProps;sceneUpgradeProps=function(st,u,items,now,r){bcSeasonObjectProps.apply(this,arguments);bcSeasonObjects(st,items,now);};window.sceneUpgradeProps=sceneUpgradeProps;
-var bcSeasonInv=renderInv;renderInv=function(p){bcSeasonInv.apply(this,arguments);const owned=decorOwned().filter(it=>['pled','garland','tree','plaque','mug30'].includes(it.id));if(!owned.length)return;const card=el('<div class="card bc-season-placed"><div class="t">Сезонные предметы в зале</div></div>');for(const it of owned){const d=decorDef(it.id),line=document.createElement('p');line.className='d';line.textContent=d.n+' · '+({pled:'плед на левом стуле у первого столика, огоньки вдоль стены',garland:'огоньки вдоль стены',tree:'на задней стойке',plaque:'на стене за баром',mug30:'на передней стойке'}[it.id])+' · '+d.d;card.append(line);}p.append(card);};
+var bcSeasonInv=renderInv;renderInv=function(p){bcSeasonInv.apply(this,arguments);const owned=decorOwned().filter(it=>['pled','garland','tree','plaque','mug30'].includes(it.id));if(!owned.length)return;const card=el('<div class="card bc-season-placed"><div class="t">Сезонные предметы в зале</div></div>');for(const it of owned){const d=decorDef(it.id),line=document.createElement('p');line.className='d';line.textContent=d.n+' · '+({pled:'тёплые огоньки вдоль стены',garland:'огоньки вдоль стены',tree:'на задней стойке',plaque:'на стене за баром',mug30:'на передней стойке'}[it.id])+' · '+d.d;card.append(line);}p.append(card);};
 (function(){const style=document.createElement('style');style.textContent='.bc-season-badge{width:100%;background:transparent;border:0;color:inherit;text-align:left;display:flex;align-items:center;gap:6px;padding:8px 0;border-top:1px solid #d8bf8c;cursor:pointer;font-size:11px;line-height:1.4}.bc-season-badge svg{width:32px;height:32px;flex:none}.bc-season-item-hint{font-size:11px!important;line-height:1.4!important}.bc-season-placed p{line-height:1.5}';document.head.append(style);})();
+
+// Experience purchases belong to this cafe, not to its next owner/business cycle.
+var bcOwnerAutoOrdering=false,bcOwnerAutoOrder=autoOrder;
+autoOrder=function(){const was=bcOwnerAutoOrdering;bcOwnerAutoOrdering=true;try{return bcOwnerAutoOrder.apply(this,arguments);}finally{bcOwnerAutoOrdering=was;}};
+var bcOwnerPatience=focusMul;focusMul=function(k){const value=bcOwnerPatience.apply(this,arguments);return k==='patience'?value*(1+.05*perk('loyal34')):value;};
+function bcOwnerPerksMigrate(){S.perks=S.perks||{};S.c=S.c||{};const capital=Math.max(0,Math.min(10,Math.floor(Number(S.perks.capital)||0)));if(capital){let refund=0;for(let i=0;i<capital;i++)refund+=2+i*2;S.shares=(Number(S.shares)||0)+refund;S.c.capitalPerkRefund={levels:capital,points:refund,at:Date.now()};delete S.perks.capital;}S.autoOrder=false;for(const it of S.inv||[])if(it.k==='item'&&it.item==='pled'){it.t='Памятный предмет: Тёплая гирлянда ноября';it.d=decorDef('pled').d;}}
+var bcOwnerMigrate=migrate;migrate=function(){const restock=S.restock;const r=bcOwnerMigrate.apply(this,arguments);if(restock===false)S.restock=false;bcOwnerPerksMigrate();return r;};
+function buyCafePerk(id){const pk=PERKS.find(p=>p.id===id);if(!pk)return false;const L=perk(id),cost=pk.cost(L);if(L>=pk.max||!Number.isFinite(cost)||S.shares<cost)return false;S.shares-=cost;S.perks[id]=L+1;save();structDirty=true;return true;}
+function cafePerkInfo(id,L){return{supplier:'Закупки −'+(3*L)+'%. Максимум −30%. Работает при ручном и автоматическом заказе.',word:'Поток гостей +'+(3*L)+'%. Максимум +45%. Не увеличивает число доступных мест.',agency:'Шанс легендарного кандидата '+(1+.2*L).toFixed(1).replace('.',',')+'% при обновлении кандидатов. Легенда — не чаще раза в 7 игровых дней.',lawyer:'Штрафы проверок −'+(10*L)+'%. Максимум −60%. Расходы на ремонт и закупки не меняются.',autoorder:L?'Автоматические закупки дешевле на 5%. Включение и выключение — на складе.':'Скидка 5% на автоматические закупки. Обычный автодозаказ доступен бесплатно на складе.',loyal34:'Время ожидания заказа +'+(5*L)+'%. Максимум +25%. Применяется к новым гостям.',train34:'Скорость сотрудников +'+(2*L)+'%. Максимум +20%. Ставки зарплаты не меняются.'}[id]||'';}
+function renderCafePerks(p){p.append(el('<div class="h">Бонусы кофейни за опыт</div>'));const info=el('<div class="card bc-perks-info"><div class="t">Как работают бонусы</div><p class="d">Бонусы действуют только в этой кофейне, до её продажи, банкротства или нового старта.</p><p class="d">Между сменами уровни сохраняются. При продаже непотраченный опыт остаётся у владельца.</p><p class="d">Опыт для бонусов дают достижения, главы и продажа кофейни. Опыт игрового уровня не тратится.</p></div>');p.append(info);const refund=S.c.capitalPerkRefund;if(refund?.points)p.append(el('<div class="card"><div class="t">Возврат опыта: '+refund.points+'</div><div class="d">Бонус «Стартовый капитал» удалён. Потраченные на него очки возвращены в баланс опыта владельца.</div></div>'));
+ for(const pk of PERKS){const L=perk(pk.id),max=L>=pk.max,cost=pk.cost(L),card=el('<div class="card bc-cafe-perk" data-perk="'+pk.id+'"><div class="row wrap"><span class="t">'+esc(pk.n)+'</span><span class="tag">'+L+'/'+pk.max+'</span></div><p class="d" data-lite="1">'+esc(cafePerkInfo(pk.id,L))+'</p></div>');if(max)card.append(el('<span class="tag">Максимум</span>'));else{const b=el('<button class="btn" '+(S.shares<cost?'disabled':'')+'>Улучшить · '+cost+' опыта</button>');b.onclick=()=>{if(b.disabled)return;b.disabled=true;if(buyCafePerk(pk.id)){sfx('buy');renderSheet();renderHud();}else renderSheet();};card.append(b);}p.append(card);}}
+// Fetch the current slot when removing; frames must not invalidate modal actions.
+function bcBadgeRemove(slot,expected){const slots=bcBadgeSlots();if(!Number.isInteger(slot)||slot<0||slot>2||expected&&slots[slot]!==expected)return false;slots[slot]=null;bcBadgeSlots();save();renderHud();structDirty=true;return true;}
+var bcRemovableBadgesInv=renderInv;renderInv=function(p){bcRemovableBadgesInv.apply(this,arguments);const slots=bcBadgeSlots(),card=el('<div class="card bc-badge-slots"><div class="t">Значки над полкой · '+slots.filter(Boolean).length+'/3</div></div>');for(let i=0;i<3;i++){const b=S.badgeList.find(b=>b.id===slots[i]),row=el('<div class="row wrap" style="margin-top:8px"><span></span></div>');row.querySelector('span').textContent='Место '+(i+1)+': '+(b?b.n:'пусто');if(b){const remove=el('<button class="btn ghost" aria-label="Снять значок из места '+(i+1)+'">Снять '+(i+1)+'</button>');remove.onclick=()=>{bcBadgeRemove(i,b.id);renderSheet();};row.append(remove);}card.append(row);}p.prepend(card);};
+function bcTapServiceGuest(id,r,x,y){const hit=g=>!g.hidden&&x>g.x-18&&x<g.x+18&&y>g.y-g.h-3&&y<g.y+5;const head=r.queue[0];if(head&&head.state==='queue'&&hit(head)&&Math.hypot(head.x-QUEUE_X,head.y-QUEUE_Y)<3){completeOrder(id,head,true);return true;}for(const g of r.guests){if((g.state==='wait'||g.state==='toPick')&&hit(g)){const job=r.jobs.find(j=>j.g===g);if(job){job.p+=.22;tapFx(g.x,g.y-g.h-8);sfx('tap');if(job.p>=1)finishJob(id,job);return true;}}}return false;}
+function bcStaffBlocksService(r,x,y){if(x>QUEUE_X-40&&x<QUEUE_X+40&&y>QUEUE_Y-18&&y<QUEUE_Y+70)return true;return r.guests.some(g=>!g.hidden&&['queue','wait','toPick'].includes(g.state)&&Math.abs(x-g.x)<30&&y>g.y-6&&y<g.y+60);}
+function bcStaffIdleSpot(r,p){const width=Math.max(W,...TABLES.map(t=>t.x+42));const points=[];for(let y=Math.max(BAR_BOT+110,340);y<H-20;y+=36)for(const x of [width-24,40,132,224])points.push([x,y]);return points.find(([x,y])=>!bcStaffBlocksService(r,x,y)&&!TABLES.some(t=>Math.abs(x-t.x)<42&&y>t.y-30&&y<t.y+38)&&!Object.values(r.staff).some(other=>other!==p&&Math.hypot(other.x-x,other.y-y)<20))||[width-24,Math.min(H-22,342)];}
+var bcServiceStaffWalk=staffWalk;staffWalk=function(id,r,s,p,dt){if(id!=='main'||!(p.walker||s.role==='Официант'||s.role==='Мойщица'&&p.k===1)||p.job||p.goal)return bcServiceStaffWalk.apply(this,arguments);const badDestination=Number.isFinite(p.tx)&&bcStaffBlocksService(r,p.tx,p.ty),badStop=(!p.walk||s.distract)&&bcStaffBlocksService(r,p.x,p.y);if(badDestination||badStop||p._serviceIdle){const dest=p._serviceIdle||bcStaffIdleSpot(r,p);p._serviceIdle=dest;p.tx=dest[0];p.ty=dest[1];p.home=dest;if(moveTo(p,dest[0],dest[1],42*Math.min(1.6,staffSpeed(s)),dt)){p.walk=false;p.idle=4;p._serviceIdle=null;}return;}const result=bcServiceStaffWalk.apply(this,arguments);if(!p.job&&!p.goal&&bcStaffBlocksService(r,p.tx,p.ty)){const dest=bcStaffIdleSpot(r,p);p.tx=dest[0];p.ty=dest[1];}return result;};window.staffWalk=staffWalk;
 
 document.title=(window.BrewCrewLab?'Админская':'Оригинал')+' · Brew Crew';
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
