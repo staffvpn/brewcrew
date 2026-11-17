@@ -1378,7 +1378,7 @@ function newTasks(){
     if(kind==='inventory'){ goal = 1; label = 'Провести инвентаризацию'; }
     if(kind==='delivery'){ goal = 15 + RI(0,3)*5; label = 'Отдать '+goal+' заказов доставки'; }
     if(kind==='kitchen'){ goal = 15 + RI(0,3)*5; label = 'Продать '+goal+' блюд кухни'; }
-    if(kind==='sell'){ const av = MENU.filter(m=>!m.side && !m.season && isUnlocked(m.id) && !S.tasks.some(t=>t.item===m.id)); if(!av.length) continue; item = pick(av).id; goal = 25 + RI(0,3)*5; label = 'Продать '+goal+': '+MENU.find(x=>x.id===item).n.toLowerCase(); }
+    if(kind==='sell'){ const av = available('main').filter(m=>!m.side && !m.season && !S.tasks.some(t=>t.item===m.id)); if(!av.length) continue; item = pick(av).id; goal = 25 + RI(0,3)*5; label = 'Продать '+goal+': '+MENU.find(x=>x.id===item).n.toLowerCase(); }
     S.tasks.push({kind, goal, prog:0, label, item, hint:TASK_HINT[kind] || TASK_HINT7[kind], reward: Math.round(daily*0.06/1000)*1000 + 3000, done:false, failed:false, day:S.day});
   }
   S.task = S.tasks[0];
@@ -7209,7 +7209,7 @@ function migrate(){
   if(!S.story){ S.story = storyInit(); startSeason(1); }
   S.interior = S.interior || {};
   S.q = S.q || {wear:1, term:1, fridge:1};
-  S.promo = {day:null, rec:[]};
+  const promo=S.promo||{};S.promo={day:MENU.some(m=>m.id===promo.day)?promo.day:null,rec:Array.isArray(promo.rec)?promo.rec.filter(id=>MENU.some(m=>m.id===id)).slice(0,2):[]};
   S.staff.concat(S.cands||[]).forEach(x=>{ if(x.role==='Уборщик') x.role = 'Мойщица'; });
   S.dishes = S.dishes || {}; S.dirtL = S.dirtL || {};
   if(S.stock.hoz === undefined || S.stock.hoz === null) S.stock.hoz = 12;
@@ -15014,6 +15014,9 @@ function refundRetiredPetUpgrades(){
 var bcNameMigrate=migrate;migrate=function(){var result=bcNameMigrate.apply(this,arguments);normalizeStaffNames();refundRetiredPetUpgrades();return result;};
 var bcNameHire=hire;hire=function(candidate){normalizeStaffName(candidate);return bcNameHire.apply(this,arguments);};
 
+// Repair impossible unstarted sale tasks from older saves without resetting earned progress.
+function repairSaleTasks(){if(!S)return;const choices=available('main').filter(m=>!m.side&&!m.season);for(const t of S.tasks||[]){if(t.kind!=='sell'||t.done||t.failed||t.prog>0)continue;const old=MENU.find(m=>m.id===t.item);if(old&&isUnlocked(old.id)&&(!old.nb34||S.c.nb34)&&(!old.bf34||S.c.bf34))continue;const m=choices.find(m=>!(S.tasks||[]).some(x=>x!==t&&x.item===m.id));if(!m)continue;t.previousItem=t.item;t.item=m.id;t.label='Продать '+t.goal+': '+m.n.toLowerCase();}}
+var bcSaleTaskMigrate=migrate;migrate=function(){const result=bcSaleTaskMigrate.apply(this,arguments);repairSaleTasks();return result;};
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
