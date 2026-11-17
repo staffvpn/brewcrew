@@ -15155,7 +15155,7 @@ function retireSecondHall(){
 var bcHallRetireMigrate=migrate;migrate=function(){retireSecondHall();return bcHallRetireMigrate.apply(this,arguments);};
 var bcHallRetireMore=renderMore;renderMore=function(p){if(sub==='rooms')return;return bcHallRetireMore.apply(this,arguments);};
 var bcHallRetireUpgrade=renderUpgrades;renderUpgrades=function(p,id){if(id==='hall2')return;bcHallRetireUpgrade.apply(this,arguments);for(const h of p.querySelectorAll('.h'))if(h.textContent.trim()==='Залы')h.remove();};
-var bcHallRetireGrant=applyGrant;applyGrant=function(k){if(['hall2','proj','sofa'].includes(k))return 'Второй зал удалён из игры';return bcHallRetireGrant.apply(this,arguments);};
+var bcHallRetireGrant=applyGrant;applyGrant=function(k){if(['hall2','proj','sofa','h2upg5'].includes(k))return 'Второй зал удалён из игры';return bcHallRetireGrant.apply(this,arguments);};
 var bcHallRetireBuy=buyUpg;buyUpg=function(u,id,n){if(id==='hall2')return;return bcHallRetireBuy.apply(this,arguments);};
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();

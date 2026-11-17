@@ -171,7 +171,7 @@ async function vStyles(env, id) {
     [B('Пропуск текущего сезона', `p:gp:${id}`)],
     [B('‹ Карточка', 'p:u:' + id), ...HOME]] };
 }
-const GRANTS = { hall2: 'Зона отдыха', proj: 'Проектор', sofa: 'Кинодиван', h2upg5: 'Зона отдыха: улучшения +5', upg5: 'Основной зал: улучшения +5', stock: 'Полный склад', rep: 'Рейтинг +0,5', party: 'Команде настроение 100', kitchen: 'Кухня +1 ступень', buyout: 'Выкуп помещения', roaster: 'Своя обжарка', goldm: 'Золотая кофемашина' };
+const GRANTS = { upg5: 'Основной зал: улучшения +5', stock: 'Полный склад', rep: 'Рейтинг +0,5', party: 'Команде настроение 100', kitchen: 'Кухня +1 ступень', buyout: 'Выкуп помещения', roaster: 'Своя обжарка', goldm: 'Золотая кофемашина' };
 const DECOR_N = {};
 function opSummary(o){if(o.op==='manage'){try{const d=JSON.parse(o.text);return ({give:'➕ Выдано',take:'➖ Изъято',set:'✏️ Установлено'}[d.action]||'Изменено')+' · '+esc(d.title)+(['resource','stock','upgrade'].includes(d.kind)?' · '+d.amount:'');}catch{}}return esc(OPN[o.op]||o.op)+(o.amount!=null&&o.op!=='msg'?' '+fmt(o.amount):'');}
 async function vHistory(env,id){const rows=(await env.DB.prepare('SELECT * FROM admin_ops WHERE tg_id=?1 ORDER BY id DESC LIMIT 12').bind(id).all()).results||[];return {text:'<b>История операций</b>\n\n'+(rows.length?rows.map(o=>when(o.created_at)+' · '+opSummary(o)+(o.applied_at?' · ✅ применено':' · ⏳ ожидает')).join('\n'):'Пока нет операций.'),kb:[[B('‹ Карточка','p:u:'+id),...HOME]]};}
