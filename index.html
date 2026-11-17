@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <script src="legal-gate.js"></script>
 <script src="save-manager.js"></script>
+<script src="cash-journal.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -1177,7 +1178,7 @@ function orderStock(k, packs, mode){
   const price = Math.round(st.price * packs * supplyMul() * mul);
   const limit = S.debt.stage>=1 || mode==='shop' ? 0 : 50000;
   if(S.money - price < -limit) return S.debt.stage>=1 ? 'Поставщики работают только по предоплате, а денег не хватает' : 'Не хватает денег';
-  spend(price, 'supply');
+  spend(price,'supply','Закупка: '+st.n+' · '+packs+' уп. ('+(st.pack*packs)+' '+(st.unit||'ед.')+') · '+({shop:'самовывоз',express:'срочная доставка',normal:'обычная доставка'}[mode]||mode));
   if(mode==='shop'){ const q = st.pack*packs; if(st.perish) S.stock[k].push({q, exp:S.day+st.perish}); else S.stock[k] = (S.stock[k]||0) + q; S.youAwayUntil = Date.now() + 45000; HOOK.struct(); return null; }
   const eta = mode==='express' ? absNow()+5 : absNow()+60;
   S.orders.push({k, q:st.pack*packs, eta, price});
@@ -1275,7 +1276,7 @@ function sellOne(roomId, opt){
   const card = opt.delivery || (!rm.broken.terminal && chance(0.8));
   const fee = opt.delivery ? 0 : card ? amount*0.02 : 0;
   const comm = opt.delivery ? Math.round(amount*0.3) : 0;
-  income(amount);
+  income(amount,'sales','Продажа: '+item.n+(dessert?' + десерт':'')+(opt.delivery?' · доставка':''));
   if(fee)spend(fee,'acq','Эквайринг: 2%');
   if(comm)spend(comm,'comm','Комиссия доставки: 30%');
   if(opt.delivery)spend(15,'supply','Упаковка доставки');
@@ -1503,7 +1504,7 @@ function closeDay(){
   for(const s of S.staff){
     if(s.isYou){ s.today = 'work'; continue; }
     const pay = bcPayrollDue(s);
-    spend(pay, 'wages', 'Смена: '+s.name);
+    spend(pay,'wages','Смена: '+s.name+' · '+s.role+' · '+(bcPayrollEnsure().staff[s.id]?.minutes||0)+' мин.');
     if(s.today==='work' || s.today==='sub' || s.today==='training'){
       if(s.today!=='sub'){ s.shifts++; s.consec++; if(s.recentAbs>0 && s.shifts%5===0) s.recentAbs = 0; }
       s.fatigue = clamp(s.fatigue + (s.consec>5 ? 16 : 8) * (hoursOpen()>14 ? 1.4 : 1) * (s.quirk==='workaholic'?2:1) * focusMul('fatigue'), 0, 100);
@@ -1750,7 +1751,7 @@ function inspectionResult(kind, mode){
     if(kind==='san' && viol>=2.5 && mode!=='lie'){ fx.close = 24; txt += ' Кофейню закрыли на сутки до устранения.'; }
     if(kind==='tax') S.fin.noCheck = 0;
   }
-  if(fine){ spend(fine, 'fines'); S.c.fines++; S.c.finesSum += fine; S.c.daysNoFine = 0; }
+  if(fine){ spend(fine,'fines','Штраф по результатам проверки'); S.c.fines++; S.c.finesSum += fine; S.c.daysNoFine = 0; }
   if(kind==='san') S.flags.expired = 0;
   return {txt, fx};
 }
@@ -1942,7 +1943,7 @@ function applyFx(fx, inc){
   const chips = []; const st = inc && inc.sid ? S.staff.find(s=>s.id===inc.sid) : null; const st2 = inc && inc.sid2 ? S.staff.find(s=>s.id===inc.sid2) : null;
   let target = st;
   if(fx.roleTarget){ target = S.staff.find(s=>s.role===fx.roleTarget && s.room===S.active) || st; }
-  if(fx.m){ if(fx.m>0){ income(fx.m); S.fin.today.other -= fx.m; } else spend(-fx.m, 'other'); chips.push([(fx.m>0?'+':'')+fmtR(fx.m), fx.m>0]); }
+  if(fx.m){ const why=inc?'Событие: '+fillText((evDef(inc)||{}).t||inc.id||'Игровое событие',inc):'Игровое событие';if(fx.m>0){ income(fx.m,'events',why); S.fin.today.other -= fx.m; } else spend(-fx.m,'other',why); chips.push([(fx.m>0?'+':'')+fmtR(fx.m), fx.m>0]); }
   if(fx.rep){ repAdd(fx.rep/10); chips.push(['Рейтинг '+(fx.rep>0?'+':'−')+(Math.abs(fx.rep)/10).toFixed(1).replace('.',','), fx.rep>0]); }
   ['soul','pathos','chaos'].forEach(m=>{ if(fx[m]){ meter(m, fx[m]); chips.push([METER_N[m]+' '+(fx[m]>0?'+':'−')+Math.abs(fx[m]), m==='chaos'? fx[m]<0 : null]); } });
   if(target && fx.mood){ target.mood = clamp(target.mood+fx.mood,0,100); chips.push([target.name+': настроение '+(fx.mood>0?'+':'−')+Math.abs(fx.mood), fx.mood>0]); }
@@ -1962,7 +1963,7 @@ function applyFx(fx, inc){
   if(fx.fights){ S.c.fights += fx.fights; }
   if(fx.loyal){ const rg = S.regs.find(x=>x.id===fx.loyal[0]); if(rg){ rg.loyal = clamp(rg.loyal + fx.loyal[1], 0, 100); const nm = (REGULARS.find(x=>x.id===rg.id)||{}).n; chips.push([nm+': лояльность '+(fx.loyal[1]>0?'+':'')+fx.loyal[1], fx.loyal[1]>0]); if(rg.loyal<=10 && !rg.gone){ rg.gone = true; chips.push([nm+' ушёл навсегда', false]); } } }
   if(fx.repair){ const [k, how] = fx.repair; const rm = room(inc && inc.room || S.active);
-    if(how==='full'){ spend(EQ[k].fix, 'repairs'); rm.broken[k] = false; rm.eq[k] = 100; }
+    if(how==='full'){ spend(EQ[k].fix,'repairs','Ремонт: '+EQ[k].n); rm.broken[k] = false; rm.eq[k] = 100; }
     if(how==='cheap'){ spend(Math.round(EQ[k].fix/3), 'repairs'); if(chance(0.55)){ rm.broken[k] = false; rm.eq[k] = 60; chips.push(['Заработало', true]); } else { chips.push(['Сломалось снова, нужен сервис', false]); } }
     if(how==='none'){ if(k==='kkt') rm.noCheck = true; } }
   if(fx.inspect){ const r = inspectionResult(fx.inspect, fx.mode); const c2 = applyFx(r.fx, inc); return {chips:c2.chips.concat(r.txt? [] : []), out:r.txt}; }
@@ -2034,7 +2035,7 @@ function scheduleEvents(nowReal){
   for(const r of S.rooms){ for(const k of ['machine','terminal','kkt']){ if(!r.broken[k] && r.eq[k] < 40 && chance((40 - r.eq[k])/400/60)) breakdown(r.id, k); } if(!r.broken.fridge){ r.eq.fridge = Math.max(0, r.eq.fridge - 0.0006*(S.serviceContract?0.5:1)*(r.id==='main' && S.q ? S.q.fridge : 1)); if(r.eq.fridge<40 && chance((40-r.eq.fridge)/400/60)) breakdown(r.id,'fridge'); } }
 }
 function serviceCost(r){ let c = 0; for(const k of Object.keys(EQ)) c += (100 - r.eq[k]) * EQ[k].fix / 300; return Math.round(c/100)*100; }
-function doService(r){ const c = serviceCost(r); if(!canSpend(c)) return false; spend(c, 'repairs'); for(const k of Object.keys(EQ)) r.eq[k] = 100; return true; }
+function doService(r){ const c = serviceCost(r); if(!canSpend(c)) return false; spend(c,'repairs','Обслуживание оборудования: '+((roomDef(r.id)||{}).n||r.id)); for(const k of Object.keys(EQ)) r.eq[k] = 100; return true; }
 
 /* ================= франшиза и достижения ================= */
 function franchiseNeed(){ return 30000000 * Math.pow(3, S.franchises); }
@@ -2097,7 +2098,7 @@ function applyBuild(choice){
     if(o.q.wear) S.q.wear = o.q.wear; if(o.q.term) S.q.term = o.q.term; if(o.q.fridge) S.q.fridge = o.q.fridge;
     if(o.q.rep) S.rep = clamp(S.rep + o.q.rep, 1, 5); if(o.q.chaos) S.meters.chaos += o.q.chaos; }
   total += START_FEES;
-  S.money -= total; S.fin.today.invest = (S.fin.today.invest||0) + total; S.build = choice;
+  ledgerize(S);MONEY_CTX={out:'invest',why:'Открытие кофейни: оборудование и ремонт'};S.money -= total;MONEY_CTX=null; S.fin.today.invest = (S.fin.today.invest||0) + total; S.build = choice;
   return total;
 }
 function makeYou(){ const y = makeStaff('Бариста', {quirk:'none'}); Object.assign(y, {name:'Ты', isYou:true, room:'main', lvl:2, today:'work', sched:'every', contract:'white'}); return y; }
@@ -2252,7 +2253,7 @@ function startKitchen(){
   const t = kitchenNext(); if(!t || S.kitchen.build) return 'Сейчас нельзя';
   const k = KITCHEN[t]; if(!k.req.f(S)) return 'Условие: '+k.req.t;
   if(S.money < k.cost) return 'Не хватает денег';
-  spend(k.cost, 'other'); S.kitchen.build = {tier:t, done:absNow() + k.days*DAY_MIN};
+  spend(k.cost,'other','Кухня: '+k.n+' · уровень '+t); S.kitchen.build = {tier:t, done:absNow() + k.days*DAY_MIN};
   addMod('traffic', 0.9, k.days*24, 'Ремонт кухни: гостей −10%'); meter('chaos', 4);
   HOOK.struct(); return null;
 }
@@ -2912,6 +2913,8 @@ function ledgerNote(d){
     L.in[cat] = (L.in[cat]||0) + d; const k = cat+'|'+w; L.inW[k] = (L.inW[k]||0) + d; }
   else { const v = -d; const cat = (c && c.out) || (c && c.cat ? 'other' : 'other'); const w = (c && c.why) || 'Разное';
     L.out[cat] = (L.out[cat]||0) + v; const k = cat+'|'+w; L.outW[k] = (L.outW[k]||0) + v; }
+  if(window.BrewCrewCash){const cat=d>0?((c&&c.cat)||(c&&c.out?'refunds':null)||INCOME_DEF||'misc'):((c&&c.out)||'other');const reason=(c&&c.why)||(d>0?IN_N[cat]:OUT_N[cat])||'Прямое изменение баланса: причина не передана';BrewCrewCash.record({delta:d,before:S.money-d,after:S.money,cat,reason});}
+
 }
 function ledgerize(s){
   if(!s || s.__lg) return;
@@ -2924,12 +2927,12 @@ function sumObj(o){ let t = 0; for(const k in (o||{})) t += o[k]||0; return t; }
 setInterval(()=>{ if(S && !S.__lg) ledgerize(S); }, 250);
 
 // расход: старая логика статей + журнал
-function spend(v, cat, why){ cat = cat||'other'; if(!v) return; const f = S.fin.today;
+function spend(v, cat, why){ cat = cat||'other'; if(!v) return;ledgerize(S); const f = S.fin.today;
   MONEY_CTX = {out: OUT_N[cat] ? cat : 'other', why: why || SPEND_WHY || (OUT_N[cat]||'Разное')}; S.money -= v; MONEY_CTX = null;
   f[cat] = (f[cat]||0) + v;
   if(cat!=='wages' && v){ const w = why || SPEND_WHY || 'Разное'; f.why = f.why || {}; const key = cat+'|'+w; f.why[key] = (f.why[key]||0) + v; f.last = f.last || []; f.last.unshift({c:cat, v:Math.round(v), w, gm:S.gm}); if(f.last.length > 30) f.last.length = 30; } }
 // приход с указанием статьи и правдоподобной причины
-function income(v, cat, why){ if(!v) return; if(!cat && SALE_NEXT){ cat = 'sales'; SALE_NEXT = false; } MONEY_CTX = {cat: cat || INCOME_DEF || 'misc', why}; S.money += v; MONEY_CTX = null; }
+function income(v, cat, why){ if(!v) return;ledgerize(S); if(!cat && SALE_NEXT){ cat = 'sales'; SALE_NEXT = false; } MONEY_CTX = {cat: cat || INCOME_DEF || 'misc', why}; S.money += v; MONEY_CTX = null; }
 function withIncome(cat, fn){ return function(){ const prev = INCOME_DEF; INCOME_DEF = cat; try{ return fn.apply(this, arguments); } finally { INCOME_DEF = prev; } }; }
 // у каждого прихода — своя статья
 deliver = withIncome('refunds', deliver);
@@ -8116,7 +8119,7 @@ function finSum(list){ const L = {in:{}, out:{}, inW:{}, outW:{}}; let open = nu
   const last = list[list.length-1]; open = last && last.open != null ? last.open : null; return {L, open, ok}; }
 function renderFin(p){
   const t = S.fin.today, hist = S.fin.hist;
-  const views = {today:[t], yday: hist[0] ? [hist[0]] : [], week:[t].concat(hist.slice(0,6))};
+  const views = {today:[t], yday: hist[0] ? [hist[0]] : [], week:[t].concat(hist.slice(0,6)),month:[t].concat(hist.slice(0,29))};
   const sel = views[finView] || [t];
   const {L, ok} = finSum(sel);
   const oldest = sel[sel.length-1];
@@ -8124,14 +8127,14 @@ function renderFin(p){
   const tin = sumObj(L.in), tout = sumObj(L.out);
   const close = finView==='today' ? S.money : (open != null ? open + tin - tout : null);
   const diff = finView==='today' && open != null ? Math.round(close - (open + tin - tout)) : 0;
-  const nav = el(`<div class="subnav finnav">${[['today','Сегодня'],['yday','Вчера'],['week','7 дней']].map(([k,n])=>`<button class="chipbtn" data-k="${k}" aria-pressed="${finView===k}">${n}</button>`).join('')}</div>`);
+  const nav = el(`<div class="subnav finnav">${[['today','Сегодня'],['yday','Вчера'],['week','7 дней'],['month','30 смен']].map(([k,n])=>`<button class="chipbtn" data-k="${k}" aria-pressed="${finView===k}">${n}</button>`).join('')}</div>`);
   nav.querySelectorAll('button').forEach(b=>b.onclick = () => { finView = b.dataset.k; finOpen = null; renderSheet(); });
   p.appendChild(nav);
   const row = (k, n, v, sign, g) => `<button class="fl ${finOpen===g+k?'open':''}" data-g="${g}" data-k="${k}"><span>${esc(n)}</span><i></i><b class="num ${sign<0?'neg':''}">${sign<0?'−':'+'}${fmt(v)}</b></button>`;
-  const det = (g, k) => { const W = g==='in' ? L.inW : L.outW; const list = Object.keys(W).filter(x=>x.startsWith(k+'|')).map(x=>[x.split('|').slice(1).join('|'), W[x]]).sort((a,b)=>b[1]-a[1]).slice(0,12); return `<div class="fdet">${list.map(([w,v])=>`<div><span>${esc(w)}</span><b class="num">${fmt(v)}</b></div>`).join('') || '<div><span>Подробностей нет</span></div>'}</div>`; };
+  const det = (g, k) => { const W = g==='in' ? L.inW : L.outW; const list = Object.keys(W).filter(x=>x.startsWith(k+'|')).map(x=>[x.split('|').slice(1).join('|'), W[x]]).sort((a,b)=>b[1]-a[1]); return `<div class="fdet">${list.map(([w,v])=>`<div><span>${esc(w)}</span><b class="num">${fmt(v)}</b></div>`).join('') || '<div><span>Подробностей нет</span></div>'}</div>`; };
   const ins = Object.keys(L.in).filter(k=>L.in[k]>=1).sort((a,b)=>L.in[b]-L.in[a]);
   const outs = Object.keys(L.out).filter(k=>L.out[k]>=1).sort((a,b)=>L.out[b]-L.out[a]);
-  const html = `<div class="card receipt-card rc15"><div class="rhead">«${esc(S.name)}»<br>${finView==='today'?'ДЕНЬ '+S.day:finView==='yday'?'ВЧЕРА':'7 ДНЕЙ'} · КАССОВЫЙ ОТЧЁТ</div>
+  const html = `<div class="card receipt-card rc15"><div class="rhead">«${esc(S.name)}»<br>${finView==='today'?'ДЕНЬ '+S.day:finView==='yday'?'ВЧЕРА':finView==='month'?'30 СМЕН':'7 ДНЕЙ'} · КАССОВЫЙ ОТЧЁТ</div>
     ${!ok?'<div class="d">Часть дней из старой версии игры: по ним подробностей нет.</div>':''}
     <div class="fl tot"><span>Касса на начало</span><i></i><b class="num">${open!=null?fmt(open):'—'}</b></div>
     <div class="fh">Поступления</div>${ins.map(k=>row(k, IN_N[k]||k, L.in[k], 1, 'in') + (finOpen==='in'+k ? det('in', k) : '')).join('') || '<div class="d">Пока ничего</div>'}
@@ -14788,7 +14791,7 @@ function bcManagedApply(o){
  else if(d.kind==='staffgift'){makePrizeStaff(Number(String(d.id).replace('legend',''))||20);syncScene('main');}
  else if(d.kind==='consumable'){invAdd(d.id==='giftcash'?{k:'money',v:50000,t:'Сертификат администрации',src:'Администрация'}:d.id==='giftxp'?{k:'xp',v:500,t:'Опыт от администрации',src:'Администрация'}:{k:'mod',v:24,boost:1.15,t:'Гостей +15% на сутки',src:'Администрация'});}
  else if(d.kind==='resource'){
-  if(d.id==='money'){MONEY_CTX={cat:'admin',out:'other',why:'Изменение баланса администрацией'};S.money=Math.min(1e12,d.action==='set'?d.amount:d.action==='give'?S.money+d.amount:S.money>0?Math.max(0,S.money-d.amount):S.money);MONEY_CTX=null;}
+  if(d.id==='money'){MONEY_CTX={cat:'admin',out:'other',why:'Администратор: '+(d.reason||d.title||'изменение баланса')+' · '+({give:'зачисление',take:'списание',set:'установка баланса'}[d.action]||'изменение')};S.money=Math.min(1e12,d.action==='set'?d.amount:d.action==='give'?S.money+d.amount:S.money>0?Math.max(0,S.money-d.amount):S.money);MONEY_CTX=null;}
   if(d.id==='xp'){if(d.action==='give')addXp(d.amount);else S.xp=calc(S.xp,0,1e9);}
   if(d.id==='level'){S.level=Math.max(1,Math.min(60,d.amount));S.xp=0;}
   if(d.id==='sp')szState().sp=calc(szState().sp,0,1e7);
@@ -15153,6 +15156,11 @@ var bcHallRetireMore=renderMore;renderMore=function(p){if(sub==='rooms')return;r
 var bcHallRetireUpgrade=renderUpgrades;renderUpgrades=function(p,id){if(id==='hall2')return;bcHallRetireUpgrade.apply(this,arguments);for(const h of p.querySelectorAll('.h'))if(h.textContent.trim()==='Залы')h.remove();};
 var bcHallRetireGrant=applyGrant;applyGrant=function(k){if(['hall2','proj','sofa','h2upg5'].includes(k))return 'Второй зал удалён из игры';return bcHallRetireGrant.apply(this,arguments);};
 var bcHallRetireBuy=buyUpg;buyUpg=function(u,id,n){if(id==='hall2')return;return bcHallRetireBuy.apply(this,arguments);};
+// Detailed cash audit is independent from financial summaries and does not change the balance.
+BrewCrewCash.init({state:function(){return typeof S==='undefined'?null:S;},save:save});
+var bcCashNew=newState;newState=function(){const before=S,next=bcCashNew.apply(this,arguments);BrewCrewCash.carry(before,next);return next;};
+var bcCashFin=renderFin;renderFin=function(p){bcCashFin.apply(this,arguments);BrewCrewCash.render(p);const nav=p.querySelector('.finnav'),journal=p.querySelector('.bc-cash-history');if(nav&&journal){const jump=el('<button class="btn ghost">История операций ↓</button>');jump.onclick=()=>journal.scrollIntoView({block:'start',behavior:'smooth'});nav.after(jump);}};
+var bcCashOffline=simulateOffline;simulateOffline=function(){BrewCrewCash.beginOffline();try{return bcCashOffline.apply(this,arguments);}finally{BrewCrewCash.endOffline();}};
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,

@@ -447,4 +447,5 @@ export async function ackOps(env, id, ids) {
     env.DB.prepare('DELETE FROM reminders WHERE tg_id = ?1').bind(id),
     env.DB.prepare('DELETE FROM cache WHERE key IN (?1,?2)').bind('full_save_'+id+'_current','full_save_'+id+'_previous')
   ]);
+  if(wiped&&wiped.n)try{await env.DB.prepare('DELETE FROM cash_ledger WHERE tg_id=?1').bind(id).run();}catch{}
 }

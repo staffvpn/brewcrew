@@ -15,3 +15,6 @@
 
 /save-manager.js
   Cache-Control: no-cache
+
+/cash-journal.js
+  Cache-Control: no-cache
