@@ -1,0 +1,18 @@
+/* Continuous canvas effects; prize selection and persistence happen before this renderer. */
+(function(){'use strict';
+function play(canvas,opt){const dpr=Math.min(devicePixelRatio||1,2),width=320,height=250;canvas.width=width*dpr;canvas.height=height*dpr;const g=canvas.getContext('2d');let raf=0,stopped=false,start=performance.now(),last=0,frames=0;const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,duration=reduce?450:3600;const ease=x=>1-Math.pow(1-Math.max(0,Math.min(1,x)),3),clamp=x=>Math.max(0,Math.min(1,x));
+function image(im,x,y,w,alpha=1){if(!im?.naturalWidth)return;g.save();g.globalAlpha=alpha;g.imageSmoothingEnabled=false;const h=im.height*w/im.width;g.drawImage(im,x-w/2,y-h,w,h);g.restore();}
+function render(now){if(stopped)return;const elapsed=(now-start)/1000,t=reduce?elapsed/.45*3.6:elapsed;frames++;last=now;canvas.dataset.renderFrames=String(frames);canvas.dataset.phase=t<.7?'arrival':t<1.6?'untie':t<2.4?'opening':'reveal';g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,width,height);
+const glow=clamp((t-1.4)/.8),cx=160,base=207;g.save();const rg=g.createRadialGradient(cx,125,6,cx,125,145);rg.addColorStop(0,opt.color+'55');rg.addColorStop(.6,'#efcf8b28');rg.addColorStop(1,'#efcf8b00');g.fillStyle=rg;g.globalAlpha=.35+glow*.65;g.fillRect(0,0,width,height);g.restore();
+// Ground contact stays fixed while the body settles and the rope unwinds.
+g.save();g.globalAlpha=.14*(1-clamp((t-2.3)/1));g.fillStyle='#67482f';g.beginPath();g.ellipse(cx,base+2,45,6,0,0,Math.PI*2);g.fill();g.restore();
+if(t<2.9){let frame=t<.8?0:t<1.05?1:t<1.3?2:t<1.55?3:t<1.8?4:t<2.05?5:t<2.3?6:7;const meta=opt.frames?.frames?.[frame];const fall=(1-ease(t/.65))*-105,bounce=t>.6&&t<1?Math.sin((t-.6)*Math.PI/.4)*-7:0;g.save();g.translate(cx,base+fall+bounce);const squash=1+Math.sin(clamp((t-.8)/.35)*Math.PI)*.06;g.scale(squash,1/squash);g.globalAlpha=1-clamp((t-2.25)/.65);g.imageSmoothingEnabled=false;if(meta&&opt.bag?.naturalWidth){const w=140,h=meta.h*w/meta.w;g.drawImage(opt.bag,meta.x,meta.y,meta.w,meta.h,-w/2,-h,w,h);}g.restore();}
+// A continuous curved rope, rather than a separate badge or control.
+if(t>.85&&t<2){const p=ease((t-.85)/1.15);g.save();g.globalAlpha=1-clamp((t-1.6)/.4);g.strokeStyle='#b8935e';g.lineWidth=2;g.lineCap='round';for(const side of [-1,1]){g.beginPath();g.moveTo(cx,104+p*7);g.bezierCurveTo(cx+side*(15+35*p),84-25*p,cx+side*(30+24*p),112+55*p,cx+side*(25+42*p),135+50*p);g.stroke();}g.restore();}
+if(t>1.6){const p=clamp((t-1.6)/.65);g.save();g.translate(cx,153);g.globalAlpha=Math.sin(p*Math.PI/2)*(1-clamp((t-2.9)/.6));for(let j=0;j<9;j++){g.rotate(Math.PI*2/9);const beam=g.createLinearGradient(0,0,0,-155);beam.addColorStop(0,'#fff2be99');beam.addColorStop(1,'#ffe2a000');g.fillStyle=beam;g.beginPath();g.moveTo(-3,0);g.lineTo(-16*p,-155*p);g.lineTo(16*p,-155*p);g.lineTo(3,0);g.fill();}g.restore();}
+if(t>2){for(let j=0;j<35;j++){const age=t-2-j*.012;if(age<0||age>1.5)continue;const a=j*2.39996,v=40+(j%7)*9,x=cx+Math.cos(a)*v*age,y=145+Math.sin(a)*v*age-110*age+65*age*age;g.save();g.globalAlpha=Math.max(0,1-age/1.5);g.translate(x,y);g.rotate(a+age);g.fillStyle=j%3?'#d8ad56':opt.color;g.fillRect(-1.5,-1.5,j%4?3:5,j%4?3:2);g.restore();}}
+if(t>2.2){const p=ease((t-2.2)/1.05),alpha=clamp((t-2.2)/.2);g.save();g.translate(cx,157-(p*25));g.scale(.3+p*.7,.3+p*.7);image(opt.reward,0,60,110,alpha);g.restore();}
+if(elapsed*1000>=duration){stopped=true;canvas.dataset.complete='true';opt.onReveal?.();return;}raf=requestAnimationFrame(render);}
+raf=requestAnimationFrame(render);return()=>{stopped=true;cancelAnimationFrame(raf);};}
+window.BrewCrewSupplierFX={play};
+})();

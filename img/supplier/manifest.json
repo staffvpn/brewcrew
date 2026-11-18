@@ -129,5 +129,12 @@
         42
       ]
     }
-  }
+  },
+  "frontRevision": "2026-11-18-v2",
+  "frontJobs": {
+    "front-a": "7a2edab5-6071-4391-b28c-1c66e85aaef1",
+    "front-b": "69e8c5f8-ad5f-477c-a074-a85dcceea733",
+    "bag-frames": "e60aeeb6-1b64-42d1-b853-b087af72619b"
+  },
+  "animation": "Eight PixelLab sack states, continuous RAF motion and light/particles"
 }
