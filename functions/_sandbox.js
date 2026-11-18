@@ -1,3 +1,4 @@
+import {invitationData} from './_referrals.js';
 // Preview API is a separate dispatcher. It never calls the live game handlers.
 import {json,verifyInitData,ADMINS,SHOP,sezId} from './_lib.js';
 import {LEGAL_VERSION,LEGAL_DOCUMENTS} from './_legal.js';
@@ -15,6 +16,8 @@ export async function sandbox({request,env}){
  if(!env.DB||!env.BOT_TOKEN)return json({ok:false,error:'Админская ещё не настроена'},503);
  let b;try{b=await request.json();}catch{return json({ok:false,error:'Админская не получила данные входа. Повтори открытие через бота.'},400);}
  const user=await verifyInitData(b?.initData,env.BOT_TOKEN);if(!user)return json({ok:false,error:'Не удалось подтвердить вход Telegram. Открой Админскую кнопкой в /admin.'},401);if(!ADMINS.includes(user.id))return json({ok:false,error:'Админская доступна только двум администраторам игры',userId:user.id},403);
+ // Invitation counts belong to the Telegram account: this one shared read never modifies a player.
+ if(path==='/api/friends')return json({ok:true,lab:true,...await invitationData(env.DB,user.id,b.offset)});
  const key='lab_v1_'+user.id,read=async()=>{const r=await env.DB.prepare('SELECT val FROM cache WHERE key=?1').bind(key).first();try{return JSON.parse(r?.val||'{}');}catch{return{};}},write=async d=>env.DB.prepare('INSERT INTO cache(key,val,at) VALUES(?1,?2,?3) ON CONFLICT(key) DO UPDATE SET val=excluded.val,at=excluded.at').bind(key,JSON.stringify(d),Date.now()).run();
  if(path==='/api/lab')return json({ok:true,lab:true,userId:user.id});
  if(path==='/api/recovery'){const d=await read();return json({ok:true,lab:true,exists:!!d.save,saves:d.save?[d.save]:[],cafe:d.save?.name,level:d.save?.level});}
