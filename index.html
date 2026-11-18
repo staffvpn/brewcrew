@@ -15141,7 +15141,7 @@ var nkOriginalDraw=draw;draw=function(){var value=nkOriginalDraw.apply(this,argu
 var nkUpgradeProps=sceneUpgradeProps;sceneUpgradeProps=function(st,u,items,now,r){nkUpgradeProps.apply(this,arguments);if(NKRUN&&!st.outdoor&&S&&S.active==='main'&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)){var actor=NKRUN,cat=NKRUN.cat;items.push({y:actor.y,f:function(){shadow(actor.x,actor.y,9);nkDraw(actor);}});if(cat)items.push({y:cat.y,f:function(){shadow(cat.x,cat.y,5);nkDraw(cat);}});}};window.sceneUpgradeProps=sceneUpgradeProps;
 var nkRenderMore=renderMore;renderMore=function(p){
  nkRenderMore.apply(this,arguments);if(sub!=='book')return;var grid=p.querySelector('.vip-grid');if(!grid||grid.querySelector('[data-blogger="nikita"]'))return;
- var card=el('<button class="vip-tile met" data-blogger="nikita"><img src="img/bloggers/nikita-icon.png" alt="Никита с котом Филей"><b>Никита</b><span>Блогер · с котом Филей</span><i>Событие появится позже</i></button>');card.onclick=function(){queueModal({kind:'nikita_card'},true);};grid.appendChild(card);
+ var card=el('<button class="vip-tile met" data-blogger="nikita"><img src="img/bloggers/nikita-icon.png" alt="Никита с котом Филей"><b>Никита</b><span>Бариста · с котом Филей</span><i>'+(window.nkLive&&nkLive()?(S.nik&&S.nik.n?('Штампов: '+S.nik.n+' из 5'):'Придёт сам'):'Скоро')+'</i></button>');card.onclick=function(){queueModal({kind:'nikita_card'},true);};grid.appendChild(card);
 };
 MODAL15.nikita_card=function(box,m,btn){
  box.append(el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png" alt="Никита и Филя"><div><div class="eyebrow">Особый гость · блогер</div><h2>Никита и Филя</h2><p>Никита приходит со своим вислоухим котом Филей. Филя гуляет рядом.</p><p>История их визита появится позже.</p></div></div>'));
@@ -15150,6 +15150,144 @@ MODAL15.nikita_card=function(box,m,btn){
 };
 window.nikitaDraw=nkDraw;
 window.BrewCrewNikita={geometry:function(){return {width:RW(),height:H};},ready:nkReady,startPreview:nkStartPreview,stopPreview:function(){NKRUN=null;},actor:function(){return NKRUN;},clip:function(name){return NK_ART.clips[name]||null;},stepPreview:function(dt){if(nkCanPreview())nkTick(dt);}};
+/* ===== Никита и Филя: 5 визитов, паспорт штампов, еженедельный шифр ===== */
+(function(){
+var NK_AT=Date.parse('2026-11-19T12:00:00+03:00'), NK_LINK='https://t.me/CoffeejNik', NK_ADM=[929887068,432943377];
+function nkUid(){ try{ return tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user&&tg.initDataUnsafe.user.id||0; }catch(e){ return 0; } }
+function nkLive(){ return Date.now()>=NK_AT||NK_ADM.indexOf(nkUid())>=0||!!window.__nkForceLive; }
+window.nkLive=nkLive;
+MENU.push({id:'filya_filter', n:'Фильтр Фили', price:450, w:0.6, need:{beans:16, cups:1}, coffee:1, unlock:{t:'Паспорт Никиты', f:function(S){return !!(S.nik&&S.nik.drink);}}});
+
+function nkS(){ if(!S.nik) S.nik={n:0, next:Date.now()+RI(10,20)*60000, nextDay:0, drink:false, solved:{}, s1w:-1, filaDay:-1, filaAt:0, titles:0}; return S.nik; }
+window.nkS=nkS;
+function openLink(u){ try{ if(tg&&tg.openTelegramLink&&/^https:\/\/t\.me\//.test(u)) tg.openTelegramLink(u); else window.open(u,'_blank'); }catch(e){} }
+function chanUrl(){ return (typeof CFG!=='undefined'&&CFG&&CFG.channel)||''; }
+function bestBarista(){ var b=S.staff.filter(function(s){return !s.isYou&&s.role==='Бариста';}); return b.sort(function(a,c){return (c.lvl||0)-(a.lvl||0);})[0]||null; }
+
+var TASTE=[
+  {notes:'молочный шоколад, лесной орех, карамель', a:'Бразилия', o:['Бразилия','Эфиопия','Кения']},
+  {notes:'жасмин, бергамот, черника', a:'Эфиопия', o:['Колумбия','Эфиопия','Бразилия']},
+  {notes:'чёрная смородина, грейпфрут, томат', a:'Кения', o:['Кения','Индонезия','Бразилия']},
+  {notes:'красное яблоко, тростниковый сахар, цитрус', a:'Колумбия', o:['Эфиопия','Колумбия','Индонезия']},
+  {notes:'тёмный шоколад, специи, табак', a:'Индонезия', o:['Кения','Колумбия','Индонезия']}
+];
+var VIS=[
+  {hi:'Эспрессо. И штамп.', tour:[['bar','Чистая кофемашина. Это видно.'],['win','Филя, не трогай сахар.']]},
+  {hi:'Сегодня дегустация.', tour:[['bar','Помол хороший.'],['tab','Филя нашёл себе стул.']]},
+  {hi:'Оставлю кое-что.', tour:[['bar','Салфетку не выбрасывай.'],['win','Филя знает больше, чем кажется.']]},
+  {hi:'Где твой бариста?', tour:[['bar','Ещё раз. Быстрее.'],['bar','Вот теперь чемпионат.']]},
+  {hi:'Последний штамп.', tour:[['bar','Фильтр Фили. Запоминай.'],['tab','Паспорт полный.']]}
+];
+function stops(v){ var tables=[]; try{ tables=bcPlacesTables(); }catch(e){} var t=tables.length?pick(tables):{x:120,y:BAR_BOT+90};
+  var P={bar:{x:168,y:BAR_BOT+16,dur:4.5}, win:{x:40,y:BAR_BOT+40,dur:4}, tab:{x:t.x+22,y:t.y+6,dur:4}};
+  return VIS[v].tour.map(function(x){ var p=Object.assign({},P[x[0]]); p.say=x[1]; return p; }); }
+
+function canStart(){ var v=nkS(); if(!nkLive()||v.n>=5||Date.now()<v.next||S.day<v.nextDay) return false;
+  if(NKRUN||VIPRUN||LZRUN||(window.__lrRun&&window.__lrRun())||FILA) return false;
+  return S.active==='main'&&!sheet&&!modals.length&&isWorking()&&!document.hidden&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)&&nkReady(); }
+function start(){ var v=nkS();
+  NKRUN={id:'nikita-ev',_kind:'nikita',_specialGuest:true,_event:true,v:v.n,x:DOOR[0],y:DOOR[1],h:64,t:0,walk:false,stage:'in',_ph:Math.random()};
+  NKRUN.cat={id:'filya-ev',_kind:'filya',_specialGuest:true,isPet:true,x:DOOR[0]+19,y:DOOR[1],h:21,t:0,walk:false,stage:'in'};
+  bubble2(0,0,VIS[v.n].hi,3000,NKRUN); structDirty=true; }
+function evTick(dt){ var m=NKRUN; dt=Math.min(.1,Math.max(0,Number(dt)||0)); m.t+=dt; try{ nkFollowCat(m,dt); }catch(e){}
+  if(m.stage==='in'){ m.walk=true; if(moveTo(m,150,QUEUE_Y+46,44,dt)){ m.walk=false; m.stage='ask'; queueModal({kind:'nik', v:m.v},true); } return; }
+  if(m.stage==='ask') return;
+  if(m.stage==='tour'){ if(!m.route){ m.route=stops(m.v); m.ri=0; } var st=m.route[m.ri]; if(!st){ m.stage='out'; return; }
+    if(!m.at){ m.walk=true; if(moveTo(m,st.x,st.y,46,dt)){ m.walk=false; m.at=true; m.wait=0; bubble2(0,0,st.say,2600,m); } return; }
+    m.wait+=dt; if(m.wait>=st.dur){ m.at=false; m.ri++; } return; }
+  if(m.stage==='out'){ m.stage='leave'; }
+  if(m.stage==='leave'){ if(!m.departed&&moveTo(m,DOOR[0]+14,DOOR[1],46,dt)) m.departed=true; if(m.departed&&Math.hypot(m.cat.x-DOOR[0]-14,m.cat.y-DOOR[1])<8){ NKRUN=null; structDirty=true; } }
+}
+function done(){ var v=nkS(), m=NKRUN; v.n=Math.max(v.n,(m?m.v:v.n)+1); v.next=Date.now()+30*60000; v.nextDay=S.day+RI(2,3); if(v.n>=3&&v.filaDay<0){ v.filaDay=S.day-1; } if(m){ m.stage='tour'; m.route=null; m.at=false; } save(); }
+var _nkTickBase=nkTick;
+nkTick=function(dt){
+  if(!S||S.active!=='main'||(typeof bcVisitClose!=='undefined'&&bcVisitClose)) return _nkTickBase(dt);
+  try{ filaTick(dt); }catch(e){}
+  if(NKRUN&&NKRUN._event){ if(modals.length||sheet) return; return evTick(dt); }
+  if(!NKRUN&&canStart()) start();
+  return _nkTickBase(dt);
+};
+
+/* ---------- Филя заглядывает раз в игровой день и носит первый слог ключа ---------- */
+var FILA=null, NKST=null;
+function nkFetch(cb){ if((!tg||!tg.initData)&&!window.__nkTest){ cb&&cb(NKST); return; } apiPost('/api/nikita',{action:'state'}).then(function(r){ if(r&&r.ok) NKST=r; cb&&cb(NKST); }).catch(function(){ cb&&cb(NKST); }); }
+window.nkFetch=nkFetch;
+function filaSpot(){ var tables=[]; try{ tables=bcPlacesTables(); }catch(e){} var opts=[{x:40,y:BAR_BOT+40},{x:RW()-30,y:BAR_BOT+70},{x:200,y:BAR_BOT+20}];
+  tables.forEach(function(t){ opts.push({x:t.x+16,y:t.y+12}); }); return pick(opts); }
+function filaTick(dt){ var v=S.nik; if(!v||v.n<3||!nkLive()) { FILA=null; return; }
+  if(!FILA){ if(v.filaDay===S.day||NKRUN||!isWorking()||sheet||modals.length) return;
+    if(!v.filaAt||v.filaAtDay!==S.day){ v.filaAtDay=S.day; v.filaAt=RI(Math.max(S.gm||0,9*60), 19*60); }
+    if((S.gm||0)<v.filaAt) return;
+    var p=filaSpot(); v.filaDay=S.day; FILA={id:'filya-day',_kind:'filya',_specialGuest:true,isPet:true,x:DOOR[0],y:DOOR[1],h:21,t:0,tx:p.x,ty:p.y,stage:'in',gm0:S.gm||0}; structDirty=true; return; }
+  var f=FILA; dt=Math.min(.1,Math.max(0,Number(dt)||0)); f.t+=dt;
+  if(f.stage==='in'){ f.walk=true; if(moveTo(f,f.tx,f.ty,40,dt)){ f.walk=false; f.stage='sit'; } return; }
+  if(f.stage==='sit'){ if((S.gm||0)-f.gm0>180||!isWorking()) f.stage='out'; return; }
+  if(f.stage==='out'){ f.walk=true; if(moveTo(f,DOOR[0]+14,DOOR[1],54,dt)){ FILA=null; structDirty=true; } }
+}
+var _supNk=sceneUpgradeProps; sceneUpgradeProps=function(st,u,items,now,r){ _supNk.apply(this,arguments);
+  if(!FILA||st.outdoor||!S||S.active!=='main'||(typeof bcVisitClose!=='undefined'&&bcVisitClose)) return;
+  var f=FILA; items.push({y:f.y,f:function(){ shadow(f.x,f.y,5); nkDraw(f); if(f.stage==='sit'){ var k=(Math.sin(performance.now()/300)+1)/2; ctx.save(); ctx.globalAlpha=.55+.45*k; ctx.fillStyle='#fff3c4'; ctx.beginPath(); ctx.arc(f.x+7,f.y-24,2.2,0,7); ctx.fill(); ctx.restore(); } }}); };
+window.sceneUpgradeProps=sceneUpgradeProps;
+cv.addEventListener('pointerdown',function(e){ var f=FILA; if(!f||S.active!=='main'||sheet) return;
+  var b=cv.getBoundingClientRect(), x=OX+(e.clientX-b.left)/b.width*VW, y=(e.clientY-b.top)/b.height*H;
+  if(Math.hypot(x-f.x,(y-(f.y-8))*1.2)<18){ e.stopImmediatePropagation(); tapFx(f.x,f.y-10); try{ sfx('tap'); }catch(err){} f.stage='out';
+    nkFetch(function(st){ var s1=st&&st.live?st.s1:null; if(s1){ S.nik.s1w=st.w; S.nik.s1=s1; save(); } queueModal({kind:'nik_fila', s1:s1},true); }); } },{capture:true});
+
+/* ---------- окна ---------- */
+function head(tag,h,ps){ return el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png" alt="Никита и Филя"><div><div class="eyebrow">'+esc(tag)+'</div><h2>'+esc(h)+'</h2>'+ps.map(function(p){return '<p>'+esc(p)+'</p>';}).join('')+'</div></div>'); }
+function stampsHtml(n){ var h='<div class="nk-st">'; for(var i=0;i<5;i++) h+='<i class="'+(i<n?'on':'')+'">'+(i<n?'Ш':'')+'</i>'; return h+'</div>'; }
+MODAL15.nik=function(box,m,btn){ var k=m.v, tag='Никита · визит '+(k+1)+' из 5';
+  if(k===0){ box.append(head('Особый гость · бариста','Никита и Филя',['Никита из канала «ЗаДРИПанный кофейник». Бариста, выступает на чемпионатах и собирает штампы кофеен в свой паспорт. С ним вислоухий кот Филя.','«Хорошая чашка для начала. Ставлю первый штамп». Филя запрыгивает на стойку.']), el(stampsHtml(1)));
+    box.append(btn('Погладить Филю',function(){ addMod('traffic',1.03,12,'Филя на стойке'); toast('Филя мурчит. Гостей +3% на полдня'); closeModal(); done(); }), btn('Канал Никиты',function(){ openLink(NK_LINK); },'ghost')); return; }
+  if(k===1){ var t=TASTE[(S.day+(S.nik.n||0))%TASTE.length];
+    box.append(head(tag,'Слепая дегустация',['Никита ставит перед тобой чашку без этикетки.','«Ноты: '+t.notes+'. Страна?»']));
+    t.o.forEach(function(o){ box.append(btn(o,function(){ closeModal(); if(o===t.a){ var tip=15000+(S.level||1)*3000; S.money+=tip; toast('Верно, '+t.a+'. Чаевые +'+fmt(tip)+' ₽'); if(NKRUN) bubble2(0,0,'Точно в цель.',2400,NKRUN); } else { toast('Это была '+t.a+'. Штамп всё равно ставлю'); if(NKRUN) bubble2(0,0,'Это '+t.a+'. Бывает.',2600,NKRUN); } done(); },'ghost')); }); return; }
+  if(k===2){ box.append(head(tag,'Салфетка с шифром',['Никита оставляет на стойке салфетку, исписанную буквами.','«Ключ из двух слогов. Первый у Фили на ошейнике: он теперь будет заглядывать к тебе каждый день. Второй в канале Brew Crew. Расшифруешь, получишь загадку. Ответ впиши в мою карточку». Каждую неделю шифр новый.']), el(stampsHtml(3)));
+    box.append(btn('Принято',function(){ closeModal(); done(); nkFetch(); })); if(chanUrl()) box.append(btn('Канал Brew Crew',function(){ openLink(chanUrl()); },'ghost')); return; }
+  if(k===3){ var b=bestBarista();
+    if(!b){ box.append(head(tag,'Чемпионат',['«Бариста нет. Тренировать некого. Штамп ставлю авансом».']), btn('Принято',function(){ closeModal(); done(); })); return; }
+    box.append(head(tag,'Подготовка к чемпионату',['«'+b.name+', к машине. Тренируем одно, но как следует».','Скорость: '+b.name+' навсегда работает на 10% быстрее. Латте-арт: пока '+b.name+' на смене, средний чек +5%.']));
+    box.append(btn('Скорость',function(){ b.nkSpeed=true; toast(b.name+' теперь быстрее на 10%'); closeModal(); done(); }), btn('Латте-арт',function(){ b.nkArt=true; toast(b.name+' рисует на пене. Чек +5% на его сменах'); closeModal(); done(); })); return; }
+  if(k===4){ box.append(head(tag,'Паспорт заполнен',['Никита ставит пятый штамп и закрывает паспорт.','«Оставляю тебе свой фильтр. Эфиопия, воронка, апельсиновая цедра. Филя одобрил». В меню: Фильтр Фили, 450 ₽.']), el(stampsHtml(5)));
+    box.append(btn('Добавить в меню',function(){ S.nik.drink=true; S.nik.passport=true; try{ isUnlocked('filya_filter'); }catch(e){} toast('В меню: Фильтр Фили, 450 ₽'); closeModal(); done(); })); return; }
+};
+MODAL15.nik_fila=function(box,m,btn){
+  box.append(el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png" alt="Филя"><div><div class="eyebrow">Шифр Никиты</div><h2>Филя</h2><p>'+(m.s1?'Филя трётся о ногу. На ошейнике выцарапано: <b class="nk-syl">'+esc(m.s1)+'</b>':'Филя трётся о ногу и уходит. Ошейник не разглядеть: нужно открыть игру из Telegram.')+'</p><p>Это первый слог ключа. Второй ищи в канале Brew Crew.</p></div></div>'));
+  box.append(btn('Открыть шифр',function(){ closeModal(); queueModal({kind:'nikita_card'},true); }), btn('Закрыть',closeModal,'ghost'));
+};
+function decode(text,key){ var A='АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', k=String(key||'').toUpperCase().replace(/Ё/g,'Е').replace(/[^А-Я]/g,''); if(!k) return text; var j=0;
+  return String(text).split('').map(function(ch){ var i=A.indexOf(ch); if(i<0) return ch; var s=A.indexOf(k[j++%k.length]); return A[(i-s+64)%32]; }).join(''); }
+function applyReward(r,w){ var v=nkS(); if(v.solved[w]) return; v.solved[w]=r.rank; var money=50000+(r.top?100000:0); S.money+=money; addMod('traffic',1.10,24,'Шифр Никиты'); if(r.top) v.titles=(v.titles||0)+1; save();
+  toast('Шифр разгадан'+(r.top?', ты в первой десятке':'')+': +'+fmt(money)+' ₽ и гостей +10% на сутки'); }
+MODAL15.nikita_card=function(box,m,btn){ var v=nkS();
+  box.append(head('Особый гость · бариста','Никита и Филя',['Бариста из «ЗаДРИПанного кофейника». Собирает штампы кофеен в паспорт, ходит с вислоухим котом Филей.', !nkLive()?'Придёт совсем скоро.':(v.n?('Визитов: '+v.n+' из 5'+(v.passport?' · паспорт заполнен':'')):'Ещё не заходил. Придёт сам.')]), el(stampsHtml(v.n)));
+  if(v.n>=3&&nkLive()){
+    var q=el('<div class="nk-q"><div class="nk-l">Салфетка этой недели</div><div class="nk-c">Загружаю...</div><div class="nk-l">Ключ'+(v.s1&&NKST&&v.s1w===NKST.w?': первый слог <b>'+esc(v.s1)+'</b>':': первый слог у Фили, второй в канале')+'</div><div class="nk-row"><input class="nk-in nk-key" maxlength="12" placeholder="Весь ключ целиком"><button class="btn ghost nk-dec">Расшифровать</button></div><div class="nk-out"></div><div class="nk-l">Кодовое слово</div><div class="nk-row"><input class="nk-in nk-ans" maxlength="30" placeholder="Ответ на загадку"><button class="btn nk-go">Проверить</button></div><div class="nk-info"></div></div>');
+    box.append(q);
+    var render=function(st){ if(!st||!st.live){ q.querySelector('.nk-c').textContent=tg&&tg.initData?'Шифр откроется с началом недели.':'Открой игру из Telegram, чтобы увидеть шифр.'; return; }
+      q.querySelector('.nk-c').textContent=st.text; var info=q.querySelector('.nk-info'), d=new Date(st.ends);
+      var solved=st.solved||v.solved[st.w]; info.innerHTML=solved?('<b>Разгадано</b>, ты '+solved+'-й на этой неделе. Новый шифр с '+d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})):('Попыток сегодня: '+st.left+' из 3 · уже разгадали: '+st.solvers+' · новый шифр с '+d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'}));
+      if(solved){ q.querySelector('.nk-ans').disabled=true; q.querySelector('.nk-go').disabled=true; } };
+    nkFetch(render); if(NKST) render(NKST);
+    q.querySelector('.nk-dec').onclick=function(){ var key=q.querySelector('.nk-key').value; if(!NKST||!NKST.text) return; q.querySelector('.nk-out').textContent=decode(NKST.text,key); };
+    q.querySelector('.nk-go').onclick=function(){ var a=q.querySelector('.nk-ans').value.trim(); if(!a) return; var b=this; b.disabled=true;
+      apiPost('/api/nikita',{action:'answer',answer:a}).then(function(r){ b.disabled=false; if(r&&r.ok){ applyReward(r,NKST?NKST.w:0); nkFetch(render); } else { toast((r&&r.error)||'Не получилось'); if(r&&r.left!=null&&NKST){ NKST.left=r.left; render(NKST); } } }).catch(function(){ b.disabled=false; toast('Нет связи'); }); };
+  }
+  if(chanUrl()) box.append(btn('Канал Brew Crew',function(){ openLink(chanUrl()); },'ghost'));
+  box.append(btn('Канал Никиты',function(){ openLink(NK_LINK); },'ghost'));
+  if(nkCanPreview()) box.append(btn('Посмотреть прогулку',function(){ if(!nkStartPreview()) toast('Прогулка уже идёт'); },'ghost'));
+  box.append(btn('Закрыть',closeModal,'ghost'));
+};
+var _ssNk=staffSpeed; staffSpeed=function(s){ var f=_ssNk.apply(this,arguments); if(s&&s.nkSpeed) f*=1.1; return f; };
+var _mmNk=modMul; modMul=function(k){ var v=_mmNk.apply(this,arguments); if(k==='check'&&S&&S.staff&&S.staff.some(function(s){return s.nkArt&&s.today==='work';})) v*=1.05; return v; };
+var css=document.createElement('style'); css.textContent='.nk-st{display:flex;gap:6px;margin:10px 0 4px}.nk-st i{flex:1;height:34px;border:2px dashed #c9a87a;border-radius:8px;display:grid;place-items:center;font-style:normal;font-weight:800;color:#8a2f1d}.nk-st i.on{border-style:solid;border-color:#8a2f1d;background:#f6e2c8;transform:rotate(-4deg)}.nk-q{margin:12px 0 6px;padding:12px;background:#f6ecd8;border-radius:12px;text-align:left}.nk-l{font-size:12px;font-weight:700;color:#7a5a3a;margin:8px 0 4px}.nk-c,.nk-out{font-family:ui-monospace,Menlo,monospace;font-size:14px;line-height:1.45;letter-spacing:.04em;color:#2a1a10;word-break:break-word}.nk-out:empty{display:none}.nk-out{margin-top:6px;padding:8px;background:#fffaf0;border-radius:8px}.nk-row{display:flex;gap:6px}.nk-in{flex:1;min-width:0;padding:10px;border:1.5px solid #c9a87a;border-radius:10px;font:inherit;font-size:15px;background:#fffaf0;text-transform:uppercase}.nk-row .btn{flex:none;margin:0!important;width:auto!important;padding:0 14px}.nk-info{font-size:12px;color:#6b4a2b;margin-top:10px;line-height:1.4}.nk-syl{font-size:22px;letter-spacing:.1em;color:#8a2f1d}';
+document.head.appendChild(css);
+window.nikitaForce=function(k){ window.__nkForceLive=true; var v=nkS(); v.n=k-1; v.next=0; v.nextDay=0; };
+window.filaForce=function(){ window.__nkForceLive=true; var v=nkS(); if(v.n<3) v.n=3; v.filaDay=-1; v.filaAt=1; v.filaAtDay=S.day; };
+window.__nkFila=function(){ return FILA; };
+window.__nkDbg=function(){ var v=nkS(); return {live:nkLive(),n:v.n,next:v.next-Date.now(),nd:v.nextDay,day:S.day,run:!!NKRUN,vip:!!VIPRUN,lz:!!LZRUN,lr:!!(window.__lrRun&&window.__lrRun()),act:S.active,sheet:!!sheet,modals:modals.length,work:isWorking(),hidden:document.hidden,ready:nkReady(),can:canStart(),tickIsMine:String(nkTick).indexOf('evTick')>0}; };
+})();
+
 
 var bcGuestsStyle=document.createElement('style');bcGuestsStyle.textContent='.bc-guests-nav{display:flex;gap:8px;margin:0 0 16px}.bc-guests-nav button{flex:1;min-height:42px}.bc-guests-nav button[aria-selected=true]{background:#714d31!important;color:#fff4e1!important}html body .sheet #panel .bc-cafe-row{display:grid!important;grid-template-columns:42px minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;text-align:left!important;padding:12px!important;min-height:74px!important}.u6sum:empty{display:none!important}.bc-cafe-avatar{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:13px;background:#e9d4ae;color:#6b492b;font-size:22px;font-weight:800}html body .sheet #panel .bc-cafe-meta{display:block!important;min-width:0;text-align:left!important}html body .sheet #panel .bc-cafe-meta .t{overflow-wrap:anywhere;text-align:left!important;margin:0!important;font-size:15px!important}html body .sheet #panel .bc-cafe-meta .d{margin:5px 0 0!important;font-size:11px!important;text-align:left!important;line-height:1.4!important}html body .sheet #panel .bc-cafe-row>.btn{align-self:center!important;justify-self:end!important;flex:none;width:auto!important;min-height:42px;margin:0!important;padding:9px 13px}.bc-guests-body h3{margin:8px 0 10px}';document.head.appendChild(bcGuestsStyle);
 
@@ -15230,7 +15368,7 @@ function leraTick(dt){
   if(!LRRUN){
     if(v.task) lrTaskCheck();
     if(v.n>=5||Date.now()<v.next||S.day<v.nextDay) return;
-    if(VIPRUN||LZRUN||S.active!=='main'||sheet||modals.length||!isWorking()||document.hidden) return;
+    if(VIPRUN||LZRUN||(window.BrewCrewNikita&&BrewCrewNikita.actor())||S.active!=='main'||sheet||modals.length||!isWorking()||document.hidden) return;
     LRRUN={stage:'in', v:v.n, x:DOOR[0], y:DOOR[1], t:0, flip:true, _ph:Math.random()};
     bubble2(0,0,VISITS[v.n].hi,3000,LRRUN); return;
   }
