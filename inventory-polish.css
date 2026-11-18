@@ -6,3 +6,5 @@ html body .modal.bc-staff-compact{padding:0!important;display:flex;flex-directio
 html body .bc-inv-card{flex-direction:row!important;text-align:left!important;align-items:center!important;justify-content:flex-start!important}html body .bc-inv-card .bc-inv-copy{text-align:left!important}html body .bc-inv-gold>b{flex:1;min-width:0}
 
 html body .bc-staff-content .acts>.bc-staff-punish{background:#b94a36!important;color:#fff4e9!important;border-color:#9b3528!important}html body .bc-staff-content .bc-staff-punish small{display:block!important;color:#fff4e9!important;opacity:.85}
+
+html body .modal.bc-staff-compact{position:relative}html body .bc-staff-close-floating{position:absolute;top:18px;right:12px;z-index:3;width:auto!important;min-height:34px;margin:0!important;padding:8px 11px;font-size:11px;box-shadow:none!important}.bc-staff-content>.u7st{padding-right:76px}.bc-staff-compact>.bc-staff-content{padding-top:12px}#bc-lab-label{max-width:86px;white-space:nowrap;box-sizing:border-box}#bc-lab-label[hidden]{display:none!important}
