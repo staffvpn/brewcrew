@@ -2,6 +2,7 @@
 // Вызывается фоном из /api/track и вебхука. Ничего не делает, пока не задан CHANNEL_ID.
 import { tgApi, getBot, mskDay, ADMINS, sezId, SEZ_NAMES } from './_lib.js';
 import { GOAL, goalInfo } from './_goal.js';
+import { nkWeek, nkCipher, nkTop } from './_nikita.js';
 import { REL10_AT, rel10Off } from './api/league.js';
 
 export const UNPOST = ['ver_8.5'];
@@ -115,6 +116,7 @@ export async function channelTick(env, origin) {
     // Елизавета из «кофеРУинер»: пост и рассылка в момент запуска
     if (await lizaTick(env, origin)) return;
     if (await leraPostTick(env, origin)) return;
+    if (await nkChannelTick(env, origin)) return;
     // особый гость недели: анонс в четверг, рассылка в пятницу, итоги в субботу
     if (await bossTick(env, origin)) return;
     // голосование в канале раз в неделю: что случится у всех
@@ -242,6 +244,17 @@ async function bossTick(env, origin) {
   return false;
 }
 
+// шифр Никиты: каждую неделю пост со вторым слогом ключа и первыми разгадавшими прошлой недели
+async function nkChannelTick(env, origin) {
+  const w = nkWeek(); if (w < 0) return false;
+  const key = 'nk_w' + w; if (await posted(env, key)) return false;
+  const c = nkCipher(w); const lines = [`<b>Шифр Никиты · неделя ${w + 1}</b>`, ''];
+  if (w === 0) lines.push('В Brew Crew пришёл Никита из «ЗаДРИПанного кофейника» с котом Филей. С третьего визита он оставляет салфетку с шифром, и каждую неделю шифр новый.', '');
+  lines.push(`Второй слог ключа этой недели: <b>${esc(c.s2)}</b>`, '', 'Первый слог ищи у Фили: он каждый день заглядывает в твою кофейню и сидит где-нибудь в зале. Нажми на него.', 'Собери ключ, расшифруй салфетку в карточке Никиты, разгадай загадку и впиши кодовое слово. Первые десять получат особую награду.');
+  if (w > 0) { const top = await nkTop(env, w - 1, 10); if (top.length) { lines.push('', '<b>Прошлую неделю разгадали первыми:</b>'); top.forEach(t => lines.push(`${t.rank}. ${esc(t.cafe || t.first_name || 'Кофейня')}`)); } else lines.push('', 'Прошлый шифр так никто и не разгадал.'); }
+  const ok = await post(env, origin, 'events.jpg', lines.join('\n'));
+  await mark(env, key, ok); return true;
+}
 // запуск Леры: один пост в канал (17.11.2026)
 async function leraPostTick(env, origin) {
   if (await posted(env, 'lera_post')) return false;
