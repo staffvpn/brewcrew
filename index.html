@@ -9,6 +9,8 @@
 <script src="save-manager.js"></script>
 <script src="cash-journal.js"></script>
 <script src="badge-art.js"></script>
+<script src="staff-skin-art.js?v=20261118-r2"></script>
+<script src="blogger-nikita-art.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -1052,18 +1054,66 @@ const LEGENDS = [
 ];
 const NAMES_M = ['Гоша','Артём','Лёха','Денис','Толик','Рустам','Александр','Жора','Боря','Кеша','Митя','Стас','Гена','Ваня','Егор','Тимур','Влад','Паша','Костя','Макс','Дима','Олег','Серёга','Никита'];
 const NAMES_F = ['Марина','Карина','Вика','Света','Ника','Полина','Ульяна','Даша','Лиза','Зоя','Мила','Оля','Аня','Евгения','Соня','Катя','Настя','Юля','Алина','Таня','Лена','Ира','Маша','Вера'];
-// Ordinary staff use the gender of their role artwork; named story characters keep their identity.
+// NPC names are resolved from identity; player and review author names are untouched.
+const PERSON_NAME_SEX=new Map();
+function personNameKey(s){return String(s||'').toLowerCase().replace(/ё/g,'е');}
+for(const n of NAMES_M.concat(['Виктор','Витя','Сергей','Алексей','Анатолий','Роман','Валерий','Валера','Михаил','Миша','Михалыч','Иван','Евгений','Дмитрий','Данил','Даниил','Борис','Константин','Николай','Коля','Павел','Пётр','Петя','Юрий','Юра','Василий','Вася','Лев','Семён','Сёма','Эдуард','Артур','Арсений','Арсен','Гордей','Глеб','Ярослав','Игорь','Максим','Владимир','Вадим','Вячеслав']))PERSON_NAME_SEX.set(personNameKey(n),'m');
+for(const n of NAMES_F.concat(['Анна','Анастасия','Екатерина','Елена','Валентина','Валя','Елизавета','Светлана','Дарья','Мария','Софья','София','Виктория','Лидия','Лилия','Лиля','Оксана','Ксения','Ксюша','Яна','Жанна','Татьяна','Зина','Зинаида','Люда','Людмила','Рита','Маргарита','Ася','Алиса','Лера','Валерия','Ноябрина','Галина','Галя','Любовь','Люба','Надежда','Надя','Алёна','Нина','Ольга','Александра']))PERSON_NAME_SEX.set(personNameKey(n),'f');
+function personNameSex(name){
+ const words=personNameKey(name).match(/[а-я]+/g)||[];
+ if(words.some(w=>['мама','бабушка','тетя','студентка'].includes(w)))return 'f';
+ if(words.some(w=>['дед','дедушка','дядя'].includes(w)))return 'm';
+ for(const word of words){const sex=PERSON_NAME_SEX.get(word);if(sex)return sex;}
+ return null;
+}
+function staffIdentitySex(s){
+ if(s.name==='Шеф Ноябрина'||s.szLeg==='2026-11')return 'f';
+ const named=LEGENDS.find(l=>l.name===s.name);if(named)return named.sex;
+ const prize=PRIZE_NAMES.find(l=>l[0]===s.name);if(prize)return prize[1];
+ if(s.som34||s.name==='Виктор')return 'm';
+ const hint=personNameSex(s.name);
+ if((s.prize||s.szLeg||s.flag34||s.legendId)&&hint)return hint;
+ if(s.sex==='m'||s.sex==='f')return s.sex;
+ if(hint)return hint;
+ if(Number.isInteger(s.spr)&&META[s.spr])return sexOf(s.spr);
+ return STAFF_VISUAL_SEX[s.role]||'m';
+}
+function explicitPersonName(name,sex){
+ return String(name||'').replace(/(^|\s)(Женя|Саша|Саня)$/i,(_,prefix,n)=>prefix+(/^женя$/i.test(n)?(sex==='f'?'Евгения':'Евгений'):(sex==='f'?'Александра':'Александр')));
+}
+function normalizeGuestName(g){
+ if(!g||g.isPet||g._specialGuest||g._role||!Number.isInteger(g.spr)||!META[g.spr])return g;
+ const def=g.reg&&REGULARS.find(r=>r.id===g.reg);
+ if(def){g.name=def.n;g.sex=def.sex;if(REG_SPR[def.id]!=null)g.spr=REG_SPR[def.id];}
+ else{
+  g.sex=sexOf(g.spr);const hint=personNameSex(g.name),pool=g.sex==='f'?NAMES_F:NAMES_M;
+  if(!g.name||hint&&hint!==g.sex)g.name=pool[Math.abs(Number(g.gid)||g.spr)%pool.length];
+  else g.name=explicitPersonName(g.name,g.sex);
+ }
+ const expected=g.sex==='f'?'guest':([59,61,62].includes(g.spr)?'elder':'guestm');
+ if(g._body&&g._body!==expected)delete g._body;
+ return g;
+}
+function normalizeGuestNames(){
+ if(!S)return;
+ for(const saved of S.regs||[]){const def=REGULARS.find(r=>r.id===saved.id);if(def){saved.sex=def.sex;if(REG_SPR[def.id]!=null)saved.spr=REG_SPR[def.id];}}
+ for(const r of Object.values(RT||{}))for(const g of (r.guests||[]).concat(r.crowd||[]))normalizeGuestName(g);
+}
+
+// Staff with both appearance sets keep their identity; named story characters keep their names.
 const STAFF_VISUAL_SEX={'Бариста':'f','Кассир':'f','Официант':'m','Мойщица':'f','Повар':'m'};
 function normalizeStaffName(s,used){
  if(!s||s.isYou)return s;
- const special=!!(s.legendId||s.prize||s.szLeg||s.som34),sex=(special||s.nameGenderFixed)?(s.sex==='f'?'f':'m'):(STAFF_VISUAL_SEX[s.role]||(s.sex==='f'?'f':'m'));
- const own=sex==='f'?NAMES_F:NAMES_M,other=sex==='f'?NAMES_M:NAMES_F,old=String(s.name||'');
+ const special=!!(s.legendId||s.prize||s.szLeg||s.som34||s.flag34),sex=staffIdentitySex(s);
+ const own=sex==='f'?NAMES_F:NAMES_M,old=String(s.name||'');
  s.sex=sex;
- if(!special&&(!old||other.includes(old)||(sex==='m'&&old==='Женя')||(sex==='f'&&old==='Саня'))){
+ if(!special&&(!old||personNameSex(old)&&personNameSex(old)!==sex)){
   used=used||new Set((S?.staff||[]).concat(S?.cands||[]).filter(x=>x!==s).map(x=>x.name));
   let n=0;for(const ch of String(s.id||old))n=(n*31+ch.charCodeAt(0))>>>0;
-  const available=own.filter(x=>!used.has(x));s.name=(available.length?available:own)[n%(available.length||own.length)];used.add(s.name);
+  const available=own.filter(x=>!used.has(x));s.name=(old.startsWith('Подмена ')?'Подмена ':'')+(available.length?available:own)[n%(available.length||own.length)];used.add(s.name);
  }
+ s.name=explicitPersonName(s.name,sex);if(s.flag34)s.name=s.name.replace(/Флагманск(?:ий|ая)$/,'Флагманск'+(sex==='f'?'ая':'ий'));
+ const currentPay=S&&S.c&&S.c.payroll&&S.c.payroll.staff&&S.c.payroll.staff[s.id];if(currentPay)currentPay.name=s.name;
  return s;
 }
 function normalizeStaffNames(){if(!S)return;const list=(S.staff||[]).concat(S.cands||[]),used=new Set(list.map(x=>x.name));list.forEach(x=>normalizeStaffName(x,used));}
@@ -1076,14 +1126,14 @@ const PATHS = {soul:'Душевная кофейня', pathos:'Пафосная 
 const PATH_BONUS = {soul:'гости терпеливее, постоянные гости приводят друзей чаще', pathos:'чек +20%', chaos:'гостей +20%'};
 const LOCK_LEVEL = 12;
 const REGULARS = [
-  {id:'mihalych', n:'Дед Михалыч', pool:'old', hour:[8,10], d:'Сидит у окна с открытия. Пьёт американо и молчит.'},
-  {id:'zina', n:'Бабушка Зина', pool:'old', hour:[11,13], d:'Приносит пирожки и критикует пенку.'},
-  {id:'gleb', n:'Глеб с ноутбуком', pool:'guest', hour:[10,16], d:'Айтишник. Сидит долго, берёт много.'},
-  {id:'anya', n:'Студентка Аня', pool:'guest', hour:[13,18], d:'Готовится к сессии. Лучше всех знает меню.'},
-  {id:'oleg', n:'Бизнесмен Олег', pool:'guest', hour:[8,9], d:'Раф с собой за две минуты. Иначе уходит.'},
-  {id:'tima', n:'Курьер Тимур', pool:'guest', hour:[12,20], d:'Забегает погреться между заказами.'},
-  {id:'sema', n:'Художник Сёма', pool:'guest', hour:[15,21], d:'Платит наличными и рисует на салфетках.'},
-  {id:'vera', n:'Вера Павловна', pool:'old', hour:[9,12], d:'Учительница на пенсии. Ставит оценки бариста.'}
+  {id:'mihalych', sex:'m', n:'Дед Михалыч', pool:'old', hour:[8,10], d:'Сидит у окна с открытия. Пьёт американо и молчит.'},
+  {id:'zina', sex:'f', n:'Бабушка Зина', pool:'old', hour:[11,13], d:'Приносит пирожки и критикует пенку.'},
+  {id:'gleb', sex:'m', n:'Глеб с ноутбуком', pool:'guest', hour:[10,16], d:'Айтишник. Сидит долго, берёт много.'},
+  {id:'anya', sex:'f', n:'Студентка Аня', pool:'guest', hour:[13,18], d:'Готовится к сессии. Лучше всех знает меню.'},
+  {id:'oleg', sex:'m', n:'Бизнесмен Олег', pool:'guest', hour:[8,9], d:'Раф с собой за две минуты. Иначе уходит.'},
+  {id:'tima', sex:'m', n:'Курьер Тимур', pool:'guest', hour:[12,20], d:'Забегает погреться между заказами.'},
+  {id:'sema', sex:'m', n:'Художник Сёма', pool:'guest', hour:[15,21], d:'Платит наличными и рисует на салфетках.'},
+  {id:'vera', sex:'f', n:'Вера Павловна', pool:'old', hour:[9,12], d:'Учительница на пенсии. Ставит оценки бариста.'}
 ];
 const RIVALS = [
   {id:'chain', n:'Кофе Хаус Плюс', owner:'менеджер сети Арсений', type:'chain', stub:0.35, d:'Сетевая кофейня через дорогу: акции и скидки.'},
@@ -1094,7 +1144,7 @@ const RIVALS = [
 /* ================= состояние ================= */
 let S = null;
 function newState(name, city, carry){
-  const s = {v:3, name, city, money:START_CAPITAL + (carry&&carry.perks? (carry.perks.capital||0)*250000 : 0), xp:0, level:1, rep:3.0,
+  const s = {v:3, name, city, money:START_CAPITAL, xp:0, level:1, rep:3.0,
     meters:{soul:10, pathos:10, chaos:5}, path:null,
     day:1, gm:9*60, hours:{open:0, close:24}, isOpen:false,
     rooms:[newRoom('main')], active:'main', staff:[], cands:[],
@@ -1108,8 +1158,8 @@ function newState(name, city, carry){
     c:{earnedRun:0, sold:0, byItem:{}, guests:0, angry:0, fights:0, fines:0, finesSum:0, inspections:0, passed:0, fired:0, quits:0, absences:0, absurd:0, geese:0, daysNoFine:0, praised:0, scolded:0, bought:0, maxDayRev:0, subs:0, conflicts:0, breakdowns:0, regularsMax:0, promoted:0},
     seen:{g:[], p:[]}, ach:{}, shares:0, perks:{}, franchises:0, bankrupts:0, cityLog:[city],
     weather:'cloud', task:null, kitchen:{tier:0, build:null}, reviews:[], delivery:null, loyalty:null, tour:null, evLast:{}, restock:true, restockAt:0.35, rush:null, supplier:'normal', tips:{jar:0, since:1}, shrink:{}, shrinkLog:[], invDay:1, focus:null, corp:null, adsCd:{}, sound:true, savedAt:Date.now(), created:Date.now(), noInspectUntil:0, flags:{}};
-  if(carry){ Object.assign(s, {ach:carry.ach, seen:carry.seen, shares:carry.shares, perks:carry.perks, franchises:carry.franchises, bankrupts:carry.bankrupts, cityLog:carry.cityLog.concat(city), sound:carry.sound});
-    if(carry.perks.autoorder) s.autoOrder = true; }
+  if(carry){ Object.assign(s, {ach:carry.ach, seen:carry.seen, shares:carry.shares, perks:{}, franchises:carry.franchises, bankrupts:carry.bankrupts, cityLog:carry.cityLog.concat(city), sound:carry.sound});
+  }
   return s;
 }
 function blankFin(){ return {rev:0, card:0, cogs:0, supply:0, wages:0, rent:0, util:0, acq:0, tax:0, spoil:0, fines:0, repairs:0, other:0, invest:0, why:{}, last:[], guests:0, comm:0, del:0}; }
@@ -1131,8 +1181,7 @@ function holiday(){ const d = new Date(); const m = d.getMonth()+1, day = d.getD
 function holidayEvents(){ const h = holiday(); return h && EV['h_'+h.id] ? ['h_'+h.id] : []; }
 function isHalloween(){ const d = new Date(); const m = d.getMonth(), day = d.getDate(); return (m===9 && day>=24) || (m===10 && day<=2); }
 function city(){ return CITIES[S.city] || CITIES.msk; }
-function perk(k){ return S.perks[k]||0; }
-function shareMult(){ return 1 + 0.03*S.shares; }
+function perk(k){const pk=PERKS.find(p=>p.id===k);return pk?Math.max(0,Math.min(pk.max,Math.floor(Number(S?.perks?.[k])||0))):0;}
 
 /* ---------- модификаторы (временные эффекты событий) ---------- */
 function addMod(k, mul, hours, label){ S.mods.push({k, mul, until:absNow()+Math.round(hours*60), label}); HOOK.struct(); }
@@ -1178,7 +1227,7 @@ function orderStock(k, packs, mode){
   packs = Math.min(packs, Math.floor(free / st.pack));
   if(packs < 1) return mode==='shop' ? 'В руках столько не унести или на складе нет места' : 'На складе нет места: всё, что влезет, уже едет';
   const mul = mode==='shop' ? 2 : mode==='express' ? 1.35 : (packs>=5 ? 0.92 : 1);
-  const price = Math.round(st.price * packs * supplyMul() * mul);
+  const price = Math.round(st.price * packs * supplyMul() * mul * (bcOwnerAutoOrdering&&perk('autoorder')?0.95:1));
   const limit = S.debt.stage>=1 || mode==='shop' ? 0 : 50000;
   if(S.money - price < -limit) return S.debt.stage>=1 ? 'Поставщики работают только по предоплате, а денег не хватает' : 'Не хватает денег';
   spend(price,'supply','Закупка: '+st.n+' · '+packs+' уп. ('+(st.pack*packs)+' '+(st.unit||'ед.')+') · '+({shop:'самовывоз',express:'срочная доставка',normal:'обычная доставка'}[mode]||mode));
@@ -1214,8 +1263,7 @@ function spoilCheck(){
   }
 }
 function autoOrder(){
-  const mgr = S.staff.some(s=>s.rank===3);
-  if(S.restock === false && !S.autoOrder && !mgr) return;
+  if(S.restock === false) return;
   const th = S.restockAt || 0.35;
   for(const k in STOCK){
     if(k==='matcha' && !isUnlocked('matcha')) continue;
@@ -1410,7 +1458,7 @@ function fmtR(n){ n = Math.round(n); return (n<0?'−':'')+Math.abs(n).toLocaleS
 function makeStaff(role, opts){
   opts = opts || {};
   const used = new Set(S.staff.map(s=>s.name).concat(S.cands.map(s=>s.name)));
-  let spr = null, sex = opts.sex==='m'||opts.sex==='f'?opts.sex:(STAFF_VISUAL_SEX[role]||(chance(0.5)?'m':'f'));
+  let spr = null, sex = opts.sex==='m'||opts.sex==='f'?opts.sex:(['Бариста','Кассир','Официант'].includes(role)?(chance(0.5)?'m':'f'):(STAFF_VISUAL_SEX[role]||(chance(0.5)?'m':'f')));
   if(HOOK.pickSpr){ const r0 = HOOK.pickSpr(role, sex); spr = r0.spr; sex = r0.sex; }
   const list = sex==='f' ? NAMES_F : NAMES_M;
   let name = pick(list), g = 0; while(used.has(name) && g++<50) name = pick(list);
@@ -2031,12 +2079,11 @@ function doService(r){ const c = serviceCost(r); if(!canSpend(c)) return false; 
 function franchiseNeed(){ return 30000000 * Math.pow(3, S.franchises); }
 function franchiseShares(){ const e = S.c.earnedRun || 0; return e < franchiseNeed() ? 0 : Math.floor(10 * Math.sqrt(e / franchiseNeed())); }
 const PERKS = [
-  {id:'capital', n:'Стартовый капитал', d:'+250 000 ₽ на старте за уровень', cost:L=>2+L*2, max:10},
   {id:'supplier', n:'Свой поставщик', d:'Закупки −3% за уровень', cost:L=>3+L*2, max:10},
   {id:'word', n:'Сарафанное радио', d:'Гостей +3% за уровень', cost:L=>3+L*3, max:15},
   {id:'agency', n:'Кадровое агентство', d:'Чаще приходят легендарные кандидаты', cost:L=>4+L*3, max:8},
   {id:'lawyer', n:'Свой юрист', d:'Штрафы −10% за уровень', cost:L=>3+L*2, max:6},
-  {id:'autoorder', n:'Автозаказ с первого дня', d:'Договор с поставщиком сразу', cost:()=>6, max:1}
+  {id:'autoorder', n:'Оптовый дозаказ', d:'Автоматические закупки дешевле на 5%. Ручные покупки — по обычной цене.', cost:()=>6, max:1}
 ];
 function sellFranchise(cityId){
   const sh = franchiseShares(); if(!sh) return false;
@@ -3030,7 +3077,7 @@ const DECOR = [
   {id:'easel', n:'Картина неизвестного художника', slot:'floor', price:1000000, d:'Рейтинг сам растёт по чуть-чуть: «у них искусство». Пока не объявится автор.', fx:{repDay:0.01}},
   {id:'photo', n:'Фотозона с неоном', slot:'floor', price:1200000, d:'Гостей +4%, блогеры заходят чаще. Хорошие и «а можно бесплатно».', fx:{traffic:1.04}},
   {id:'toilet', n:'Золотой унитаз', slot:'floor', price:3000000, d:'Абсолютно бесполезен. Гостей +6%: все хотят посмотреть. Однажды его попробуют украсть.', fx:{traffic:1.06}},
-  {id:'pled', n:'Плед и гирлянда', slot:'counter', price:0, season:true, d:'Ноябрьский подарок: плед на стуле у первого столика и тёплая гирлянда вдоль стены. Гости терпеливее на 5%.', fx:{patience:1.05}},
+  {id:'pled', n:'Тёплая гирлянда ноября', slot:'counter', price:0, season:true, d:'Ноябрьский подарок: тёплые огоньки вдоль стены. Гости терпеливее на 5%.', fx:{patience:1.05}},
   {id:'tree', n:'Ёлка до потолка', slot:'floor', price:0, season:true, d:'Памятный предмет сезона «Новогодняя запара». Гостей +3%.', fx:{traffic:1.03}},
   {id:'garland', n:'Гирлянда сезона', slot:'counter', price:0, season:true, d:'Памятный предмет сезона. Гостей +2%.', fx:{traffic:1.02}}
 ];
@@ -3573,8 +3620,7 @@ function callService(id){
 
 /* ---------- автозаказ: видит пустую полку ---------- */
 function autoOrder(){
-  const mgr = S.staff.some(s=>s.rank===3);
-  if(S.restock === false && !S.autoOrder && !mgr) return;
+  if(S.restock === false) return;
   const th = S.restockAt || 0.35;
   for(const k in STOCK){
     if(k==='matcha' && !isUnlocked('matcha')) continue;
@@ -3821,7 +3867,7 @@ def('s6_viktor', {cat:'story', who:'viktor', t:'Возвращение Викт�
  {t:'Показать расписку и выгнать', req:S=>sflag('kept'), fx:{st:{rel:{viktor:-30}, karma:1, season:10}}, out:'Виктор бледнеет при виде расписки и уходит. Говорят, Палыч уже знает, что он в районе.'},
  {t:'Выкупить его претензию', fx:S=>({fx:{m:-Math.round(Math.max(300000, avgRev()*5)/1000)*1000, st:{rel:{viktor:20}, season:10}}, out:'Виктор берёт деньги и обещает исчезнуть навсегда. В который раз.'})},
  {t:'Сдать его Палычу', fx:{st:{karma:-3, rel:{palych:30, viktor:-100}, f:{viktor_gone:1}, season:10}}, out:'Один звонок. Виктора больше никто не видел.'},
- {t:'Взять его бариста', fx:S=>{ const v = makeStaff('Бариста', {quirk:'genius'}); v.name = 'Виктор'; v.lvl = 7; v.rank = 1; v.shifts = 20; hire(v, 'main', 'grey'); return {fx:{st:{rel:{viktor:40}, karma:2, season:10}}, out:'Виктор надевает фартук: «Я ведь всегда хотел просто варить кофе»'}; }}]});
+ {t:'Взять его бариста', fx:S=>{ const v = makeStaff('Бариста', {quirk:'genius',sex:'m'}); v.name = 'Виктор'; v.lvl = 7; v.rank = 1; v.shifts = 20; hire(v, 'main', 'grey'); return {fx:{st:{rel:{viktor:40}, karma:2, season:10}}, out:'Виктор надевает фартук: «Я ведь всегда хотел просто варить кофе»'}; }}]});
 
 /* --- генератор бесконечных сезонов --- */
 const GEN_VILLAINS = [
@@ -5664,7 +5710,7 @@ function spawnGuest(id, reg, company){
   if(!reg && id==='main' && S.day >= 3 && S.shopperDay !== S.day && chance(0.01)){ g.secret = true; S.shopperDay = S.day; }
   g.gid = ++GID; if(!reg && !g.secret){ const kr = Math.random(); g.kind = g.h===SPR_KID ? 'norm' : kr < 0.22 ? 'slow' : kr < 0.37 ? 'fast' : 'norm'; if(g.kind==='slow' && chance(0.12)){ g.dumb = true; g.q = pickLine(DUMB_LINES, 'dumb'); } } else g.kind = 'norm';
   if(!reg && !company && S.level >= 4 && chance(0.06) && r.queue.length < 4){ const n = RI(2,3); for(let i=0;i<n;i++) setTimeout(()=>spawnGuest(id, null, true), 300 + i*350); }
-  g.orders = 0;
+  g.orders = 0;normalizeGuestName(g);
   r.guests.push(g); r.queue.push(g);
   if(id===S.active) sfx('door');
 }
@@ -6068,6 +6114,7 @@ cv.addEventListener('pointerdown', e => {
   for(const k in (r.dirty||{})){ if(k[0]==='s'){ const s0 = slotOf(id, +k.slice(1)); if(s0 && s0[2]!=='out'){ const cx = s0[2]==='wall' ? 8 : s0[0], cy = s0[2]==='wall' ? s0[1]-24 : BAR_TOP-4; if(Math.abs(x-cx)<16 && Math.abs(y-cy)<14){ cleanDirty(id, k); tapFx(cx, cy-8); sfx('tap'); addXp(1); return; } } continue; } const tb = k[0]==='t' ? TABLES[+k.slice(1)] : null; if(tb && Math.abs(x-tb.x)<22 && y>tb.y-26 && y<tb.y+12){ cleanDirty(id, k); tapFx(tb.x, tb.y-16); sfx('tap'); addXp(2); taskProg('clean', 1); return; } }
   if(TIPJAR && Math.abs(x-TIPJAR.x)<9 && Math.abs(y-TIPJAR.y)<10){ sfx('tap'); queueModal({kind:'tips'}, true); return; }
   for(const v of EV_SPOTS){ if(x>v.x-16 && x<v.x+16 && y>v.y-52 && y<v.y+4){ sfx('tap'); queueModal({kind:'inc', uid:v.uid}, true); return; } }
+  if(bcTapServiceGuest(id,r,x,y))return;
   let best = null;
   for(const s of workingStaff(id)){ const p = r.staff[s.id]; if(!p || p.x>W+4) continue; const m = META[staffSpr(s)]; const w = m[3]*STAFF_H/m[4]; if(x>p.x-w/2-4 && x<p.x+w/2+4 && y>p.y-62 && y<p.y+4){ if(!best || p.y > best.p.y) best = {s,p}; } }
   if(best){ sfx('tap'); if(best.s.isYou){ toast('Это ты. Тапай по гостю у кассы, по кофемашине и по гостям на выдаче — так работа идёт быстрее'); return; } queueModal({kind:'staff', sid:best.s.id}, true); return; }
@@ -6603,22 +6650,41 @@ function staffStatus(s){
   if(s.today==='work' || s.today==='sub') return ['g', S.isOpen ? 'На смене' : 'Смена'];
   return ['', 'Выходной'];
 }
+let teamShowAll = true;
+function staffWishLine(s){
+  if(!s.wish)return '';
+  const wish=wishOf(s),by=Number(s.wish.by),left=Number.isFinite(by)?' · '+Math.max(0,by-S.day)+' дн.':'';
+  return '<div class="wishline">'+esc(wish.t||'Есть пожелание')+left+'</div>';
+}
 function renderTeam(p, id){
-  const list = staffIn(id).filter(s=>s.today!=='sub' || true);
+  const list = staffIn(id);
   p.appendChild(el(`<div class="h">Команда · ${esc(roomDef(id).n)}</div>`));
   const you = list.find(s=>s.isYou);
   if(you){ const on = youNeeded(id); p.appendChild(el(`<div class="card staff badge-card you"><div class="lanyard"></div><div class="spr" style="${sprStyle(staffSpr(you),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row wrap"><span class="t">Ты</span><span class="tag">Владелец</span><span class="stamp ${on?'red':'green'}">${on?'ЗА СТОЙКОЙ':'ОТДЫХАЕШЬ'}</span></div><div class="d">${on?'Пока в команде нет бариста или кассира, ты работаешь сам: медленнее, но бесплатно. Тапай по гостю у кассы, по кофемашине и по гостям у выдачи, чтобы ускорить работу.':'Команда справляется без тебя. Если бариста или кассир не выйдет, ты снова встанешь за стойку.'}</div></div></div>`)); }
-  const crew = list.filter(s=>!s.isYou);
-  if(!crew.length) p.appendChild(el(`<div class="empty">Команды нет. Ты один, как кофемашина в пятницу вечером. Ниже кандидаты: начни с бариста и кассира.</div>`));
+  const allCrew = S.staff.filter(s=>!s.isYou);
+  const crew = teamShowAll ? allCrew : list.filter(s=>!s.isYou && (s.today==='work' || s.today==='sub'));
+  if(allCrew.length){
+    const filter = el(`<div class="row wrap" data-team-controls><span class="d">Показано ${crew.length} из ${allCrew.length}</span><span class="sp"></span><button class="btn ghost" data-team-filter aria-pressed="${teamShowAll}">${teamShowAll?'Только на смене':'Показать всех'} · ${teamShowAll?list.filter(s=>!s.isYou&&(s.today==='work'||s.today==='sub')).length:allCrew.length}</button></div>`);
+    filter.querySelector('button').onclick=()=>{teamShowAll=!teamShowAll;renderPanel();};p.appendChild(filter);
+  }
+  if(!crew.length) p.appendChild(el(`<div class="empty">${allCrew.length?'Сейчас на смене никого нет. Нажми «Показать всех», чтобы увидеть сотрудников на выходном, в отпуске или на обучении.':'Команды пока нет. Ниже кандидаты: начни с бариста и кассира.'}</div>`));
   crew.forEach(s=>{
+    try{
     const [cls, txt] = staffStatus(s);
     const stamp = (s.legendId || s.prize) ? '<span class="stamp gold">ЛЕГЕНДА</span>' : s.today==='absent' ? '<span class="stamp red">ПРОГУЛ</span>' : s.notice ? '<span class="stamp red">УХОДИТ</span>' : '';
     const card = el(`<button class="card staff badge-card${(s.legendId || s.prize) ? ' legend' : ''}"><div class="lanyard"></div>${stamp}<div class="spr" style="${sprStyle(staffSpr(s),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0">
       <div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl}</span>${(s.legendId || s.prize)?'<span class="tag gold">Легенда</span>':''}${s.role==='Бариста'?(s.prio==='help'?'<span class="tag">На подхвате</span>':'<span class="tag g">Основной</span>'):''}${freshFault(s)?'<span class="tag warn">Косяк</span>':''}${s.quirk!=='none'?`<span class="tag">${qN(s)}</span>`:''}${s.contract==='grey'?'<span class="tag warn">В серую</span>':''}<span class="tag ${cls}">${txt}</span></div>
-      <div class="mood">Состояние ${bar(staffState(s), moodCol(staffState(s)))}<span class="st ${staffState(s)<45?'bad':''}">${stateLabel(staffState(s))}</span></div>${s.wish?`<div class="wishline">${esc(WISHES[s.wish.k].t)} · ${Math.max(0,s.wish.by-S.day)} дн.</div>`:''}
+      <div class="mood">Состояние ${bar(staffState(s), moodCol(staffState(s)))}<span class="st ${staffState(s)<45?'bad':''}">${stateLabel(staffState(s))}</span></div>${staffWishLine(s)}
       <div class="d">${s.today==='sub'?'Подмена на сегодня · ':''}${fmt(s.today==='sub'?s.subPay:shiftPay(s))} ₽ за смену · смен ${s.shifts}</div></div></button>`);
+    card.dataset.staffId = String(s.id);
     card.onclick = () => { if(s.today!=='sub') queueModal({kind:'staff', sid:s.id}, true); };
     p.appendChild(card);
+    }catch(error){
+      console.error('Employee card could not render',s.id,error);
+      const fallback=el('<button class="card staff badge-card" data-staff-id="'+esc(String(s.id))+'" data-staff-fallback><div><div class="t">'+esc(s.name||'Сотрудник')+'</div><div class="d">'+esc(s.role||'Роль не указана')+' · ур. '+esc(String(s.lvl||1))+'</div><div class="d">Не удалось открыть полную карточку. Сотрудник сохранён в команде.</div></div></button>');
+      fallback.onclick=()=>queueModal({kind:'note',title:s.name||'Сотрудник',text:'Сотрудник остаётся в сохранении. Полная карточка требует проверки данных старого сохранения.'},true);p.appendChild(fallback);
+    }
+
   });
   const left = Math.max(0, (S.candsAt||0) - Date.now()); const mm = Math.floor(left/60000), ss = Math.floor(left/1000)%60;
   p.appendChild(el(`<div class="h chalk">Кандидаты <span class="cd num" id="candcd">новые через ${mm}:${String(ss).padStart(2,'0')}</span></div>`));
@@ -6836,18 +6902,15 @@ function renderMore(p){
   }
   else if(sub==='fr'){
     const need = franchiseNeed(), e = S.c.earnedRun||0, sh = franchiseShares();
-    p.appendChild(el(`<div class="card"><div class="t">Опыт владельца: ${S.shares}</div><div class="d">Это твой опыт как хозяина. Каждое очко навсегда даёт +3% к доходу во всех будущих кофейнях. Сейчас доход ×${shareMult().toFixed(2).replace('.',',')}. Опыт дают достижения и продажа сети. Его можно потратить на вечные бонусы ниже.</div></div>`));
+    p.appendChild(el(`<div class="card"><div class="t">Опыт владельца: ${S.shares}</div><div class="d">Очки дают достижения, главы и продажа кофейни. Это отдельная валюта для бонусов ниже: опыт игрового уровня не расходуется. Непотраченные очки сохраняются при продаже кофейни.</div></div>`));
     const fr = el(`<div class="card"><div class="t">Продать сеть и начать заново</div><div class="d">Когда сеть заработает ${fmt(need)} ₽, её можно продать. Залы, команда и деньги уйдут покупателю, а ты получишь опыт и начнёшь заново в новом помещении с новым сюжетом.</div>
       <div class="mood">Заработано ${bar(e/need*100,'var(--caramel)')}<span class="num">${fmt(e)}</span></div>
-      <div class="d">За продажу сейчас: <b>${sh}</b> опыта. Продано сетей: ${S.franchises}.</div><div class="d">Новая точка открывается с нуля: команда, улучшения, договоры и деньги обнуляются. С тобой остаются значки, вечные бонусы и вещи с пропуска. Плюс 600 000 ₽ на открытие и +3% гостей навсегда за каждую проданную сеть (до +15%).</div>
+      <div class="d">За продажу сейчас: <b>${sh?sh+Math.floor(S.level/10):0}</b> опыта${sh?' (включая '+Math.floor(S.level/10)+' за уровень владельца)':''}. Продано сетей: ${S.franchises}.</div><div class="d">Новая точка открывается с нуля: команда, улучшения, договоры и деньги обнуляются. С тобой остаются значки, непотраченный опыт и вещи с пропуска. Купленные за опыт бонусы закончатся вместе с этой кофейней. Плюс 600 000 ₽ на открытие и +3% гостей навсегда за каждую проданную сеть (до +15%).</div>
       <div class="row">${btnHtml('Продать сеть', 0, sh<=0)}</div></div>`);
     fr.querySelector('button').onclick = () => { if(sh>0) queueModal({kind:'franchise'}, true); };
     p.appendChild(fr);
-    p.appendChild(el(`<div class="h">Вечные бонусы</div>`));
-    PERKS.forEach(pk=>{ const L = perk(pk.id), c = pk.cost(L), max = L>=pk.max;
-      const card = el(`<div class="card up"><div><div class="t">${pk.n} <span class="tag num">${L}/${pk.max}</span></div><div class="eff">${pk.d}</div></div>${max?'<span class="tag">Максимум</span>':`<button class="btn" ${S.shares<c?'disabled':''}>${c} опыта</button>`}</div>`);
-      const b = card.querySelector('button'); if(b) b.onclick = () => { if(S.shares < c) return; S.shares -= c; S.perks[pk.id] = L+1; if(pk.id==='autoorder') S.autoOrder = true; sfx('buy'); save(); renderSheet(); };
-      p.appendChild(card); });
+    renderCafePerks(p);
+
   }
 }
 
@@ -7025,7 +7088,7 @@ function showModal(){
   }
   else if(m.kind==='franchise'){
     const sh = franchiseShares();
-    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh} опыта?</h2>`), el(`<p>Залы, команда, деньги и улучшения уйдут новому владельцу. Останутся опыт владельца, вечные бонусы, достижения и гостевая книга. Новое помещение будет ждать сразу после продажи.</p>`));
+    box.append(el(`<div class="eyebrow">Франшиза</div>`), el(`<h2>Продать сеть за ${sh+Math.floor(S.level/10)} опыта?</h2>`), el(`<p>Залы, команда, деньги и улучшения уйдут новому владельцу. Останутся непотраченный опыт владельца, достижения, значки и вещи с пропуска. Купленные за опыт бонусы будут сброшены. Новое помещение будет ждать сразу после продажи.</p>`));
     const opts = el(`<div class="opts"></div>`);
     const nm = el(`<div class="d" style="margin:6px 0 4px">Новая кофейня — новое название. Старая уйдёт из рейтинга сезона.</div>`);
     const inp = el(`<input class="field" maxlength="16" placeholder="Название новой кофейни" value="${esc(randomName())}" style="width:100%;margin-bottom:8px">`);
@@ -7050,9 +7113,9 @@ function staffModal(box, m, btn){
     <h2>${esc(s.name)}</h2><div class="row wrap"><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl} из ${RANK_CAP[s.rank]}</span>${s.legendId?'<span class="tag gold">Легенда</span>':''}${s.quirk!=='none'?`<span class="tag">${qN(s)}</span>`:''}<span class="tag ${cls}">${txt}</span></div>
     <div class="d">Скорость ×${staffSpeed(s).toFixed(2).replace('.',',')} · смен ${s.shifts} · прогулов ${s.absences} · ${s.contract==='grey'?'в серую':he(s,'оформлен','оформлена')} · ${fmt(shiftPay(s))} ₽ за смену</div></div></div>`));
   { const v = staffState(s); box.append(el(`<div class="mood">Состояние ${bar(v, moodCol(v))}<span class="st ${v<45?'bad':''}">${stateLabel(v)}</span></div>`), el(`<div class="d">${s.fatigue>70?'Сильно '+he(s,'устал','устала')+'. ':''}${s.mood<40?'Настроение плохое. ':''}${(s.pat||100)<40?'Терпение на исходе. ':''}${v<32?'Если так пойдёт дальше — напишет заявление.':v>=80?'Работает с удовольствием, быстрее обычного.':''}</div>`)); }
-  if(s.wish){ const w = wishOf(s), c = wishCost(s); const wb = el(`<div class="wish"><b>${esc(w.t)}</b><span>${esc(w.d)} Осталось ${Math.max(0, s.wish.by - S.day)} дн.</span><button class="btn">${s.wish.k==='raise'?'Поднять ставку на 10%':s.wish.k==='dayoff'?'Дать выходной завтра':s.wish.k==='training'?'Записать на курсы: '+fmt(c)+' ₽':s.wish.k==='bonus'?'Выдать премию: '+fmt(c)+' ₽':'Поговорить пять минут'}</button></div>`); wb.querySelector('button').onclick = () => { const r = fulfillWish(s); if(r) toast(r); sfx('buy'); save(); $('#modalRoot').innerHTML=''; showModal(); }; box.appendChild(wb); }
-  if(s.legendId) box.appendChild(el(`<div class="d" style="color:#e9c46a">${esc(LEGENDS[s.legendId-1].legend)}</div>`));
-  if(s.quirk!=='none') box.appendChild(el(`<div class="d">${esc(QUIRKS[s.quirk].d)}</div>`));
+  if(s.wish&&WISHES[s.wish.k]){ const w = wishOf(s), c = wishCost(s); const wb = el(`<div class="wish"><b>${esc(w.t)}</b><span>${esc(w.d)} Осталось ${Math.max(0, s.wish.by - S.day)} дн.</span><button class="btn">${s.wish.k==='raise'?'Поднять ставку на 10%':s.wish.k==='dayoff'?'Дать выходной завтра':s.wish.k==='training'?'Записать на курсы: '+fmt(c)+' ₽':s.wish.k==='bonus'?'Выдать премию: '+fmt(c)+' ₽':'Поговорить пять минут'}</button></div>`); wb.querySelector('button').onclick = () => { const r = fulfillWish(s); if(r) toast(r); sfx('buy'); save(); $('#modalRoot').innerHTML=''; showModal(); }; box.appendChild(wb); }
+  if(s.legendId&&LEGENDS[s.legendId-1]) box.appendChild(el(`<div class="d" style="color:#e9c46a">${esc(LEGENDS[s.legendId-1].legend)}</div>`));
+  if(s.quirk!=='none'&&QUIRKS[s.quirk]) box.appendChild(el(`<div class="d">${esc(QUIRKS[s.quirk].d)}</div>`));
   if(s.promise) box.appendChild(el(`<div class="d" style="color:var(--bad)">Ты обещал повышение до ${s.promise} дня.</div>`));
   const acts = el(`<div class="acts"></div>`);
   const redraw = () => { save(); structDirty = true; renderHud(); $('#modalRoot').innerHTML=''; showModal(); };
@@ -7976,7 +8039,7 @@ function drawDecor(it, x, y, now){
   else if(id==='easel'){ ctx.strokeStyle = '#7a5232'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x-8, y); ctx.lineTo(x, y-34); ctx.lineTo(x+8, y); ctx.stroke(); RR(x-11, y-32, 22, 18, 1, '#f4efe6'); EL(x-4, y-25, 5, 4, '#e0574a'); EL(x+4, y-21, 4, 3, '#3a7ac8'); rect(x-8, y-18, 14, 1.5, '#e8a548'); }
   else if(id==='photo'){ const g = 0.5 + 0.3*Math.sin(now*2); glow2(x, y-26, 22, '255,120,190', 0.25*g + 0.1); ctx.strokeStyle = `rgba(255,130,200,${0.7+0.3*g})`; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(x, y-26, 12, 0, 7); ctx.stroke(); rect(x-1, y-14, 2, 14, '#2a2a2e'); }
   else if(id==='toilet'){ glow2(x, y-10, 16, '255,214,90', 0.25); RR(x-6, y-22, 12, 9, 2, '#e8be46'); EL(x, y-10, 9, 4, '#f2cf5a'); RR(x-4, y-10, 8, 10, 2, '#d8a83a'); rect(x-2, y-21, 2, 7, 'rgba(255,255,230,.7)'); }
-  else if(id==='pled'){ RR(x-10, y-6, 20, 6, 1, '#b8463a'); for(let j=0;j<4;j++) rect(x-9 + j*5, y-6, 1.2, 6, '#e8d4a0'); for(let j=0;j<6;j++) EL(x-12 + j*5, y-10 + Math.sin(j)*1.5, 1.4, 1.4, Math.sin(now*3+j) > 0 ? '#ffd25a' : '#8a6a3a'); }
+  else if(id==='pled'){for(let j=0;j<8;j++)EL(x-14+j*4,y-4-Math.sin(j*.8)*2,1.4,1.4,Math.sin(now*3+j)>0?'#ffe5a0':'#9b8050');}
   else if(id==='tree'){ ctx.fillStyle = '#2f6b3a'; for(let j=0;j<3;j++){ ctx.beginPath(); ctx.moveTo(x, y-46 + j*10); ctx.lineTo(x-14 + j*-2, y-26 + j*10); ctx.lineTo(x+14 + j*2, y-26 + j*10); ctx.closePath(); ctx.fill(); } rect(x-2, y-6, 4, 6, '#6a4224'); for(let j=0;j<8;j++) EL(x - 10 + (j*7)%20, y - 40 + j*4, 1.4, 1.4, Math.sin(now*4+j) > 0 ? ['#ff5a5a','#ffd25a','#5ad2ff'][j%3] : '#1e3a22'); txt('*', x, y-46, '800 10px sans-serif', '#ffd25a', 'center'); }
   else if(id==='garland'){ for(let j=0;j<8;j++) EL(x-14 + j*4, y-4 - Math.sin(j*0.8)*2, 1.4, 1.4, Math.sin(now*3+j) > 0 ? ['#ff5a5a','#ffd25a','#5ad2ff'][j%3] : '#555'); }
 }
@@ -10329,35 +10392,67 @@ const BANK29_DAYS = 14;
 IN_N.loan = 'Кредит банка'; OUT_N.loan = 'Возврат кредита'; NON_OP_IN.push('loan');
 const _opProfit29 = opProfit;
 opProfit = function(f){ const L = (f && f.L) || {out:{}}; return _opProfit29(f) + ((L.out && L.out.loan) || 0); };
-function bank29(){ return S.bank29 || null; }
-function bankTake(o){ if(bank29()){ toast('Сначала верни текущий кредит'); return; } if(S.level < o.lvl){ toast('Доступно с '+o.lvl+' уровня'); return; }
-  if(S.bankBan29 && S.day < S.bankBan29){ toast('Банки отказывают: испорчена кредитная история. Ещё '+(S.bankBan29 - S.day)+' дн.'); return; }
-  S.bank29 = {id:o.id, n:o.n, sum:o.sum, back:o.back, due:S.day + BANK29_DAYS, took:S.day};
-  income(o.sum, 'loan', o.n); sfx('coin'); toast(o.n+': +'+fmt(o.sum)+' ₽. Вернуть '+fmt(o.back)+' ₽ через '+BANK29_DAYS+' дней'); save(); structDirty = true; renderHud(); }
-function bankRepay(){ const b = bank29(); if(!b) return; if(S.money < b.back){ toast('Не хватает '+fmt(b.back - S.money)+' ₽'); return; }
-  bcBankPayment(b, ': возврат'); S.bank29 = null; S.c.loansPaid = (S.c.loansPaid||0) + 1; sfx('coin'); toast('Кредит закрыт. Банк улыбается'); save(); structDirty = true; renderHud(); }
-function bankDue(){ const b = bank29(); if(!b || S.day < b.due) return;
-  const had = S.money; bcBankPayment(b, ': списание долга'); S.bank29 = null;
-  if(had >= b.back){ HOOK.modal({kind:'note', title:'Кредит закрыт', text:'Банк списал '+fmt(b.back)+' ₽ точно в срок. Менеджер прислал открытку «Спасибо, что вы с нами». Открытка платная, но об этом позже.', chips:[['−'+fmt(b.back)+' ₽', false]]}); return; }
-  S.bankBan29 = S.day + 14; repAdd(-0.2); S.staff.forEach(s=>{ if(!s.isYou) s.mood = clamp((s.mood||50) - 10, 0, 100); });
-  HOOK.modal({kind:'note', title:'Пришли коллекторы', text:'Денег на возврат не хватило. Банк списал всё и увёл кассу в минус на '+fmt(Math.max(0, b.back - had))+' ₽. Двое в кожанках посидели у кассы и распугали гостей. Две недели ни один банк не даст кредит. Если касса будет в минусе 14 дней подряд, кофейня обанкротится.', chips:[['−'+fmt(b.back)+' ₽', false], ['Рейтинг −0,2', false], ['Настроение команды −10', false]]}); }
-const _closeDay29 = closeDay;
-closeDay = function(){ return _closeDay29.apply(this, arguments); };
-function bankCard(){ const b = bank29(), c = el(`<div class="card bank29"><div class="t">Банк</div></div>`);
-  if(b){ const left = Math.max(0, b.due - S.day);
-    c.appendChild(el(`<div class="d">${esc(b.n)}: взял ${fmt(b.sum)} ₽, вернуть <b>${fmt(b.back)} ₽</b>. ${left > 1 ? 'Спишут через '+left+' '+plural29(left, 'день','дня','дней')+'.' : 'Спишут сегодня после закрытия смены.'} Если денег не хватит, банк спишет всё в минус и пришлёт коллекторов.</div>`));
-    const row = el(`<div class="row"><button class="btn num" ${S.money >= b.back ? '' : 'disabled'}>Вернуть ${fmt(b.back)} ₽</button></div>`); row.querySelector('button').onclick = bankRepay; c.appendChild(row);
-    if(!b.rs && b.back > b.sum*1.25){ const nb = Math.round(b.sum*1.25/1000)*1000;
-      const rr = el(`<div class="row"><button class="btn ghost num">Реструктуризация: ${fmt(nb)} ₽ на 21 день</button></div>`);
-      rr.querySelector('button').onclick = () => { const cur = bank29(); if(!cur || cur.rs) return; cur.back = Math.min(cur.back, nb); cur.due = S.day + 21; cur.rs = 1; repAdd(-0.1); sfx('coin'); toast('Банк пошёл навстречу: вернуть '+fmt(cur.back)+' ₽ за 21 день'); save(); structDirty = true; renderHud(); try{ renderSheet(); }catch(e){} };
-      c.appendChild(rr); c.appendChild(el(`<div class="d">Один раз на кредит: сумма долга снижается до 125% от займа, срок 21 день, рейтинг −0,1.</div>`)); }
-    return c; }
-  c.appendChild(el(`<div class="d">Деньги сразу, вернуть примерно в полтора-два раза больше через ${BANK29_DAYS} дней. Один кредит за раз. Не вернёшь — коллекторы, касса в минусе и две недели без кредитов.</div>`));
-  if(S.bankBan29 && S.day < S.bankBan29) c.appendChild(el(`<div class="d" style="color:var(--bad)">Банки отказывают ещё ${S.bankBan29 - S.day} ${plural29(S.bankBan29 - S.day, 'день','дня','дней')}.</div>`));
-  BANK29.forEach(o=>{ const lock = S.level < o.lvl;
-    const r = el(`<div class="bk29r"><div><b>${esc(o.n)}</b><span>${lock ? 'с '+o.lvl+' уровня' : 'вернуть '+fmt(o.back)+' ₽ через '+BANK29_DAYS+' дн.'}</span></div><button class="btn num" ${lock?'disabled':''}>+${fmt(o.sum)} ₽</button></div>`);
-    r.querySelector('button').onclick = () => bankTake(o); c.appendChild(r); });
-  return c; }
+function bank29(){
+ const b=S&&S.bank29;if(!b||typeof b!=='object')return b||null;
+ for(const k of ['sum','back','took','due'])if(typeof b[k]==='string'&&b[k].trim()&&Number.isFinite(Number(b[k])))b[k]=Number(b[k]);
+ return b;
+}
+function bankValid(b){return !!b&&Number.isFinite(b.sum)&&b.sum>0&&Number.isFinite(b.back)&&b.back>0;}
+function bankRefresh(persist){if(persist!==false)save();structDirty=true;renderHud();if(persist!==false&&sheet==='hall'&&hallTab==='money')renderPanel();}
+function bankTake(offer){
+ const o=BANK29.find(x=>x.id===(typeof offer==='string'?offer:offer&&offer.id));if(!o)return false;
+ if(bank29()){toast('Сначала верни текущий кредит');return false;}
+ if(S.level<o.lvl){toast('Доступно с '+o.lvl+' уровня');return false;}
+ if(S.bankBan29&&S.day<S.bankBan29){toast('Банки отказывают: испорчена кредитная история. Ещё '+(S.bankBan29-S.day)+' дн.');return false;}
+ S.bank29={id:o.id,n:o.n,sum:o.sum,back:o.back,due:S.day+BANK29_DAYS,took:S.day};
+ income(o.sum,'loan',o.n);sfx('coin');toast(o.n+': +'+fmt(o.sum)+' ₽. К возврату '+fmt(o.back)+' ₽. Можно погасить досрочно');bankRefresh();return true;
+}
+function bankRepay(expected){
+ const b=bank29();if(!b||expected&&expected!==b)return false;
+ if(!bankValid(b)){toast('Не удалось определить сумму кредита. Деньги не списаны');return false;}
+ if(S.money<b.back){toast('Не хватает '+fmt(b.back-S.money)+' ₽');return false;}
+ bcBankPayment(b,Number.isInteger(b.due)&&S.day<b.due?': досрочное погашение':': погашение кредита');S.bank29=null;S.c.loansPaid=(S.c.loansPaid||0)+1;
+ sfx('coin');toast('Кредит полностью погашен');bankRefresh();return true;
+}
+function bankRestructure(expected){
+ const b=bank29();if(!b||expected&&expected!==b||!bankValid(b)||b.rs)return false;
+ const amount=Math.round(b.sum*1.25/1000)*1000;if(!Number.isFinite(amount)||amount<=0||b.back<=amount)return false;
+ b.back=amount;b.due=S.day+21;b.rs=1;repAdd(-.1);sfx('coin');toast('Банк пошёл навстречу: вернуть '+fmt(b.back)+' ₽ за 21 день');bankRefresh();return true;
+}
+function bankDue(){
+ const b=bank29();if(!bankValid(b)||!Number.isInteger(b.due)||b.due<1||S.day<b.due)return false;
+ const had=S.money;bcBankPayment(b,': автопогашение в срок');S.bank29=null;
+ if(had>=b.back){
+  S.c.loansPaid=(S.c.loansPaid||0)+1;bankRefresh(false);
+  HOOK.modal({kind:'note',title:'Кредит закрыт',text:'Банк списал '+fmt(b.back)+' ₽ в срок. Кредит полностью погашен.',chips:[['−'+fmt(b.back)+' ₽',false]]});return true;
+ }
+ S.bankBan29=S.day+14;repAdd(-.2);S.staff.forEach(s=>{if(!s.isYou){const mood=s.mood==null?50:Number(s.mood);s.mood=clamp((Number.isFinite(mood)?mood:50)-10,0,100);}});bankRefresh(false);
+ HOOK.modal({kind:'note',title:'Пришли коллекторы',text:'Денег на возврат не хватило. Банк списал '+fmt(b.back)+' ₽ и увёл кассу в минус. После списания в кассе '+fmt(S.money)+' ₽. Две недели банки не дадут новый кредит. Если касса будет в минусе 14 дней подряд, кофейня обанкротится.',chips:[['−'+fmt(b.back)+' ₽',false],['Рейтинг −0,2',false],['Настроение команды −10',false]]});return true;
+}
+const _closeDay29=closeDay;closeDay=function(){return _closeDay29.apply(this,arguments);};
+function bankCard(){
+ const b=bank29(),card=el('<div class="card bank29"><div class="t">Банк</div></div>');
+ if(b){
+  if(!bankValid(b)){card.appendChild(el('<div class="d" data-lite="1">Не удалось прочитать условия кредита. Деньги не списываются. Обратись в поддержку для проверки договора.</div>'));return card;}
+  const validDue=Number.isInteger(b.due)&&b.due>=1,left=validDue?Math.max(0,b.due-S.day):null,principal=Math.min(b.back,b.sum),interest=b.back-principal;
+  const deadline=left===null?'Дата возврата не указана. Кредит можно погасить сейчас.':left>0?'До срока '+left+' '+plural29(left,'игровой день','игровых дня','игровых дней')+' · день '+b.due+'.':'Срок наступил. Автосписание — при закрытии смены.';
+  card.appendChild(el('<div class="d" data-lite="1"><b>'+esc(b.n||'Кредит')+'</b><br>Получено: '+fmt(b.sum)+' ₽. К возврату: <b>'+fmt(b.back)+' ₽</b>, из них основной долг '+fmt(principal)+' ₽ и проценты '+fmt(interest)+' ₽.<br>'+deadline+'</div>'));
+  card.appendChild(el('<div class="d" data-lite="1">Можно полностью погасить в любой игровой день, как только в кассе хватит указанной суммы. При досрочном возврате сумма по договору фиксированная. После погашения повторного списания не будет.</div>'));
+  const row=el('<div class="row">'+btnHtml('Погасить сейчас · '+fmt(b.back)+' ₽',b.back,false)+'</div>'),button=row.querySelector('button');button.dataset.bankAction='repay';button.dataset.cost=String(b.back);button.onclick=()=>bankRepay(b);card.appendChild(row);
+  if(!b.rs&&b.back>b.sum*1.25){
+   const amount=Math.round(b.sum*1.25/1000)*1000,rr=el('<div class="row"><button class="btn ghost num" data-bank-action="restructure">Реструктуризация: '+fmt(amount)+' ₽ на 21 день</button></div>');
+   rr.querySelector('button').onclick=()=>bankRestructure(b);card.appendChild(rr);card.appendChild(el('<div class="d" data-lite="1">Один раз на кредит: сумма долга снижается до 125% от займа, срок 21 день, рейтинг −0,1. После этого также доступно досрочное погашение.</div>'));
+  }
+  return card;
+ }
+ card.appendChild(el('<div class="d" data-lite="1">Один кредит за раз. Сумма возврата фиксируется при выдаче; её можно вернуть досрочно. Срок — '+BANK29_DAYS+' игровых дней. В срок банк спишет долг при закрытии смены. Если денег не хватит, касса уйдёт в минус и банки откажут на 14 дней.</div>'));
+ const banned=!!(S.bankBan29&&S.day<S.bankBan29);
+ if(banned)card.appendChild(el('<div class="d" data-lite="1" style="color:var(--bad)">Банки отказывают ещё '+(S.bankBan29-S.day)+' '+plural29(S.bankBan29-S.day,'день','дня','дней')+'.</div>'));
+ BANK29.forEach(o=>{
+  const lock=S.level<o.lvl||banned,row=el('<div class="bk29r"><div><b>'+esc(o.n)+'</b><span>'+(S.level<o.lvl?'С '+o.lvl+' уровня':'Получить '+fmt(o.sum)+' ₽ · вернуть '+fmt(o.back)+' ₽ через '+BANK29_DAYS+' игр. дн.')+'</span></div><button class="btn num" data-bank-offer="'+o.id+'" '+(lock?'disabled':'')+'>+'+fmt(o.sum)+' ₽</button></div>');
+  row.querySelector('button').onclick=()=>bankTake(o);card.appendChild(row);
+ });return card;
+}
 function plural29(n, a, b, c){ n = Math.abs(n) % 100; const n1 = n % 10; if(n > 10 && n < 20) return c; if(n1 > 1 && n1 < 5) return b; if(n1 === 1) return a; return c; }
 const _renderFin29 = renderFin;
 renderFin = function(p){ _renderFin29.apply(this, arguments); try{ const c = bankCard(); const first = p.querySelector('.card'); const nav=p.querySelector('.finnav'); if(nav){p.insertBefore(c,nav);nav.classList.add('bc-fin-periods');}else if(first) p.insertBefore(c, first); else p.appendChild(c); }catch(e){ console.error(e); } };
@@ -10365,9 +10460,9 @@ renderFin = function(p){ _renderFin29.apply(this, arguments); try{ const c = ban
 const _renderHud29 = renderHud;
 renderHud = function(){ _renderHud29.apply(this, arguments); try{ const pe = $('#pills'); if(!pe || !S) return; let pl = pe.querySelector('.pill.loan29'); const b = bank29();
   if(!b){ if(pl) pl.remove(); return; }
-  const left = Math.max(0, b.due - S.day), t = 'Кредит '+fmt(b.back)+' ₽ · '+(left > 1 ? left+' дн.' : 'сегодня');
+  const left = Number.isInteger(b.due)&&b.due>=1 ? Math.max(0,b.due-S.day) : null, t = bankValid(b)?'Кредит '+fmt(b.back)+' ₽ · '+(left===null?'срок не указан':left>0?left+' дн.':'срок наступил'):'Кредит · проверка договора';
   if(!pl){ pl = el(`<button class="pill loan29"></button>`); pl.onclick = () => { hallTab = 'money'; openSheet('hall'); }; pe.insertBefore(pl, pe.firstChild); }
-  if(pl.textContent !== t) pl.textContent = t; pl.classList.toggle('hot', left <= 1); }catch(e){} };
+  if(pl.textContent !== t) pl.textContent = t; pl.classList.toggle('hot', !bankValid(b)||left!==null&&left<=1); }catch(e){} };
 
 /* ================= v29: ноябрь — хандра, ремонт у соседей, фуд-блогер, инспектор «на кофе», две арки сотрудников, новые реплики ================= */
 Object.assign(CHARS, {
@@ -11007,7 +11102,7 @@ frameOwnedId = function(){ if(S && S.c && S.c.signFrame === 'flag' && ext34('fla
 function flag34Apply(){ if(!S || !ext34('flagship') || S.c.flag34) return; S.c.flag34 = S.day; S.c.signFrame = 'flag';
   badgeAdd('flagship', 'Флагман района', 'Самая большая кофейня района');
   try{ const me = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {}; const nm = String(me.first_name || 'Хозяин').slice(0, 20);
-    const s = makeStaff('Бариста', {quirk:'none'}); s.name = nm+' Флагманский'; s.prize = true; s.legendId = 0; s.lvl = 40; s.rank = 3; s.shifts = 200; s.mood = 95; s.flag34 = true; hire(s, 'main', 'white'); syncScene('main'); }catch(e){ console.error(e); }
+    const sex=personNameSex(nm)||'m',s = makeStaff('Бариста', {quirk:'none',sex}); s.name = nm+(sex==='f'?' Флагманская':' Флагманский'); s.prize = true; s.legendId = 0; s.lvl = 40; s.rank = 3; s.shifts = 200; s.mood = 95; s.flag34 = true; hire(s, 'main', 'white'); syncScene('main'); }catch(e){ console.error(e); }
   queueModal({kind:'note', title:'Ты — Флагман района', text:'Золотая вывеска уже висит, имя в рейтингах и дуэлях золотое, в команду вышел легендарный бариста с твоим именем. Гости других кофеен теперь иногда рассказывают о тебе.'});
   save(); try{ track(true); }catch(e){} }
 const _refreshEnt34 = refreshEntitlements;
@@ -11150,15 +11245,14 @@ const _renderUpgrades931 = renderUpgrades;
 renderUpgrades = function(p, id){ _renderUpgrades931.apply(this, arguments); try{ const rid = id || S.active || 'main'; p.appendChild(wearCard931(rid)); if(rid === 'main'){ p.appendChild(michCard931()); p.appendChild(premCard931()); } }catch(e){ console.error(e); } };
 
 /* ---------- новый виток: звёзды владельца при продаже сети ---------- */
-PERKS.push({id:'loyal34', n:'Верные гости', d:'Рейтинг новой кофейни +0,1 на старте за уровень', cost:L=>3+L*2, max:5},
+PERKS.push({id:'loyal34', n:'Верные гости', d:'Гости ждут заказ на 5% дольше за каждый уровень', cost:L=>3+L*2, max:5},
   {id:'train34', n:'Наставник', d:'Сотрудники работают быстрее на 2% за уровень', cost:L=>3+L*2, max:10});
 const _sellFr931 = sellFranchise;
 sellFranchise = function(cityId){ const lvl = S.level, mich = S.mich34, prem = S.prem34, badges = S.badgeList, bon = Math.floor(lvl / 10), stars = (S.ownerStars34 || 0);
   const r = _sellFr931.apply(this, arguments); if(!r) return r;
   try{ S.shares += bon; S.ownerStars34 = stars + bon; if(badges) S.badgeList = badges; delete S.prem34; delete S.mich34;
     S.money += 600000; S.fin.today.why = S.fin.today.why || {};
-    const L = perk('loyal34'); if(L) S.rep = Math.min(5, S.rep + 0.1*L);
-    setTimeout(() => { try{ queueModal({kind:'note', title:'Новый виток', text:'Новая точка с нуля: команда, улучшения, договоры и деньги прошлой кофейни остались в прошлом. Ты получил +600 000 ₽ на открытие, гостей +'+Math.min(15, 3*(S.franchises||0))+'% навсегда за проданные сети и +'+bon+' звёзд владельца за '+lvl+' уровень (их тратят в Опыте). С тобой остались значки, вечные бонусы и вещи с пропуска.'}); }catch(e){} }, 800); }catch(e){ console.error(e); }
+    setTimeout(() => { try{ queueModal({kind:'note', title:'Новый виток', text:'Новая точка с нуля: команда, улучшения, договоры и деньги прошлой кофейни остались в прошлом. Ты получил +600 000 ₽ на открытие, гостей +'+Math.min(15, 3*(S.franchises||0))+'% навсегда за проданные сети и +'+bon+' звёзд владельца за '+lvl+' уровень (их тратят в Опыте). С тобой остались значки, непотраченный опыт и вещи с пропуска. Бонусы за опыт для новой кофейни нужно открыть заново.'}); }catch(e){} }, 800); }catch(e){ console.error(e); }
   return r; };
 const _staffSpeed931 = staffSpeed;
 staffSpeed = function(s){ let v = _staffSpeed931.apply(this, arguments); try{ const L = perk('train34'); if(L) v *= 1 + 0.02*L; if(s && !s.isYou && s.mood >= 85 && (s.fatigue || 0) < 30) v *= 1.08; }catch(e){} return v; };
@@ -11670,7 +11764,7 @@ var CUR=null, _wp=walkPose, _ds=drawSprite, _dst=drawStaff;
 var SEATQ=[];
 window.walkPose=function(e){ CUR=e; return _wp(e); };
 window.drawStaff=function(s,p,id){
-  p._role=s.role; p._sid=s.id; p._cup=!!p.cup; p._vi=p.k||0; p._you=!!s.isYou; p._dis=s.distract?s.distract.kind:null;
+  p._role=s.role; p._sex=s.sex; p._sid=s.id; p._cup=!!p.cup; p._vi=p.k||0; p._you=!!s.isYou; p._dis=s.distract?s.distract.kind:null;
   var c=p.cup; p.cup=false;
   try { return _dst(s,p,id); } finally { p.cup=c; }
 };
@@ -11697,7 +11791,7 @@ function tintSheet(kind,a,b){
     var id=g.getImageData(0,0,c.width,c.height), d=id.data;
     var coat=kind==='g'?COATS[a]:null, hair=HAIRS[b], cap=kind==='b'?(typeof a==='string'?UNIC[a.slice(1)]:CAPS[a]):null;
     var body=new Uint8Array(c.width*c.height);
-    for(var nm in CM){ var cl=CM[nm], top=nm.indexOf('slip')>0?0:Math.floor(cl.h*0.5);
+    for(var nm in CM){ if(window.BrewCrewStaffArt&&window.BrewCrewStaffArt.clips[nm])continue; var cl=CM[nm], top=nm.indexOf('slip')>0?0:Math.floor(cl.h*0.5);
       for(var fi=0;fi<cl.f.length;fi++){ var fx=cl.f[fi][0], fy=cl.f[fi][1];
         for(var yy=fy+top;yy<fy+cl.h;yy++) body.fill(1,yy*c.width+fx,yy*c.width+fx+cl.w); } }
     for(var i=0;i<d.length;i+=4){
@@ -11716,6 +11810,7 @@ function tintSheet(kind,a,b){
 var KIND={'Бариста':'barista','Кассир':'cashier','Официант':'waiter','Мойщица':'washer','Повар':'cook'};
 var OLDSPR={59:1,60:1,61:1,62:1,63:1};
 function bodyOf(e){
+  normalizeGuestName(e);
   if(e._body) return e._body;
   var i=e.spr|0, fem=(typeof FEM!=='undefined')&&FEM.has(i), b='guest';
   if(OLDSPR[i]&&!fem&&CM['elder_walk:south']) b='elder';
@@ -11844,6 +11939,8 @@ function pickAct(e,t,now){
 function baseLoop(e){ var b=bodyOf(e); if(!CM[b+'_type:south-east']) return null; return e.act==='laptop'?b+'_type:south-east':(e.act==='phone'||e.act==='read')?b+'_phone:south-east':null; }
 function drawGuestNew(e,alpha){
   var now=track(e), H=62*((e.h||56)/56), sh=sheetFor(e), x=e.x, y=e.y, mm, f;
+  var longSeat=window.BrewCrewLongTables&&window.BrewCrewLongTables.seat(e);
+  if(longSeat){blit(sh,gc(e,'sit:'+(longSeat.side?'north':'south')),Math.floor((now+e._ph)*2.4),x,y-2,H,false,alpha);return;}
   if(e.slipT>0){ if(CM[bodyOf(e)+'_slip:south']) blit(sh,bodyOf(e)+'_slip:south',Math.min(6,Math.floor((1.4-e.slipT)*6)),x,y,H,false,alpha); else blit(sh,gc(e,'sit:south'),0,x,y+2,H,false,alpha); return; }
   var t=null;
   if((e.state==='sit'||e._standT)&&S.active!=='hall2'){ t=nearTable(e); }
@@ -11976,7 +12073,7 @@ function drawStaffNew(e,kind,alpha){
   var now=track(e), H=65, sh=sheetFor(e), x=e.x, y=e.y-barLift(e), d=e._d||'south', mm=md(d), f;
   if(bcPhonePose(e,kind,sh,x,y,H,now,alpha))return;
   var has=function(n){ return !!CM[kind+'_'+n]; };
-  if(e._moving){ var cl=dclip(kind+'_walk:',d,e); if(cl){ blit(sh,cl[0],Math.floor((e._dist||0)/4.6),x,y,H,cl[1],alpha); return; } }
+  if(e._moving){ var cl=dclip(bcSkinWalkPrefix(kind),d,e); if(cl){ blit(sh,cl[0],Math.floor((e._dist||0)/4.6),x,y,H,cl[1],alpha); return; } }
   var busy=false; try{ busy=rt(S.active).jobs.length>0; }catch(err){}
   if(kind==='washer'&&!e._dis){
     if(e.washing&&has('wash:north')){ blit(sh,'washer_wash:north',pp(CM['washer_wash:north'].f.length,Math.floor((now+e._ph)*6)),x,y,H,false,alpha); return; }
@@ -11990,11 +12087,11 @@ function drawStaffNew(e,kind,alpha){
   }
   if(kind==='cashier'&&has('till:south')&&!e._dis){
     var q0=null; try{ q0=rt(S.active).queue[0]; }catch(err){}
-    if(q0&&q0.state==='queue'&&q0.prog>0){ var c=CM['cashier_till:south']; blit(sh,'cashier_till:south',Math.floor((now+e._ph)*6)%c.f.length,x,y,H,false,alpha); return; }
+    if(q0&&q0.state==='queue'&&q0.prog>0){ var c=CM['cashier_till:south'], frame=Math.floor((now+e._ph)*6)%c.f.length; blit(sh,'cashier_till:south',frame,x,y,H,false,alpha); return; }
   }
   blit(sh,kind+'_idle:south',Math.floor((now+e._ph)*2.4),x,y,H,false,alpha);
 }
-if(typeof drawMop!=='undefined'){ var _dm=drawMop; window.drawMop=function(p,now){ if(!ready()||!CM['washer_mop:south']) return _dm(p,now); }; }
+if(typeof drawMop!=='undefined'){ var _dm=drawMop; window.drawMop=function(p,now){ if(p._bcStaffVariant==='washer_f'&&p.job&&p.job.kind==='mess'&&!p._moving&&!p._dis)return _dm(p,now);if(!ready()||!CM['washer_mop:south']) return _dm(p,now); }; }
 /* --- блогеры --- */
 function vipChar(m,who){ var now=track(m), Hh=64, cl;
   if(m._moving){ cl=dclip(who+'_walk:',m._d||'south',m)||[who+'_walk:south',false]; blit(CA,cl[0],Math.floor((m._dist||0)/4.4),m.x,m.y,Hh,cl[1]); }
@@ -12010,6 +12107,7 @@ window.leraDraw=function(m){ try{ if(!ready()||!CM['masha_terrier_walk:south']) 
 window.drawSprite=function(i,cx,fy,h,flip,rot,alpha){
   var e=CUR; CUR=null;
   if(e&&CA.naturalWidth&&ready()&&e.x!=null){
+    if(e._role==='Повар'&&e._sex==='f')return _ds(i,cx,fy,h,flip,rot,alpha);
     if(e._role==='Бариста'){ drawBaristaNew(e,alpha); return; }
     if(e._role&&KIND[e._role]&&CM[KIND[e._role]+'_idle:south']){ drawStaffNew(e,KIND[e._role],alpha); return; }
     if(!e._role&&e.state&&e.spr!=null&&!e.isPet){ drawGuestNew(e,alpha); return; }
@@ -12054,7 +12152,7 @@ function street(now){
     var pxp=sp>0 ? OX+((now*speed+p*34)%(OW+22))-11 : OX+OW-((now*speed+p*34)%(OW+22))+11;
     if(typeof GUESTS!=='undefined') drawSprite(GUESTS[(p*5+2)%GUESTS.length], pxp, OY+OH*0.80+p*2, 14, sp<0, 0, 0.9); }
   try{ var smk=workingStaff(S.active).filter(function(x){return x.distract&&x.distract.kind==='smoke';}).slice(0,2);
-    smk.forEach(function(sx_,k){ var kind=KIND[sx_.role]||'barista', nm=kind+'_idle:south'; if(!CM[nm]) nm='barista_idle:south';
+    smk.forEach(function(sx_,k){ var kind=bcStaffVariant(sx_)||KIND[sx_.role]||'barista', nm=kind+'_idle:south'; if(!CM[nm]) nm='barista_idle:south';
       var px=OX+OW*0.3+k*OW*0.34, py=OY+OH*0.86;
       blit(CA,nm,Math.floor(now*2.4+k),px,py,24,k%2===1,0.95);
       ctx.fillStyle='rgba(235,235,235,.55)'; for(var i=0;i<3;i++){ var tt=(now*0.5+i*0.33)%1; ctx.beginPath(); ctx.arc(px+5+Math.sin(now*2+i)*1.5, py-18-tt*10, 1+tt*1.6, 0, 6.3); ctx.fill(); } });
@@ -12913,7 +13011,7 @@ if(typeof staffModal!=='undefined'){ var _sm7=staffModal; window.staffModal=func
   try{ Array.prototype.forEach.call(box.querySelectorAll('.card'),function(c){ var t=c.querySelector('.t'); if(t&&/Трансферное окно/.test(t.textContent)) c.remove(); });
     var s=S.staff.find(function(x){return x.id===m.sid;}); if(!s) return;
     var head=box.firstElementChild, spr=head&&head.querySelector('.spr');
-    if(spr){ var kind=s.isYou?'barista':(KIND[s.role]||'barista'); var w=document.createElement('div'); w.className='u7p'; w.appendChild(portrait(kind,84)); spr.replaceWith(w); head.classList.add('u7st'); head.classList.remove('row');
+    if(spr&&!(s.role==='Повар'&&s.sex==='f')){ var kind=bcStaffVariant(s)||(s.isYou?'barista':(KIND[s.role]||'barista')); var w=document.createElement('div'); w.className='u7p'; w.appendChild(portrait(kind,84)); spr.replaceWith(w); head.classList.add('u7st'); head.classList.remove('row');
       var dd=head.querySelector('.d'); if(dd){ var kv=document.createElement('div'); kv.className='u7kv';
         kv.innerHTML='<div><b>×'+staffSpeed(s).toFixed(2).replace('.',',')+'</b><s>скорость</s></div><div><b>'+s.shifts+'</b><s>смен</s></div><div><b>'+s.absences+'</b><s>прогулов</s></div><div><b>'+fmt(shiftPay(s))+' ₽</b><s>за смену</s></div>';
         dd.remove(); head.insertAdjacentElement('afterend',kv); } }
@@ -13096,11 +13194,13 @@ if(typeof swipeDeck!=='undefined') window.swipeDeck=function(p,id){
   p.appendChild(el('<div class="h chalk">Кандидаты <span class="cd num" id="candcd">новые через '+mm+':'+String(ss).padStart(2,'0')+'</span></div>'));
   if(!S.cands||!S.cands.length){ p.appendChild(el('<div class="empty">Кандидатов пока нет. Новые придут через несколько минут.</div>')); return; }
   S.cands.forEach(function(c){
+    normalizeStaffName(c);
     var cnt=list.filter(function(s){ return s.role===c.role&&s.today!=='sub'&&!s.isYou; }).length, full=cnt>=staffCap(c.role);
     var cw=0, cg=0, pw=shiftPay(Object.assign({},c,{contract:'white'})), pg=shiftPay(Object.assign({},c,{contract:'grey'}));
-    var kind=KIND[c.role]||'barista', u=portURL(kind);
-    var card=el('<div class="card u8cand"><div class="u8ct"><div class="u8cp"'+(u?' style="background-image:url('+u+')"':'')+'></div><div class="u8ci"><div class="t">'+esc(c.name)+'</div><div class="u8tags"><span>'+esc(c.role)+'</span><span>ур. '+c.lvl+(c.claim?' · со слов':'')+'</span>'+(c.legendId?'<span class="lg">легенда района</span>':'')+'</div>'+(full?'<div class="d u8full">Мест на эту роль нет</div>':'')+'</div></div>'+
+    var portraitStyle=sprStyle(staffSpr(c),74);
+    var card=el('<div class="card u8cand"><div class="u8ct"><div class="u8cp"></div><div class="u8ci"><div class="t">'+esc(c.name)+'</div><div class="u8tags"><span>'+esc(c.role)+'</span><span>ур. '+c.lvl+(c.claim?' · со слов':'')+'</span>'+(c.legendId?'<span class="lg">легенда района</span>':'')+'</div>'+(full?'<div class="d u8full">Мест на эту роль нет</div>':'')+'</div></div>'+
       '<div class="u8cb"><button class="btn u8y"'+(full||S.money<cw?' disabled':'')+'><b>Принять</b><small>'+fmt(pw)+' ₽/смена</small></button><button class="btn alt u8g"'+(full||S.money<cg?' disabled':'')+'><b>В серую</b><small>'+fmt(pg)+' ₽/смена</small></button><button class="btn alt u8n"><b>Отказать</b><small>&nbsp;</small></button></div></div>');
+    var face=card.querySelector('.u8cp'),sprite=document.createElement('div');sprite.className='spr';sprite.style.cssText=portraitStyle;face.style.display='flex';face.style.alignItems='flex-end';face.style.justifyContent='center';face.appendChild(sprite);
     var hireIt=function(grey){ if(full){ toast('Мест на эту роль нет'); return; } var cost=grey?cg:cw; if(S.money<cost){ toast('Не хватает денег'); return; } doHire(c,id,grey?'grey':'white',cost); };
     card.querySelector('.u8y').onclick=function(){ hireIt(false); }; card.querySelector('.u8g').onclick=function(){ hireIt(true); };
     card.querySelector('.u8n').onclick=function(){ try{ sfx('tap'); }catch(e){} S.cands=S.cands.filter(function(x){ return x!==c; }); save(); renderPanel(); };
@@ -13259,7 +13359,7 @@ function sceneTools(){ var sc=document.getElementById('scene'); if(!sc) return; 
   var n=0; try{ n=(S.incidents||[]).length; }catch(e){} var b=t.querySelector('#u9task i'); if(n){ b.hidden=false; if(b.textContent!==String(n)) b.textContent=n; } else b.hidden=true; }
 setInterval(sceneTools,500);
 /* --- листы: в «Магазине» и «Команде» нет чужих вкладок; старый магазин из настроек переехал сюда --- */
-try{ openShop=function(tab){ try{ window.__shopCat='p:'+((tab&&SHOP29_TABS.some(function(t){return t[0]===tab;}))?tab:(tab==='help'?'money':SHOP29_TABS[0][0])); }catch(e){} openSheet('hall','shop'); }; window.openShop=openShop; }catch(e){}
+try{ openShop=function(tab){ try{ window.__shopCat=tab?'p:'+((SHOP29_TABS.some(function(t){return t[0]===tab;}))?tab:(tab==='help'?'money':SHOP29_TABS[0][0])):allCats()[0][0]; window.__shopSc=0; }catch(e){} openSheet('hall','shop'); }; window.openShop=openShop; }catch(e){}
 (function(){ var r=window.renderSheet; window.renderSheet=function(){ r.apply(this,arguments);
   try{ var nav=document.querySelector('#hallnav'), solo=(sheet==='hall'&&(hallTab==='shop'||hallTab==='team'));
     Array.prototype.forEach.call(document.querySelectorAll('.sheet .sheethead .subnav'),function(n){ if(solo||sheet==='team') n.style.setProperty('display','none','important'); else n.style.removeProperty('display'); });
@@ -14134,6 +14234,7 @@ function bgSpecial(e){return !!e&&(e===VIPRUN||e===LZRUN||e._specialGuest===true
 function bgTables(){
   var out=[],seen={};
   try{var n=tableCount(room('main').upg.tables);TABLE_SLOTS.slice(0,n).forEach(function(s){if(s[2]!=='table'||seen[s[3]])return;var t=TABLES[s[3]];if(t){seen[s[3]]=1;out.push({x:t.x,y:t.y});}});}catch(e){}
+  if(window.BrewCrewLongTables&&window.BrewCrewLongTables.active())return window.BrewCrewLongTables.obstacles(out);
   return out.length?out:visTables();
 }
 function bgPeople(e){
@@ -14190,7 +14291,7 @@ var bgOriginalMove=moveTo;
 window.moveTo=function(e,tx,ty,sp,dt){
   if(!bgSpecial(e)){
     var x=e.x,y=e.y,result=bgOriginalMove(e,tx,ty,sp,dt);
-    if(S&&S.active==='main'&&!e.isPet&&(e.spr!=null||e._role)&&!bgActorClear(x,y,e.x,e.y,[VIPRUN,LZRUN].filter(function(p){return p&&p!==e;}))){e.x=x;e.y=y;e.walk=false;return false;}return result;
+    if(S&&S.active==='main'&&!e.isPet&&(e.spr!=null||e._role)&&!bgActorClear(x,y,e.x,e.y,bgSpecialActors(e))){e.x=x;e.y=y;e.walk=false;return false;}return result;
   }
   if(!S||S.active!=='main'||e.h2)return bgOriginalMove(e,tx,ty,sp,dt);
   var rw=RW(),doorY=DOOR[1],speed=sp*.85,delta=Math.min(.1,Math.max(0,dt));
@@ -14779,7 +14880,7 @@ tryOn=function(cat,id,nm,price){var sku=bcStoreSku(cat,id),p=BC_STORE[sku];if(!p
 };
 var bcGameSnapshot=snapshot;snapshot=function(){var raw=bcGameSnapshot.apply(this,arguments);if(BC_GAME_PREVIEW&&BC_GAME_PREVIEW.state===S){var copy=JSON.parse(raw);copy.skin=BC_GAME_PREVIEW.skin;if(!BC_GAME_PREVIEW.owned&&copy.skinOwned)delete copy.skinOwned[BC_GAME_PREVIEW.key];return JSON.stringify(copy);}return raw;};
 var bcMixedModal=showModal;showModal=function(){var result=bcMixedModal.apply(this,arguments);if(modals[0]&&['bc_checkout','gift29'].includes(modals[0].kind))bcPolishStars(document.getElementById('modalRoot'));return result;};
-var bcMixedStyle=document.createElement('style');bcMixedStyle.textContent='.bc-money-price{display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}.bc-currency-star{display:inline-block!important;width:21px!important;height:21px!important;object-fit:contain;vertical-align:-4px;flex:none;filter:drop-shadow(0 1px 1px #9c681c22)}.bc-cash-symbol{color:var(--mut);font-size:.86em}.bc-checkout-price{font-size:25px;font-weight:800;margin:14px 0}.bc-checkout-price .bc-currency-star{width:29px!important;height:29px!important}.bc-price-legend{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}.bc-price-legend .bc-currency-star{width:16px!important;height:16px!important}.btn .bc-money-price{pointer-events:none}.sc29 .col{min-width:92px}';document.head.appendChild(bcMixedStyle);
+var bcMixedStyle=document.createElement('style');bcMixedStyle.textContent='.bc-money-price{display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}.bc-currency-star{display:inline-block!important;width:21px!important;height:21px!important;object-fit:contain;vertical-align:-4px;flex:none;filter:drop-shadow(0 1px 1px #9c681c22)}.bc-cash-symbol{color:var(--mut);font-size:.86em}.bc-checkout-price{font-size:25px;font-weight:800;margin:14px 0}.bc-checkout-price .bc-currency-star{width:29px!important;height:29px!important}.bc-price-legend{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}.bc-price-legend .bc-currency-star{width:16px!important;height:16px!important}.btn .bc-money-price{pointer-events:none}.btn>.bc-money-price,.u9b1>.bc-money-price{margin-inline-start:.35em}.sc29 .col{min-width:92px}';document.head.appendChild(bcMixedStyle);
 if(S)bcGameRestore();
 
 /* Fixed cash packs: new invoices pin both Stars and payout; legacy cash ops keep their old formula. */
@@ -14851,6 +14952,34 @@ syncScene=function(id){if(id!=='main')return bcPlacesSync.apply(this,arguments);
 };
 window.bcPlacesTables=bgTables;
 var bcPlacesShop=shopPanel;shopPanel=function(p){bcPlacesShop.apply(this,arguments);if(window.__shopCat==='room')p.append(el('<div class="u6note">До 6 столов открываются за первые 20 уровней «Места». Расширения дают доступ к следующим уровням: 21–24 вправо и 25–28 вглубь. Новые столы и места покупаются через улучшения.</div>'));};
+if(window.BrewCrewLab)window.bcLongTableFit=function(){fitRoom();};
+/* Keep the existing catalog/SKUs intact; only group its navigation. */
+var BC_SHOP_GROUPS=[
+ {id:'furniture',name:'Мебель и интерьер',cats:['table','floor','backfloor','wall','win','bar','barf']},
+ {id:'equipment',name:'Техника',cats:['mach','grind']},
+ {id:'misc',name:'Разное',cats:['p:more','uni']}
+];
+var bcGroupedShop=shopPanel;
+shopPanel=function(p){
+ bcGroupedShop.apply(this,arguments);
+ var nav=p.querySelector('.u8cats');if(!nav)return;
+ var categories=allCats(),cat=window.__shopCat||categories[0][0],group=BC_SHOP_GROUPS.find(function(g){return g.cats.includes(cat);});
+ var entries=[],seenGroups=new Set();categories.forEach(function(c){var parent=BC_SHOP_GROUPS.find(function(g){return g.cats.includes(c[0]);});if(parent){if(!seenGroups.has(parent.id)){entries.push(parent);seenGroups.add(parent.id);}}else entries.push({id:c[0],name:c[1],cats:[c[0]]});});
+ var top=el('<nav class="u6cats bc-shop-groups" aria-label="Разделы магазина"></nav>');
+ entries.forEach(function(g){if(!categories.some(function(c){return g.cats.includes(c[0]);}))return;
+  var active=group?group.id===g.id:cat===g.id,button=el('<button type="button" class="u6cat'+(active?' on':'')+'" data-shop-group="'+g.id+'" aria-pressed="'+active+'">'+esc(g.name)+'</button>');
+  button.onclick=function(){if(active)return;window.__shopCat=g.cats.find(function(k){return categories.some(function(c){return c[0]===k;});});window.__shopSc=0;sfx('tap');renderSheet();};top.appendChild(button);
+ });nav.replaceWith(top);
+ if(group){
+  var options=group.cats.map(function(key){return categories.find(function(c){return c[0]===key;});}).filter(Boolean);
+  var label=el('<label class="bc-shop-subcategory"><span>Раздел</span><select aria-label="Категория в разделе «'+esc(group.name)+'»">'+options.map(function(c){return '<option value="'+c[0]+'"'+(c[0]===cat?' selected':'')+'>'+esc(c[0]==='p:more'?'Товары и услуги':c[1])+'</option>';}).join('')+'</select></label>');
+  label.querySelector('select').onchange=function(){window.__shopCat=this.value;window.__shopSc=0;sfx('tap');renderSheet();};top.after(label);
+ }
+ var heading=p.querySelector('.u6hero .big');if(heading)heading.textContent=group?group.name:(categories.find(function(c){return c[0]===cat;})||['','Магазин'])[1];
+ if(window.BrewCrewLongTables)window.BrewCrewLongTables.shop(p,cat);
+};
+var bcShopGroupsStyle=document.createElement('style');bcShopGroupsStyle.textContent='html body .bc-shop-groups{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;overflow:visible;margin:12px 0;padding:0}html body .bc-shop-groups>.u6cat{grid-column:span 2;min-width:0;margin:0;padding:11px 5px;font-size:12px;white-space:normal;line-height:1.2;min-height:42px}.bc-shop-subcategory{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:8px 11px;border:1px solid var(--line);border-radius:12px;background:var(--tile);color:var(--mut);font-size:12px}.bc-shop-subcategory select{flex:1;min-width:0;max-width:100%;padding:8px 4px;background:transparent;border:0;color:var(--ink);font:700 14px "Golos Text",sans-serif;min-height:36px}';document.head.appendChild(bcShopGroupsStyle);
+
 // Existing earned levels are retained. Building an expansion unlocks its stages, without granting them for free.
 var bcEconomyMetric=upgMetric;
 upgMetric=function(u,id){var html=bcEconomyMetric.apply(this,arguments);if(u.id==='tables'&&id==='main')html+='<div class="d">Уровни 1–20: 6 столов, 5 мест у передней стойки и 3 у настенной. Каждый уровень добавляет 1% терпения гостей. После расширения вправо уровни 21–22 добавляют два стола справа, 23–24 продлевают гостевую стойку. После расширения вглубь доступны уровни 25–28.</div>';return html;};
@@ -14902,6 +15031,117 @@ var bcEconomyOpsNew=newState;newState=function(){var ops=S&&S.c&&S.c.economyOps,
 var bcLegalCheckout=MODAL15.bc_checkout;
 MODAL15.bc_checkout=function(box,m,btn){bcLegalCheckout.apply(this,arguments);var p=BC_STORE[m.sku];if(p&&p.sub)box.append(el('<p class="d">Подписка: '+nf(p.stars)+' Stars каждые 30 дней, с автопродлением. Управление и отмена — в подписках Telegram.</p>'));box.append(el('<p class="d"><a href="payments.html" target="_blank" rel="noopener">Условия покупок и возвратов</a></p>'));};
 
+/* Staff appearance follows identity in the room, portraits, work and breaks. */
+var BC_STAFF_SHEET=new Image(),BC_STAFF_DRAW=null;
+var BC_STAFF_SKINS=window.BrewCrewStaffArt||{clips:{}};
+Object.assign(CM,BC_STAFF_SKINS.clips);
+BC_STAFF_SHEET.onload=function(){PORT={};structDirty=true;if(S)renderPanel();};
+BC_STAFF_SHEET.src=BC_STAFF_SKINS.src||'';
+window.bcStaffVariant=function(s){
+ if(!s||s.isYou)return null;
+ if(s.name==='Шеф Ноябрина'||s.szLeg==='2026-11')return 'noyabrina';
+ if(s.role==='Бариста'&&s.sex==='f')return 'barista_f';
+ if(s.role==='Кассир'&&s.sex==='m')return 'cashier_m';
+ if(s.role==='Кассир'&&s.sex==='f')return 'cashier_f';
+ if(s.role==='Мойщица'&&s.sex==='f')return 'washer_f';
+ if(s.role==='Официант'&&s.sex==='f')return 'waiter_f';
+ return null;
+};
+function bcSkinWalkPrefix(kind){return BC_STAFF_DRAW&&CM[BC_STAFF_DRAW+'_walk:south']?BC_STAFF_DRAW+'_walk:':kind+'_walk:';}
+function bcSkinClip(name,variant){
+ if(BC_STAFF_SKINS.clips[name])return name;
+ if(!variant||! /^(barista|cashier|waiter|washer)_/.test(name))return null;
+ var mapped=variant+'_'+name.slice(name.indexOf('_')+1);
+ return BC_STAFF_SKINS.clips[mapped]?mapped:null;
+}
+var bcIdentitySheet=sheetFor;
+sheetFor=function(e){return BC_STAFF_DRAW&&BC_STAFF_SHEET.naturalWidth?BC_STAFF_SHEET:bcIdentitySheet.apply(this,arguments);};
+var bcStaffArtBlit=blit;
+blit=function(sheet,name,idx,cx,fy,H,mirror,alpha){
+ var mapped=bcSkinClip(name,BC_STAFF_DRAW);
+ if(mapped&&BC_STAFF_SHEET.naturalWidth)return bcStaffArtBlit(BC_STAFF_SHEET,mapped,idx,cx,fy,H,mirror,alpha);
+ return bcStaffArtBlit.apply(this,arguments);
+};
+var bcIdentityDrawStaff=drawStaff;
+window.drawStaff=function(s,p,id){var before=BC_STAFF_DRAW;BC_STAFF_DRAW=bcStaffVariant(s);p._bcStaffVariant=BC_STAFF_DRAW;try{return bcIdentityDrawStaff.apply(this,arguments);}finally{BC_STAFF_DRAW=before;}};
+var bcIdentityStaffSpr=staffSpr;
+window.staffSpr=function(s){var spr=bcIdentityStaffSpr.apply(this,arguments);__sprK=s&&s.role==='Повар'&&s.sex==='f'?null:bcStaffVariant(s)||__sprK;return spr;};
+// Trim transparent padding in cards; world sprites retain their shared foot anchor.
+var bcIdentityPortURL=portURL,bcIdentityPortrait=portrait;
+portURL=function(kind){
+ var c=BC_STAFF_SKINS.clips[kind+'_idle:south'];if(!c)return bcIdentityPortURL.apply(this,arguments);
+ if(!BC_STAFF_SHEET.naturalWidth)return null;
+ var key='staff:'+kind;if(PORT[key])return PORT[key];
+ var b=c.crop||[0,0,c.w,c.h],canvas=document.createElement('canvas');canvas.width=b[2]*3;canvas.height=b[3]*3;
+ var g=canvas.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(BC_STAFF_SHEET,c.f[0][0]+b[0],c.f[0][1]+b[1],b[2],b[3],0,0,canvas.width,canvas.height);
+ return PORT[key]=canvas.toDataURL();
+};
+portrait=function(kind,h){if(!BC_STAFF_SKINS.clips[kind+'_idle:south'])return bcIdentityPortrait.apply(this,arguments);var im=document.createElement('img');im.src=portURL(kind)||'';im.style.height=h+'px';im.style.width='auto';im.style.imageRendering='pixelated';return im;};
+function bcStaffAppearanceMigrate(){
+ if(!S)return;
+ (S.staff||[]).concat(S.cands||[]).forEach(function(s){
+  if(s.name==='Шеф Ноябрина'||s.szLeg==='2026-11'){s.sex='f';s.nameGenderFixed=true;}
+ });
+}
+var bcAppearanceMigrate=migrate;
+migrate=function(){var out=bcAppearanceMigrate.apply(this,arguments);bcStaffAppearanceMigrate();return out;};
+// A small read-only view supports visual regression checks without mutating a cafe.
+window.BrewCrewStaffSkins={variant:bcStaffVariant,ready:function(){return !!BC_STAFF_SHEET.naturalWidth;},clip:function(name){return BC_STAFF_SKINS.clips[name]||null;}};
+
+/* Nikita and Filya: artwork and test-only walks, with no story or rewards yet. */
+var NK_ART=window.BrewCrewNikitaArt||{clips:{}},NK_IMAGE=new Image(),NKRUN=null;
+NK_IMAGE.onload=function(){structDirty=true;if(S)renderPanel();};NK_IMAGE.src=NK_ART.src||'';
+function nkReady(){return !!NK_IMAGE.naturalWidth;}
+function nkClip(m,walking){
+ var direction=md(m._d||'south'),dir=direction[0],mirror=direction[1],prefix=(m._kind||'nikita')+'_'+(walking?'walk:':'idle:');
+ if(!NK_ART.clips[prefix+dir])dir=dir==='north-east'?'north':dir==='south-east'?'south':dir;
+ var c=NK_ART.clips[prefix+dir]||NK_ART.clips[(m._kind||'nikita')+'_idle:'+dir]||NK_ART.clips[(m._kind||'nikita')+'_idle:south'];
+ return c?{clip:c,mirror:mirror}:null;
+}
+function nkDraw(m){
+ if(!m||!nkReady())return false;track(m);var selected=nkClip(m,m._moving),q=selected&&selected.clip;if(!q)return false;
+ var frame=m._moving?Math.floor((m._dist||0)/4.4)%q.f.length:Math.floor((performance.now()/1000+(m._ph||0))*2)%q.f.length;
+ var point=q.f[frame],sc=(m._kind==='filya'?21:64)/70*(q.k||1);ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(Math.round(m.x*2)/2,Math.round(m.y*2)/2);if(selected.mirror)ctx.scale(-1,1);
+ ctx.drawImage(NK_IMAGE,point[0],point[1],q.w,q.h,-q.ax*sc,-q.ay*sc,q.w*sc,q.h*sc);ctx.restore();return true;
+}
+function nkCanPreview(){return !!(window.BrewCrewLab&&bcAdminTest);}
+function nkStartPreview(){
+ if(!nkCanPreview()||!S||!nkReady()||NKRUN||S.active!=='main'||typeof bcVisitClose!=='undefined'&&bcVisitClose)return false;
+ closeModal();openSheet(null);fitRoom();
+ NKRUN={id:'nikita-preview',_kind:'nikita',_specialGuest:true,x:DOOR[0],y:DOOR[1],h:64,t:0,walk:false,stage:'in',stop:0,wait:0};
+ NKRUN.cat={id:'filya-preview',_kind:'filya',_specialGuest:true,isPet:true,x:DOOR[0]+19,y:DOOR[1],h:21,t:0,walk:false,stage:'in'};
+ structDirty=true;return true;
+}
+function nkTick(dt){
+ var m=NKRUN;if(!m||!S||S.active!=='main'||typeof bcVisitClose!=='undefined'&&bcVisitClose||modals.length||sheet)return;
+ dt=Math.min(.1,Math.max(0,Number(dt)||0));m.t+=dt;nkFollowCat(m,dt);
+ var route=[[RW()-28,BAR_BOT+90],[30,H-38],[RW()-28,H-38],[90,BAR_BOT+40]];
+ if(m.stage==='out'){if(!m.departed&&moveTo(m,DOOR[0]+14,DOOR[1],46,dt))m.departed=true;if(m.departed&&m.cat.x>RW()+10)NKRUN=null;return;}
+ if(m.wait>0){m.wait=Math.max(0,m.wait-dt);m.walk=false;if(!m.wait){m.stop++;if(m.stop>=route.length)m.stage='out';}return;}
+ var target=route[m.stop];if(target&&moveTo(m,target[0],target[1],44,dt)){m.stage='tour';m.walk=false;m.wait=3;}
+}
+function nkFollowCat(m,dt){
+ var cat=m.cat;if(!cat)return;cat.t+=dt;cat.stage=m.stage;if(!m.departed&&(Math.hypot(cat.x-m.x,cat.y-m.y)<18||cat.x>RW()-4&&m.x>RW()-25)){cat.walk=false;return;}var dx=m.x-(m._followX==null?m.x:m._followX),dy=m.y-(m._followY==null?m.y:m._followY),len=Math.hypot(dx,dy);m._followX=m.x;m._followY=m.y;
+ if(len>.01){m._followDir=[dx/len,dy/len];}var dir=m._followDir||[-1,0],target=m.departed?[DOOR[0]+14,DOOR[1]]:[m.x-dir[0]*17-dir[1]*7,m.y-dir[1]*17+dir[0]*7];
+ if(!m.departed&&Math.hypot(cat.x-m.x,cat.y-m.y)<21&&Math.hypot(cat.x-target[0],cat.y-target[1])<7){cat.walk=false;return;}
+ moveTo(cat,target[0],target[1],54,dt);
+}
+var nkPeople=bgPeople;bgPeople=function(e){var people=nkPeople.apply(this,arguments);if(NKRUN&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)){if(NKRUN!==e)people.push(NKRUN);if(NKRUN.cat&&NKRUN.cat!==e)people.push(NKRUN.cat);}return people;};
+function bgSpecialActors(e){return [VIPRUN,LZRUN].concat(NKRUN&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)?[NKRUN,NKRUN.cat]:[]).filter(function(p){return p&&p!==e;});}
+var nkOriginalDraw=draw;draw=function(){var value=nkOriginalDraw.apply(this,arguments);nkTick(DRAW_DT);return value;};
+var nkUpgradeProps=sceneUpgradeProps;sceneUpgradeProps=function(st,u,items,now,r){nkUpgradeProps.apply(this,arguments);if(NKRUN&&!st.outdoor&&S&&S.active==='main'&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)){var actor=NKRUN,cat=NKRUN.cat;items.push({y:actor.y,f:function(){shadow(actor.x,actor.y,9);nkDraw(actor);}});if(cat)items.push({y:cat.y,f:function(){shadow(cat.x,cat.y,5);nkDraw(cat);}});}};window.sceneUpgradeProps=sceneUpgradeProps;
+var nkRenderMore=renderMore;renderMore=function(p){
+ nkRenderMore.apply(this,arguments);if(sub!=='book')return;var grid=p.querySelector('.vip-grid');if(!grid||grid.querySelector('[data-blogger="nikita"]'))return;
+ var card=el('<button class="vip-tile met" data-blogger="nikita"><img src="img/bloggers/nikita-icon.png" alt="Никита с котом Филей"><b>Никита</b><span>Блогер · с котом Филей</span><i>Событие появится позже</i></button>');card.onclick=function(){queueModal({kind:'nikita_card'},true);};grid.appendChild(card);
+};
+MODAL15.nikita_card=function(box,m,btn){
+ box.append(el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png" alt="Никита и Филя"><div><div class="eyebrow">Особый гость · блогер</div><h2>Никита и Филя</h2><p>Никита приходит со своим вислоухим котом Филей. Филя гуляет рядом.</p><p>История их визита появится позже.</p></div></div>'));
+ if(nkCanPreview())box.append(btn('Посмотреть прогулку',function(){if(!nkStartPreview())toast(nkReady()?'Прогулка уже идёт':'Персонаж ещё загружается');},'primary'));
+ box.append(btn('Закрыть',closeModal,'ghost'));
+};
+window.nikitaDraw=nkDraw;
+window.BrewCrewNikita={geometry:function(){return {width:RW(),height:H};},ready:nkReady,startPreview:nkStartPreview,stopPreview:function(){NKRUN=null;},actor:function(){return NKRUN;},clip:function(name){return NK_ART.clips[name]||null;},stepPreview:function(dt){if(nkCanPreview())nkTick(dt);}};
+
 var bcGuestsStyle=document.createElement('style');bcGuestsStyle.textContent='.bc-guests-nav{display:flex;gap:8px;margin:0 0 16px}.bc-guests-nav button{flex:1;min-height:42px}.bc-guests-nav button[aria-selected=true]{background:#714d31!important;color:#fff4e1!important}html body .sheet #panel .bc-cafe-row{display:grid!important;grid-template-columns:42px minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;text-align:left!important;padding:12px!important;min-height:74px!important}.u6sum:empty{display:none!important}.bc-cafe-avatar{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:13px;background:#e9d4ae;color:#6b492b;font-size:22px;font-weight:800}html body .sheet #panel .bc-cafe-meta{display:block!important;min-width:0;text-align:left!important}html body .sheet #panel .bc-cafe-meta .t{overflow-wrap:anywhere;text-align:left!important;margin:0!important;font-size:15px!important}html body .sheet #panel .bc-cafe-meta .d{margin:5px 0 0!important;font-size:11px!important;text-align:left!important;line-height:1.4!important}html body .sheet #panel .bc-cafe-row>.btn{align-self:center!important;justify-self:end!important;flex:none;width:auto!important;min-height:42px;margin:0!important;padding:9px 13px}.bc-guests-body h3{margin:8px 0 10px}';document.head.appendChild(bcGuestsStyle);
 
 })();
@@ -14919,7 +15159,7 @@ function refundRetiredPetUpgrades(){
  return amount;
 }
 // Repair old staff/candidate names in place before the cafe is rendered or saved.
-var bcNameMigrate=migrate;migrate=function(){var result=bcNameMigrate.apply(this,arguments);normalizeStaffNames();refundRetiredPetUpgrades();return result;};
+var bcNameMigrate=migrate;migrate=function(){var result=bcNameMigrate.apply(this,arguments);normalizeStaffNames();normalizeGuestNames();refundRetiredPetUpgrades();return result;};
 var bcNameHire=hire;hire=function(candidate){normalizeStaffName(candidate);return bcNameHire.apply(this,arguments);};
 
 // Repair impossible unstarted sale tasks from older saves without resetting earned progress.
@@ -15088,7 +15328,7 @@ var bcBadgeView=viewSnap34;viewSnap34=function(){const d=bcBadgeView.apply(this,
 function bcBadgeSlots(){
  S.badgeList=S.badgeList||[];const ids=new Set(S.badgeList.map(b=>b.id));
  if(!Array.isArray(S.badgeSlots))S.badgeSlots=[S.badgeOn,...S.badgeList.map(b=>b.id)].filter((id,i,a)=>ids.has(id)&&a.indexOf(id)===i).slice(0,3);
- S.badgeSlots=Array.from({length:3},(_,i)=>ids.has(S.badgeSlots[i])&&S.badgeSlots.indexOf(S.badgeSlots[i])===i?S.badgeSlots[i]:null);
+ for(let i=0;i<3;i++)if(!ids.has(S.badgeSlots[i])||S.badgeSlots.indexOf(S.badgeSlots[i])!==i)S.badgeSlots[i]=null;S.badgeSlots.length=3;
  S.badgeOn=S.badgeSlots.find(Boolean)||null;return S.badgeSlots;
 }
 function bcBadgeChoose(id,slot){if(!(S.badgeList||[]).some(b=>b.id===id)||!Number.isInteger(slot)||slot<0||slot>2)return;const slots=bcBadgeSlots();for(let i=0;i<3;i++)if(slots[i]===id)slots[i]=null;slots[slot]=id;bcBadgeSlots();save();renderHud();structDirty=true;}
@@ -15098,7 +15338,7 @@ MODAL15.bc_badge=function(box,m,btn){const b=(S.badgeList||[]).find(b=>b.id===m.
  const slots=bcBadgeSlots(),at=slots.indexOf(b.id),row=el('<div class="row wrap"></div>');
  for(let i=0;i<3;i++){const old=(S.badgeList||[]).find(b=>b.id===slots[i]);row.append(btn((at===i?'Надет: ':'Место ')+(i+1),()=>{bcBadgeChoose(b.id,i);closeModal();bcBadgeOpen(b.id);},at===i?'':'ghost'));}
  box.append(el('<p class="d">Три значка висят над полкой слева. Выбери место: значок на нём будет заменён.</p>'),row);
- if(at>=0)box.append(btn('Снять значок',()=>{slots[at]=null;bcBadgeSlots();save();renderHud();closeModal();},'ghost'));
+ if(at>=0)box.append(btn('Снять значок',()=>{bcBadgeRemove(at,b.id);closeModal();},'ghost'));
  box.append(btn('Закрыть',closeModal,'ghost'));
 };
 const bcBadgeImages=new Map();function bcBadgeImage(b){if(!bcBadgeImages.has(b.id)){const im=new Image();im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(BrewCrewBadgeArt.art(b));bcBadgeImages.set(b.id,im);}return bcBadgeImages.get(b.id);}
@@ -15109,31 +15349,45 @@ var bcBadgeHud=renderHud;renderHud=function(){const r=bcBadgeHud.apply(this,argu
 var bcBadgeInv=renderInv;renderInv=function(p){bcBadgeSlots();bcBadgeInv.apply(this,arguments);const buttons=p.querySelectorAll('.badge15');buttons.forEach((button,i)=>{const b=S.badgeList[i];if(!b)return;button.classList.toggle('on',S.badgeSlots.includes(b.id));button.insertAdjacentHTML('afterbegin',BrewCrewBadgeArt.art(b));button.querySelector('i').textContent=S.badgeSlots.includes(b.id)?'Надет · место '+(S.badgeSlots.indexOf(b.id)+1):'Посмотреть и надеть';button.onclick=()=>bcBadgeOpen(b.id);});};
 (function(){const style=document.createElement('style');style.textContent='.bc-medallion{width:48px;height:48px;flex:none}.badge15 .bc-medallion{display:block;margin:0 auto 6px}.bc-badge-hit{padding:0;border:0;background:transparent;cursor:pointer}.bc-badge-hit:focus-visible{outline:2px solid #fff3b6;border-radius:50%}.bc-badge-large .bc-medallion{width:80px;height:80px}.bc-badge-modal{margin-top:auto!important;background:#fff5df!important;color:#493322!important;border-radius:24px 24px 0 0!important}.bc-badge-modal .d{color:#765c42!important}.veil:has(.bc-badge-modal){align-items:flex-end!important;padding-bottom:0!important}#hbdg{display:none!important}';document.head.append(style);})();
 
-function bcSeasonItemThumb(id){if(id==='pled')return '<img class="bc-reward-art" src="img/season-blanket.png" alt="Клетчатый плед с бахромой" width="48" height="48" style="object-fit:contain;image-rendering:pixelated">';const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.strokeStyle='#72583a';g.beginPath();g.moveTo(4,9);g.quadraticCurveTo(24,23,44,9);g.stroke();for(let i=0;i<5;i++){g.fillStyle='#ffe5a0';g.fillRect(6+i*8,12+Math.round(Math.sin(i/4*Math.PI)*5),3,4);}return '<img class="bc-reward-art" src="'+c.toDataURL()+'" alt="Тёплая гирлянда" width="48" height="48">';}
+function bcSeasonItemThumb(id){const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.strokeStyle='#72583a';g.beginPath();g.moveTo(4,9);g.quadraticCurveTo(24,23,44,9);g.stroke();for(let i=0;i<5;i++){g.fillStyle='#ffe5a0';g.fillRect(6+i*8,12+Math.round(Math.sin(i/4*Math.PI)*5),3,4);}return '<img class="bc-reward-art" src="'+c.toDataURL()+'" alt="'+'Тёплая гирлянда'+'" width="48" height="48">';}
 var bcSeasonDecorView=viewSnap34;viewSnap34=function(){const d=bcSeasonDecorView.apply(this,arguments);if(d)d.sd=decorOwned().filter(it=>['pled','garland','tree','plaque','mug30'].includes(it.id)).map(it=>it.id);return d;};
 // Milestone badges accompany the existing rewards; no cash/items/claims are replaced.
 function bcMilestoneBadge(track,n){const info=sezInfo();if(track==='f'&&[15,30,50].includes(n))return{id:'sz'+n+'_'+info.id,n:({15:'Бронза',30:'Серебро',50:'Золото'})[n]+' сезона «'+info.n+'»',d:'Дошёл до '+n+' ступени'};if(track==='p'&&n===50)return{id:'goldown_'+info.id,n:'Золотой владелец «'+info.n+'»',d:'50 ступень пропуска'};return null;}
 var bcVisibleSeason=renderSeason;renderSeason=function(p){bcVisibleSeason.apply(this,arguments);badgeTick();p.querySelectorAll('.sz-row').forEach(row=>{const n=Number(row.querySelector('b.num').textContent);for(const track of ['f','p']){const cell=row.querySelector('.sz-cell.'+track),b=bcMilestoneBadge(track,n);if(!cell)continue;
  if(b&&!cell.querySelector('.bc-season-badge')){const extra=el('<button type="button" class="bc-season-badge">'+BrewCrewBadgeArt.art(b)+'<span></span></button>');extra.querySelector('span').textContent=b.n+' · дополнительно';extra.title=b.d+' · можно надеть над полкой слева';extra.onclick=()=>{if((S.badgeList||[]).some(x=>x.id===b.id))bcBadgeOpen(b.id);else toast(b.d+' — значок появится автоматически');};cell.append(extra);}
  const rw=szReward(track,n);if(['badge','veteran'].includes(rw.k)){const id=(rw.k==='veteran'?'vet_':'owner_')+sezId(),art=cell.querySelector('.bc-reward-art');if(art){const tmp=el(BrewCrewBadgeArt.art({id}));tmp.classList.add('bc-reward-art');art.replaceWith(tmp);}}
- if(rw.k==='item'){const item=sezInfo().item,old=cell.querySelector('.bc-reward-art');if(old&&['pled','garland'].includes(item))old.replaceWith(el(bcSeasonItemThumb(item)));const hint=el('<p class="d bc-season-item-hint"></p>');hint.textContent=({pled:'Плед на стуле и огоньки на стене. Терпение +5%. Инвентарь → Применить.',garland:'Огоньки вдоль стены. Гостей +2%. Инвентарь → Применить.'}[item]||decorDef(item)?.d+' Инвентарь → Применить.');cell.append(hint);}
+ if(rw.k==='item'){const item=sezInfo().item,old=cell.querySelector('.bc-reward-art');if(old&&['pled','garland'].includes(item))old.replaceWith(el(bcSeasonItemThumb(item)));const hint=el('<p class="d bc-season-item-hint"></p>');hint.textContent=({pled:'Огоньки вдоль стены. Терпение +5%. Инвентарь → Применить.',garland:'Огоньки вдоль стены. Гостей +2%. Инвентарь → Применить.'}[item]||decorDef(item)?.d+' Инвентарь → Применить.');cell.append(hint);}
  }});};
 var bcMilestoneClaim=szClaim;szClaim=function(){const result=bcMilestoneClaim.apply(this,arguments);if(!result)badgeTick();return result;};
 function bcSeasonGarland(now){const left=8,right=OX+VW-8,y=26;ctx.save();ctx.strokeStyle='#72583a';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(left,y);for(let x=left;x<=right;x+=2)ctx.lineTo(x,y+Math.sin((x-left)/(right-left)*Math.PI)*2.5);ctx.stroke();for(let x=left+3,i=0;x<right;x+=13,i++){const yy=y+Math.sin((x-left)/(right-left)*Math.PI)*2.5;rect(x,yy,1,2,'#72583a');EL(x+.5,yy+3,1.2,1.7,Math.sin(now*1.6+i)>-.5?'#ffe5a0':'#ccac6c');}ctx.restore();}
-const bcPledImage=new Image();bcPledImage.src='img/season-blanket.png';
-function bcSeasonPled(x,y){if(bcPledImage.complete&&bcPledImage.naturalWidth){ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(bcPledImage,7,4,48,72,x-8,y-34,16,24);ctx.restore();return;}RR(x-5,y-31,11,17,1,'#a94e3d');for(let i=0;i<3;i++)rect(x-4+i*4,y-31,1.2,17,'#e0b786');for(let i=0;i<4;i++)rect(x-5,y-29+i*4,11,.9,'#e0b786');}
 
 function bcSeasonObjects(st,items,now){if(!S||S.active!=='main'||st.outdoor)return;const owned=decorOwned().filter(it=>decorDef(it.id)?.season);if(owned.some(it=>['pled','garland'].includes(it.id)))items.push({y:1,f:()=>bcSeasonGarland(now)});
- const first=TABLES[0];if(first&&owned.some(it=>it.id==='pled'))items.push({y:first.y-5,f:()=>bcSeasonPled(first.x-28,first.y)});
  // Keep earlier earned seasonal objects visible too, on their own surfaces.
  if(owned.some(it=>it.id==='tree')&&S.interior?.main!=='int_winter')items.push({y:106,f:()=>drawDecor({id:'tree'},190,105,now)});
  if(owned.some(it=>it.id==='plaque'))items.push({y:1,f:()=>drawDecor({id:'plaque'},140,64,now)});
  if(owned.some(it=>it.id==='mug30'))items.push({y:BAR_FACE+1,f:()=>drawDecor({id:'mug30'},112,BAR_TOP+6,now)});
 }
 var bcSeasonObjectProps=sceneUpgradeProps;sceneUpgradeProps=function(st,u,items,now,r){bcSeasonObjectProps.apply(this,arguments);bcSeasonObjects(st,items,now);};window.sceneUpgradeProps=sceneUpgradeProps;
-function bcPledPreview(){const image=document.createElement('img');image.className='bc-pled-preview';image.src='img/season-blanket.png';image.alt='Клетчатый плед со складками и бахромой';image.width=96;image.height=96;image.style.cssText='display:block;object-fit:contain;image-rendering:pixelated;margin:8px auto';return image;}
-var bcSeasonInv=renderInv;renderInv=function(p){bcSeasonInv.apply(this,arguments);for(const it of S.inv||[])if(it.k==='item'&&it.item==='pled'){for(const card of p.querySelectorAll('.inv-item'))if(card.querySelector('.t')?.textContent===invText(it)&&!card.querySelector('.bc-pled-preview'))card.prepend(bcPledPreview());}const owned=decorOwned().filter(it=>['pled','garland','tree','plaque','mug30'].includes(it.id));if(!owned.length)return;const card=el('<div class="card bc-season-placed"><div class="t">Сезонные предметы в зале</div></div>');for(const it of owned){if(it.id==='pled')card.append(bcPledPreview());const d=decorDef(it.id),line=document.createElement('p');line.className='d';line.textContent=d.n+' · '+({pled:'плед на левом стуле у первого столика, огоньки вдоль стены',garland:'огоньки вдоль стены',tree:'на задней стойке',plaque:'на стене за баром',mug30:'на передней стойке'}[it.id])+' · '+d.d;card.append(line);}p.append(card);};
+var bcSeasonInv=renderInv;renderInv=function(p){bcSeasonInv.apply(this,arguments);const owned=decorOwned().filter(it=>['pled','garland','tree','plaque','mug30'].includes(it.id));if(!owned.length)return;const card=el('<div class="card bc-season-placed"><div class="t">Сезонные предметы в зале</div></div>');for(const it of owned){const d=decorDef(it.id),line=document.createElement('p');line.className='d';line.textContent=d.n+' · '+({pled:'тёплые огоньки вдоль стены',garland:'огоньки вдоль стены',tree:'на задней стойке',plaque:'на стене за баром',mug30:'на передней стойке'}[it.id])+' · '+d.d;card.append(line);}p.append(card);};
 (function(){const style=document.createElement('style');style.textContent='.bc-season-badge{width:100%;background:transparent;border:0;color:inherit;text-align:left;display:flex;align-items:center;gap:6px;padding:8px 0;border-top:1px solid #d8bf8c;cursor:pointer;font-size:11px;line-height:1.4}.bc-season-badge svg{width:32px;height:32px;flex:none}.bc-season-item-hint{font-size:11px!important;line-height:1.4!important}.bc-season-placed p{line-height:1.5}';document.head.append(style);})();
+
+// Experience purchases belong to this cafe, not to its next owner/business cycle.
+var bcOwnerAutoOrdering=false,bcOwnerAutoOrder=autoOrder;
+autoOrder=function(){const was=bcOwnerAutoOrdering;bcOwnerAutoOrdering=true;try{return bcOwnerAutoOrder.apply(this,arguments);}finally{bcOwnerAutoOrdering=was;}};
+var bcOwnerPatience=focusMul;focusMul=function(k){const value=bcOwnerPatience.apply(this,arguments);return k==='patience'?value*(1+.05*perk('loyal34')):value;};
+function bcOwnerPerksMigrate(){S.perks=S.perks||{};S.c=S.c||{};const capital=Math.max(0,Math.min(10,Math.floor(Number(S.perks.capital)||0)));if(capital){let refund=0;for(let i=0;i<capital;i++)refund+=2+i*2;S.shares=(Number(S.shares)||0)+refund;S.c.capitalPerkRefund={levels:capital,points:refund,at:Date.now()};delete S.perks.capital;}S.autoOrder=false;for(const it of S.inv||[])if(it.k==='item'&&it.item==='pled'){it.t='Памятный предмет: Тёплая гирлянда ноября';it.d=decorDef('pled').d;}}
+var bcOwnerMigrate=migrate;migrate=function(){const restock=S.restock;const r=bcOwnerMigrate.apply(this,arguments);if(restock===false)S.restock=false;bcOwnerPerksMigrate();return r;};
+function buyCafePerk(id){const pk=PERKS.find(p=>p.id===id);if(!pk)return false;const L=perk(id),cost=pk.cost(L);if(L>=pk.max||!Number.isFinite(cost)||S.shares<cost)return false;S.shares-=cost;S.perks[id]=L+1;save();structDirty=true;return true;}
+function cafePerkInfo(id,L){return{supplier:'Закупки −'+(3*L)+'%. Максимум −30%. Работает при ручном и автоматическом заказе.',word:'Поток гостей +'+(3*L)+'%. Максимум +45%. Не увеличивает число доступных мест.',agency:'Шанс легендарного кандидата '+(1+.2*L).toFixed(1).replace('.',',')+'% при обновлении кандидатов. Легенда — не чаще раза в 7 игровых дней.',lawyer:'Штрафы проверок −'+(10*L)+'%. Максимум −60%. Расходы на ремонт и закупки не меняются.',autoorder:L?'Автоматические закупки дешевле на 5%. Включение и выключение — на складе.':'Скидка 5% на автоматические закупки. Обычный автодозаказ доступен бесплатно на складе.',loyal34:'Время ожидания заказа +'+(5*L)+'%. Максимум +25%. Применяется к новым гостям.',train34:'Скорость сотрудников +'+(2*L)+'%. Максимум +20%. Ставки зарплаты не меняются.'}[id]||'';}
+function renderCafePerks(p){p.append(el('<div class="h">Бонусы кофейни за опыт</div>'));const info=el('<div class="card bc-perks-info"><div class="t">Как работают бонусы</div><p class="d">Бонусы действуют только в этой кофейне, до её продажи, банкротства или нового старта.</p><p class="d">Между сменами уровни сохраняются. При продаже непотраченный опыт остаётся у владельца.</p><p class="d">Опыт для бонусов дают достижения, главы и продажа кофейни. Опыт игрового уровня не тратится.</p></div>');p.append(info);const refund=S.c.capitalPerkRefund;if(refund?.points)p.append(el('<div class="card"><div class="t">Возврат опыта: '+refund.points+'</div><div class="d">Бонус «Стартовый капитал» удалён. Потраченные на него очки возвращены в баланс опыта владельца.</div></div>'));
+ for(const pk of PERKS){const L=perk(pk.id),max=L>=pk.max,cost=pk.cost(L),card=el('<div class="card bc-cafe-perk" data-perk="'+pk.id+'"><div class="row wrap"><span class="t">'+esc(pk.n)+'</span><span class="tag">'+L+'/'+pk.max+'</span></div><p class="d" data-lite="1">'+esc(cafePerkInfo(pk.id,L))+'</p></div>');if(max)card.append(el('<span class="tag">Максимум</span>'));else{const b=el('<button class="btn" '+(S.shares<cost?'disabled':'')+'>Улучшить · '+cost+' опыта</button>');b.onclick=()=>{if(b.disabled)return;b.disabled=true;if(buyCafePerk(pk.id)){sfx('buy');renderSheet();renderHud();}else renderSheet();};card.append(b);}p.append(card);}}
+// Fetch the current slot when removing; frames must not invalidate modal actions.
+function bcBadgeRemove(slot,expected){const slots=bcBadgeSlots();if(!Number.isInteger(slot)||slot<0||slot>2||expected&&slots[slot]!==expected)return false;slots[slot]=null;bcBadgeSlots();save();renderHud();structDirty=true;return true;}
+var bcRemovableBadgesInv=renderInv;renderInv=function(p){bcRemovableBadgesInv.apply(this,arguments);const slots=bcBadgeSlots(),card=el('<div class="card bc-badge-slots"><div class="t">Значки над полкой · '+slots.filter(Boolean).length+'/3</div></div>');for(let i=0;i<3;i++){const b=S.badgeList.find(b=>b.id===slots[i]),row=el('<div class="row wrap" style="margin-top:8px"><span></span></div>');row.querySelector('span').textContent='Место '+(i+1)+': '+(b?b.n:'пусто');if(b){const remove=el('<button class="btn ghost" aria-label="Снять значок из места '+(i+1)+'">Снять '+(i+1)+'</button>');remove.onclick=()=>{bcBadgeRemove(i,b.id);renderSheet();};row.append(remove);}card.append(row);}p.prepend(card);};
+function bcTapServiceGuest(id,r,x,y){const hit=g=>!g.hidden&&x>g.x-18&&x<g.x+18&&y>g.y-g.h-3&&y<g.y+5;const head=r.queue[0];if(head&&head.state==='queue'&&hit(head)&&Math.hypot(head.x-QUEUE_X,head.y-QUEUE_Y)<3){completeOrder(id,head,true);return true;}for(const g of r.guests){if((g.state==='wait'||g.state==='toPick')&&hit(g)){const job=r.jobs.find(j=>j.g===g);if(job){job.p+=.22;tapFx(g.x,g.y-g.h-8);sfx('tap');if(job.p>=1)finishJob(id,job);return true;}}}return false;}
+function bcStaffBlocksService(r,x,y){if(x>QUEUE_X-40&&x<QUEUE_X+40&&y>QUEUE_Y-18&&y<QUEUE_Y+70)return true;return r.guests.some(g=>!g.hidden&&['queue','wait','toPick'].includes(g.state)&&Math.abs(x-g.x)<30&&y>g.y-6&&y<g.y+60);}
+function bcStaffIdleSpot(r,p){const width=Math.max(W,...TABLES.map(t=>t.x+42));const points=[];for(let y=Math.max(BAR_BOT+110,340);y<H-20;y+=36)for(const x of [width-24,40,132,224])points.push([x,y]);return points.find(([x,y])=>!bcStaffBlocksService(r,x,y)&&!TABLES.some(t=>Math.abs(x-t.x)<42&&y>t.y-30&&y<t.y+38)&&!Object.values(r.staff).some(other=>other!==p&&Math.hypot(other.x-x,other.y-y)<20))||[width-24,Math.min(H-22,342)];}
+var bcServiceStaffWalk=staffWalk;staffWalk=function(id,r,s,p,dt){if(id!=='main'||!(p.walker||s.role==='Официант'||s.role==='Мойщица'&&p.k===1)||p.job||p.goal)return bcServiceStaffWalk.apply(this,arguments);const badDestination=Number.isFinite(p.tx)&&bcStaffBlocksService(r,p.tx,p.ty),badStop=(!p.walk||s.distract)&&bcStaffBlocksService(r,p.x,p.y);if(badDestination||badStop||p._serviceIdle){const dest=p._serviceIdle||bcStaffIdleSpot(r,p);p._serviceIdle=dest;p.tx=dest[0];p.ty=dest[1];p.home=dest;if(moveTo(p,dest[0],dest[1],42*Math.min(1.6,staffSpeed(s)),dt)){p.walk=false;p.idle=4;p._serviceIdle=null;}return;}const result=bcServiceStaffWalk.apply(this,arguments);if(!p.job&&!p.goal&&bcStaffBlocksService(r,p.tx,p.ty)){const dest=bcStaffIdleSpot(r,p);p.tx=dest[0];p.ty=dest[1];}return result;};window.staffWalk=staffWalk;
 
 document.title=(window.BrewCrewLab?'Админская':'Оригинал')+' · Brew Crew';
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
@@ -15145,5 +15399,6 @@ BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){
 Promise.resolve(window.BrewCrewLab?.ready).then(function(){return BrewCrewFreeze.prepare();}).then(function(){BrewCrewLegal.run(function(){BrewCrewSaves.start();});});
 
 </script>
+<script src="long-table-lab.js"></script>
 </body>
 </html>
