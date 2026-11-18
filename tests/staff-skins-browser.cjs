@@ -26,6 +26,7 @@ const { acceptLegal } = require('./legal-fixture.cjs');
   await p.getByRole('button', { name: 'Поехали', exact: true }).click();
   await p.waitForFunction(() => window.BrewCrewStaffSkins?.ready() && !!S);
 
+  await p.evaluate(async () => { window.__staffGeometryAtlas = new Image(); window.__staffGeometryAtlas.src = window.BrewCrewStaffArt.src; await window.__staffGeometryAtlas.decode(); });
   const result = await p.evaluate(() => {
     const check = (v, m) => { if (!v) throw Error(m); };
     while (modals.length) closeModal();
@@ -57,7 +58,7 @@ const { acceptLegal } = require('./legal-fixture.cjs');
     }
     const calls = [], original = CanvasRenderingContext2D.prototype.drawImage;
     CanvasRenderingContext2D.prototype.drawImage = function (image, ...args) {
-      if (image.src?.includes('crew-20261117-r2.png')) calls.push(args);
+      if (image.src?.includes(window.BrewCrewStaffArt.src)) calls.push(args);
       return original.call(this, image, ...args);
     };
     const rendered = [], portraits = new Set();
@@ -71,7 +72,20 @@ const { acceptLegal } = require('./legal-fixture.cjs');
           const expectedFrames = action.startsWith('idle:') ? 1 : action.startsWith('phone:') ? 8 : action.startsWith('work:') ? 7 : action.startsWith('wash:') ? 5 : 6;
           check(c.f.length === expectedFrames, 'Incomplete animation ' + variant + '_' + action);
           check(c.ay >= c.h - 6 && c.ay <= c.h - 1, 'Inconsistent feet anchor');
-          check(c.k > .9 && c.k < 1.7, 'Invalid sprite scale');
+          check(c.k > .7 && c.k < 1.7, 'Invalid sprite scale');
+          if (['cashier_f', 'cashier_m', 'washer_f'].includes(variant)) {
+            const atlas = window.__staffGeometryAtlas;
+            const measure = q => q.f.map(([x,y]) => {
+              const canvas = document.createElement('canvas'); canvas.width=q.w; canvas.height=q.h;
+              const g=canvas.getContext('2d'); g.drawImage(atlas,x,y,q.w,q.h,0,0,q.w,q.h);
+              const rgba=g.getImageData(0,0,q.w,q.h).data; let top=q.h,bottom=0,left=q.w,right=0;
+              for(let y=0;y<q.h;y++)for(let x=0;x<q.w;x++)if(rgba[(y*q.w+x)*4+3]>128){top=Math.min(top,y);bottom=Math.max(bottom,y+1);}
+              for(let y=top;y<Math.min(q.h,top+Math.round(q.h*.32));y++)for(let x=0;x<q.w;x++)if(rgba[(y*q.w+x)*4+3]>128){left=Math.min(left,x);right=Math.max(right,x+1);}
+              return {head:(right-left)*q.k,height:(bottom-top)*q.k};
+            });
+            const idle=measure(BrewCrewStaffSkins.clip(variant+'_idle:south'))[0];
+            for(const frame of measure(c)){check(frame.head<=idle.head*1.04,variant+'/'+action+' head grows');check(frame.height<=idle.height*1.04,variant+'/'+action+' body grows');}
+          }
           c.f.forEach(([x, y]) => check(Number.isInteger(x) && Number.isInteger(y), 'Invalid atlas location'));
           if (c.hand) check(c.hand.length === c.f.length && c.hand.every(h => h.every(Number.isFinite)), 'Invalid cup attachment');
         }

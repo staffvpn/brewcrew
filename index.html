@@ -9,7 +9,7 @@
 <script src="save-manager.js"></script>
 <script src="cash-journal.js"></script>
 <script src="badge-art.js"></script>
-<script src="staff-skin-art.js"></script>
+<script src="staff-skin-art.js?v=20261118"></script>
 <script src="blogger-nikita-art.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -12066,7 +12066,7 @@ function drawStaffNew(e,kind,alpha){
   }
   if(kind==='cashier'&&has('till:south')&&!e._dis){
     var q0=null; try{ q0=rt(S.active).queue[0]; }catch(err){}
-    if(q0&&q0.state==='queue'&&q0.prog>0){ var c=CM['cashier_till:south']; blit(sh,'cashier_till:south',Math.floor((now+e._ph)*6)%c.f.length,x,y,H,false,alpha); return; }
+    if(q0&&q0.state==='queue'&&q0.prog>0){ var c=CM['cashier_till:south'], frame=e._bcStaffVariant==='cashier_m'?pp(c.f.length,Math.floor((now+e._ph)*4)):Math.floor((now+e._ph)*6)%c.f.length; blit(sh,'cashier_till:south',frame,x,y,H,false,alpha); return; }
   }
   blit(sh,kind+'_idle:south',Math.floor((now+e._ph)*2.4),x,y,H,false,alpha);
 }
@@ -13338,7 +13338,7 @@ function sceneTools(){ var sc=document.getElementById('scene'); if(!sc) return; 
   var n=0; try{ n=(S.incidents||[]).length; }catch(e){} var b=t.querySelector('#u9task i'); if(n){ b.hidden=false; if(b.textContent!==String(n)) b.textContent=n; } else b.hidden=true; }
 setInterval(sceneTools,500);
 /* --- листы: в «Магазине» и «Команде» нет чужих вкладок; старый магазин из настроек переехал сюда --- */
-try{ openShop=function(tab){ try{ window.__shopCat='p:'+((tab&&SHOP29_TABS.some(function(t){return t[0]===tab;}))?tab:(tab==='help'?'money':SHOP29_TABS[0][0])); }catch(e){} openSheet('hall','shop'); }; window.openShop=openShop; }catch(e){}
+try{ openShop=function(tab){ try{ window.__shopCat=tab?'p:'+((SHOP29_TABS.some(function(t){return t[0]===tab;}))?tab:(tab==='help'?'money':SHOP29_TABS[0][0])):allCats()[0][0]; window.__shopSc=0; }catch(e){} openSheet('hall','shop'); }; window.openShop=openShop; }catch(e){}
 (function(){ var r=window.renderSheet; window.renderSheet=function(){ r.apply(this,arguments);
   try{ var nav=document.querySelector('#hallnav'), solo=(sheet==='hall'&&(hallTab==='shop'||hallTab==='team'));
     Array.prototype.forEach.call(document.querySelectorAll('.sheet .sheethead .subnav'),function(n){ if(solo||sheet==='team') n.style.setProperty('display','none','important'); else n.style.removeProperty('display'); });
@@ -14858,7 +14858,7 @@ tryOn=function(cat,id,nm,price){var sku=bcStoreSku(cat,id),p=BC_STORE[sku];if(!p
 };
 var bcGameSnapshot=snapshot;snapshot=function(){var raw=bcGameSnapshot.apply(this,arguments);if(BC_GAME_PREVIEW&&BC_GAME_PREVIEW.state===S){var copy=JSON.parse(raw);copy.skin=BC_GAME_PREVIEW.skin;if(!BC_GAME_PREVIEW.owned&&copy.skinOwned)delete copy.skinOwned[BC_GAME_PREVIEW.key];return JSON.stringify(copy);}return raw;};
 var bcMixedModal=showModal;showModal=function(){var result=bcMixedModal.apply(this,arguments);if(modals[0]&&['bc_checkout','gift29'].includes(modals[0].kind))bcPolishStars(document.getElementById('modalRoot'));return result;};
-var bcMixedStyle=document.createElement('style');bcMixedStyle.textContent='.bc-money-price{display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}.bc-currency-star{display:inline-block!important;width:21px!important;height:21px!important;object-fit:contain;vertical-align:-4px;flex:none;filter:drop-shadow(0 1px 1px #9c681c22)}.bc-cash-symbol{color:var(--mut);font-size:.86em}.bc-checkout-price{font-size:25px;font-weight:800;margin:14px 0}.bc-checkout-price .bc-currency-star{width:29px!important;height:29px!important}.bc-price-legend{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}.bc-price-legend .bc-currency-star{width:16px!important;height:16px!important}.btn .bc-money-price{pointer-events:none}.sc29 .col{min-width:92px}';document.head.appendChild(bcMixedStyle);
+var bcMixedStyle=document.createElement('style');bcMixedStyle.textContent='.bc-money-price{display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}.bc-currency-star{display:inline-block!important;width:21px!important;height:21px!important;object-fit:contain;vertical-align:-4px;flex:none;filter:drop-shadow(0 1px 1px #9c681c22)}.bc-cash-symbol{color:var(--mut);font-size:.86em}.bc-checkout-price{font-size:25px;font-weight:800;margin:14px 0}.bc-checkout-price .bc-currency-star{width:29px!important;height:29px!important}.bc-price-legend{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}.bc-price-legend .bc-currency-star{width:16px!important;height:16px!important}.btn .bc-money-price{pointer-events:none}.btn>.bc-money-price,.u9b1>.bc-money-price{margin-inline-start:.35em}.sc29 .col{min-width:92px}';document.head.appendChild(bcMixedStyle);
 if(S)bcGameRestore();
 
 /* Fixed cash packs: new invoices pin both Stars and payout; legacy cash ops keep their old formula. */
