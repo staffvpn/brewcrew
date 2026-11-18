@@ -12241,11 +12241,11 @@ function backBar(u,now){
   put('barw', -8, 99, 316, 47);
   img('appl', 4, 142, 37);
   var sb=B['shelf'], s=SHELF_W/sb[2], SH=sb[3]*s;
-  var supplierShelf=window.BrewCrewSupplier&&window.BrewCrewSupplier.drawShelf(SHELF_X,SHELF_Y,SHELF_W,SH);if(!supplierShelf) put('shelf', SHELF_X, SHELF_Y, SHELF_W, SH);
+  put('shelf', SHELF_X, SHELF_Y, SHELF_W, SH);
   var pa=SHELF_Y+7*s, pb=SHELF_Y+49*s;
   var sn=(window.__shelfN!=null)?window.__shelfN:Math.max(0,Math.min(4,Math.floor((u.menu||0)/3)+1));
   var sx=[SHELF_X+5, SHELF_X+27, SHELF_X+4, SHELF_X+27], sh=[14,13,12,13];
-  for(var i=0;i<(supplierShelf?0:sn);i++) img(SHELF_GOODS[i], sx[i], i<2?pa:pb, sh[i]);
+  for(var i=0;i<sn;i++) img(SHELF_GOODS[i], sx[i], i<2?pa:pb, sh[i]);
   ctx.save(); ctx.globalAlpha=0.16; ctx.globalCompositeOperation='source-atop';
   ctx.fillStyle='#c79a5e'; ctx.fillRect(4,109,72,35); ctx.restore();
   img('tap', 15, TOP, 21);
