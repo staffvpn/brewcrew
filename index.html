@@ -1573,10 +1573,9 @@ function closeDay(){
     if(s.isYou) continue;
     if(s.notice && s.notice <= S.day){ removeStaff(s.id); S.c.quits++; HOOK.toast(s.name+' '+he(s,'отработал и ушёл','отработала и ушла')); continue; }
     if(s.promise && s.promise < S.day && s.rank < s.promiseRank){ HOOK.event('promise_broken', {sid:s.id}); s.promise = 0; continue; }
-    const stv = staffState(s); let p = (stv<30 ? 0.06 : 0.004) + (unpaid ? 0.12 : 0);
-    if(s.legendId) p *= 0.4;
-    if(!s.notice && chance(p)){
-      const why = unpaid ? 'money' : s.fatigue>75 ? 'burn' : s.mood<35 ? pick(['money','burn','conflict']) : pick(['life','odd','money','odd']);
+    const p = staffQuitRisk(s,unpaid);
+    if(!s.notice && !staffHasDecision(s) && chance(p)){
+      const why = unpaid ? 'money' : s.fatigue>75 ? 'burn' : s.mood<35 ? pick(['money','burn','conflict']) : pick(['life','poach','money','odd']);
       HOOK.event('quit', {sid:s.id, why, reason:pick(QUIT_REASONS[why])});
     }
   }
@@ -1815,7 +1814,7 @@ def('quit', {cat:'staff', t:'Заявление об уходе', x:'{s} кла�
   {t:'Подписать', fx:{fire:1, quit:1}, out:'{s} забрал вещи и ушёл.'},
   {t:'Уговорить: ставка +20%', fx:{raise:1.2, mood:25}, out:'{s} подумал и остался.', p:0.65, fail:'{s} всё равно уходит. Деньги не главное, говорит.'},
   {t:'Дать неделю отпуска', fx:{vacation:7, mood:30, fatigue:-80}, out:'{s} уехал отдыхать. Обещает вернуться.', p:0.75, fail:'Отпуск взял, но уходит всё равно.'},
-  {t:'Пообещать повышение', fx:{promise:1, mood:20}, out:'{s} поверил. Не подведи: если не повысишь за 10 дней, будет хуже.'},
+  {t:'Пообещать повышение', fx:{promise:1, mood:20}, out:'{s} поверил. Не подведи: если не повысишь за 10 дней, будет хуже.', p:.75, fail:'{s} решил уйти: обещание повышения не помогло.'},
   {t:'Пусть отработает две недели', fx:{notice:14}, out:'{s} будет работать ещё 14 дней. Вполсилы.'}]});
 def('promise_broken', {cat:'staff', t:'Обещание не выполнено', x:'{s} так и не дождался повышения и уходит со скандалом при гостях.', auto:{fire:1, chaos:5, rep:-2, moodAll:-10, complain:1}});
 def('conflict', {cat:'staff', t:'Ссора в команде', x:'{s} и {s2} орут друг на друга за стойкой. Причина: {reason}.', o:[
@@ -1826,9 +1825,9 @@ def('conflict', {cat:'staff', t:'Ссора в команде', x:'{s} и {s2} �
   {t:'Уволить обоих', fx:{fire:1, fire2:1, moodAll:-10}, out:'Тишина. Очень много тишины.'}]});
 const CONFLICT_REASONS = ['кто-то съел чужой сырник','кто моет питчеры','музыка в зале','кто убирает после смены','ревность','чаевые','один назвал другого «стажёром»','кто-то переставил кофемолку на 2 миллиметра'];
 def('poach', {cat:'staff', t:'Переманивают', x:'Конкуренты зовут к себе и обещают ставку на 40% выше. {s} пришёл посоветоваться.', o:[
-  {t:'Поднять ставку на 30%', fx:{raise:1.3, mood:15}, out:'{s} остаётся.'},
+  {t:'Поднять ставку на 30%', fx:{raise:1.3, mood:15}, out:'{s} остаётся.', p:.8, fail:'{s} уже принял предложение другой кофейни и уходит.'},
   {t:'Пожелать удачи', fx:{fire:1, rival:[0]}, out:'{s} ушёл к конкурентам.'},
-  {t:'Пообещать повышение', fx:{promise:1, mood:10}, out:'{s} остаётся, но ждёт.'}]});
+  {t:'Пообещать повышение', fx:{promise:1, mood:10}, out:'{s} остаётся, но ждёт.', p:.6, fail:'{s} не захотел ждать и перешёл к конкурентам.'}]});
 def('revenge', {cat:'staff', t:'Срыв на смене', x:'{s} не выдержал: {reason}', o:[
   {t:'Извиниться при всех', fx:{mood:20, pat:45, soul:2, rep:-1}, out:'{s} кивнул и вернулся к работе.'},
   {t:'Уволить на месте', fx:{fire:1, chaos:4, moodAll:-10, complainGrey:1}, out:'{s} ушёл, хлопнув дверью.'},
@@ -2217,7 +2216,7 @@ function advanceGameMinutes(n){
 }
 function hourly(){
   deliver();
-  kitchenTick(); rushTick(); reviewTick(); autoOrder();
+  kitchenTick(); rushTick(); reviewTick(); autoOrder(); staffRequestsTick();
   if(S.isOpen && EV.toaster && EV.toaster.cond(S) && chance(0.012) && !S.incidents.some(i=>i.id==='toaster')) HOOK.event('toaster', {});
   if(S.isOpen && dirtLevel('main') > 0.55 && chance(0.04*dirtLevel('main'))) S.pending.push({at:absNow()+RI(10,60), ev:'inspect_san'});
   if(S.delivery && S.delivery.on) deliveryRate((4.6 - S.delivery.rating)*0.02);
@@ -2406,9 +2405,22 @@ function supplier(){ return SUPPLIERS[S.supplier] || SUPPLIERS.normal; }
 /* ---------- состояние сотрудника: одна шкала вместо трёх ---------- */
 function staffState(s){ return clamp(s.mood*0.5 + (100 - s.fatigue)*0.3 + (s.pat==null?100:s.pat)*0.2, 0, 100); }
 function stateLabel(v){ return v>=80 ? 'Огонь' : v>=60 ? 'Нормально' : v>=45 ? 'Устал' : v>=30 ? 'На грани' : 'Пишет заявление'; }
+function waiterWalkSpeed(s){return 54*clamp(staffSpeed(s),.85,1.5);}
+function staffHasDecision(s){return S.incidents.some(i=>i.sid===s.id&&evDef(i)?.cat==='staff')||S.pending.some(i=>i.data?.sid===s.id&&EV[i.ev]?.cat==='staff');}
+function staffQuitRisk(s,unpaid){const condition=staffState(s);return (.004+.056*clamp((60-condition)/60,0,1)+(unpaid ? .12 : 0))*(s.legendId ? .4 : 1);}
+function staffWishKind(s){const choices=['raise','training','bonus','dayoff'];if(s.fatigue>=50||staffState(s)<60)choices.push('dayoff','dayoff','dayoff');return pick(choices);}
+function staffRequestsTick(){
+ if(!S.isOpen||S.day<3)return;const hour=Math.floor(absNow()/60);S.c=S.c||{};if(S.c.staffRequestHour===hour||S.c.staffRequestDay===S.day)return;S.c.staffRequestHour=hour;
+ if(S.incidents.length>=4)return;
+ for(const s of S.staff){if(s.isYou||s.today!=='work'||s.notice||s.wish||staffHasDecision(s))continue;
+  const tired=clamp((60-staffState(s))/60,0,1),restRisk=.002+.02*tired;
+  if(chance(restRisk)){s.wish={k:'dayoff',by:S.day+3};S.c.staffRequestDay=S.day;HOOK.toast(s.name+' просит выходной. Открой карточку сотрудника.');HOOK.struct();return;}
+  const rivals=S.rivals.filter(r=>r.status==='open');if((s.shifts||0)>=3&&rivals.length&&chance(.0015*(s.legendId ? .4 : 1))){S.c.staffRequestDay=S.day;HOOK.event('poach',{sid:s.id,rid:pick(rivals).id});return;}
+ }
+}
 function staffDayCheck(){
   for(const s of S.staff){
-    if(s.isYou || s.notice) continue;
+    if(s.isYou || s.notice || staffHasDecision(s)) continue;
     const v = staffState(s);
     s.lowDays = v < 32 ? (s.lowDays||0) + 1 : 0;
     if(s.lowDays >= 2 && !S.incidents.some(i=>i.id==='want_quit' && i.sid===s.id) && chance(0.6)){ s.lowDays = 0; HOOK.event('want_quit', {sid:s.id}); }
@@ -2466,17 +2478,17 @@ const WISHES = {
   raise:{t:'Хочет прибавку 10%', d:'Говорит, что в сети через дорогу платят больше.'},
   dayoff:{t:'Хочет внеплановый выходной', d:'«У меня дела». Какие — не говорит.'},
   training:{t:'Хочет на курсы', d:'Насмотрелся видео про латте-арт.'},
-  bonus:{t:'Хочет премию за запару', d:'Считает, что вчера вытащил смену на себе.'},
-  respect:{t:'Хочет, чтобы его выслушали', d:'Накопилось. Нужно пять минут разговора.'}
+  bonus:{t:'Хочет премию за запару', d:'Считает, что вчера вытащил смену на себе.'}
 };
 function wishTick(){
-  for(const s of S.staff){ if(s.isYou) continue;
+  for(const s of S.staff){ if(s.isYou || s.notice) continue;
+    if(s.wish?.k==='respect')s.wish=null;
     if(s.wish && s.wish.by < S.day){ s.mood = clamp(s.mood-20,0,100); s.pat = clamp((s.pat||100)-20,0,100); HOOK.toast(s.name+(s.sex==='f'?' обиделась: ':' обиделся: ')+wishOf(s).t.toLowerCase().replace('хочет', s.sex==='f'?'хотела':'хотел')+', а ты не заметил'); s.wish = null; }
-    else if(!s.wish && chance(0.18)){ s.wish = {k:pick(Object.keys(WISHES)), by:S.day+3}; HOOK.struct(); } }
+    else if(!s.wish && !staffHasDecision(s) && chance(.18+Math.max(0,60-staffState(s))*.002)){ s.wish = {k:staffWishKind(s), by:S.day+3}; HOOK.struct(); } }
 }
 function wishCost(s){ const k = s.wish && s.wish.k; return k==='raise' ? 0 : k==='bonus' ? Math.round(shiftPay(s)/100)*100 : k==='training' ? trainCost(s) : 0; }
 function fulfillWish(s){
-  if(!s.wish) return null; const k = s.wish.k, c = wishCost(s);
+  if(!s.wish || !WISHES[s.wish.k]){s.wish=null;return null;} const k = s.wish.k, c = wishCost(s);
   if(S.money < c) return 'Не хватает денег';
   if(k==='raise'){ s.rateMul = (s.rateMul||1)*1.1; }
   if(k==='dayoff'){ s.vacation = S.day+1; s.fatigue = clamp(s.fatigue-40,0,100); }
@@ -2652,15 +2664,15 @@ const FAULTS = {
 function addFault(s, k){ if(!s || s.isYou || !FAULTS[k]) return; s.fault = {k, at:absNow(), day:S.day}; s.faults = (s.faults||0) + 1; HOOK.struct(); }
 function freshFault(s){ return s && s.fault && absNow() - s.fault.at < 240 ? s.fault : null; }
 function faultBlock(s, kind){ return s.disc && s.disc[kind] && s.disc[kind] >= S.day ? 0.35 : 1; }
-// mode: hit — пиздюли, talk — поговорить, fine — штраф
+// mode: hit — пиздюли, fine — штраф
 function punish(s, mode){
+  if(!['hit','fine'].includes(mode))return 'Это действие больше недоступно';
   const f = freshFault(s); const kind = f ? FAULTS[f.k].w : null; const name = s.name;
   S.c.scolded = (S.c.scolded||0) + (mode==='hit' ? 1 : 0);
   if(!f){
     if(mode==='hit'){ s.mood = clamp(s.mood-30,0,100); s.pat = clamp(s.pat-40,0,100); S.staff.filter(x=>x.room===s.room && x!==s && !x.isYou).forEach(x=>x.mood = clamp(x.mood-5,0,100)); meter('chaos', 2); S.c.unfair = (S.c.unfair||0)+1;
       if(s.quirk==='genius' || chance(0.25)){ s.away = true; s.awayUntil = absNow()+60; return name+' не понял, за что, и ушёл рыдать в подсобку. Команда тоже не поняла'; }
       return pick([name+' получил ни за что. Вся смена смотрит на тебя как на мудака', 'Пиздюли без повода. '+name+' молча моет питчер и пишет в чат «ищу работу»', name+': «А чё я-то?» Коллеги делают вид, что не слышали']); }
-    if(mode==='talk'){ s.mood = clamp(s.mood+4,0,100); return 'Поговорили по душам. Ни о чём, но приятно'; }
     return 'Штрафовать не за что. Бухгалтер покрутил пальцем у виска';
   }
   s.fault = null;
@@ -2672,7 +2684,6 @@ function punish(s, mode){
     if(s.quirk==='bore' || s.quirk==='philo') return name+' прочитал лекцию о токсичном менеджменте. Но понял';
     return pick(['«'+FAULTS[f.k].t+'» — разобрали по косточкам. '+name+' краснеет и пашет как проклятый', name+' получил по заслугам. Три дня будет как шёлковый', 'Отчитал при всех. '+name+' всё понял, остальные тоже']);
   }
-  if(mode==='talk'){ s.disc[kind] = S.day + 1; s.mood = clamp(s.mood+2,0,100); meter('soul', 0.5); s.xp = (s.xp||0); return 'Поговорили спокойно. '+name+' обещал исправиться. Обещания у нас все дают'; }
   const fine = Math.round(shiftPay(s)*0.3/10)*10; income(fine); S.fin.today.wages -= fine; s.disc[kind] = S.day + 2; s.mood = clamp(s.mood-22,0,100); s.fines = (s.fines||0)+1;
   if(s.fines >= 3 && s.contract==='white' && chance(0.3)){ S.flags.complaint = 1; return 'Штраф '+fmtR(fine)+'. '+name+' пошёл в трудовую инспекцию с пачкой штрафов. Жди проверку'; }
   return 'Штраф '+fmtR(fine)+' из зарплаты. '+name+' ненавидит тебя ровно на эту сумму';
@@ -4398,9 +4409,9 @@ def('l_stamp', {cat:'normal', cond:S=>!!S.loyalty, t:'Поддельный шт�
 /* ================= v7: события команды и ещё пачка историй ================= */
 const QUIT_LATER = (inc, why) => { S.pending.push({at:absNow()+RI(60,240), ev:'quit', data:{sid:inc.sid, why:'burn', reason:why}}); };
 def('want_quit', {cat:'staff', t:'{s} на грани', x:'{s} уже третий день молча смотрит в кофемолку. Сегодня спрашивает, где у нас бланк заявления. «Просто посмотреть».', o:[
- {t:'Поговорить по душам', fx:(S, inc)=>{ if(chance(0.6)) return {fx:{mood:30, pat:30, soul:1}, out:'Проговорили час в подсобке. {s} выдохнул и вернулся за стойку. Даже улыбнулся.'}; QUIT_LATER(inc, 'разговор по душам только всё испортил'); return {fx:{mood:5}, out:'{s} выслушал, кивнул и ушёл писать заявление. Красивым почерком.'}; }},
- {t:'Отправить в отпуск на 3 дня', fx:{vacation:3, fatigue:-70, mood:25, pat:20}, out:'{s} уехал на дачу. Обещает вернуться другим человеком. Желательно — тем же, но отдохнувшим.'},
- {t:'Поднять ставку на 15%', fx:{raise:1.15, mood:30, pat:25}, out:'{s} оживился. Деньги не главное, но приятно.'},
+ {t:'Поддержать сотрудника', fx:(S, inc)=>{ if(chance(0.6)) return {fx:{mood:30, pat:30, soul:1}, out:'Проговорили час в подсобке. {s} выдохнул и вернулся за стойку. Даже улыбнулся.'}; QUIT_LATER(inc, 'разговор по душам только всё испортил'); return {fx:{mood:5}, out:'{s} выслушал, кивнул и ушёл писать заявление. Красивым почерком.'}; }},
+ {t:'Отправить в отпуск на 3 дня', fx:{vacation:3, fatigue:-70, mood:25, pat:20}, out:'{s} уехал на дачу. Обещает вернуться другим человеком. Желательно — тем же, но отдохнувшим.', p:.85, fail:'{s} решил уйти: даже отпуск не изменил решение.'},
+ {t:'Поднять ставку на 15%', fx:{raise:1.15, mood:30, pat:25}, out:'{s} оживился. Деньги не главное, но приятно.', p:.75, fail:'{s} уходит: прибавка уже не изменит решение.'},
  {t:'Подарить абонемент в спортзал', fx:(S, inc)=>{ spend(4000,'other'); if(chance(0.4)) return {fx:{mood:35, pat:20}, out:'{s} начал ходить в зал и стал бодрее всех. Теперь всем советует протеин в раф.'}; return {fx:{mood:-10}, out:'{s} посмотрел на абонемент, как на оскорбление. «Вы считаете, что я толстый?»'}; }},
  {t:'Пусть уходит', fx:{fire:1, quit:1}, out:'{s} ушёл, оставив на стойке фартук и записку «удачи с этим всем».'}]});
 def('tip_thief', {cat:'normal', cond:S=>S.tips && S.tips.jar > 8000, t:'Банка с чаевыми полегчала', x:'Банка для чаевых вчера была полной, сегодня — наполовину. Камера показывает только руку в перчатке с рисунком котика.', o:[
@@ -5344,9 +5355,7 @@ function drawStaff(s, p, id){
   legendSkin(s, p, nowS, false);
   if(p.cup && s.role==='Бариста'){ const cx = p.x + (p.flip ? 9 : -9); RR(cx-3, p.y-34-bob, 7, 8, 1, '#f3e8d3'); rect(cx-3, p.y-34-bob, 7, 2, '#8a5a3a'); }
   const hy = p.y - 62;
-  if(S.incidents.some(i=>i.sid===s.id)){ EL(p.x, hy-6, 6, 6, '#e0574a'); txt('!', p.x, hy-2.5, '800 9px sans-serif', '#fff', 'center'); }
-  else if(freshFault(s) && !s.distract){ ctx.fillStyle = '#e8a548'; ctx.beginPath(); ctx.moveTo(p.x, hy-13); ctx.lineTo(p.x+7, hy); ctx.lineTo(p.x-7, hy); ctx.closePath(); ctx.fill(); txt('!', p.x, hy-2, '800 8px sans-serif', '#1d1410', 'center'); }
-  else if(s.distract){ bubble(p.x, hy, s.distract.kind); if(s.distract.kind==='phone') glow2(p.x, p.y-42, 12, '120,190,255', 0.45); }
+  if(s.distract){ bubble(p.x, hy, s.distract.kind); if(s.distract.kind==='phone') glow2(p.x, p.y-42, 12, '120,190,255', 0.45); }
   else if(prep) progress(p.x, hy, p.prog, '#eaa33c');
   if(p.job){ const t = performance.now()/1000; for(let i=0;i<3;i++) EL(p.x-6+i*6, p.y-30-((t*14+i*5)%12), 2, 2, 'rgba(220,240,255,.8)'); }
   if(s.boostUntil > Date.now()) txt('»', p.x+12, hy+8, '800 9px "Golos Text",sans-serif', '#ffd36b');
@@ -5453,7 +5462,7 @@ function staffWalk(id, r, s, p, dt){
   if(s.role==='Мойщица') return washerWalk(id, r, s, p, dt);
   if(!p.walker){ const tg2 = s.role==='Бариста' ? baristaTarget(id, s, p) : s.role==='Кассир' ? p.home : p.home; if(s.role==='Кассир') p.flip = true; moveTo(p, tg2[0], tg2[1], 70, dt); return; }
   const legend3 = s.legendId===1 ? 3 : 1;
-  const speed = 34 * (s.role==='Мойщица' ? 1.2 : 1) * Math.min(1.6, staffSpeed(s));
+  const speed = s.role==='Официант' ? waiterWalkSpeed(s) : 34 * (s.role==='Мойщица' ? 1.2 : 1) * Math.min(1.6, staffSpeed(s));
   if(s.distract){ p.walk = false; return; }
   // работа на месте
   if(p.job){ p.job.t -= dt * staffSpeed(s) * legend3 * (p.job.kind==='dish'?1:1+0.5*(room(id).upg.clean||0)); p.walk = false;
@@ -7114,7 +7123,7 @@ function staffModal(box, m, btn){
     <h2>${esc(s.name)}</h2><div class="row wrap"><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl} из ${RANK_CAP[s.rank]}</span>${s.legendId?'<span class="tag gold">Легенда</span>':''}${s.quirk!=='none'?`<span class="tag">${qN(s)}</span>`:''}<span class="tag ${cls}">${txt}</span></div>
     <div class="d">Скорость ×${staffSpeed(s).toFixed(2).replace('.',',')} · смен ${s.shifts} · прогулов ${s.absences} · ${s.contract==='grey'?'в серую':he(s,'оформлен','оформлена')} · ${fmt(shiftPay(s))} ₽ за смену</div></div></div>`));
   { const v = staffState(s); box.append(el(`<div class="mood">Состояние ${bar(v, moodCol(v))}<span class="st ${v<45?'bad':''}">${stateLabel(v)}</span></div>`), el(`<div class="d">${s.fatigue>70?'Сильно '+he(s,'устал','устала')+'. ':''}${s.mood<40?'Настроение плохое. ':''}${(s.pat||100)<40?'Терпение на исходе. ':''}${v<32?'Если так пойдёт дальше — напишет заявление.':v>=80?'Работает с удовольствием, быстрее обычного.':''}</div>`)); }
-  if(s.wish&&WISHES[s.wish.k]){ const w = wishOf(s), c = wishCost(s); const wb = el(`<div class="wish"><b>${esc(w.t)}</b><span>${esc(w.d)} Осталось ${Math.max(0, s.wish.by - S.day)} дн.</span><button class="btn">${s.wish.k==='raise'?'Поднять ставку на 10%':s.wish.k==='dayoff'?'Дать выходной завтра':s.wish.k==='training'?'Записать на курсы: '+fmt(c)+' ₽':s.wish.k==='bonus'?'Выдать премию: '+fmt(c)+' ₽':'Поговорить пять минут'}</button></div>`); wb.querySelector('button').onclick = () => { const r = fulfillWish(s); if(r) toast(r); sfx('buy'); save(); $('#modalRoot').innerHTML=''; showModal(); }; box.appendChild(wb); }
+  if(s.wish&&WISHES[s.wish.k]){ const w = wishOf(s), c = wishCost(s); const wb = el(`<div class="wish"><b>${esc(w.t)}</b><span>${esc(w.d)} Осталось ${Math.max(0, s.wish.by - S.day)} дн.</span><button class="btn">${s.wish.k==='raise'?'Поднять ставку на 10%':s.wish.k==='dayoff'?'Дать выходной завтра':s.wish.k==='training'?'Записать на курсы: '+fmt(c)+' ₽':'Выдать премию: '+fmt(c)+' ₽'}</button></div>`); wb.querySelector('button').onclick = () => { const r = fulfillWish(s); if(r) toast(r); sfx('buy'); save(); $('#modalRoot').innerHTML=''; showModal(); }; box.appendChild(wb); }
   if(s.legendId&&LEGENDS[s.legendId-1]) box.appendChild(el(`<div class="d" style="color:#e9c46a">${esc(LEGENDS[s.legendId-1].legend)}</div>`));
   if(s.quirk!=='none'&&QUIRKS[s.quirk]) box.appendChild(el(`<div class="d">${esc(QUIRKS[s.quirk].d)}</div>`));
   if(s.promise) box.appendChild(el(`<div class="d" style="color:var(--bad)">Ты обещал повышение до ${s.promise} дня.</div>`));
@@ -7129,7 +7138,6 @@ function staffModal(box, m, btn){
     act('Подогнать','Быстрее на минуту, настроение −10', ()=>{ s.distract = null; s.boostUntil = now+60000; s.boostMul = 1.5; s.mood = clamp(s.mood-10,0,100); s.pat = clamp(s.pat-15,0,100); checkPatience(s); }, 'ghost');
     const ff = freshFault(s);
     if(ff){ act('Дать пиздюлей', 'За дело: «'+FAULTS[ff.k].t.toLowerCase()+'». Три дня как '+he(s,'шёлковый','шёлковая'), ()=>{ toast(punish(s,'hit')); s.distract = null; checkPatience(s); }, 'red');
-      act('Поговорить', 'Мягко. Поможет на день', ()=>{ toast(punish(s,'talk')); s.distract = null; }, 'ghost');
       act('Штраф '+fmt(Math.round(shiftPay(s)*0.3/10)*10)+' ₽', 'Из зарплаты. Часто — жди трудовую', ()=>{ toast(punish(s,'fine')); s.distract = null; }, 'ghost'); }
     else act('Дать пиздюлей просто так', 'Без повода: обидится вся смена', ()=>{ toast(punish(s,'hit')); s.distract = null; checkPatience(s); }, 'red ghost');
     act('На перерыв','30 секунд отдыха, настроение +25', ()=>{ s.distract = null; s.breakUntil = now+30000; s.mood = clamp(s.mood+25,0,100); s.pat = clamp(s.pat+25,0,100); s.fatigue = clamp(s.fatigue-8,0,100); }, 'ghost', s.breakUntil>now);
@@ -12378,12 +12386,12 @@ function fixMess(r){ if(!r||!r.mess) return; var tabs=[]; for(var k in VIS_DBG) 
     var t=tabs[Math.floor(Math.random()*tabs.length)], sd=Math.random()<0.5?-1:1;
     m.x=t.x+sd*(30+Math.random()*8); m.y=t.y+14+Math.random()*10; } }
 /* официант не стоит над душой: ждёт у прохода */
-var WPTS=[[128,264],[204,268],[150,340],[40,340],[214,340],[120,412]];
+var WPTS=[[26,312],[26,374],[26,436],[134,320],[134,382],[134,444]];
 if(typeof staffWalk!=='undefined'){ var _sw0=staffWalk; window.staffWalk=function(id,r,s,p,dt){
   var res=_sw0(id,r,s,p,dt);
   if(s.role==='Официант'&&!p.job&&!p.goal&&id!=='hall2'&&p.tx!=null){ var bad=false;
     for(var k in VIS_DBG){ var t=VIS_DBG[k]; if(Math.abs(p.tx-t.x)<46&&p.ty-t.y>-30&&p.ty-t.y<40){ bad=true; break; } }
-    if(bad||p.tx<30){ var w=WPTS[Math.floor(Math.random()*WPTS.length)]; p.tx=w[0]+Math.random()*10-5; p.ty=Math.min(H-20,w[1]); p.idle=3+Math.random()*5; } }
+    if(bad||p.tx<20){ var choices=WPTS.filter(function(w){return w[1]<H-20&&!Object.values(VIS_DBG).some(function(t){return Math.abs(w[0]-t.x)<46&&w[1]-t.y>-30&&w[1]-t.y<40;});});if(choices.length){var w=choices[Math.floor(Math.random()*choices.length)];p.tx=w[0];p.ty=w[1];p.idle=3+Math.random()*5;} } }
   return res; }; }
 /* настенные часы (идут по игровому времени) и картины */
 function wallDecor(now){
@@ -15552,8 +15560,10 @@ var bcRemovableBadgesInv=renderInv;renderInv=function(p){bcRemovableBadgesInv.ap
 function bcTapServiceGuest(id,r,x,y){const hit=g=>!g.hidden&&x>g.x-18&&x<g.x+18&&y>g.y-g.h-3&&y<g.y+5;const head=r.queue[0];if(head&&head.state==='queue'&&hit(head)&&Math.hypot(head.x-QUEUE_X,head.y-QUEUE_Y)<3){completeOrder(id,head,true);return true;}for(const g of r.guests){if((g.state==='wait'||g.state==='toPick')&&hit(g)){const job=r.jobs.find(j=>j.g===g);if(job){job.p+=.22;tapFx(g.x,g.y-g.h-8);sfx('tap');if(job.p>=1)finishJob(id,job);return true;}}}return false;}
 function bcStaffBlocksService(r,x,y){if(x>QUEUE_X-40&&x<QUEUE_X+40&&y>QUEUE_Y-18&&y<QUEUE_Y+70)return true;return r.guests.some(g=>!g.hidden&&['queue','wait','toPick'].includes(g.state)&&Math.abs(x-g.x)<30&&y>g.y-6&&y<g.y+60);}
 function bcStaffIdleSpot(r,p){const width=Math.max(W,...TABLES.map(t=>t.x+42));const points=[];for(let y=Math.max(BAR_BOT+110,340);y<H-20;y+=36)for(const x of [width-24,40,132,224])points.push([x,y]);return points.find(([x,y])=>!bcStaffBlocksService(r,x,y)&&!TABLES.some(t=>Math.abs(x-t.x)<42&&y>t.y-30&&y<t.y+38)&&!Object.values(r.staff).some(other=>other!==p&&Math.hypot(other.x-x,other.y-y)<20))||[width-24,Math.min(H-22,342)];}
-var bcServiceStaffWalk=staffWalk;staffWalk=function(id,r,s,p,dt){if(id!=='main'||!(p.walker||s.role==='Официант'||s.role==='Мойщица'&&p.k===1)||p.job||p.goal)return bcServiceStaffWalk.apply(this,arguments);const badDestination=Number.isFinite(p.tx)&&bcStaffBlocksService(r,p.tx,p.ty),badStop=(!p.walk||s.distract)&&bcStaffBlocksService(r,p.x,p.y);if(badDestination||badStop||p._serviceIdle){const dest=p._serviceIdle||bcStaffIdleSpot(r,p);p._serviceIdle=dest;p.tx=dest[0];p.ty=dest[1];p.home=dest;if(moveTo(p,dest[0],dest[1],42*Math.min(1.6,staffSpeed(s)),dt)){p.walk=false;p.idle=4;p._serviceIdle=null;}return;}const result=bcServiceStaffWalk.apply(this,arguments);if(!p.job&&!p.goal&&bcStaffBlocksService(r,p.tx,p.ty)){const dest=bcStaffIdleSpot(r,p);p.tx=dest[0];p.ty=dest[1];}return result;};window.staffWalk=staffWalk;
+var bcServiceStaffWalk=staffWalk;staffWalk=function(id,r,s,p,dt){if(id!=='main'||!(p.walker||s.role==='Официант'||s.role==='Мойщица'&&p.k===1)||p.job||p.goal)return bcServiceStaffWalk.apply(this,arguments);const badDestination=Number.isFinite(p.tx)&&bcStaffBlocksService(r,p.tx,p.ty),badStop=(!p.walk||s.distract)&&bcStaffBlocksService(r,p.x,p.y);if(badDestination||badStop||p._serviceIdle){const dest=p._serviceIdle||bcStaffIdleSpot(r,p);p._serviceIdle=dest;p.tx=dest[0];p.ty=dest[1];p.home=dest;if(moveTo(p,dest[0],dest[1],s.role==='Официант'?waiterWalkSpeed(s):42*Math.min(1.6,staffSpeed(s)),dt)){p.walk=false;p.idle=4;p._serviceIdle=null;}return;}const result=bcServiceStaffWalk.apply(this,arguments);if(!p.job&&!p.goal&&bcStaffBlocksService(r,p.tx,p.ty)){const dest=bcStaffIdleSpot(r,p);p.tx=dest[0];p.ty=dest[1];}return result;};window.staffWalk=staffWalk;
 
+// Retired talk requests must not penalize employees from an existing save.
+var bcStaffTalkMigrate=migrate;migrate=function(){const result=bcStaffTalkMigrate.apply(this,arguments);for(const s of S.staff||[])if(s.wish?.k==='respect')s.wish=null;return result;};
 // Administrator-issued supplier openings belong to the account across cafe sales.
 var bcSupplierCreditNew=newState;newState=function(){var credits=S&&S.c&&S.c.supplierTickets,next=bcSupplierCreditNew.apply(this,arguments);if(credits)next.c.supplierTickets={...credits};return next;};
 document.title=(window.BrewCrewLab?'Админская':'Оригинал')+' · Brew Crew';
@@ -15567,8 +15577,9 @@ Promise.resolve(window.BrewCrewLab?.ready).then(function(){return BrewCrewFreeze
 
 </script>
 <script src="long-table-lab.js"></script>
-<link rel="stylesheet" href="cafe-ui.css?v=1">
-<script src="cafe-ui.js?v=1"></script>
+<link rel="stylesheet" href="cafe-ui.css?v=2">
+<script src="cafe-ui.js?v=2"></script>
+<script src="panel-scroll.js?v=1"></script>
 <link rel="stylesheet" href="invitations-polish.css?v=1">
 <script src="invitations-polish.js?v=1"></script>
 <script src="expanded-queue.js?v=1"></script>
