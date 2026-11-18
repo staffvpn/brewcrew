@@ -83,6 +83,6 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (waitUntil) { waitUntil(dispatchReminders(env)); waitUntil(channelTick(env, origin)); waitUntil(winbackTick(env).catch(() => {})); } else await dispatchReminders(env);
   const me = await env.DB.prepare('SELECT banned FROM players WHERE tg_id = ?1').bind(user.id).first();
   let ops = [];
-  try { ops = await opsFor(env, user.id, s.adminProtocol===1); } catch {}
+  try { ops = await opsFor(env, user.id, Math.max(0,Number(s.adminProtocol)||0)); } catch {}
   return json({ ok: true, banned: Boolean(me && me.banned), ops, goal, world });
 }

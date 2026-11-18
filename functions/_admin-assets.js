@@ -5,6 +5,7 @@ export const ASSET_GROUPS={interior:'Оформление',equipment:'Обору
 const group=p=>['mach','grind','terminal','room'].includes(p.category)?'equipment':p.category?'interior':'premium';
 const hidden=/^frame_(fire|bulbs|spark|aurora|cat)$/;
 export const ADMIN_ASSETS=Object.entries(SHOP).filter(([k,p])=>!hidden.test(k)&&!p.cash&&k!=='rename').map(([id,p])=>({id,kind:'product',title:p.title,group:group(p)}));
+for(const [id,title]of [['first','Обжарка № 1'],['hall','Изумрудная гильдия'],['author','Королевский резерв']])ADMIN_ASSETS.push({id,kind:'supplier',title:'Открытия: '+title,max:1000000,group:'inventory'});
 ADMIN_ASSETS.push({id:'newbadge',kind:'badgegift',title:'Выдать новый значок',group:'badges'});
 for(const level of [10,20,30])ADMIN_ASSETS.push({id:'legend'+level,kind:'staffgift',title:'Выдать легенду '+level+' уровня',group:'staff'});
 for(const[id,title]of [['giftcash','Сертификат на 50 000 ₽'],['giftxp','Сертификат на 500 опыта'],['giftboost','Бонус: гостей +15% на сутки']])ADMIN_ASSETS.push({id,kind:'consumable',title,group:'inventory'});
@@ -16,7 +17,7 @@ for(const[id,title]of Object.entries({kitchen:'Кухня',buyout:'Собств�
 export function safeAdminSnapshot(raw){
  if(!raw||typeof raw!=='object')return null;
  const str=(x,n=80)=>typeof x==='string'?x.slice(0,n):'',number=(x,max=1e12)=>Math.max(0,Math.min(max,Number(x)||0));
- return {at:Date.now(),cash:Math.max(-1e12,Math.min(1e12,Number(raw.cash)||0)),owned:(Array.isArray(raw.owned)?raw.owned:[]).filter(k=>typeof k==='string'&&k.length<90).slice(0,220),staff:(Array.isArray(raw.staff)?raw.staff:[]).filter(x=>x&&!x.you).slice(0,80).map(x=>({id:str(String(x.id)),title:str(x.title),role:str(x.role)})),inventory:(Array.isArray(raw.inventory)?raw.inventory:[]).slice(0,150).filter(x=>x&&/^[\w-]{1,80}$/.test(String(x.id))).map(x=>({id:String(x.id),title:str(x.title)})),badges:(Array.isArray(raw.badges)?raw.badges:[]).slice(0,100).map(x=>typeof x==='string'?{id:str(x),title:str(x)}:{id:str(x?.id),title:str(x?.title)}).filter(x=>x.id&&x.title),stock:Object.fromEntries(['beans','milk','cups','syrup','tea','desserts','matcha','sandwiches','pastry','hoz','food'].map(k=>[k,number(raw.stock?.[k],100000)])),xp:number(raw.xp,1e9),sp:number(raw.sp,1e7),rep:number(raw.rep,5)};
+ return {at:Date.now(),suppliers:Object.fromEntries(['first','hall','author'].map(k=>[k,number(raw.suppliers?.[k],1000000)])),cash:Math.max(-1e12,Math.min(1e12,Number(raw.cash)||0)),owned:(Array.isArray(raw.owned)?raw.owned:[]).filter(k=>typeof k==='string'&&k.length<90).slice(0,220),staff:(Array.isArray(raw.staff)?raw.staff:[]).filter(x=>x&&!x.you).slice(0,80).map(x=>({id:str(String(x.id)),title:str(x.title),role:str(x.role)})),inventory:(Array.isArray(raw.inventory)?raw.inventory:[]).slice(0,150).filter(x=>x&&/^[\w-]{1,80}$/.test(String(x.id))).map(x=>({id:String(x.id),title:str(x.title)})),badges:(Array.isArray(raw.badges)?raw.badges:[]).slice(0,100).map(x=>typeof x==='string'?{id:str(x),title:str(x)}:{id:str(x?.id),title:str(x?.title)}).filter(x=>x.id&&x.title),stock:Object.fromEntries(['beans','milk','cups','syrup','tea','desserts','matcha','sandwiches','pastry','hoz','food'].map(k=>[k,number(raw.stock?.[k],100000)])),xp:number(raw.xp,1e9),sp:number(raw.sp,1e7),rep:number(raw.rep,5)};
 }
 export async function adminSnapshot(env,id){const r=await env.DB.prepare('SELECT val FROM cache WHERE key=?1').bind('admin_inventory_'+id).first();try{return JSON.parse(r?.val||'null');}catch{return null;}}
 export async function assetEntries(env,id,section){
@@ -31,7 +32,7 @@ export function validateAssetAction(data){
  if(!a&&!(['staff','inventory','badge'].includes(data.kind)&&data.action==='take'&&typeof data.id==='string'&&data.id.length<=80))return null;
  if(data.kind==='badgegift'&&(data.action!=='give'||typeof data.title!=='string'||data.title.trim().length<2||data.title.length>40))return null;
  if(['staffgift','consumable'].includes(data.kind)&&data.action!=='give')return null;
- if(['resource','stock','upgrade'].includes(data.kind)){const amount=Number(data.amount);if(!Number.isFinite(amount)||amount<0||amount>(a.max||1e12)||!Number.isInteger(amount)&&data.id!=='rep')return null;if(data.kind==='resource'&&data.id==='level'&&data.action!=='set')return null;if((data.id==='level'||data.id==='rep'&&data.action==='set')&&amount<1)return null;}
+ if(['resource','stock','upgrade','supplier'].includes(data.kind)){const amount=Number(data.amount);if(!Number.isFinite(amount)||amount<0||amount>(a.max||1e12)||!Number.isInteger(amount)&&data.id!=='rep')return null;if(data.kind==='resource'&&data.id==='level'&&data.action!=='set')return null;if((data.id==='level'||data.id==='rep'&&data.action==='set')&&amount<1)return null;}
  else if(data.action==='set')return null;
  return {...data,amount:Number(data.amount)||0,title:data.kind==='badgegift'?data.title.trim():a?.title||String(data.title||data.id).slice(0,120)};
 }
