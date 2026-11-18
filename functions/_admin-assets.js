@@ -2,7 +2,7 @@
 import {ADMINS,SHOP} from './_lib.js';
 import {TEST_UPGRADES} from './_test-catalog.js';
 export const ASSET_GROUPS={interior:'Оформление',equipment:'Оборудование',premium:'Пропуск и покупки',resources:'Ресурсы',staff:'Сотрудники',inventory:'Инвентарь',upgrades:'Улучшения',badges:'Значки',features:'Возможности'};
-const group=p=>['mach','grind','room'].includes(p.category)?'equipment':p.category?'interior':'premium';
+const group=p=>['mach','grind','terminal','room'].includes(p.category)?'equipment':p.category?'interior':'premium';
 const hidden=/^frame_(fire|bulbs|spark|aurora|cat)$/;
 export const ADMIN_ASSETS=Object.entries(SHOP).filter(([k,p])=>!hidden.test(k)&&!p.cash&&k!=='rename').map(([id,p])=>({id,kind:'product',title:p.title,group:group(p)}));
 ADMIN_ASSETS.push({id:'newbadge',kind:'badgegift',title:'Выдать новый значок',group:'badges'});

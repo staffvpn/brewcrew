@@ -49,3 +49,13 @@ const cashTotal=Object.values(SHOP).filter(x=>x.currency==='GAME').reduce((a,x)=
 console.log('PASS: mixed earned-cash/Stars catalogue, signed invoices, owner/currency/amount validation, payment retry idempotency, receipt restoration, authenticated cafe directory, first three and pagination, Cyrillic and literal search, private field filtering, saved-layout availability and daily respect.');
 
 assert.equal((await call(view,{vk})).liked,true,'repeat visit knows about today’s respect');const placeSnap=publicCafe({pv:2,up:{tables:1000,machine:1000}});assert.equal(placeSnap.up.tables,28);assert.equal(placeSnap.up.machine,20);assert.equal(placeSnap.pv,2);
+// The standalone kiosk is a server-priced permanent purchase, not a register level reward.
+assert.equal(SHOP.skin_terminal_self_service.currency,'XTR');assert.equal(SHOP.skin_terminal_self_service.stars,999);
+r=await call(invoice,{item:'skin_terminal_self_service',stars:1});assert(r.ok);const kioskQuote=requests.at(-1).body;assert.equal(kioskQuote.prices[0].amount,999);
+const kioskPay={invoice_payload:kioskQuote.payload,currency:'XTR',total_amount:999,telegram_payment_charge_id:'kiosk-1'};
+assert.equal(await paymentPayload(env,{...kioskPay,total_amount:1},101),null);await paid(kioskPay);await paid(kioskPay);
+assert.equal(sql.prepare("SELECT count(*) n FROM purchases WHERE charge_id='kiosk-1'").get().n,1);
+assert((await purchaseState(env,101)).skins.some(x=>x.category==='terminal'&&x.id==='self_service'));
+assert.equal((await call(invoice,{item:'skin_terminal_self_service'})).ok,false);
+assert.deepEqual(publicCafe({sk:{terminal:'self_service'},so:['terminal:self_service']}).so,['terminal:self_service']);
+console.log('PASS standalone kiosk: authoritative 999-Star invoice, wrong amount rejection, payment retry idempotency, receipt restoration and public cafe snapshot.');

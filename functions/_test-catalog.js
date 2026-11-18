@@ -193,6 +193,9 @@ export const TEST_SKINS = {
     "int_neon",
     "int_autumn",
     "int_winter"
+  ],
+  "terminal": [
+    "self_service"
   ]
 };
 export const TEST_UPGRADES = ["machine","register","menu","tables","showcase","decor","sign","clean","sink","storage","safety","ware"];
