@@ -10,7 +10,7 @@
 <script src="cash-journal.js"></script>
 <script src="badge-art.js"></script>
 <script src="staff-skin-art.js?v=20261118-r2"></script>
-<script src="blogger-nikita-art.js"></script>
+<script src="blogger-nikita-art.js?v=20261118-walk"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -15115,7 +15115,7 @@ function nkClip(m,walking){
 }
 function nkDraw(m){
  if(!m||!nkReady())return false;track(m);var selected=nkClip(m,m._moving),q=selected&&selected.clip;if(!q)return false;
- var frame=m._moving?Math.floor((m._dist||0)/4.4)%q.f.length:Math.floor((performance.now()/1000+(m._ph||0))*2)%q.f.length;
+ var frame=m._moving?Math.floor((m._dist||0)/(q.stride||4.4))%q.f.length:Math.floor((performance.now()/1000+(m._ph||0))*2)%q.f.length;
  var point=q.f[frame],sc=(m._kind==='filya'?21:64)/70*(q.k||1);ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(Math.round(m.x*2)/2,Math.round(m.y*2)/2);if(selected.mirror)ctx.scale(-1,1);
  ctx.drawImage(NK_IMAGE,point[0],point[1],q.w,q.h,-q.ax*sc,-q.ay*sc,q.w*sc,q.h*sc);ctx.restore();return true;
 }
