@@ -22,17 +22,18 @@ const { acceptLegal } = require('./legal-fixture.cjs');
   await p.getByRole('button', { name: 'Поехали', exact: true }).click();
   await p.waitForFunction(() => S && window.BrewCrewStaffSkins?.ready());
   const before=await p.evaluate(()=>{while(modals.length)closeModal();S.isOpen=false;S.hours={open:20,close:22};S.gm=600;S.money=100000000;openShop();return {money:S.money,owned:JSON.stringify(S.skinOwned),cats:['style','lux','atmosphere','floor','backfloor','wall','win','table','chair','bstool','bar','barf','mach','grind','art','sign','font','uni','room','p:frames','p:pass','p:money','p:more']};});
-  const top=p.locator('[data-shop-group]');assert.equal(await top.count(),5,'Too many main sections');
-  assert.equal(await top.first().innerText(),'Мебель и интерьер');
+  const top=p.locator('[data-shop-group]');assert.equal(await top.count(),15,'Incorrect main sections');
+  assert.equal(await top.first().innerText(),'Стиль зала');
   const seen=[],counts={};
-  for(const group of ['furniture','equipment','p:pass','p:money','misc']){
+  for(const group of await top.evaluateAll(buttons=>buttons.map(b=>b.dataset.shopGroup))){
     await p.locator('[data-shop-group="'+group+'"]').click();
     const select=p.locator('.bc-shop-subcategory select');
     if(await select.count()){
       const values=await select.locator('option').evaluateAll(options=>options.map(o=>o.value));
       if(group==='equipment')assert.deepEqual(values,['mach','grind']);
+      if(group==='furniture')assert.deepEqual(values,['table','floor','backfloor','wall','win','bar','barf']);
       for(const cat of values){await select.selectOption(cat);assert.equal(await p.evaluate(()=>window.__shopCat),cat);seen.push(cat);counts[cat]=await p.locator('#panel .u6it, #panel .sc29').count();assert(counts[cat]>0,'Empty catalog '+cat);}
-    }else{seen.push(group);assert(await p.locator('#panel .sc29').count()>0,'Empty section '+group);}
+    }else{seen.push(group);assert(await p.locator('#panel .sc29, #panel .u6it').count()>0,'Empty section '+group);}
     assert(await p.locator('#panel').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'Mobile overflow in '+group);
   }
   assert.deepEqual([...seen].sort(),before.cats.sort(),'Some categories were lost or duplicated');
@@ -54,6 +55,6 @@ const { acceptLegal } = require('./legal-fixture.cjs');
   await p.locator('[data-bc-sku="skin_mach_m_steam"]').getByRole('button',{name:'Купить',exact:true}).click();
   assert(await p.locator('#modalRoot .bc-currency-star').count()>0,'Stars checkout lost');
   await p.evaluate(()=>{while(modals.length)closeModal();openSheet(null);openShop();});
-  assert.equal(await p.locator('[data-shop-group="furniture"]').getAttribute('aria-pressed'),'true');assert.equal(await p.locator('.bc-shop-subcategory select').inputValue(),'style');
-  assert.deepEqual(errors,[]);await b.close();console.log('PASS grouped shop: five main sections, every existing category reachable and nonempty, cash buy and Stars checkout preserved, unchanged ownership during navigation, mobile layout, default first section.');
+  assert.equal(await p.locator('[data-shop-group="style"]').getAttribute('aria-pressed'),'true');assert.equal(await p.locator('.bc-shop-subcategory select').count(),0);
+  assert.deepEqual(errors,[]);await b.close();console.log('PASS grouped shop: exact seven furniture categories, separate styles/chairs/decor/frames/expansions, every existing category reachable and nonempty, cash buy and Stars checkout preserved, unchanged ownership during navigation, mobile layout, default first section.');
 })().catch(e=>{console.error(e);process.exit(1);});
