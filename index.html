@@ -14963,7 +14963,7 @@ var bcTerminalSkin=skinS;
 skinS=function(){var k=bcTerminalSkin.apply(this,arguments);k.terminal=hasSelfServiceTerminal()?'self_service':'none';return k;};window.skinS=skinS;
 /* Keep the existing catalog/SKUs intact; only group its navigation. */
 var BC_SHOP_GROUPS=[
- {id:'furniture',name:'Мебель и интерьер',cats:['table','floor','backfloor','wall','win','bar','barf']},
+ {id:'furniture',name:'Мебель и интерьер',cats:['table','chair','floor','backfloor','wall','win','bar','barf']},
  {id:'equipment',name:'Техника',cats:['mach','grind','terminal']},
  {id:'misc',name:'Разное',cats:['p:more','uni']}
 ];
@@ -14973,21 +14973,27 @@ shopPanel=function(p){
  var nav=p.querySelector('.u8cats');if(!nav)return;
  var categories=allCats(),cat=window.__shopCat||categories[0][0],group=BC_SHOP_GROUPS.find(function(g){return g.cats.includes(cat);});
  var entries=[],seenGroups=new Set();categories.forEach(function(c){var parent=BC_SHOP_GROUPS.find(function(g){return g.cats.includes(c[0]);});if(parent){if(!seenGroups.has(parent.id)){entries.push(parent);seenGroups.add(parent.id);}}else entries.push({id:c[0],name:c[1],cats:[c[0]]});});
- var top=el('<nav class="u6cats bc-shop-groups" aria-label="Разделы магазина"></nav>');
- entries.forEach(function(g){if(!categories.some(function(c){return g.cats.includes(c[0]);}))return;
+ var top=el('<nav class="u6cats '+(group?'bc-shop-breadcrumb':'bc-shop-groups')+'" aria-label="Разделы магазина"></nav>');
+ if(group){
+  const back=el('<button type="button" class="btn ghost" data-shop-back>← Все разделы</button>');back.onclick=function(){window.__shopCat=categories.find(c=>!BC_SHOP_GROUPS.some(g=>g.cats.includes(c[0])))[0];window.__shopSc=0;sfx('tap');renderSheet();var body=document.getElementById('panel');if(body)body.scrollTop=0;};top.appendChild(back);
+ }
+ entries.filter(function(g){return !group||g.id===group.id;}).forEach(function(g){if(!categories.some(function(c){return g.cats.includes(c[0]);}))return;
   var active=group?group.id===g.id:cat===g.id,button=el('<button type="button" class="u6cat'+(active?' on':'')+'" data-shop-group="'+g.id+'" aria-pressed="'+active+'">'+esc(g.name)+'</button>');
-  button.onclick=function(){if(active)return;window.__shopCat=g.cats.find(function(k){return categories.some(function(c){return c[0]===k;});});window.__shopSc=0;sfx('tap');renderSheet();};top.appendChild(button);
+  button.onclick=function(){if(active)return;window.__shopCat=g.cats.find(function(k){return categories.some(function(c){return c[0]===k;});});window.__shopSc=top.scrollLeft;window.__shopChildScroll=window.__shopChildScroll||{};window.__shopChildScroll[g.id]=0;sfx('tap');renderSheet();var body=document.getElementById('panel');if(body)body.scrollTop=0;};top.appendChild(button);
  });nav.replaceWith(top);
+ if(!group){top.addEventListener('scroll',function(){window.__shopSc=top.scrollLeft;},{passive:true});setTimeout(function(){if(top.isConnected)top.scrollLeft=window.__shopSc||0;},0);}
  if(group){
   var options=group.cats.map(function(key){return categories.find(function(c){return c[0]===key;});}).filter(Boolean);
-  var label=el('<label class="bc-shop-subcategory"><span>Раздел</span><select aria-label="Категория в разделе «'+esc(group.name)+'»">'+options.map(function(c){return '<option value="'+c[0]+'"'+(c[0]===cat?' selected':'')+'>'+esc(c[0]==='p:more'?'Товары и услуги':c[1])+'</option>';}).join('')+'</select></label>');
-  label.querySelector('select').onchange=function(){window.__shopCat=this.value;window.__shopSc=0;sfx('tap');renderSheet();};top.after(label);
+  var children=el('<nav class="bc-shop-subcategory bc-shop-subnav" aria-label="Категории группы «'+esc(group.name)+'»"></nav>');
+  options.forEach(function(c){var b=el('<button type="button" class="u6cat'+(c[0]===cat?' on':'')+'" data-shop-cat="'+c[0]+'" aria-pressed="'+(c[0]===cat)+'">'+esc(c[0]==='p:more'?'Товары и услуги':c[1])+'</button>');b.onclick=function(){window.__shopCat=c[0];window.__shopChildScroll=window.__shopChildScroll||{};window.__shopChildScroll[group.id]=children.scrollLeft;sfx('tap');renderSheet();var body=document.getElementById('panel');if(body)body.scrollTop=0;};children.appendChild(b);});top.after(children);
+  children.addEventListener('scroll',function(){window.__shopChildScroll=window.__shopChildScroll||{};window.__shopChildScroll[group.id]=children.scrollLeft;},{passive:true});setTimeout(function(){if(children.isConnected)children.scrollLeft=window.__shopChildScroll&&window.__shopChildScroll[group.id]||0;},0);
  }
  var heading=p.querySelector('.u6hero .big');if(heading)heading.textContent=group?group.name:(categories.find(function(c){return c[0]===cat;})||['','Магазин'])[1];
+ if(group){var summary=p.querySelector('.u6hero .sub');if(summary)summary.textContent=options.length+' категорий · выбери нужную ниже';}
  if(cat==='terminal'){p.querySelectorAll('.u9try').forEach(b=>b.remove());const card=p.querySelector('.u6it');if(card&&!card.querySelector('.u8ds'))card.querySelector('.u6nm').after(el('<div class="u8ds">Сам принимает заказы и разгружает очередь. Отдельная покупка за Stars.</div>'));}
  if(window.BrewCrewLongTables)window.BrewCrewLongTables.shop(p,cat);
 };
-var bcShopGroupsStyle=document.createElement('style');bcShopGroupsStyle.textContent='html body .bc-shop-groups{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;overflow:visible;margin:12px 0;padding:0}html body .bc-shop-groups>.u6cat{grid-column:span 2;min-width:0;margin:0;padding:11px 5px;font-size:12px;white-space:normal;line-height:1.2;min-height:42px}.bc-shop-subcategory{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:8px 11px;border:1px solid var(--line);border-radius:12px;background:var(--tile);color:var(--mut);font-size:12px}.bc-shop-subcategory select{flex:1;min-width:0;max-width:100%;padding:8px 4px;background:transparent;border:0;color:var(--ink);font:700 14px "Golos Text",sans-serif;min-height:36px}';document.head.appendChild(bcShopGroupsStyle);
+var bcShopGroupsStyle=document.createElement('style');bcShopGroupsStyle.textContent='html body .bc-shop-groups{display:flex!important;flex:none;flex-wrap:nowrap;gap:6px;overflow-x:auto;margin:12px 0;padding:0;min-height:44px}html body .bc-shop-groups>.u6cat{flex:none;min-width:0;margin:0;padding:11px 13px;font-size:12px;white-space:nowrap;line-height:1.2;min-height:42px}html body .bc-shop-breadcrumb{flex:none;min-height:44px;overflow:visible;position:sticky;top:0;z-index:3;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}.bc-shop-breadcrumb>[data-shop-back]{font-size:12px;padding:10px}.bc-shop-breadcrumb>.u6cat{white-space:normal;text-align:center;max-width:55%;padding:10px;font-size:12px}.bc-shop-subnav{flex:none;display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;overscroll-behavior-x:contain;gap:6px;margin:0 0 16px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--tile)}.bc-shop-subnav>.u6cat{flex:none;min-width:0;padding:10px 13px;margin:0;white-space:nowrap;line-height:1.2;font-size:12px;min-height:40px}';document.head.appendChild(bcShopGroupsStyle);
 
 // Existing earned levels are retained. Building an expansion unlocks its stages, without granting them for free.
 var bcEconomyMetric=upgMetric;
