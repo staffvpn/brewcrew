@@ -30,6 +30,8 @@ const { acceptLegal } = require('./legal-fixture.cjs');
     window.__teamSnapshot=snapshot;const before=snapshot();openSheet('hall','team');return before;
   });
   const ids=()=>p.locator('#panel [data-staff-id]').evaluateAll(cards=>cards.map(c=>c.dataset.staffId));
+  assert.equal((await ids()).length,7,'The complete team must be visible by default');
+  await p.getByRole('button',{name:/Только на смене/}).click();
   assert.deepEqual(await ids(),['team-fixture-0','team-fixture-1']);
   await p.getByRole('button',{name:/Показать всех/}).click();
   assert.equal((await ids()).length,7,'Employees on leave, training, absent and without room must remain reachable');

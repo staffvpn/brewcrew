@@ -6650,7 +6650,12 @@ function staffStatus(s){
   if(s.today==='work' || s.today==='sub') return ['g', S.isOpen ? 'На смене' : 'Смена'];
   return ['', 'Выходной'];
 }
-let teamShowAll = false;
+let teamShowAll = true;
+function staffWishLine(s){
+  if(!s.wish)return '';
+  const wish=wishOf(s),by=Number(s.wish.by),left=Number.isFinite(by)?' · '+Math.max(0,by-S.day)+' дн.':'';
+  return '<div class="wishline">'+esc(wish.t||'Есть пожелание')+left+'</div>';
+}
 function renderTeam(p, id){
   const list = staffIn(id);
   p.appendChild(el(`<div class="h">Команда · ${esc(roomDef(id).n)}</div>`));
@@ -6664,15 +6669,22 @@ function renderTeam(p, id){
   }
   if(!crew.length) p.appendChild(el(`<div class="empty">${allCrew.length?'Сейчас на смене никого нет. Нажми «Показать всех», чтобы увидеть сотрудников на выходном, в отпуске или на обучении.':'Команды пока нет. Ниже кандидаты: начни с бариста и кассира.'}</div>`));
   crew.forEach(s=>{
+    try{
     const [cls, txt] = staffStatus(s);
     const stamp = (s.legendId || s.prize) ? '<span class="stamp gold">ЛЕГЕНДА</span>' : s.today==='absent' ? '<span class="stamp red">ПРОГУЛ</span>' : s.notice ? '<span class="stamp red">УХОДИТ</span>' : '';
     const card = el(`<button class="card staff badge-card${(s.legendId || s.prize) ? ' legend' : ''}"><div class="lanyard"></div>${stamp}<div class="spr" style="${sprStyle(staffSpr(s),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0">
       <div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl}</span>${(s.legendId || s.prize)?'<span class="tag gold">Легенда</span>':''}${s.role==='Бариста'?(s.prio==='help'?'<span class="tag">На подхвате</span>':'<span class="tag g">Основной</span>'):''}${freshFault(s)?'<span class="tag warn">Косяк</span>':''}${s.quirk!=='none'?`<span class="tag">${qN(s)}</span>`:''}${s.contract==='grey'?'<span class="tag warn">В серую</span>':''}<span class="tag ${cls}">${txt}</span></div>
-      <div class="mood">Состояние ${bar(staffState(s), moodCol(staffState(s)))}<span class="st ${staffState(s)<45?'bad':''}">${stateLabel(staffState(s))}</span></div>${s.wish?`<div class="wishline">${esc(WISHES[s.wish.k].t)} · ${Math.max(0,s.wish.by-S.day)} дн.</div>`:''}
+      <div class="mood">Состояние ${bar(staffState(s), moodCol(staffState(s)))}<span class="st ${staffState(s)<45?'bad':''}">${stateLabel(staffState(s))}</span></div>${staffWishLine(s)}
       <div class="d">${s.today==='sub'?'Подмена на сегодня · ':''}${fmt(s.today==='sub'?s.subPay:shiftPay(s))} ₽ за смену · смен ${s.shifts}</div></div></button>`);
     card.dataset.staffId = String(s.id);
     card.onclick = () => { if(s.today!=='sub') queueModal({kind:'staff', sid:s.id}, true); };
     p.appendChild(card);
+    }catch(error){
+      console.error('Employee card could not render',s.id,error);
+      const fallback=el('<button class="card staff badge-card" data-staff-id="'+esc(String(s.id))+'" data-staff-fallback><div><div class="t">'+esc(s.name||'Сотрудник')+'</div><div class="d">'+esc(s.role||'Роль не указана')+' · ур. '+esc(String(s.lvl||1))+'</div><div class="d">Не удалось открыть полную карточку. Сотрудник сохранён в команде.</div></div></button>');
+      fallback.onclick=()=>queueModal({kind:'note',title:s.name||'Сотрудник',text:'Сотрудник остаётся в сохранении. Полная карточка требует проверки данных старого сохранения.'},true);p.appendChild(fallback);
+    }
+
   });
   const left = Math.max(0, (S.candsAt||0) - Date.now()); const mm = Math.floor(left/60000), ss = Math.floor(left/1000)%60;
   p.appendChild(el(`<div class="h chalk">Кандидаты <span class="cd num" id="candcd">новые через ${mm}:${String(ss).padStart(2,'0')}</span></div>`));
@@ -7101,9 +7113,9 @@ function staffModal(box, m, btn){
     <h2>${esc(s.name)}</h2><div class="row wrap"><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl} из ${RANK_CAP[s.rank]}</span>${s.legendId?'<span class="tag gold">Легенда</span>':''}${s.quirk!=='none'?`<span class="tag">${qN(s)}</span>`:''}<span class="tag ${cls}">${txt}</span></div>
     <div class="d">Скорость ×${staffSpeed(s).toFixed(2).replace('.',',')} · смен ${s.shifts} · прогулов ${s.absences} · ${s.contract==='grey'?'в серую':he(s,'оформлен','оформлена')} · ${fmt(shiftPay(s))} ₽ за смену</div></div></div>`));
   { const v = staffState(s); box.append(el(`<div class="mood">Состояние ${bar(v, moodCol(v))}<span class="st ${v<45?'bad':''}">${stateLabel(v)}</span></div>`), el(`<div class="d">${s.fatigue>70?'Сильно '+he(s,'устал','устала')+'. ':''}${s.mood<40?'Настроение плохое. ':''}${(s.pat||100)<40?'Терпение на исходе. ':''}${v<32?'Если так пойдёт дальше — напишет заявление.':v>=80?'Работает с удовольствием, быстрее обычного.':''}</div>`)); }
-  if(s.wish){ const w = wishOf(s), c = wishCost(s); const wb = el(`<div class="wish"><b>${esc(w.t)}</b><span>${esc(w.d)} Осталось ${Math.max(0, s.wish.by - S.day)} дн.</span><button class="btn">${s.wish.k==='raise'?'Поднять ставку на 10%':s.wish.k==='dayoff'?'Дать выходной завтра':s.wish.k==='training'?'Записать на курсы: '+fmt(c)+' ₽':s.wish.k==='bonus'?'Выдать премию: '+fmt(c)+' ₽':'Поговорить пять минут'}</button></div>`); wb.querySelector('button').onclick = () => { const r = fulfillWish(s); if(r) toast(r); sfx('buy'); save(); $('#modalRoot').innerHTML=''; showModal(); }; box.appendChild(wb); }
-  if(s.legendId) box.appendChild(el(`<div class="d" style="color:#e9c46a">${esc(LEGENDS[s.legendId-1].legend)}</div>`));
-  if(s.quirk!=='none') box.appendChild(el(`<div class="d">${esc(QUIRKS[s.quirk].d)}</div>`));
+  if(s.wish&&WISHES[s.wish.k]){ const w = wishOf(s), c = wishCost(s); const wb = el(`<div class="wish"><b>${esc(w.t)}</b><span>${esc(w.d)} Осталось ${Math.max(0, s.wish.by - S.day)} дн.</span><button class="btn">${s.wish.k==='raise'?'Поднять ставку на 10%':s.wish.k==='dayoff'?'Дать выходной завтра':s.wish.k==='training'?'Записать на курсы: '+fmt(c)+' ₽':s.wish.k==='bonus'?'Выдать премию: '+fmt(c)+' ₽':'Поговорить пять минут'}</button></div>`); wb.querySelector('button').onclick = () => { const r = fulfillWish(s); if(r) toast(r); sfx('buy'); save(); $('#modalRoot').innerHTML=''; showModal(); }; box.appendChild(wb); }
+  if(s.legendId&&LEGENDS[s.legendId-1]) box.appendChild(el(`<div class="d" style="color:#e9c46a">${esc(LEGENDS[s.legendId-1].legend)}</div>`));
+  if(s.quirk!=='none'&&QUIRKS[s.quirk]) box.appendChild(el(`<div class="d">${esc(QUIRKS[s.quirk].d)}</div>`));
   if(s.promise) box.appendChild(el(`<div class="d" style="color:var(--bad)">Ты обещал повышение до ${s.promise} дня.</div>`));
   const acts = el(`<div class="acts"></div>`);
   const redraw = () => { save(); structDirty = true; renderHud(); $('#modalRoot').innerHTML=''; showModal(); };
