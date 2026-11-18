@@ -10373,35 +10373,67 @@ const BANK29_DAYS = 14;
 IN_N.loan = 'Кредит банка'; OUT_N.loan = 'Возврат кредита'; NON_OP_IN.push('loan');
 const _opProfit29 = opProfit;
 opProfit = function(f){ const L = (f && f.L) || {out:{}}; return _opProfit29(f) + ((L.out && L.out.loan) || 0); };
-function bank29(){ return S.bank29 || null; }
-function bankTake(o){ if(bank29()){ toast('Сначала верни текущий кредит'); return; } if(S.level < o.lvl){ toast('Доступно с '+o.lvl+' уровня'); return; }
-  if(S.bankBan29 && S.day < S.bankBan29){ toast('Банки отказывают: испорчена кредитная история. Ещё '+(S.bankBan29 - S.day)+' дн.'); return; }
-  S.bank29 = {id:o.id, n:o.n, sum:o.sum, back:o.back, due:S.day + BANK29_DAYS, took:S.day};
-  income(o.sum, 'loan', o.n); sfx('coin'); toast(o.n+': +'+fmt(o.sum)+' ₽. Вернуть '+fmt(o.back)+' ₽ через '+BANK29_DAYS+' дней'); save(); structDirty = true; renderHud(); }
-function bankRepay(){ const b = bank29(); if(!b) return; if(S.money < b.back){ toast('Не хватает '+fmt(b.back - S.money)+' ₽'); return; }
-  bcBankPayment(b, ': возврат'); S.bank29 = null; S.c.loansPaid = (S.c.loansPaid||0) + 1; sfx('coin'); toast('Кредит закрыт. Банк улыбается'); save(); structDirty = true; renderHud(); }
-function bankDue(){ const b = bank29(); if(!b || S.day < b.due) return;
-  const had = S.money; bcBankPayment(b, ': списание долга'); S.bank29 = null;
-  if(had >= b.back){ HOOK.modal({kind:'note', title:'Кредит закрыт', text:'Банк списал '+fmt(b.back)+' ₽ точно в срок. Менеджер прислал открытку «Спасибо, что вы с нами». Открытка платная, но об этом позже.', chips:[['−'+fmt(b.back)+' ₽', false]]}); return; }
-  S.bankBan29 = S.day + 14; repAdd(-0.2); S.staff.forEach(s=>{ if(!s.isYou) s.mood = clamp((s.mood||50) - 10, 0, 100); });
-  HOOK.modal({kind:'note', title:'Пришли коллекторы', text:'Денег на возврат не хватило. Банк списал всё и увёл кассу в минус на '+fmt(Math.max(0, b.back - had))+' ₽. Двое в кожанках посидели у кассы и распугали гостей. Две недели ни один банк не даст кредит. Если касса будет в минусе 14 дней подряд, кофейня обанкротится.', chips:[['−'+fmt(b.back)+' ₽', false], ['Рейтинг −0,2', false], ['Настроение команды −10', false]]}); }
-const _closeDay29 = closeDay;
-closeDay = function(){ return _closeDay29.apply(this, arguments); };
-function bankCard(){ const b = bank29(), c = el(`<div class="card bank29"><div class="t">Банк</div></div>`);
-  if(b){ const left = Math.max(0, b.due - S.day);
-    c.appendChild(el(`<div class="d">${esc(b.n)}: взял ${fmt(b.sum)} ₽, вернуть <b>${fmt(b.back)} ₽</b>. ${left > 1 ? 'Спишут через '+left+' '+plural29(left, 'день','дня','дней')+'.' : 'Спишут сегодня после закрытия смены.'} Если денег не хватит, банк спишет всё в минус и пришлёт коллекторов.</div>`));
-    const row = el(`<div class="row"><button class="btn num" ${S.money >= b.back ? '' : 'disabled'}>Вернуть ${fmt(b.back)} ₽</button></div>`); row.querySelector('button').onclick = bankRepay; c.appendChild(row);
-    if(!b.rs && b.back > b.sum*1.25){ const nb = Math.round(b.sum*1.25/1000)*1000;
-      const rr = el(`<div class="row"><button class="btn ghost num">Реструктуризация: ${fmt(nb)} ₽ на 21 день</button></div>`);
-      rr.querySelector('button').onclick = () => { const cur = bank29(); if(!cur || cur.rs) return; cur.back = Math.min(cur.back, nb); cur.due = S.day + 21; cur.rs = 1; repAdd(-0.1); sfx('coin'); toast('Банк пошёл навстречу: вернуть '+fmt(cur.back)+' ₽ за 21 день'); save(); structDirty = true; renderHud(); try{ renderSheet(); }catch(e){} };
-      c.appendChild(rr); c.appendChild(el(`<div class="d">Один раз на кредит: сумма долга снижается до 125% от займа, срок 21 день, рейтинг −0,1.</div>`)); }
-    return c; }
-  c.appendChild(el(`<div class="d">Деньги сразу, вернуть примерно в полтора-два раза больше через ${BANK29_DAYS} дней. Один кредит за раз. Не вернёшь — коллекторы, касса в минусе и две недели без кредитов.</div>`));
-  if(S.bankBan29 && S.day < S.bankBan29) c.appendChild(el(`<div class="d" style="color:var(--bad)">Банки отказывают ещё ${S.bankBan29 - S.day} ${plural29(S.bankBan29 - S.day, 'день','дня','дней')}.</div>`));
-  BANK29.forEach(o=>{ const lock = S.level < o.lvl;
-    const r = el(`<div class="bk29r"><div><b>${esc(o.n)}</b><span>${lock ? 'с '+o.lvl+' уровня' : 'вернуть '+fmt(o.back)+' ₽ через '+BANK29_DAYS+' дн.'}</span></div><button class="btn num" ${lock?'disabled':''}>+${fmt(o.sum)} ₽</button></div>`);
-    r.querySelector('button').onclick = () => bankTake(o); c.appendChild(r); });
-  return c; }
+function bank29(){
+ const b=S&&S.bank29;if(!b||typeof b!=='object')return b||null;
+ for(const k of ['sum','back','took','due'])if(typeof b[k]==='string'&&b[k].trim()&&Number.isFinite(Number(b[k])))b[k]=Number(b[k]);
+ return b;
+}
+function bankValid(b){return !!b&&Number.isFinite(b.sum)&&b.sum>0&&Number.isFinite(b.back)&&b.back>0;}
+function bankRefresh(persist){if(persist!==false)save();structDirty=true;renderHud();if(persist!==false&&sheet==='hall'&&hallTab==='money')renderPanel();}
+function bankTake(offer){
+ const o=BANK29.find(x=>x.id===(typeof offer==='string'?offer:offer&&offer.id));if(!o)return false;
+ if(bank29()){toast('Сначала верни текущий кредит');return false;}
+ if(S.level<o.lvl){toast('Доступно с '+o.lvl+' уровня');return false;}
+ if(S.bankBan29&&S.day<S.bankBan29){toast('Банки отказывают: испорчена кредитная история. Ещё '+(S.bankBan29-S.day)+' дн.');return false;}
+ S.bank29={id:o.id,n:o.n,sum:o.sum,back:o.back,due:S.day+BANK29_DAYS,took:S.day};
+ income(o.sum,'loan',o.n);sfx('coin');toast(o.n+': +'+fmt(o.sum)+' ₽. К возврату '+fmt(o.back)+' ₽. Можно погасить досрочно');bankRefresh();return true;
+}
+function bankRepay(expected){
+ const b=bank29();if(!b||expected&&expected!==b)return false;
+ if(!bankValid(b)){toast('Не удалось определить сумму кредита. Деньги не списаны');return false;}
+ if(S.money<b.back){toast('Не хватает '+fmt(b.back-S.money)+' ₽');return false;}
+ bcBankPayment(b,Number.isInteger(b.due)&&S.day<b.due?': досрочное погашение':': погашение кредита');S.bank29=null;S.c.loansPaid=(S.c.loansPaid||0)+1;
+ sfx('coin');toast('Кредит полностью погашен');bankRefresh();return true;
+}
+function bankRestructure(expected){
+ const b=bank29();if(!b||expected&&expected!==b||!bankValid(b)||b.rs)return false;
+ const amount=Math.round(b.sum*1.25/1000)*1000;if(!Number.isFinite(amount)||amount<=0||b.back<=amount)return false;
+ b.back=amount;b.due=S.day+21;b.rs=1;repAdd(-.1);sfx('coin');toast('Банк пошёл навстречу: вернуть '+fmt(b.back)+' ₽ за 21 день');bankRefresh();return true;
+}
+function bankDue(){
+ const b=bank29();if(!bankValid(b)||!Number.isInteger(b.due)||b.due<1||S.day<b.due)return false;
+ const had=S.money;bcBankPayment(b,': автопогашение в срок');S.bank29=null;
+ if(had>=b.back){
+  S.c.loansPaid=(S.c.loansPaid||0)+1;bankRefresh(false);
+  HOOK.modal({kind:'note',title:'Кредит закрыт',text:'Банк списал '+fmt(b.back)+' ₽ в срок. Кредит полностью погашен.',chips:[['−'+fmt(b.back)+' ₽',false]]});return true;
+ }
+ S.bankBan29=S.day+14;repAdd(-.2);S.staff.forEach(s=>{if(!s.isYou){const mood=s.mood==null?50:Number(s.mood);s.mood=clamp((Number.isFinite(mood)?mood:50)-10,0,100);}});bankRefresh(false);
+ HOOK.modal({kind:'note',title:'Пришли коллекторы',text:'Денег на возврат не хватило. Банк списал '+fmt(b.back)+' ₽ и увёл кассу в минус. После списания в кассе '+fmt(S.money)+' ₽. Две недели банки не дадут новый кредит. Если касса будет в минусе 14 дней подряд, кофейня обанкротится.',chips:[['−'+fmt(b.back)+' ₽',false],['Рейтинг −0,2',false],['Настроение команды −10',false]]});return true;
+}
+const _closeDay29=closeDay;closeDay=function(){return _closeDay29.apply(this,arguments);};
+function bankCard(){
+ const b=bank29(),card=el('<div class="card bank29"><div class="t">Банк</div></div>');
+ if(b){
+  if(!bankValid(b)){card.appendChild(el('<div class="d" data-lite="1">Не удалось прочитать условия кредита. Деньги не списываются. Обратись в поддержку для проверки договора.</div>'));return card;}
+  const validDue=Number.isInteger(b.due)&&b.due>=1,left=validDue?Math.max(0,b.due-S.day):null,principal=Math.min(b.back,b.sum),interest=b.back-principal;
+  const deadline=left===null?'Дата возврата не указана. Кредит можно погасить сейчас.':left>0?'До срока '+left+' '+plural29(left,'игровой день','игровых дня','игровых дней')+' · день '+b.due+'.':'Срок наступил. Автосписание — при закрытии смены.';
+  card.appendChild(el('<div class="d" data-lite="1"><b>'+esc(b.n||'Кредит')+'</b><br>Получено: '+fmt(b.sum)+' ₽. К возврату: <b>'+fmt(b.back)+' ₽</b>, из них основной долг '+fmt(principal)+' ₽ и проценты '+fmt(interest)+' ₽.<br>'+deadline+'</div>'));
+  card.appendChild(el('<div class="d" data-lite="1">Можно полностью погасить в любой игровой день, как только в кассе хватит указанной суммы. При досрочном возврате сумма по договору фиксированная. После погашения повторного списания не будет.</div>'));
+  const row=el('<div class="row">'+btnHtml('Погасить сейчас · '+fmt(b.back)+' ₽',b.back,false)+'</div>'),button=row.querySelector('button');button.dataset.bankAction='repay';button.dataset.cost=String(b.back);button.onclick=()=>bankRepay(b);card.appendChild(row);
+  if(!b.rs&&b.back>b.sum*1.25){
+   const amount=Math.round(b.sum*1.25/1000)*1000,rr=el('<div class="row"><button class="btn ghost num" data-bank-action="restructure">Реструктуризация: '+fmt(amount)+' ₽ на 21 день</button></div>');
+   rr.querySelector('button').onclick=()=>bankRestructure(b);card.appendChild(rr);card.appendChild(el('<div class="d" data-lite="1">Один раз на кредит: сумма долга снижается до 125% от займа, срок 21 день, рейтинг −0,1. После этого также доступно досрочное погашение.</div>'));
+  }
+  return card;
+ }
+ card.appendChild(el('<div class="d" data-lite="1">Один кредит за раз. Сумма возврата фиксируется при выдаче; её можно вернуть досрочно. Срок — '+BANK29_DAYS+' игровых дней. В срок банк спишет долг при закрытии смены. Если денег не хватит, касса уйдёт в минус и банки откажут на 14 дней.</div>'));
+ const banned=!!(S.bankBan29&&S.day<S.bankBan29);
+ if(banned)card.appendChild(el('<div class="d" data-lite="1" style="color:var(--bad)">Банки отказывают ещё '+(S.bankBan29-S.day)+' '+plural29(S.bankBan29-S.day,'день','дня','дней')+'.</div>'));
+ BANK29.forEach(o=>{
+  const lock=S.level<o.lvl||banned,row=el('<div class="bk29r"><div><b>'+esc(o.n)+'</b><span>'+(S.level<o.lvl?'С '+o.lvl+' уровня':'Получить '+fmt(o.sum)+' ₽ · вернуть '+fmt(o.back)+' ₽ через '+BANK29_DAYS+' игр. дн.')+'</span></div><button class="btn num" data-bank-offer="'+o.id+'" '+(lock?'disabled':'')+'>+'+fmt(o.sum)+' ₽</button></div>');
+  row.querySelector('button').onclick=()=>bankTake(o);card.appendChild(row);
+ });return card;
+}
 function plural29(n, a, b, c){ n = Math.abs(n) % 100; const n1 = n % 10; if(n > 10 && n < 20) return c; if(n1 > 1 && n1 < 5) return b; if(n1 === 1) return a; return c; }
 const _renderFin29 = renderFin;
 renderFin = function(p){ _renderFin29.apply(this, arguments); try{ const c = bankCard(); const first = p.querySelector('.card'); const nav=p.querySelector('.finnav'); if(nav){p.insertBefore(c,nav);nav.classList.add('bc-fin-periods');}else if(first) p.insertBefore(c, first); else p.appendChild(c); }catch(e){ console.error(e); } };
@@ -10409,9 +10441,9 @@ renderFin = function(p){ _renderFin29.apply(this, arguments); try{ const c = ban
 const _renderHud29 = renderHud;
 renderHud = function(){ _renderHud29.apply(this, arguments); try{ const pe = $('#pills'); if(!pe || !S) return; let pl = pe.querySelector('.pill.loan29'); const b = bank29();
   if(!b){ if(pl) pl.remove(); return; }
-  const left = Math.max(0, b.due - S.day), t = 'Кредит '+fmt(b.back)+' ₽ · '+(left > 1 ? left+' дн.' : 'сегодня');
+  const left = Number.isInteger(b.due)&&b.due>=1 ? Math.max(0,b.due-S.day) : null, t = bankValid(b)?'Кредит '+fmt(b.back)+' ₽ · '+(left===null?'срок не указан':left>0?left+' дн.':'срок наступил'):'Кредит · проверка договора';
   if(!pl){ pl = el(`<button class="pill loan29"></button>`); pl.onclick = () => { hallTab = 'money'; openSheet('hall'); }; pe.insertBefore(pl, pe.firstChild); }
-  if(pl.textContent !== t) pl.textContent = t; pl.classList.toggle('hot', left <= 1); }catch(e){} };
+  if(pl.textContent !== t) pl.textContent = t; pl.classList.toggle('hot', !bankValid(b)||left!==null&&left<=1); }catch(e){} };
 
 /* ================= v29: ноябрь — хандра, ремонт у соседей, фуд-блогер, инспектор «на кофе», две арки сотрудников, новые реплики ================= */
 Object.assign(CHARS, {
