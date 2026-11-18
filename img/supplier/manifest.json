@@ -1,0 +1,133 @@
+{
+  "collection": "Кофейный мастер",
+  "generator": "PixelLab generate-image-v2",
+  "generatedAt": "2026-11-18",
+  "style": "Brew Crew native warm pixel art, same home-props style reference",
+  "jobs": {
+    "props-a": "7e906bc6-f2eb-49d9-8128-f80dab66679d",
+    "props-b": "6ba6b129-93d6-47c4-9bcb-a8678fab9095",
+    "machine": "f918af35-4350-4ff0-8915-a079739c6e15",
+    "delivery": "6e3581d8-8e06-4e7c-9c1d-9ca2807ddc5b"
+  },
+  "items": {
+    "lamp": {
+      "file": "lamp.png",
+      "size": [
+        47,
+        57
+      ]
+    },
+    "poster": {
+      "file": "poster.png",
+      "size": [
+        42,
+        52
+      ]
+    },
+    "dripper": {
+      "file": "dripper.png",
+      "size": [
+        40,
+        57
+      ]
+    },
+    "napkins": {
+      "file": "napkins.png",
+      "size": [
+        51,
+        49
+      ]
+    },
+    "sugar": {
+      "file": "sugar.png",
+      "size": [
+        56,
+        44
+      ]
+    },
+    "radio": {
+      "file": "radio.png",
+      "size": [
+        56,
+        49
+      ]
+    },
+    "tea": {
+      "file": "tea.png",
+      "size": [
+        61,
+        59
+      ]
+    },
+    "machine": {
+      "file": "machine.png",
+      "size": [
+        96,
+        70
+      ]
+    },
+    "siphon": {
+      "file": "siphon.png",
+      "size": [
+        37,
+        64
+      ]
+    },
+    "delivery": {
+      "file": "delivery.png",
+      "size": [
+        98,
+        115
+      ]
+    },
+    "cups": {
+      "file": "cups.png",
+      "size": [
+        53,
+        47
+      ]
+    },
+    "cupstand": {
+      "file": "cupstand.png",
+      "size": [
+        49,
+        57
+      ]
+    },
+    "cabinet": {
+      "file": "cabinet.png",
+      "size": [
+        61,
+        63
+      ]
+    },
+    "clock": {
+      "file": "clock.png",
+      "size": [
+        52,
+        53
+      ]
+    },
+    "beans": {
+      "file": "beans.png",
+      "size": [
+        36,
+        54
+      ]
+    },
+    "grinder": {
+      "file": "grinder.png",
+      "size": [
+        43,
+        58
+      ]
+    },
+    "plant": {
+      "file": "plant.png",
+      "size": [
+        29,
+        42
+      ]
+    }
+  }
+}

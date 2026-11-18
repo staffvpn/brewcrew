@@ -13164,7 +13164,7 @@ wallDecor=function(now){
 };
 /* --- кофемашина и кофемолка из магазина --- */
 function machDraw(){ var m=window.MACH_SKIN, g=window.GRIND_SKIN;
-  if(m&&m!=='std'&&DEC[m]&&DEC[m].naturalWidth) pimg(m,80,TOP+0.5,45); else img('mach',57,TOP,45);
+  if(!(window.BrewCrewSupplier&&window.BrewCrewSupplier.drawMachine(80,TOP+0.5))){if(m&&m!=='std'&&DEC[m]&&DEC[m].naturalWidth) pimg(m,80,TOP+0.5,45); else img('mach',57,TOP,45);}
   if(g&&g!=='std'&&DEC[g]&&DEC[g].naturalWidth) pimg(g,124,TOP+0.5,39); else img('grind2',114,TOP,39);
  }
 /* --- вывеска --- */
@@ -14992,6 +14992,7 @@ shopPanel=function(p){
  if(group){var summary=p.querySelector('.u6hero .sub');if(summary)summary.textContent=options.length+' категорий · выбери нужную ниже';}
  if(cat==='terminal'){p.querySelectorAll('.u9try').forEach(b=>b.remove());const card=p.querySelector('.u6it');if(card&&!card.querySelector('.u8ds'))card.querySelector('.u6nm').after(el('<div class="u8ds">Сам принимает заказы и разгружает очередь. Отдельная покупка за Stars.</div>'));}
  if(window.BrewCrewLongTables)window.BrewCrewLongTables.shop(p,cat);
+ if(window.BrewCrewSupplier)window.BrewCrewSupplier.shop(p,cat);
 };
 var bcShopGroupsStyle=document.createElement('style');bcShopGroupsStyle.textContent='html body .bc-shop-groups{display:flex!important;flex:none;flex-wrap:nowrap;gap:6px;overflow-x:auto;margin:12px 0;padding:0;min-height:44px}html body .bc-shop-groups>.u6cat{flex:none;min-width:0;margin:0;padding:11px 13px;font-size:12px;white-space:nowrap;line-height:1.2;min-height:42px}html body .bc-shop-breadcrumb{flex:none;min-height:44px;overflow:visible;position:sticky;top:0;z-index:3;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}.bc-shop-breadcrumb>[data-shop-back]{font-size:12px;padding:10px}.bc-shop-breadcrumb>.u6cat{white-space:normal;text-align:center;max-width:55%;padding:10px;font-size:12px}.bc-shop-subnav{flex:none;display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;overscroll-behavior-x:contain;gap:6px;margin:0 0 16px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--tile)}.bc-shop-subnav>.u6cat{flex:none;min-width:0;padding:10px 13px;margin:0;white-space:nowrap;line-height:1.2;font-size:12px;min-height:40px}';document.head.appendChild(bcShopGroupsStyle);
 
@@ -15563,5 +15564,8 @@ Promise.resolve(window.BrewCrewLab?.ready).then(function(){return BrewCrewFreeze
 
 </script>
 <script src="long-table-lab.js"></script>
+<link rel="stylesheet" href="supplier-lab.css?v=1">
+<script src="supplier-rules.js?v=1"></script>
+<script src="supplier-lab.js?v=1"></script>
 </body>
 </html>

@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),R=require('../supplier-rules.js');
+assert.equal(R.items.length,16);assert.equal(new Set(R.items.map(i=>i.id)).size,16);
+for(const t of R.tiers){assert.equal(t.weights.reduce((a,b)=>a+b),100);assert(t.pool.every(id=>R.items.some(i=>i.id===id)));for(let r=0;r<5;r++)if(t.weights[r])assert(t.pool.some(id=>R.items.find(i=>i.id===id).rarity===r));
+ for(let rarity=0;rarity<5;rarity++){if(!t.weights[rarity])continue;const roll=(t.weights.slice(0,rarity).reduce((a,b)=>a+b,0)+t.weights[rarity]/2)/100;const pool=R.items.filter(i=>i.rarity===rarity&&t.pool.includes(i.id));assert.deepEqual(pool.map((i,n)=>R.pick(t,0,roll,(n+.5)/pool.length).id),pool.map(i=>i.id));}
+ const counts=[0,0,0,0,0],guaranteed=[0,0,0,0,0];for(let n=0;n<10000;n++){counts[R.pick(t,0,(n+.5)/10000,.5).rarity]++;guaranteed[R.pick(t,10,(n+.5)/10000,.5).rarity]++;}assert.deepEqual(counts,t.weights.map(w=>w*100));assert.equal(guaranteed[0]+guaranteed[1],0);assert(Math.abs(R.odds(t,10).reduce((a,b)=>a+b)-100)<1e-9);
+ for(const v of [0,.99])assert(R.pick(t,0,.99,v));assert.throws(()=>R.pick(t,0,1,.5));
+}
+const s=R.fresh();assert.equal(R.unlocked(R.tiers[0],s,false),true);assert.equal(R.unlocked(R.tiers[1],s,false),false);s.seconds=5*3600;assert.equal(R.unlocked(R.tiers[1],s,false),true);assert.equal(R.unlocked(R.tiers[2],s,true),false);s.seconds=20*3600;assert.equal(R.unlocked(R.tiers[2],s,false),false);assert.equal(R.unlocked(R.tiers[2],s,true),true);
+for(const cat of ['donate','admin','promo','pass','refunds','misc','credit'])R.account(s,100000,cat);assert.equal(s.earned,0);R.account(s,1200,'sales');R.account(s,100,'tips');assert.equal(s.earned,1300);R.account(s,-300,'wages');assert.equal(s.earned,1000);R.account(s,-5000,'tax');assert.equal(s.earned,0);
+for(const item of R.items){const row=R.award(s,item,{at:1,id:item.id,tier:'first',cost:0});assert.equal(row.duplicate,false);const after=s.seals;assert.equal(R.award(s,item,{at:2,id:item.id+'-repeat',tier:'first',cost:0}).seals,R.rarities[item.rarity].seals);assert.equal(s.seals,after+R.rarities[item.rarity].seals);}assert.equal(Object.keys(s.owned).length,16);
+console.log('PASS supplier rules: exact advertised probabilities, guarantee normalization, all pools, hour/expansion gates, paid currency excluded, earned-first spending, unique ownership and duplicate seals.');
