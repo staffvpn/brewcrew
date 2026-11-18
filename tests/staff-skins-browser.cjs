@@ -121,6 +121,20 @@ const { acceptLegal } = require('./legal-fixture.cjs');
       });
       check(portraits.size === 6, 'Different employees share the same portrait');
     } finally { CanvasRenderingContext2D.prototype.drawImage = original; }
+    // Both cashier identities must use the same frame order and clock.
+    const clock=performance.now.bind(performance), drawImage=CanvasRenderingContext2D.prototype.drawImage;
+    try{
+      for(let frame=0;frame<6;frame++){
+        performance.now=()=>100000+(frame+.1)*1000/6;
+        for(const sex of ['m','f']){
+          const s=people.find(s=>s.role==='Кассир'&&s.sex===sex),variant='cashier_'+sex,c=BrewCrewStaffSkins.clip(variant+'_till:south');
+          let actual=-1;CanvasRenderingContext2D.prototype.drawImage=function(image,...args){if(image.src?.includes(window.BrewCrewStaffArt.src)){const at=c.f.findIndex(([x,y])=>args[0]===x&&args[1]===y);if(at>=0)actual=at;}return drawImage.call(this,image,...args);};
+          rt('main').queue=[{state:'queue',prog:.5}];s.distract=null;
+          drawStaff(s,{x:190,y:185,_px:190,_py:185,_ph:0,_d:'south'},'main');
+          check(actual===frame,'Cashier motion clock differs: '+sex+' frame '+frame+' got '+actual);
+        }
+      }
+    }finally{performance.now=clock;CanvasRenderingContext2D.prototype.drawImage=drawImage;}
     // Persist actual staff and confirm identities remain after real page reload.
     rt('main').queue = [];
     people.forEach(s => { s.distract = null; });

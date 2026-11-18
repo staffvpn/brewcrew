@@ -188,6 +188,147 @@
         }
       },
       "pixelLabJob": "6d4bfe70-766e-4673-811e-66cf0363300f"
+    },
+    {
+      "id": "neon",
+      "name": "Не спим",
+      "description": "Тёмная столешница и неоновые акценты",
+      "parts": {
+        "table": {
+          "file": "neon-table.png",
+          "size": [
+            213,
+            90
+          ],
+          "sourceRect": [
+            27,
+            0,
+            205,
+            82
+          ]
+        },
+        "chair-south": {
+          "file": "neon-chair-south.png",
+          "size": [
+            48,
+            80
+          ],
+          "sourceRect": [
+            78,
+            88,
+            40,
+            72
+          ]
+        },
+        "chair-north": {
+          "file": "neon-chair-north.png",
+          "size": [
+            49,
+            73
+          ],
+          "sourceRect": [
+            139,
+            95,
+            41,
+            65
+          ]
+        }
+      },
+      "pixelLabJob": "75998c21-7fe4-4cd0-ab7f-dafc14ba9b6a"
+    },
+    {
+      "id": "autumn",
+      "name": "Листопад",
+      "description": "Медовое дерево, терракота и осенняя дорожка",
+      "parts": {
+        "table": {
+          "file": "autumn-table.png",
+          "size": [
+            213,
+            90
+          ],
+          "sourceRect": [
+            27,
+            0,
+            205,
+            82
+          ]
+        },
+        "chair-south": {
+          "file": "autumn-chair-south.png",
+          "size": [
+            48,
+            80
+          ],
+          "sourceRect": [
+            78,
+            88,
+            40,
+            72
+          ]
+        },
+        "chair-north": {
+          "file": "autumn-chair-north.png",
+          "size": [
+            49,
+            73
+          ],
+          "sourceRect": [
+            139,
+            95,
+            41,
+            65
+          ]
+        }
+      },
+      "pixelLabJob": "4d8dc2aa-cc5e-493d-81be-965cc9a80e06"
+    },
+    {
+      "id": "winter",
+      "name": "Снежный",
+      "description": "Светлое дерево, синие сиденья и снежинки",
+      "parts": {
+        "table": {
+          "file": "winter-table.png",
+          "size": [
+            213,
+            90
+          ],
+          "sourceRect": [
+            27,
+            0,
+            205,
+            82
+          ]
+        },
+        "chair-south": {
+          "file": "winter-chair-south.png",
+          "size": [
+            48,
+            80
+          ],
+          "sourceRect": [
+            78,
+            88,
+            40,
+            72
+          ]
+        },
+        "chair-north": {
+          "file": "winter-chair-north.png",
+          "size": [
+            49,
+            73
+          ],
+          "sourceRect": [
+            139,
+            95,
+            41,
+            65
+          ]
+        }
+      },
+      "pixelLabJob": "24fb5a8c-6a1c-4161-9c84-195bf7704e6c"
     }
   ]
 }
