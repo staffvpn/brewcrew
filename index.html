@@ -5326,7 +5326,7 @@ function drawRoom(id){
   }
   for(const p of r.pets){ items.push({y:p.y, f:()=>{ const [b] = walkPose(p); shadow(p.x,p.y,7); drawSprite(p.spr, p.x, p.y-b*0.5, p.h*1.25, p.flip); }}); }
   items.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
-  if(r.queue.length >= 6) txt('Очередь полная', 236, QUEUE_Y-62, '700 8px "Golos Text",sans-serif', 'rgba(224,87,74,.95)', 'center');
+  if(r.queue.length >= (window.BrewCrewQueues?BrewCrewQueues.busyAt(id):6)) txt('Очередь полная', 236, QUEUE_Y-62, '700 8px "Golos Text",sans-serif', 'rgba(224,87,74,.95)', 'center');
   if(st.neon){ ctx.fillStyle = 'rgba(30,20,50,.10)'; ctx.fillRect(0,0,W,H); }
   // вечер
   const hh = S.gm/60; const night = hh>=22 || hh<6 ? 0.3 : hh>=19 ? (hh-19)*0.07 : hh<8 ? (8-hh)*0.11 : 0;
@@ -5701,7 +5701,7 @@ let GID = 0;
 function spawnGuest(id, reg, company){
   const r = rt(id);
   if(!reg && r.seats.length && !freeSeats(id).length && !(id==='main' && room('hall2') && freeSeats('hall2').length) && chance(0.25)){ const f = S.fin.today; f.lost = f.lost || {}; f.lost.seats = (f.lost.seats||0)+1; if(id===S.active && chance(0.3)) bubble2(W-60, DOOR[1]-64, 'Мест нет? Ну и ладно', 1800); return; }
-  if(r.queue.length >= 7 && !reg){ if(r.outside < (S.rush && S.rush.until > absNow() ? 20 : 9)){ r.outside++; r.outsideWait.push(0); } else walkAway(id, 'full'); return; }
+  if(r.queue.length >= (window.BrewCrewQueues?BrewCrewQueues.capacity(id):7) && !reg){ if(r.outside < (S.rush && S.rush.until > absNow() ? 20 : 9)){ r.outside++; r.outsideWait.push(0); } else walkAway(id, 'full'); return; }
   let g;
   if(reg){ const def = REGULARS.find(x=>x.id===reg.id); reg.spr = REG_SPR[reg.id] != null ? REG_SPR[reg.id] : (reg.spr != null ? reg.spr : pick(POOL.guest)); g = {spr:reg.spr, h:SPR_H, reg:reg.id, name:def.n}; }
   else { const p = pickGuestSprite(); g = {spr:p.spr, h:p.kid?SPR_KID:SPR_H}; markSeen('g', p.spr); }
@@ -5735,7 +5735,7 @@ function simRoom(id, dt){
     if(r.spawnT <= 0){ if(st.lambda > 0) spawnGuest(id); r.spawnT = clamp(-Math.log(1-Math.random()) / Math.max(st.lambda, 0.002), 0.6, 90); }
     crowdTick(id, st, dt); corpTick(id, r); messTick(id, r, dt); cleanTick(id, r, dt); if(id===S.active){ waveTick(id, r, dt); rushKazus(dt); }
     // очередь на улице заходит, когда внутри освобождается место
-    if(r.outside > 0 && r.queue.length < 6){ r.outside--; r.outsideWait.shift(); spawnGuest(id); }
+    if(r.outside > 0 && r.queue.length < (window.BrewCrewQueues?BrewCrewQueues.admitAt(id):6) && (!window.BrewCrewQueues||BrewCrewQueues.admitReady(id,r,dt))){ r.outside--; r.outsideWait.shift(); spawnGuest(id); }
     for(let i=r.outsideWait.length-1;i>=0;i--){ r.outsideWait[i] += dt; if(r.outsideWait[i] > 70){ r.outsideWait.splice(i,1); r.outside--; walkAway(id, 'outside'); } }
     // курьеры доставки
     if(st.lambdaD > 0){ r.courierT -= dt; if(r.courierT <= 0){ r.courierT = clamp(-Math.log(1-Math.random()) / st.lambdaD, 4, 200); spawnCourier(id); } }
@@ -5775,7 +5775,7 @@ function simRoom(id, dt){
   for(const g of r.guests){
     g.t += dt;
     if(slipTick(id, r, g, dt)) continue;
-    if(g.state==='toQueue' || g.state==='queue'){ const idx = r.queue.indexOf(g); const qp = queuePos(idx); if(moveTo(g, qp[0], qp[1], 46, dt)) g.state = 'queue'; }
+    if(g.state==='toQueue' || g.state==='queue'){ const idx = r.queue.indexOf(g); const qp = queuePos(idx,id); if(moveTo(g, qp[0], qp[1], 46, dt)) g.state = 'queue'; }
     else if(g.state==='toPick'||g.state==='wait'){ const p = bcPickupGoal(g,id); if(moveTo(g, p[0], p[1], 46, dt)) g.state = 'wait'; else g.state='toPick'; }
     else if(g.state==='toSeat'){ const t = slotOf(id, g.seat); const sx = t[0], sy = t[2]==='stool' ? t[1]-3 : t[1]; if(moveTo(g, sx, sy, 46, dt)){ g.state = 'sit'; g.flip = t[2]==='table' ? t[4]===1 : t[2]==='wall' ? true : false; if(t[2]==='out') g.hidden = true; g.sawDirt = Math.max(g.sawDirt||0, dirtLevel(id)); g.sit = R(16,30) * (waiters.length ? 0.75 : 1) * (g.burst ? 2.2 : 1); g.act = g.kidG ? 'drink' : pick(['drink','drink','laptop','phone','sleep','read','phone']); } }
     else if(g.state==='sit' && id==='hall2'){ g.sit -= dt; if(g.sit <= 0 && !h2SitEnd(id, r, g)){ leaveMess(id, g); r.seats[g.seat] = null; g.state = 'leave'; g.hidden = false; } }
@@ -5970,7 +5970,7 @@ function drawRoom_old(id){
   for(const p of r.pets){ items.push({y:p.y, f:()=>{ const [b] = walkPose(p); shadow(p.x,p.y,6); drawSprite(p.spr, p.x, p.y-b*0.5, p.h, p.flip); }}); }
   items.filter(o=>!o.behind).sort((a,b)=>a.y-b.y).forEach(o=>o.f());
   // queue full warning
-  if(r.queue.length >= 6){ ctx.fillStyle = 'rgba(224,87,74,.9)'; ctx.font = '700 8px "Golos Text",sans-serif'; ctx.fillText('Очередь полная', 236, 186); }
+  if(r.queue.length >= (window.BrewCrewQueues?BrewCrewQueues.busyAt(id):6)){ ctx.fillStyle = 'rgba(224,87,74,.9)'; ctx.font = '700 8px "Golos Text",sans-serif'; ctx.fillText('Очередь полная', 236, 186); }
   if(CUR_INT) interiorFront(CUR_INT, now);
   // evening tint
   const hh = S.gm/60; const night = hh>=22 || hh<6 ? 0.32 : hh>=19 ? (hh-19)*0.07 : hh<8 ? (8-hh)*0.12 : 0;
@@ -7188,7 +7188,7 @@ let sirenT = 0, rushOnPrev = false;
 function rushFx(){
   const sc = $('#scene'); if(!sc) return; const on = !!(S.rush && S.rush.until > absNow()) && S.isOpen;
   if(on !== rushOnPrev){ rushOnPrev = on; sc.classList.toggle('rushing', on); let b = $('#rushban'); if(on){ if(!b){ b = el(`<div id="rushban" class="rushban" aria-live="polite"></div>`); sc.appendChild(b); } b.innerHTML = `<b>ЗАПАРА</b><span>${esc(S.rush.why)}</span>`; sfx('siren'); sirenT = performance.now(); } else if(b) b.remove(); }
-  if(on){ const rr = RT[S.active]; const full = rr && (rr.queue.length >= 6 || rr.outside > 0); sc.classList.toggle('panic', !!full); if(performance.now() - sirenT > (full ? 5200 : 9000)){ sirenT = performance.now(); sfx('siren'); } }
+  if(on){ const rr = RT[S.active]; const full = rr && (rr.queue.length >= (window.BrewCrewQueues?BrewCrewQueues.busyAt(S.active):6) || rr.outside > 0); sc.classList.toggle('panic', !!full); if(performance.now() - sirenT > (full ? 5200 : 9000)){ sirenT = performance.now(); sfx('siren'); } }
   else sc.classList.remove('panic');
 }
 function hideBoot(){ const b = document.getElementById('boot'); if(!b || b.dataset.out) return; if(!atlasReady || performance.now() < 1800) return; b.dataset.out = '1'; b.classList.add('out'); setTimeout(()=>b.remove(), 500); }
@@ -14932,6 +14932,7 @@ function bcUpgradeCap(u,id){var cap=upgCap();if(u.id==='tables'&&id==='main')ret
 function bcUpgradeLock(u,id,L){if(u.id==='tables'&&id==='main'){if(L>=bcPlacesAreaCap())return expanded()?'Для уровней 25–28 нужно расширение вглубь':'Для уровней 21–24 нужно расширение вправо';if(L>=20&&upgCap()<20)return 'Нужен ур. 17 владельца';}return 'Нужен ур. '+(L-2);}
 var bcPlacesCost=upCost;
 upCost=function(u,L,id){if(u.id==='tables'&&id==='main'){if(bcAdminTest)return 0;return Math.round((L<20?40000*Math.pow(1.18,L):1200000+400000*(L-20))*roomMult(id)/100)*100;}return bcPlacesCost.apply(this,arguments);};
+window.BrewCrewQueueNavigation={route:function(sx,sy,tx,ty,tables){return bgFindPath(sx,sy,tx,ty,tables,[]);},free:function(x,y,tables){return bgFreeGoal(x,y,tables,[]);},blocked:function(x,y,tables){return bgBlocked(x,y,tables,[]);},clear:function(ax,ay,bx,by,tables){return bgClear(ax,ay,bx,by,tables,[]);},step:function(e,x,y,speed,dt){var oldX=e.x,oldY=e.y,result=_mt0(e,x,y,speed*.85,dt);if(!bgActorClear(oldX,oldY,e.x,e.y,bgSpecialActors(e))){e.x=oldX;e.y=oldY;e.walk=false;return false;}return result;}};
 var bcPlacesPatience=focusMul;
 focusMul=function(k){var m=bcPlacesPatience.apply(this,arguments);return k==='patience'&&S&&room('main')?m*(1+bcPlacesLevel(room('main').upg.tables)/100):m;};
 window.layoutSlots=function(){
@@ -15495,13 +15496,13 @@ function bcBadgeSlots(){
  for(let i=0;i<3;i++)if(!ids.has(S.badgeSlots[i])||S.badgeSlots.indexOf(S.badgeSlots[i])!==i)S.badgeSlots[i]=null;S.badgeSlots.length=3;
  S.badgeOn=S.badgeSlots.find(Boolean)||null;return S.badgeSlots;
 }
-function bcBadgeChoose(id,slot){if(!(S.badgeList||[]).some(b=>b.id===id)||!Number.isInteger(slot)||slot<0||slot>2)return;const slots=bcBadgeSlots();for(let i=0;i<3;i++)if(slots[i]===id)slots[i]=null;slots[slot]=id;bcBadgeSlots();save();renderHud();structDirty=true;}
+function bcBadgeChoose(id,slot){if(!(S.badgeList||[]).some(b=>b.id===id)||!Number.isInteger(slot)||slot<0||slot>2)return;const slots=bcBadgeSlots(),from=slots.indexOf(id),old=slots[slot];if(from>=0&&from!==slot)slots[from]=old||null;slots[slot]=id;bcBadgeSlots();save();renderHud();structDirty=true;return true;}
 function bcBadgeOpen(id){if((S.badgeList||[]).some(b=>b.id===id))queueModal({kind:'bc_badge',id},true);}
 MODAL15.bc_badge=function(box,m,btn){const b=(S.badgeList||[]).find(b=>b.id===m.id);if(!b){box.append(btn('Закрыть',closeModal));return;}
  box.classList.add('bc-badge-modal');box.append(el('<div class="bc-badge-large">'+BrewCrewBadgeArt.art(b)+'</div>'));const title=document.createElement('h2');title.textContent=b.n;const desc=document.createElement('p');desc.textContent=b.d||'Памятный значок кофейни';box.append(title,desc);if(b.at){const when=document.createElement('p');when.className='d';when.textContent='Получен '+new Date(b.at).toLocaleDateString('ru-RU');box.append(when);}
  const slots=bcBadgeSlots(),at=slots.indexOf(b.id),row=el('<div class="row wrap"></div>');
  for(let i=0;i<3;i++){const old=(S.badgeList||[]).find(b=>b.id===slots[i]);row.append(btn((at===i?'Надет: ':'Место ')+(i+1),()=>{bcBadgeChoose(b.id,i);closeModal();bcBadgeOpen(b.id);},at===i?'':'ghost'));}
- box.append(el('<p class="d">Три значка висят над полкой слева. Выбери место: значок на нём будет заменён.</p>'),row);
+ box.append(el('<p class="d">Три значка висят над полкой слева. Выбери место: уже надетые значки поменяются местами.</p>'),row);
  if(at>=0)box.append(btn('Снять значок',()=>{bcBadgeRemove(at,b.id);closeModal();},'ghost'));
  box.append(btn('Закрыть',closeModal,'ghost'));
 };
@@ -15566,5 +15567,10 @@ Promise.resolve(window.BrewCrewLab?.ready).then(function(){return BrewCrewFreeze
 
 </script>
 <script src="long-table-lab.js"></script>
+<link rel="stylesheet" href="cafe-ui.css?v=1">
+<script src="cafe-ui.js?v=1"></script>
+<link rel="stylesheet" href="invitations-polish.css?v=1">
+<script src="invitations-polish.js?v=1"></script>
+<script src="expanded-queue.js?v=1"></script>
 </body>
 </html>
