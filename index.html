@@ -6650,13 +6650,19 @@ function staffStatus(s){
   if(s.today==='work' || s.today==='sub') return ['g', S.isOpen ? 'На смене' : 'Смена'];
   return ['', 'Выходной'];
 }
+let teamShowAll = false;
 function renderTeam(p, id){
-  const list = staffIn(id).filter(s=>s.today!=='sub' || true);
+  const list = staffIn(id);
   p.appendChild(el(`<div class="h">Команда · ${esc(roomDef(id).n)}</div>`));
   const you = list.find(s=>s.isYou);
   if(you){ const on = youNeeded(id); p.appendChild(el(`<div class="card staff badge-card you"><div class="lanyard"></div><div class="spr" style="${sprStyle(staffSpr(you),52)};justify-self:center"></div><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="row wrap"><span class="t">Ты</span><span class="tag">Владелец</span><span class="stamp ${on?'red':'green'}">${on?'ЗА СТОЙКОЙ':'ОТДЫХАЕШЬ'}</span></div><div class="d">${on?'Пока в команде нет бариста или кассира, ты работаешь сам: медленнее, но бесплатно. Тапай по гостю у кассы, по кофемашине и по гостям у выдачи, чтобы ускорить работу.':'Команда справляется без тебя. Если бариста или кассир не выйдет, ты снова встанешь за стойку.'}</div></div></div>`)); }
-  const crew = list.filter(s=>!s.isYou);
-  if(!crew.length) p.appendChild(el(`<div class="empty">Команды нет. Ты один, как кофемашина в пятницу вечером. Ниже кандидаты: начни с бариста и кассира.</div>`));
+  const allCrew = S.staff.filter(s=>!s.isYou);
+  const crew = teamShowAll ? allCrew : list.filter(s=>!s.isYou && (s.today==='work' || s.today==='sub'));
+  if(allCrew.length){
+    const filter = el(`<div class="row wrap" data-team-controls><span class="d">Показано ${crew.length} из ${allCrew.length}</span><span class="sp"></span><button class="btn ghost" data-team-filter aria-pressed="${teamShowAll}">${teamShowAll?'Только на смене':'Показать всех'} · ${teamShowAll?list.filter(s=>!s.isYou&&(s.today==='work'||s.today==='sub')).length:allCrew.length}</button></div>`);
+    filter.querySelector('button').onclick=()=>{teamShowAll=!teamShowAll;renderPanel();};p.appendChild(filter);
+  }
+  if(!crew.length) p.appendChild(el(`<div class="empty">${allCrew.length?'Сейчас на смене никого нет. Нажми «Показать всех», чтобы увидеть сотрудников на выходном, в отпуске или на обучении.':'Команды пока нет. Ниже кандидаты: начни с бариста и кассира.'}</div>`));
   crew.forEach(s=>{
     const [cls, txt] = staffStatus(s);
     const stamp = (s.legendId || s.prize) ? '<span class="stamp gold">ЛЕГЕНДА</span>' : s.today==='absent' ? '<span class="stamp red">ПРОГУЛ</span>' : s.notice ? '<span class="stamp red">УХОДИТ</span>' : '';
@@ -6664,6 +6670,7 @@ function renderTeam(p, id){
       <div class="row wrap"><span class="t">${esc(s.name)}</span><span class="tag">${roleN(s)}</span><span class="tag">${RANKS[s.rank]}</span><span class="tag num">ур. ${s.lvl}</span>${(s.legendId || s.prize)?'<span class="tag gold">Легенда</span>':''}${s.role==='Бариста'?(s.prio==='help'?'<span class="tag">На подхвате</span>':'<span class="tag g">Основной</span>'):''}${freshFault(s)?'<span class="tag warn">Косяк</span>':''}${s.quirk!=='none'?`<span class="tag">${qN(s)}</span>`:''}${s.contract==='grey'?'<span class="tag warn">В серую</span>':''}<span class="tag ${cls}">${txt}</span></div>
       <div class="mood">Состояние ${bar(staffState(s), moodCol(staffState(s)))}<span class="st ${staffState(s)<45?'bad':''}">${stateLabel(staffState(s))}</span></div>${s.wish?`<div class="wishline">${esc(WISHES[s.wish.k].t)} · ${Math.max(0,s.wish.by-S.day)} дн.</div>`:''}
       <div class="d">${s.today==='sub'?'Подмена на сегодня · ':''}${fmt(s.today==='sub'?s.subPay:shiftPay(s))} ₽ за смену · смен ${s.shifts}</div></div></button>`);
+    card.dataset.staffId = String(s.id);
     card.onclick = () => { if(s.today!=='sub') queueModal({kind:'staff', sid:s.id}, true); };
     p.appendChild(card);
   });
