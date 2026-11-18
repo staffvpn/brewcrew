@@ -155,3 +155,4 @@ sku,category,item,currency,price,previous_game_rubles,previous_stars,cash_payout
 "cash_m","service","Мама дала в долг без процентов","XTR","449","","60","10000000"
 "cash_l","service","Чемодан из девяностых","XTR","999","","150","25000000"
 "cash_xl","service","Спонсор из Дубая","XTR","2299","","350","65000000"
+"skin_terminal_self_service","terminal","Терминал самообслуживания","XTR","999","","",""

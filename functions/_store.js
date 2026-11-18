@@ -1496,5 +1496,16 @@ export const STORE_ITEMS = {
     "oldCoins": 0,
     "currency": "XTR",
     "gamePrice": 0
+  },
+  "skin_terminal_self_service": {
+    "title": "Терминал самообслуживания",
+    "desc": "Сам принимает заказ у гостя, когда в очереди от двух человек. Разгружает кассира. Отдельная постоянная покупка, не зависит от уровня кассы.",
+    "stars": 999,
+    "once": 1,
+    "category": "terminal",
+    "skin": "self_service",
+    "currency": "XTR",
+    "gamePrice": 0,
+    "oldCoins": 0
   }
 };
