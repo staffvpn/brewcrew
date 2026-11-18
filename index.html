@@ -14937,6 +14937,33 @@ syncScene=function(id){if(id!=='main')return bcPlacesSync.apply(this,arguments);
 };
 window.bcPlacesTables=bgTables;
 var bcPlacesShop=shopPanel;shopPanel=function(p){bcPlacesShop.apply(this,arguments);if(window.__shopCat==='room')p.append(el('<div class="u6note">До 6 столов открываются за первые 20 уровней «Места». Расширения дают доступ к следующим уровням: 21–24 вправо и 25–28 вглубь. Новые столы и места покупаются через улучшения.</div>'));};
+/* Keep the existing catalog/SKUs intact; only group its navigation. */
+var BC_SHOP_GROUPS=[
+ {id:'furniture',name:'Мебель и интерьер',cats:['style','floor','backfloor','wall','win','table','chair','bstool','bar','barf','art','atmosphere','lux','sign','font','p:frames','room']},
+ {id:'equipment',name:'Техника',cats:['mach','grind']},
+ {id:'misc',name:'Разное',cats:['p:more','uni']}
+];
+var bcGroupedShop=shopPanel;
+shopPanel=function(p){
+ bcGroupedShop.apply(this,arguments);
+ var nav=p.querySelector('.u8cats');if(!nav)return;
+ var categories=allCats(),cat=window.__shopCat||categories[0][0],group=BC_SHOP_GROUPS.find(function(g){return g.cats.includes(cat);});
+ var grouped=new Set(BC_SHOP_GROUPS.flatMap(function(g){return g.cats;}));
+ var entries=[BC_SHOP_GROUPS[0],BC_SHOP_GROUPS[1]].concat(categories.filter(function(c){return !grouped.has(c[0]);}).map(function(c){return{id:c[0],name:c[1],cats:[c[0]]};}),BC_SHOP_GROUPS[2]);
+ var top=el('<nav class="u6cats bc-shop-groups" aria-label="Разделы магазина"></nav>');
+ entries.forEach(function(g){if(!categories.some(function(c){return g.cats.includes(c[0]);}))return;
+  var active=group?group.id===g.id:cat===g.id,button=el('<button type="button" class="u6cat'+(active?' on':'')+'" data-shop-group="'+g.id+'" aria-pressed="'+active+'">'+esc(g.name)+'</button>');
+  button.onclick=function(){if(active)return;window.__shopCat=g.cats.find(function(k){return categories.some(function(c){return c[0]===k;});});window.__shopSc=0;sfx('tap');renderSheet();};top.appendChild(button);
+ });nav.replaceWith(top);
+ if(group){
+  var options=group.cats.map(function(key){return categories.find(function(c){return c[0]===key;});}).filter(Boolean);
+  var label=el('<label class="bc-shop-subcategory"><span>Раздел</span><select aria-label="Категория в разделе «'+esc(group.name)+'»">'+options.map(function(c){return '<option value="'+c[0]+'"'+(c[0]===cat?' selected':'')+'>'+esc(c[0]==='p:more'?'Товары и услуги':c[1])+'</option>';}).join('')+'</select></label>');
+  label.querySelector('select').onchange=function(){window.__shopCat=this.value;window.__shopSc=0;sfx('tap');renderSheet();};top.after(label);
+ }
+ var heading=p.querySelector('.u6hero .big');if(heading)heading.textContent=group?group.name:(categories.find(function(c){return c[0]===cat;})||['','Магазин'])[1];
+};
+var bcShopGroupsStyle=document.createElement('style');bcShopGroupsStyle.textContent='html body .bc-shop-groups{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;overflow:visible;margin:12px 0;padding:0}html body .bc-shop-groups>.u6cat{grid-column:span 2;min-width:0;margin:0;padding:11px 5px;font-size:12px;white-space:normal;line-height:1.2;min-height:42px}html body .bc-shop-groups>[data-shop-group="furniture"],html body .bc-shop-groups>[data-shop-group="equipment"]{grid-column:span 3}.bc-shop-subcategory{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:8px 11px;border:1px solid var(--line);border-radius:12px;background:var(--tile);color:var(--mut);font-size:12px}.bc-shop-subcategory select{flex:1;min-width:0;max-width:100%;padding:8px 4px;background:transparent;border:0;color:var(--ink);font:700 14px "Golos Text",sans-serif;min-height:36px}';document.head.appendChild(bcShopGroupsStyle);
+
 // Existing earned levels are retained. Building an expansion unlocks its stages, without granting them for free.
 var bcEconomyMetric=upgMetric;
 upgMetric=function(u,id){var html=bcEconomyMetric.apply(this,arguments);if(u.id==='tables'&&id==='main')html+='<div class="d">Уровни 1–20: 6 столов, 5 мест у передней стойки и 3 у настенной. Каждый уровень добавляет 1% терпения гостей. После расширения вправо уровни 21–22 добавляют два стола справа, 23–24 продлевают гостевую стойку. После расширения вглубь доступны уровни 25–28.</div>';return html;};

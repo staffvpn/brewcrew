@@ -1,0 +1,193 @@
+{
+  "status": "preview",
+  "styles": [
+    {
+      "id": "home",
+      "name": "Домашний",
+      "description": "Орех, кружевная дорожка и бордовая клетка",
+      "parts": {
+        "table": {
+          "file": "home-table.png",
+          "size": [
+            213,
+            90
+          ],
+          "sourceRect": [
+            27,
+            0,
+            205,
+            82
+          ]
+        },
+        "chair-south": {
+          "file": "home-chair-south.png",
+          "size": [
+            48,
+            80
+          ],
+          "sourceRect": [
+            78,
+            88,
+            40,
+            72
+          ]
+        },
+        "chair-north": {
+          "file": "home-chair-north.png",
+          "size": [
+            49,
+            73
+          ],
+          "sourceRect": [
+            139,
+            95,
+            41,
+            65
+          ]
+        }
+      },
+      "pixelLabJob": "f1bf4967-96a8-4677-be97-93627207ee80"
+    },
+    {
+      "id": "loft",
+      "name": "Флагман",
+      "description": "Морёный дуб и чёрный металл",
+      "parts": {
+        "table": {
+          "file": "loft-table.png",
+          "size": [
+            213,
+            90
+          ],
+          "sourceRect": [
+            27,
+            0,
+            205,
+            82
+          ]
+        },
+        "chair-south": {
+          "file": "loft-chair-south.png",
+          "size": [
+            48,
+            80
+          ],
+          "sourceRect": [
+            78,
+            88,
+            40,
+            72
+          ]
+        },
+        "chair-north": {
+          "file": "loft-chair-north.png",
+          "size": [
+            49,
+            73
+          ],
+          "sourceRect": [
+            139,
+            95,
+            41,
+            65
+          ]
+        }
+      },
+      "pixelLabJob": "5935cdf6-f2d7-4ab1-84db-fedfd46266ed"
+    },
+    {
+      "id": "scandi",
+      "name": "Фика",
+      "description": "Светлый ясень и мягкие кремовые сиденья",
+      "parts": {
+        "table": {
+          "file": "scandi-table.png",
+          "size": [
+            213,
+            90
+          ],
+          "sourceRect": [
+            27,
+            0,
+            205,
+            82
+          ]
+        },
+        "chair-south": {
+          "file": "scandi-chair-south.png",
+          "size": [
+            48,
+            80
+          ],
+          "sourceRect": [
+            78,
+            88,
+            40,
+            72
+          ]
+        },
+        "chair-north": {
+          "file": "scandi-chair-north.png",
+          "size": [
+            49,
+            73
+          ],
+          "sourceRect": [
+            139,
+            95,
+            41,
+            65
+          ]
+        }
+      },
+      "pixelLabJob": "c86537e5-debb-43f6-875d-9578122bddcb"
+    },
+    {
+      "id": "soviet",
+      "name": "Столовая №1",
+      "description": "Светлая столешница, мятная кромка и хром",
+      "parts": {
+        "table": {
+          "file": "soviet-table.png",
+          "size": [
+            213,
+            90
+          ],
+          "sourceRect": [
+            27,
+            0,
+            205,
+            82
+          ]
+        },
+        "chair-south": {
+          "file": "soviet-chair-south.png",
+          "size": [
+            48,
+            80
+          ],
+          "sourceRect": [
+            78,
+            88,
+            40,
+            72
+          ]
+        },
+        "chair-north": {
+          "file": "soviet-chair-north.png",
+          "size": [
+            49,
+            73
+          ],
+          "sourceRect": [
+            139,
+            95,
+            41,
+            65
+          ]
+        }
+      },
+      "pixelLabJob": "6d4bfe70-766e-4673-811e-66cf0363300f"
+    }
+  ]
+}
