@@ -26,7 +26,7 @@ const { acceptLegal } = require('./legal-fixture.cjs');
   await p.evaluate(()=>{room('main').upg.register=20;migrate();});assert.equal(await p.evaluate(()=>kioskOn()),false,'Later migrations grant a free kiosk');
   await p.evaluate(()=>{room('main').upg.register=0;window.__shopCat='terminal';openSheet('hall','shop');});
   assert.equal(await p.locator('[data-shop-group="equipment"]').getAttribute('aria-pressed'),'true');
-  assert.equal(await p.locator('.bc-shop-subcategory select').inputValue(),'terminal');
+  assert.equal(await p.locator('[data-shop-cat="terminal"]').getAttribute('aria-pressed'),'true');
   const card=p.locator('[data-bc-sku="skin_terminal_self_service"]');assert((await card.innerText()).includes('999'));assert.equal(await card.locator('.u9try').count(),0,'Functional kiosk must not be granted by try-on');
   await card.getByRole('button',{name:'Купить',exact:true}).click();await p.waitForTimeout(500);
   const wallet=await p.evaluate(()=>S.money);await p.getByRole('button',{name:/Купить за/}).click();
