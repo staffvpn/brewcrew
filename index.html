@@ -12716,7 +12716,7 @@ function sumFor(k){
     if(k==='market'){ return 'кандидаты и продажа'; }
     if(k==='tasks'){ var d=(S.tasks||[]).filter(function(t){return t.done;}).length; return '<b>'+d+'</b> из '+((S.tasks||[]).length||5); }
     if(k==='season'){ return 'ступень <b>'+szTier(szState())+'</b> из '+SZ_TIERS; }
-    if(k==='inv'){ return 'награды сезона'; }
+    if(k==='inv'){ return 'поставки, пропуск и значки'; }
     if(k==='stock'){ var l=lowStock(); return l.length?('<b>'+l.length+'</b> заканчивается'):'запас в норме'; }
     if(k==='money'){ var r=(S.fin&&S.fin.today&&S.fin.today.rev)||0; return 'сегодня <b>'+nf(r)+' ₽</b>'; }
     if(k==='guests')return '';
@@ -14804,7 +14804,7 @@ function bcManagedApply(o){
  else if(d.kind==='stock'&&STOCK[d.id]){var amount=calc(stockQty(d.id),0,100000),st=STOCK[d.id];S.stock[d.id]=st.perish?(amount?[{q:amount,exp:S.day+st.perish}]:[]):amount;}
  else if(d.kind==='upgrade'&&room('main').upg[d.id]!=null){room('main').upg[d.id]=calc(room('main').upg[d.id],0,d.id==='tables'?28:20);}
  else if(d.kind==='staff'){S.staff=S.staff.filter(function(s){return s.isYou||String(s.id)!==String(d.id);});syncScene('main');}
- else if(d.kind==='inventory'){S.inv=(S.inv||[]).filter(function(it){return String(it.uid)!==String(d.id);});}
+ else if(d.kind==='inventory'){const it=(S.inv||[]).find(it=>String(it.uid)===String(d.id));if(it?.k==='supplier'&&S.supplierDrops){delete S.supplierDrops.owned[it.item];for(const k of Object.keys(S.supplierDrops.equipped||{}))if(S.supplierDrops.equipped[k]===it.item)S.supplierDrops.equipped[k]=null;}S.inv=(S.inv||[]).filter(it=>String(it.uid)!==String(d.id));}
  else if(d.kind==='badge'){S.badges=(S.badges||[]).filter(function(b){return b!==d.title;});S.badgeList=(S.badgeList||[]).filter(function(b){return b.id!==d.id;});if(S.badgeOn===d.id)S.badgeOn=null;}
  else if(d.kind==='feature'){
   if(!take)applyGrant(d.id);
@@ -15498,7 +15498,7 @@ function bcBadgeSlots(){
  for(let i=0;i<3;i++)if(!ids.has(S.badgeSlots[i])||S.badgeSlots.indexOf(S.badgeSlots[i])!==i)S.badgeSlots[i]=null;S.badgeSlots.length=3;
  S.badgeOn=S.badgeSlots.find(Boolean)||null;return S.badgeSlots;
 }
-function bcBadgeChoose(id,slot){if(!(S.badgeList||[]).some(b=>b.id===id)||!Number.isInteger(slot)||slot<0||slot>2)return;const slots=bcBadgeSlots();for(let i=0;i<3;i++)if(slots[i]===id)slots[i]=null;slots[slot]=id;bcBadgeSlots();save();renderHud();structDirty=true;}
+function bcBadgeChoose(id,slot){if(!(S.badgeList||[]).some(b=>b.id===id)||!Number.isInteger(slot)||slot<0||slot>2)return;const slots=bcBadgeSlots(),from=slots.indexOf(id),old=slots[slot];if(from>=0&&from!==slot)slots[from]=old||null;slots[slot]=id;bcBadgeSlots();save();renderHud();structDirty=true;return true;}
 function bcBadgeOpen(id){if((S.badgeList||[]).some(b=>b.id===id))queueModal({kind:'bc_badge',id},true);}
 MODAL15.bc_badge=function(box,m,btn){const b=(S.badgeList||[]).find(b=>b.id===m.id);if(!b){box.append(btn('Закрыть',closeModal));return;}
  box.classList.add('bc-badge-modal');box.append(el('<div class="bc-badge-large">'+BrewCrewBadgeArt.art(b)+'</div>'));const title=document.createElement('h2');title.textContent=b.n;const desc=document.createElement('p');desc.textContent=b.d||'Памятный значок кофейни';box.append(title,desc);if(b.at){const when=document.createElement('p');when.className='d';when.textContent='Получен '+new Date(b.at).toLocaleDateString('ru-RU');box.append(when);}
@@ -15573,8 +15573,10 @@ Promise.resolve(window.BrewCrewLab?.ready).then(function(){return BrewCrewFreeze
 <script src="supplier-rules.js?v=3"></script>
 <script src="supplier-bag-art.js?v=3"></script>
 <script src="supplier-fx.js?v=3"></script>
-<script src="supplier-lab.js?v=3r1"></script>
-<link rel="stylesheet" href="supplier-additions.css?v=3">
-<script src="supplier-additions.js?v=3"></script>
+<script src="supplier-lab.js?v=4"></script>
+<link rel="stylesheet" href="supplier-additions.css?v=4">
+<script src="supplier-additions.js?v=4"></script>
+<link rel="stylesheet" href="inventory-polish.css?v=1">
+<script src="inventory-polish.js?v=1"></script>
 </body>
 </html>
