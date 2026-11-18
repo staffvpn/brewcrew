@@ -5,7 +5,7 @@ export const ASSET_GROUPS={interior:'Оформление',equipment:'Обору
 const group=p=>['mach','grind','terminal','room'].includes(p.category)?'equipment':p.category?'interior':'premium';
 const hidden=/^frame_(fire|bulbs|spark|aurora|cat)$/;
 export const ADMIN_ASSETS=Object.entries(SHOP).filter(([k,p])=>!hidden.test(k)&&!p.cash&&k!=='rename').map(([id,p])=>({id,kind:'product',title:p.title,group:group(p)}));
-for(const [id,title]of [['first','Обжарка № 1'],['hall','Изумрудная гильдия'],['author','Королевский резерв']])ADMIN_ASSETS.push({id,kind:'supplier',title:'Открытия: '+title,max:1000000,group:'inventory'});
+for(const [id,title]of [['first','Утренний завоз'],['hall','Барная поставка'],['author','Поставка шефа']])ADMIN_ASSETS.push({id,kind:'supplier',title:'Открытия: '+title,max:1000000,group:'inventory'});
 ADMIN_ASSETS.push({id:'newbadge',kind:'badgegift',title:'Выдать новый значок',group:'badges'});
 for(const level of [10,20,30])ADMIN_ASSETS.push({id:'legend'+level,kind:'staffgift',title:'Выдать легенду '+level+' уровня',group:'staff'});
 for(const[id,title]of [['giftcash','Сертификат на 50 000 ₽'],['giftxp','Сертификат на 500 опыта'],['giftboost','Бонус: гостей +15% на сутки']])ADMIN_ASSETS.push({id,kind:'consumable',title,group:'inventory'});

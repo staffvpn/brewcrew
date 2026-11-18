@@ -15517,7 +15517,7 @@ var bcBadgeInv=renderInv;renderInv=function(p){bcBadgeSlots();bcBadgeInv.apply(t
 (function(){const style=document.createElement('style');style.textContent='.bc-medallion{width:48px;height:48px;flex:none}.badge15 .bc-medallion{display:block;margin:0 auto 6px}.bc-badge-hit{padding:0;border:0;background:transparent;cursor:pointer}.bc-badge-hit:focus-visible{outline:2px solid #fff3b6;border-radius:50%}.bc-badge-large .bc-medallion{width:80px;height:80px}.bc-badge-modal{margin-top:auto!important;background:#fff5df!important;color:#493322!important;border-radius:24px 24px 0 0!important}.bc-badge-modal .d{color:#765c42!important}.veil:has(.bc-badge-modal){align-items:flex-end!important;padding-bottom:0!important}#hbdg{display:none!important}';document.head.append(style);})();
 
 function bcSeasonItemThumb(id){const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.strokeStyle='#72583a';g.beginPath();g.moveTo(4,9);g.quadraticCurveTo(24,23,44,9);g.stroke();for(let i=0;i<5;i++){g.fillStyle='#ffe5a0';g.fillRect(6+i*8,12+Math.round(Math.sin(i/4*Math.PI)*5),3,4);}return '<img class="bc-reward-art" src="'+c.toDataURL()+'" alt="'+'Тёплая гирлянда'+'" width="48" height="48">';}
-var bcSeasonDecorView=viewSnap34;viewSnap34=function(){const d=bcSeasonDecorView.apply(this,arguments);if(d)d.sd=decorOwned().filter(it=>['pled','garland','tree','plaque','mug30'].includes(it.id)).map(it=>it.id);return d;};
+var bcSeasonDecorView=viewSnap34;viewSnap34=function(){const d=bcSeasonDecorView.apply(this,arguments);if(d)d.sd=decorOwned().filter(it=>['pled','garland','tree','plaque','mug30'].includes(it.id)&&!S.c?.hiddenSeason?.[it.id]).map(it=>it.id);return d;};
 // Milestone badges accompany the existing rewards; no cash/items/claims are replaced.
 function bcMilestoneBadge(track,n){const info=sezInfo();if(track==='f'&&[15,30,50].includes(n))return{id:'sz'+n+'_'+info.id,n:({15:'Бронза',30:'Серебро',50:'Золото'})[n]+' сезона «'+info.n+'»',d:'Дошёл до '+n+' ступени'};if(track==='p'&&n===50)return{id:'goldown_'+info.id,n:'Золотой владелец «'+info.n+'»',d:'50 ступень пропуска'};return null;}
 var bcVisibleSeason=renderSeason;renderSeason=function(p){bcVisibleSeason.apply(this,arguments);badgeTick();p.querySelectorAll('.sz-row').forEach(row=>{const n=Number(row.querySelector('b.num').textContent);for(const track of ['f','p']){const cell=row.querySelector('.sz-cell.'+track),b=bcMilestoneBadge(track,n);if(!cell)continue;
@@ -15528,7 +15528,7 @@ var bcVisibleSeason=renderSeason;renderSeason=function(p){bcVisibleSeason.apply(
 var bcMilestoneClaim=szClaim;szClaim=function(){const result=bcMilestoneClaim.apply(this,arguments);if(!result)badgeTick();return result;};
 function bcSeasonGarland(now){const left=8,right=OX+VW-8,y=26;ctx.save();ctx.strokeStyle='#72583a';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(left,y);for(let x=left;x<=right;x+=2)ctx.lineTo(x,y+Math.sin((x-left)/(right-left)*Math.PI)*2.5);ctx.stroke();for(let x=left+3,i=0;x<right;x+=13,i++){const yy=y+Math.sin((x-left)/(right-left)*Math.PI)*2.5;rect(x,yy,1,2,'#72583a');EL(x+.5,yy+3,1.2,1.7,Math.sin(now*1.6+i)>-.5?'#ffe5a0':'#ccac6c');}ctx.restore();}
 
-function bcSeasonObjects(st,items,now){if(!S||S.active!=='main'||st.outdoor)return;const owned=decorOwned().filter(it=>decorDef(it.id)?.season);if(owned.some(it=>['pled','garland'].includes(it.id)))items.push({y:1,f:()=>bcSeasonGarland(now)});
+function bcSeasonObjects(st,items,now){if(!S||S.active!=='main'||st.outdoor)return;const owned=decorOwned().filter(it=>decorDef(it.id)?.season&&!S.c?.hiddenSeason?.[it.id]);if(owned.some(it=>['pled','garland'].includes(it.id)))items.push({y:1,f:()=>bcSeasonGarland(now)});
  // Keep earlier earned seasonal objects visible too, on their own surfaces.
  if(owned.some(it=>it.id==='tree')&&S.interior?.main!=='int_winter')items.push({y:106,f:()=>drawDecor({id:'tree'},190,105,now)});
  if(owned.some(it=>it.id==='plaque'))items.push({y:1,f:()=>drawDecor({id:'plaque'},140,64,now)});
@@ -15570,13 +15570,15 @@ Promise.resolve(window.BrewCrewLab?.ready).then(function(){return BrewCrewFreeze
 </script>
 <script src="long-table-lab.js"></script>
 <link rel="stylesheet" href="supplier-lab.css?v=3">
-<script src="supplier-rules.js?v=3"></script>
+<script src="supplier-rules.js?v=5"></script>
 <script src="supplier-bag-art.js?v=3"></script>
 <script src="supplier-fx.js?v=3"></script>
-<script src="supplier-lab.js?v=4"></script>
+<script src="supplier-lab.js?v=5"></script>
 <link rel="stylesheet" href="supplier-additions.css?v=4">
 <script src="supplier-additions.js?v=4"></script>
-<link rel="stylesheet" href="inventory-polish.css?v=1">
-<script src="inventory-polish.js?v=1"></script>
+<link rel="stylesheet" href="inventory-polish.css?v=5">
+<script src="inventory-polish.js?v=5"></script>
+<link rel="stylesheet" href="invitations-polish.css?v=5">
+<script src="invitations-polish.js?v=5"></script>
 </body>
 </html>

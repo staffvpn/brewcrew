@@ -22,13 +22,13 @@ const definitions=[
  ['royalpress','Пресс «Золотая гильдия»',4,'shelf','Редкий рычажный эспрессо-пресс с изумрудной сердцевиной.'],
  ['machine','Кофемашина «Медный мастер»',4,'machine','Уникальная медная кофемашина. Вид спереди, мягкий пар. Скин без изменения скорости.']
 ];
-const items=definitions.map(([id,name,rarity,slot,description])=>({id,name,rarity,slot,description,kind:'item',image:'img/supplier/front/'+id+'.png'}));
+const items=definitions.map(([id,name,rarity,slot,description])=>({id,name,rarity,slot,description,kind:'item',image:'img/supplier/front/'+id+(['cups','sugar','cupstand','tower'].includes(id)?'-v5':'')+'.png'}));
 const tiers=[
- {id:'first',name:'Обжарка № 1',bag:'first',cost:25000,hours:0,expansion:false,weights:[75,22,3,0,0],pool:['cups','sugar','dripper','beans','napkins','plant','clock','poster','grinder']},
- {id:'hall',name:'Изумрудная гильдия',bag:'hall',cost:250000,hours:5,expansion:false,weights:[55,30,12,3,0],pool:items.filter(i=>i.rarity<4).map(i=>i.id)},
- {id:'author',name:'Королевский резерв',bag:'author',cost:1500000,hours:20,expansion:true,weights:[55,28,12,4,1],pool:items.map(i=>i.id)}
+ {id:'first',name:'Утренний завоз',bag:'first',cost:25000,hours:0,expansion:false,weights:[75,22,3,0,0],pool:['cups','sugar','dripper','beans','napkins','plant','clock','poster','grinder']},
+ {id:'hall',name:'Барная поставка',bag:'hall',cost:250000,hours:5,expansion:false,weights:[55,30,12,3,0],pool:items.filter(i=>i.rarity<4).map(i=>i.id)},
+ {id:'author',name:'Поставка шефа',bag:'author',cost:1500000,hours:20,expansion:true,weights:[55,28,12,4,1],pool:items.map(i=>i.id)}
 ];
-const currencies=['cash','xp'].flatMap(kind=>rarities.map((r,rarity)=>({id:kind+'_'+rarity,name:kind==='cash'?'Игровые рубли':'Опыт кофейни',rarity,kind,slot:null,image:'img/supplier/'+kind+'.png',description:kind==='cash'?'Поступают в кассу сразу.':'Сразу повышает опыт и уровень кофейни.'})));
+const currencies=['cash','xp'].flatMap(kind=>rarities.map((r,rarity)=>({id:kind+'_'+rarity,name:kind==='cash'?'Валюта':'Опыт',rarity,kind,slot:null,image:'img/supplier/'+kind+'.png',description:kind==='cash'?'Сохраняется в инвентаре.':'Применяется из инвентаря.'})));
 const rewards=items.concat(currencies),kindWeights={item:70,cash:20,xp:10},giftOrders=60;
 for(const t of tiers)t.pool.push(...currencies.filter(i=>t.weights[i.rarity]>0).map(i=>i.id));
 function migrate(s){if(s.version===2)return s;s.version=2;s.giftProgress=Number(s.giftProgress)||0;s.giftTickets=Number(s.giftTickets)||0;s.equipped.table=s.equipped.table||null;return s;}
