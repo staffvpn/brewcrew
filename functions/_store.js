@@ -1507,5 +1507,38 @@ export const STORE_ITEMS = {
     "currency": "XTR",
     "gamePrice": 0,
     "oldCoins": 0
+  },
+  "lux_x_orbit": {
+    "title": "Орбита обжарщика",
+    "desc": "Гости ждут на 3% дольше",
+    "stars": 799,
+    "once": 1,
+    "category": "lux",
+    "skin": "x_orbit",
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
+  },
+  "lux_x_crystal": {
+    "title": "Хрустальная витрина",
+    "desc": "+2,5% к среднему чеку",
+    "stars": 999,
+    "once": 1,
+    "category": "lux",
+    "skin": "x_crystal",
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
+  },
+  "lux_x_midnight": {
+    "title": "Знак полуночи",
+    "desc": "+2,5% гостей",
+    "stars": 699,
+    "once": 1,
+    "category": "lux",
+    "skin": "x_midnight",
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
   }
 };

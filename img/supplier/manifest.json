@@ -136,5 +136,10 @@
     "front-b": "69e8c5f8-ad5f-477c-a074-a85dcceea733",
     "bag-frames": "e60aeeb6-1b64-42d1-b853-b087af72619b"
   },
-  "animation": "Eight PixelLab sack states, continuous RAF motion and light/particles"
+  "animation": "Eight PixelLab sack states, continuous RAF motion and light/particles",
+  "v3Jobs": {
+    "treasures": "085b6fc1-3afe-4f09-9bcd-3c03801bb1c2",
+    "emerald-bag": "f478d049-3994-4a11-b933-d7b5e6d22bd2",
+    "royal-bag": "278e7846-768f-4bc2-a2f6-57f4ca4debf0"
+  }
 }

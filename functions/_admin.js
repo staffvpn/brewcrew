@@ -174,7 +174,7 @@ async function vStyles(env, id) {
 }
 const GRANTS = { upg5: 'Основной зал: улучшения +5', stock: 'Полный склад', rep: 'Рейтинг +0,5', party: 'Команде настроение 100', kitchen: 'Кухня +1 ступень', buyout: 'Выкуп помещения', roaster: 'Своя обжарка', goldm: 'Золотая кофемашина' };
 const DECOR_N = {};
-function opSummary(o){if(o.op==='manage'){try{const d=JSON.parse(o.text);return ({give:'➕ Выдано',take:'➖ Изъято',set:'✏️ Установлено'}[d.action]||'Изменено')+' · '+esc(d.title)+(['resource','stock','upgrade'].includes(d.kind)?' · '+d.amount:'');}catch{}}return esc(OPN[o.op]||o.op)+(o.amount!=null&&o.op!=='msg'?' '+fmt(o.amount):'');}
+function opSummary(o){if(o.op==='manage'){try{const d=JSON.parse(o.text);return ({give:'➕ Выдано',take:'➖ Изъято',set:'✏️ Установлено'}[d.action]||'Изменено')+' · '+esc(d.title)+(['resource','stock','upgrade','supplier'].includes(d.kind)?' · '+d.amount:'');}catch{}}return esc(OPN[o.op]||o.op)+(o.amount!=null&&o.op!=='msg'?' '+fmt(o.amount):'');}
 async function vHistory(env,id){const rows=(await env.DB.prepare('SELECT * FROM admin_ops WHERE tg_id=?1 ORDER BY id DESC LIMIT 12').bind(id).all()).results||[];return {text:'<b>История операций</b>\n\n'+(rows.length?rows.map(o=>when(o.created_at)+' · '+opSummary(o)+(o.applied_at?' · ✅ применено':' · ⏳ ожидает')).join('\n'):'Пока нет операций.'),kb:[[B('‹ Карточка','p:u:'+id),...HOME]]};}
 async function vChannel(env) {
   if (!env.CHANNEL_ID) return { text: 'Канал не подключён: нет CHANNEL_ID в настройках Cloudflare.', kb: [HOME] };
@@ -235,14 +235,15 @@ async function vAssetDetail(env,id,group,index){
  if(a.kind==='product'){const p=SHOP[a.id];const row=await env.DB.prepare('SELECT 1 x FROM purchases WHERE tg_id=?1 AND item=?2 AND refunded=0').bind(id,a.id).first();const own=!!row||snap?.owned?.includes(a.id)||p.category&&snap?.owned?.includes(p.category+':'+p.skin);state=block[a.id]?'Доступ отозван':own?'Есть у игрока':'Не найден в последнем снимке';}
  if(a.kind==='reward')state=block[a.id]?'Доступ отозван':Object.hasOwn(block,a.id)||snap?.owned?.includes(a.id)?'Выдано игроку':'Не найдено в снимке';
  if(a.kind==='resource'){if(a.id==='money'||a.id==='level'){const p=await env.DB.prepare('SELECT money,level FROM players WHERE tg_id=?1').bind(id).first();state='По последнему снимку: '+fmt(a.id==='money'&&snap?snap.cash:p?.[a.id]||0);}else state='По снимку: '+fmt(snap?.[a.id]||0);}
+ if(a.kind==='supplier')state='Бесплатных открытий по снимку: '+fmt(snap?.suppliers?.[a.id]||0);
  if(a.kind==='stock')state='По снимку: '+fmt(snap?.stock?.[a.id]||0);
- const amount=['resource','stock','upgrade'].includes(a.kind);const onlyTake=['staff','inventory','badge'].includes(a.kind);const choices=['staffgift','consumable','badgegift'].includes(a.kind)?['give']:a.kind==='resource'&&a.id==='level'?['set']:onlyTake?['take']:amount?['give','take','set']:['give','take'];
+ const amount=['resource','stock','upgrade','supplier'].includes(a.kind);const onlyTake=['staff','inventory','badge'].includes(a.kind);const choices=['staffgift','consumable','badgegift'].includes(a.kind)?['give']:a.kind==='resource'&&a.id==='level'?['set']:onlyTake?['take']:amount?['give','take','set']:['give','take'];
  return{banner:'admin/'+({resources:'resources',staff:'staff',inventory:'items',badges:'badges'}[group]||'inventory')+'.png',text:'<b>'+esc(a.title)+'</b>\n\n'+state+'\n\n'+(onlyTake?'Будет удалён именно выбранный объект.':amount?'Можно добавить, списать или установить точное значение.':a.kind==='product'?'Выдача бесплатная. Отзыв доступа не делает возврат платежа.':'Изменение применится при следующем выходе игры на связь.'),kb:[...choices.map(action=>[B({give:'Выдать',take:'Изъять',set:'Установить значение'}[action],'p:ap:'+id+':'+group+':'+index+':'+action)]),[B('‹ Назад','p:agroup:'+id+':'+group+':'+Math.floor(index/8)),...HOME]]};
 }
 async function assetConfirmation(env,id,data,admin){
  const d=validateAssetAction(data);if(!d)return{text:'Некорректное действие.',kb:[HOME]};const token=crypto.randomUUID().replaceAll('-','').slice(0,20);const player=await env.DB.prepare('SELECT cafe,first_name FROM players WHERE tg_id=?1').bind(id).first();if(!player)return{text:'Игрок не найден.',kb:[HOME]};
  await env.DB.prepare('INSERT INTO cache(key,val,at)VALUES(?1,?2,?3)').bind('admin_draft_'+token,JSON.stringify({admin,id,data:d,until:Date.now()+15*60000}),Date.now()).run();
- return{banner:'admin/confirm.png',text:'<b>Проверь изменение</b>\n\nИгрок: <b>'+esc(player.first_name||id)+'</b> · <code>'+id+'</code>\nКофейня: «'+esc(player.cafe||'?')+'»\nДействие: <b>'+{give:'выдать',take:'изъять',set:'установить'}[d.action]+'</b>\nОбъект: <b>'+esc(d.title)+'</b>'+(['resource','stock','upgrade'].includes(d.kind)?'\nКоличество / значение: <b>'+String(d.amount)+'</b>':'')+'\n\nПрименится при следующем выходе игры на связь. Действие попадёт в журнал.',kb:[[B('Подтвердить '+(d.action==='take'?'изъятие':'изменение'),'p:ago:'+token)],[B('Отмена','p:inv:'+id)]]};
+ return{banner:'admin/confirm.png',text:'<b>Проверь изменение</b>\n\nИгрок: <b>'+esc(player.first_name||id)+'</b> · <code>'+id+'</code>\nКофейня: «'+esc(player.cafe||'?')+'»\nДействие: <b>'+{give:'выдать',take:'изъять',set:'установить'}[d.action]+'</b>\nОбъект: <b>'+esc(d.title)+'</b>'+(['resource','stock','upgrade','supplier'].includes(d.kind)?'\nКоличество / значение: <b>'+String(d.amount)+'</b>':'')+'\n\nПрименится при следующем выходе игры на связь. Действие попадёт в журнал.',kb:[[B('Подтвердить '+(d.action==='take'?'изъятие':'изменение'),'p:ago:'+token)],[B('Отмена','p:inv:'+id)]]};
 }
 
 /* ---------- вход: команда /admin ---------- */
@@ -358,7 +359,7 @@ export async function adminCallback(env, cq) {
     const a=(await assetEntries(env,id,parts[3]))[Number(parts[4])];if(!a)return answer('Предмет не найден');
     if(a.kind==='badgegift')return wait('asset_badge',{id},ask('Название значка','Пришли название от 2 до 40 символов.','p:inv:'+id));
     const d={id:a.id,kind:a.kind,title:a.title,action:parts[5]};
-    if(['resource','stock','upgrade'].includes(a.kind))return wait('asset_amount',{id,data:d},ask(a.title,'Действие: '+({give:'добавить',take:'списать',set:'установить'}[d.action]||'?')+'. Пришли количество'+(a.max?' (максимум '+fmt(a.max)+')':'')+'.','p:inv:'+id));
+    if(['resource','stock','upgrade','supplier'].includes(a.kind))return wait('asset_amount',{id,data:d},ask(a.title,'Действие: '+({give:'добавить',take:'списать',set:'установить'}[d.action]||'?')+'. Пришли количество'+(a.max?' (максимум '+fmt(a.max)+')':'')+'.','p:inv:'+id));
     await edit(await assetConfirmation(env,id,d,from));return answer('');
   }
   if(act==='ago'){
@@ -434,7 +435,7 @@ export async function adminCallback(env, cq) {
 
 // Игра забирает команды при отметке онлайн.
 export async function opsFor(env, id, supportsManaged = false) {
-  return (await env.DB.prepare('SELECT id, op, amount, text FROM admin_ops WHERE tg_id = ?1 AND applied_at IS NULL AND (op != \'manage\' OR ?2 = 1) ORDER BY id LIMIT 20').bind(id,supportsManaged?1:0).all()).results || [];
+  return (await env.DB.prepare("SELECT id,op,amount,text FROM admin_ops WHERE tg_id=?1 AND applied_at IS NULL AND (op!='manage' OR ?2=1) AND (op!='manage' OR ?3>=2 OR COALESCE(json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END,'$.kind'),'')!='supplier') ORDER BY id LIMIT 20").bind(id,supportsManaged?1:0,Number(supportsManaged)||0).all()).results||[];
 }
 export async function ackOps(env, id, ids) {
   ids = (Array.isArray(ids) ? ids : []).map(Number).filter(Number.isFinite).slice(0, 20);

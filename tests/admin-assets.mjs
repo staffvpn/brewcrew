@@ -31,4 +31,6 @@ await cb('p:find');await adminInput(env,ADMINS[0],ADMINS[0],91,'ЕЖИК');
 assert(calls.filter(c=>c.method==='editMessageText').at(-1).body.text.includes('ЁЖИК КОФЕ'));
 
 assert.equal((await opsFor(env,100)).filter(o=>o.op==='manage').length,0,'old clients must never acknowledge unsupported commands');assert((await opsFor(env,100,true)).some(o=>o.op==='manage'));
+for(const id of ['first','hall','author']){assert(validateAssetAction({kind:'supplier',id,action:'give',amount:123}));assert.equal(validateAssetAction({kind:'supplier',id,action:'give',amount:1.5}),null);await change({kind:'supplier',id,action:'give',amount:123});}assert.equal((await assetEntries(env,100,'inventory')).filter(a=>a.kind==='supplier').length,3);
+assert(!(await opsFor(env,100,1)).some(o=>{try{return JSON.parse(o.text).kind==='supplier';}catch{return false;}}));assert.equal((await opsFor(env,100,2)).filter(o=>{try{return JSON.parse(o.text).kind==='supplier';}catch{return false;}}).length,3);
 console.log('PASS: admin-only asset changes, typed validation, exact confirmation, replay protection, queue/audit, no fake refunds, revocation and regrant survive receipts, private inventory filtering, catalogue pagination and Telegram icons.');

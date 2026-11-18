@@ -17,13 +17,16 @@ const definitions=[
  ['tea','Чайный ларец',2,'shelf','Три сорта чая в стеклянных банках.'],
  ['siphon','Сифон «Алхимик»',3,'shelf','Стеклянная колба и медный держатель.'],
  ['cabinet','Витрина мастера',3,'shelf','Небольшая витрина с авторской керамикой.'],
+ ['royalgrinder','Кофемолка «Изумрудный монарх»',4,'grind','Легендарный скин кофемолки: эмаль, латунь и золотой бункер.'],
+ ['tower','Башня «Лунная капля»',4,'shelf','Коллекционная колд-брю башня из стекла и латуни.'],
+ ['royalpress','Пресс «Золотая гильдия»',4,'shelf','Редкий рычажный эспрессо-пресс с изумрудной сердцевиной.'],
  ['machine','Кофемашина «Медный мастер»',4,'machine','Уникальная медная кофемашина. Вид спереди, мягкий пар. Скин без изменения скорости.']
 ];
 const items=definitions.map(([id,name,rarity,slot,description])=>({id,name,rarity,slot,description,kind:'item',image:'img/supplier/front/'+id+'.png'}));
 const tiers=[
- {id:'first',name:'Первая поставка',cost:25000,hours:0,expansion:false,weights:[75,22,3,0,0],pool:['cups','sugar','dripper','beans','napkins','plant','clock','poster','grinder']},
- {id:'hall',name:'Поставка для зала',cost:250000,hours:5,expansion:false,weights:[55,30,12,3,0],pool:items.filter(i=>i.rarity<4).map(i=>i.id)},
- {id:'author',name:'Авторская поставка',cost:1500000,hours:20,expansion:true,weights:[55,28,12,4,1],pool:items.map(i=>i.id)}
+ {id:'first',name:'Обжарка № 1',bag:'first',cost:25000,hours:0,expansion:false,weights:[75,22,3,0,0],pool:['cups','sugar','dripper','beans','napkins','plant','clock','poster','grinder']},
+ {id:'hall',name:'Изумрудная гильдия',bag:'hall',cost:250000,hours:5,expansion:false,weights:[55,30,12,3,0],pool:items.filter(i=>i.rarity<4).map(i=>i.id)},
+ {id:'author',name:'Королевский резерв',bag:'author',cost:1500000,hours:20,expansion:true,weights:[55,28,12,4,1],pool:items.map(i=>i.id)}
 ];
 const currencies=['cash','xp'].flatMap(kind=>rarities.map((r,rarity)=>({id:kind+'_'+rarity,name:kind==='cash'?'Игровые рубли':'Опыт кофейни',rarity,kind,slot:null,image:'img/supplier/'+kind+'.png',description:kind==='cash'?'Поступают в кассу сразу.':'Сразу повышает опыт и уровень кофейни.'})));
 const rewards=items.concat(currencies),kindWeights={item:70,cash:20,xp:10},giftOrders=60;

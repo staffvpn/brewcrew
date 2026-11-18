@@ -22,7 +22,7 @@ const { acceptLegal } = require('./legal-fixture.cjs');
   await p.getByRole('button', { name: 'Поехали', exact: true }).click();
   await p.waitForFunction(() => S && window.BrewCrewStaffSkins?.ready());
   const before=await p.evaluate(()=>{while(modals.length)closeModal();S.isOpen=false;S.hours={open:20,close:22};S.gm=600;S.money=100000000;openShop();return {money:S.money,owned:JSON.stringify(S.skinOwned),cats:['style','lux','atmosphere','floor','backfloor','wall','win','table','chair','bstool','bar','barf','mach','grind','art','sign','font','uni','room','p:frames','p:pass','p:money','p:more','terminal']};});
-  const top=p.locator('[data-shop-group]');assert.equal(await top.count(),14,'Incorrect main sections');
+  const top=p.locator('[data-shop-group]');assert.equal(await top.count(),13,'Incorrect main sections');
   assert.equal(await top.first().innerText(),'Стиль зала');
   assert(await p.locator('.bc-shop-groups').evaluate(n=>getComputedStyle(n).overflowX==='auto'&&n.scrollWidth>n.clientWidth),'Main shop sections lost horizontal scrolling');
   const seen=[],counts={},groups=await top.evaluateAll(buttons=>buttons.map(b=>b.dataset.shopGroup));
@@ -35,7 +35,7 @@ const { acceptLegal } = require('./legal-fixture.cjs');
       assert.equal(await p.locator('[data-shop-group]').count(),1,'Other shop sections appear inside a group');
       assert.equal(await p.locator('[data-shop-back]').count(),1);
       if(group==='equipment')assert.deepEqual(values,['mach','grind','terminal']);
-      if(group==='furniture')assert.deepEqual(values,['table','chair','floor','backfloor','wall','win','bar','barf']);
+      if(group==='furniture')assert.deepEqual(values,['table','chair','bstool','floor','backfloor','wall','win','bar','barf']);
       if(group==='furniture')assert(await p.locator('.bc-shop-subnav').evaluate(n=>getComputedStyle(n).overflowX==='auto'&&n.scrollWidth>n.clientWidth),'Furniture categories lost horizontal scrolling');
       for(const cat of values){await p.locator('[data-shop-cat="'+cat+'"]').click();assert.equal(await p.evaluate(()=>window.__shopCat),cat);seen.push(cat);counts[cat]=await p.locator('#panel .u6it, #panel .sc29').count();assert(counts[cat]>0,'Empty catalog '+cat);}
     }else{seen.push(group);assert(await p.locator('#panel .sc29, #panel .u6it').count()>0,'Empty section '+group);}
@@ -62,5 +62,5 @@ const { acceptLegal } = require('./legal-fixture.cjs');
   assert(await p.locator('#modalRoot .bc-currency-star').count()>0,'Stars checkout lost');
   await p.evaluate(()=>{while(modals.length)closeModal();openSheet(null);openShop();});
   assert.equal(await p.locator('[data-shop-group="style"]').getAttribute('aria-pressed'),'true');assert.equal(await p.locator('[data-shop-cat]').count(),0);
-  assert.deepEqual(errors,[]);await b.close();console.log('PASS grouped shop: exact eight furniture categories, isolated group screens, separate styles/bar-stools/decor/frames/expansions, every existing category reachable and nonempty, cash buy and Stars checkout preserved, unchanged ownership during navigation, mobile layout, default first section.');
+  assert.deepEqual(errors,[]);await b.close();console.log('PASS grouped shop: exact nine furniture categories, isolated group screens, separate styles/decor/frames/expansions, every existing category reachable and nonempty, cash buy and Stars checkout preserved, unchanged ownership during navigation, mobile layout, default first section.');
 })().catch(e=>{console.error(e);process.exit(1);});
