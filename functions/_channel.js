@@ -66,6 +66,8 @@ export async function post(env, origin, img, html) {
 export async function channelTick(env, origin) {
   if (!env.CHANNEL_ID || !env.DB || !env.BOT_TOKEN) return;
   try {
+    // диагностика ссылки на мини-приложение (19.11): один раз пишем, куда ведёт кнопка
+    try { const bot = await getBot(env); await env.DB.prepare("INSERT OR REPLACE INTO cache (key, val, at) VALUES ('diag_app', ?1, ?2)").bind(JSON.stringify({ bot: bot && bot.username, app: env.APP_SHORT || null, url: env.APP_URL || null }), Date.now()).run(); } catch {}
     // не чаще одного поста в 3 минуты, чтобы не спамить
     const last = await env.DB.prepare('SELECT MAX(at) at FROM posts').first();
     if (last && last.at && Date.now() - last.at < 3 * 60000) return;
