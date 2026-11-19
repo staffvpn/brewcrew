@@ -116,6 +116,7 @@ export async function channelTick(env, origin) {
     // Елизавета из «кофеРУинер»: пост и рассылка в момент запуска
     if (await lizaTick(env, origin)) return;
     if (await leraPostTick(env, origin)) return;
+    if (await giftsPostTick(env, origin)) return;
     if (await nkChannelTick(env, origin)) return;
     // особый гость недели: анонс в четверг, рассылка в пятницу, итоги в субботу
     if (await bossTick(env, origin)) return;
@@ -254,6 +255,20 @@ async function nkChannelTick(env, origin) {
   if (w > 0) { const top = await nkTop(env, w - 1, 10); if (top.length) { lines.push('', '<b>Прошлую неделю разгадали первыми:</b>'); top.forEach(t => lines.push(`${t.rank}. ${esc(t.cafe || t.first_name || 'Кофейня')}`)); } else lines.push('', 'Прошлый шифр так никто и не разгадал.'); }
   const ok = await post(env, origin, 'events.jpg', lines.join('\n'));
   await mark(env, key, ok); return true;
+}
+// подарки первой недели и сундук возвращения: один пост (19.11.2026)
+async function giftsPostTick(env, origin) {
+  if (await posted(env, 'gifts_1119')) return false;
+  const ok = await post(env, origin, 'updates.jpg', [
+    "<b>Новое в Brew Crew: подарки каждый день и сундук возвращения</b>",
+    "",
+    "<b>Первая неделя.</b> Каждый день в игре тебя ждёт подарок: деньги, новые сотрудники, улучшения кофемашины и мест, бонусы к гостям и чеку. На седьмой день в команду придёт легендарный сотрудник. Календарь видно целиком, так что ты всегда знаешь, что будет завтра. Подарок открывается кнопкой рядом с залом, а на все семь даётся две недели. Подарки получают новые игроки и все, кто пока не дорос до 8 уровня.",
+    "",
+    "<b>Сундук возвращения.</b> Давно не заходил? Кофейня тебя ждала. Чем дольше ты отсутствовал, тем больше сундук: деньги, приток гостей, довольная команда, а после долгой паузы даже легендарный сотрудник.",
+    "",
+    "Заходи, твой подарок уже ждёт."
+  ].join('\n'));
+  await mark(env, 'gifts_1119', ok); return true;
 }
 // запуск Леры: один пост в канал (17.11.2026)
 async function leraPostTick(env, origin) {
