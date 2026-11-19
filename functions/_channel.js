@@ -116,6 +116,7 @@ export async function channelTick(env, origin) {
     // Елизавета из «кофеРУинер»: пост и рассылка в момент запуска
     if (await lizaTick(env, origin)) return;
     if (await leraPostTick(env, origin)) return;
+    if (await nikitaPostTick(env, origin)) return;
     if (await giftsPostTick(env, origin)) return;
     if (await nkChannelTick(env, origin)) return;
     // особый гость недели: анонс в четверг, рассылка в пятницу, итоги в субботу
@@ -269,6 +270,27 @@ async function giftsPostTick(env, origin) {
     "Заходи, твой подарок уже ждёт."
   ].join('\n'));
   await mark(env, 'gifts_1119', ok); return true;
+}
+// анонс Никиты с баннером: один пост (19.11.2026)
+async function nikitaPostTick(env, origin) {
+  if (await posted(env, 'nikita_post')) return false;
+  const ok = await post(env, origin, 'nikita_banner.jpg', [
+    "<b>Никита уже ходит по вашим кофейням</b>",
+    "",
+    "Никита из «ЗаДРИПанного кофейника» вместе с котом Филей собирает штампы в свой паспорт. Сегодня он начал обходить кофейни Brew Crew, так что держи свою открытой: он может зайти в любую минуту.",
+    "",
+    "За пять визитов Никита:",
+    "— поставит первый штамп, а Филя запрыгнет на стойку и будет ждать, пока его погладят;",
+    "— устроит слепую дегустацию: угадай страну зерна по трём нотам;",
+    "— оставит салфетку с шифром недели;",
+    "— подготовит твоего бариста к чемпионату: скорость или латте-арт на выбор;",
+    "— закроет паспорт и оставит в меню свой «Фильтр Фили».",
+    "",
+    "<b>Шифр недели</b> начинается с третьего визита. Первая часть ключа у Фили на ошейнике: найди кота в зале. Вторая часть в посте выше. Первые десять, кто разгадает, получат больше всех.",
+    "",
+    "Канал Никиты: t.me/CoffeejNik"
+  ].join('\n'));
+  await mark(env, 'nikita_post', ok); return true;
 }
 // запуск Леры: один пост в канал (17.11.2026)
 async function leraPostTick(env, origin) {
