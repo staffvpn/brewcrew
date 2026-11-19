@@ -1,5 +1,5 @@
 // POST /api/invoice — создаёт ссылку на оплату звёздами для товара из каталога.
-import { json, verifyInitData, tgApi, SHOP, giftCheck } from '../_lib.js';
+import { json, verifyInitData, tgApi, SHOP, giftCheck, weekendStart } from '../_lib.js';
 
 export async function onRequestPost({ request, env }) {
   if (!env.BOT_TOKEN || !env.DB) return json({ ok: false, error: 'not configured' }, 503);
@@ -11,6 +11,12 @@ export async function onRequestPost({ request, env }) {
   const item = Object.hasOwn(SHOP, body.item) ? SHOP[body.item] : null;
   if (!item) return json({ ok: false, error: 'unknown item' }, 400);
   if(body.shopVersion!==2)return json({ok:false,error:'Цены магазина обновились. Перезапусти игру перед покупкой.'},409);
+  if (item.weekend) {
+    const ws = weekendStart(); if (!ws) return json({ ok: false, error: 'Набор выходных продаётся с пятницы 18:00 до воскресенья 23:59' });
+    if (body.gift) return json({ ok: false, error: 'Набор выходных нельзя подарить' });
+    const had = await env.DB.prepare("SELECT 1 x FROM purchases WHERE tg_id = ?1 AND item = 'weekend' AND refunded = 0 AND created_at >= ?2").bind(user.id, ws).first();
+    if (had) return json({ ok: false, error: 'Набор этих выходных уже куплен' });
+  }
   if(item.currency==='GAME')return json({ok:false,error:'Этот предмет покупается за игровые деньги в магазине'},400);
   if (item.once && env.DB && !body.gift) { const had = await env.DB.prepare('SELECT 1 x FROM purchases WHERE tg_id = ?1 AND item = ?2 AND refunded = 0').bind(user.id, body.item).first(); if (had) return json({ ok: false, error: 'Этот набор уже куплен' }); }
   // подарок другому игроку: проверяем получателя и что у него этого ещё нет

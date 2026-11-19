@@ -10301,7 +10301,7 @@ renderSettings = function(p){ _renderSettings27.apply(this, arguments); try{
 /* ---------- магазин: обычная шторка, как Улучшения ---------- */
 const SHOP29_TABS = [['frames','Рамки'],['pass','Пропуск'],['styles','Стили зала'],['atm','Атмосфера'],['vip','Флагман'],['money','Деньги'],['more','Разное']];
 let SHOP29_TAB = 'frames';
-const GIFTABLE29 = id => !(window.bcStoreCurrency&&window.bcStoreCurrency(id)==='GAME') && !/^(sub_owner|rename|flagship)$/.test(id);
+const GIFTABLE29 = id => !(window.bcStoreCurrency&&window.bcStoreCurrency(id)==='GAME') && !/^(sub_owner|rename|flagship|weekend|starter)$/.test(id);
 function shop29Items(){ const sub = ownerSub();
   return {
     frames:{d:'Анимированная рамка навсегда: вывеска над меню, рейтинг сезона и дуэли. Надеть другую можно в Настройках.', list: FRAME_SHOP.map(k=>({id:'frame_'+k, n:SIGN_FRAMES[k].n, d:(FRAME29_D[k]||''), stars:1000, owned:frameOwned(k), prev:'frame', k}))},
@@ -15572,13 +15572,13 @@ function cash(v){ S.money+=v; return fmt(v)+' ₽'; }
 
 /* ---------- Первая неделя ---------- */
 var GIFTS=[
-  {t:'Первый сотрудник', d:'100 000 ₽ и бариста в команду бесплатно', f:function(){ var s=giveStaff(needRole()); return cash(100000)+' и '+s.name+' ('+s.role.toLowerCase()+') в команде'; }},
-  {t:'Кофемашина получше', d:'Кофемашина +1 уровень и 50 000 ₽', f:function(){ var ok=freeUpg('machine'); return (ok?'Кофемашина +1 уровень и ':'')+cash(ok?50000:120000); }},
-  {t:'Сарафанное радио', d:'150 000 ₽ и гостей +20% на сутки', f:function(){ addMod('traffic',1.2,24,'Подарок первой недели'); return cash(150000)+', гостей +20% на сутки'; }},
-  {t:'Новые места', d:'Места +1 уровень и 100 000 ₽', f:function(){ var ok=freeUpg('tables'); return (ok?'Места +1 уровень и ':'')+cash(ok?100000:180000); }},
-  {t:'Золотой чек', d:'250 000 ₽ и средний чек +25% на сутки', f:function(){ addMod('check',1.25,24,'Подарок первой недели'); return cash(250000)+', чек +25% на сутки'; }},
-  {t:'Опытный сотрудник', d:'Сотрудник 4 уровня и 150 000 ₽', f:function(){ var s=giveStaff(needRole(),4); return s.name+' ('+s.role.toLowerCase()+', 4 уровень) в команде и '+cash(150000); }},
-  {t:'Легенда', d:'Легендарный сотрудник и 300 000 ₽', big:true, f:function(){ var L=null; try{ L=makeLegend(); }catch(e){} if(L){ hire(L,'main','white'); if(S.isOpen) L.today='work'; structDirty=true; try{ syncScene('main'); }catch(e){} } S.nw.done=true; return (L?'Легенда '+L.name+' ('+L.role.toLowerCase()+') в команде и ':'')+cash(L?300000:600000); }}
+  {t:'Первый сотрудник', d:'50 000 ₽ и бариста в команду бесплатно', f:function(){ var s=giveStaff(needRole()); return cash(50000)+' и '+s.name+' ('+s.role.toLowerCase()+') в команде'; }},
+  {t:'Кофемашина получше', d:'Кофемашина +1 уровень и 25 000 ₽', f:function(){ var ok=freeUpg('machine'); return (ok?'Кофемашина +1 уровень и ':'')+cash(ok?25000:60000); }},
+  {t:'Сарафанное радио', d:'75 000 ₽ и гостей +20% на сутки', f:function(){ addMod('traffic',1.2,24,'Подарок первой недели'); return cash(75000)+', гостей +20% на сутки'; }},
+  {t:'Новые места', d:'Места +1 уровень и 50 000 ₽', f:function(){ var ok=freeUpg('tables'); return (ok?'Места +1 уровень и ':'')+cash(ok?50000:90000); }},
+  {t:'Золотой чек', d:'100 000 ₽ и средний чек +25% на сутки', f:function(){ addMod('check',1.25,24,'Подарок первой недели'); return cash(100000)+', чек +25% на сутки'; }},
+  {t:'Опытный сотрудник', d:'Сотрудник 4 уровня и 75 000 ₽', f:function(){ var s=giveStaff(needRole(),4); return s.name+' ('+s.role.toLowerCase()+', 4 уровень) в команде и '+cash(75000); }},
+  {t:'Легенда', d:'Легендарный сотрудник и 150 000 ₽', big:true, f:function(){ var L=null; try{ L=makeLegend(); }catch(e){} if(L){ hire(L,'main','white'); if(S.isOpen) L.today='work'; structDirty=true; try{ syncScene('main'); }catch(e){} } S.nw.done=true; return (L?'Легенда '+L.name+' ('+L.role.toLowerCase()+') в команде и ':'')+cash(L?150000:400000); }}
 ];
 function nwInit(){ if(!S) return null;
   if(!S.nw){ var fresh=(S.level||1)<=7; if(!fresh) { S.nw={off:true}; return S.nw; } S.nw={start:mskDay(), got:0, last:null}; save(); }
@@ -15600,7 +15600,7 @@ MODAL15.nw=function(box,m,btn){ var st=nwState(); var w=S.nw;
 function avgRev(){ var h=(S.fin&&S.fin.hist)||[], a=h.slice(0,7).map(function(x){return Number(x&&x.rev)||0;}).filter(function(v){return v>0;}); return a.length?a.reduce(function(p,c){return p+c;},0)/a.length:0; }
 function rcCheck(){ if(!S) return; S.rc=S.rc||{}; var now=Date.now(), seen=S.rc.seen||PREV_SAVED||now; S.rc.seen=now;
   var gap=now-seen, days=Math.floor(gap/DAY); if(days<2||now-(S.rc.last||0)<5*DAY) return;
-  var tier=days>=21?4:days>=8?3:days>=4?2:1, base=Math.max(60000,Math.round(avgRev()/1000)*1000)||60000, mult=[0,1,2,3,5][tier];
+  var tier=days>=21?4:days>=8?3:days>=4?2:1, base=Math.max(60000,Math.round(avgRev()/1000)*1000)||60000, mult=[0,0.5,1,1.5,2.5][tier];
   var best=S.staff.filter(function(s){return !s.isYou;}).sort(function(a,c){return (c.lvl||0)-(a.lvl||0);})[0];
   S.rc.last=now; S.rc.pending={days:days,tier:tier,money:base*mult,who:best?best.name:'',whoF:best&&best.sex==='f'}; save();
   setTimeout(function(){ queueModal({kind:'rc'}); },1500); }
@@ -15639,6 +15639,53 @@ var css=document.createElement('style'); css.textContent='.nw-h h2,.rc-h h2{marg
 document.head.appendChild(css);
 window.nwForce=function(){ window.__nwForce=true; if(S.nw&&S.nw.off) delete S.nw; if(S.nw) S.nw.last=null; };
 window.rcForce=function(days){ window.__nwForce=true; S.rc=S.rc||{}; S.rc.last=0; S.rc.seen=Date.now()-days*86400000; booted=false; };
+})();
+
+/* ===== Монетизация: предложение при нехватке денег и набор выходных ===== */
+(function(){
+var PACKS=[['cash_s',3000000,149,'Конверт от инвестора'],['cash_m',10000000,449,'Мама дала в долг без процентов'],['cash_l',25000000,999,'Чемодан из девяностых'],['cash_xl',65000000,2299,'Спонсор из Дубая']];
+var WK={id:'weekend', cash:12000000, stars:249, n:'Набор выходных'};
+function packFor(need){ for(var i=0;i<PACKS.length;i++) if(PACKS[i][1]>=need) return PACKS[i]; return PACKS[PACKS.length-1]; }
+function canPay(){ return !!(tg&&tg.openInvoice)||!!window.__mnTest; }
+function weekendStart(ts){ ts=ts||Date.now(); var m=new Date(ts+3*3600000), dow=m.getUTCDay(), h=m.getUTCHours();
+  if(!((dow===5&&h>=18)||dow===6||dow===0)) return 0; var back=dow===5?0:dow===6?1:2;
+  return Date.UTC(m.getUTCFullYear(),m.getUTCMonth(),m.getUTCDate()-back,18)-3*3600000; }
+function weekendEnds(ws){ return ws+2*86400000+6*3600000-60000; }
+window.mnWeekend=function(){ return weekendStart(); };
+
+/* ---------- нехватка денег: кнопка не гаснет, а предлагает добрать ---------- */
+var lastOffer=0;
+refreshAfford=function(){ document.querySelectorAll('[data-cost]').forEach(function(b){ var c=+b.dataset.cost, lock=b.dataset.lock==='1', short=!lock&&S.money<c; b.disabled=lock; b.classList.toggle('mn-short',short); }); };
+document.addEventListener('click',function(e){ var b=e.target&&e.target.closest&&e.target.closest('button.mn-short[data-cost]'); if(!b) return;
+  e.preventDefault(); e.stopImmediatePropagation(); var need=Math.max(0,(+b.dataset.cost)-S.money);
+  if(!canPay()||Date.now()-lastOffer<3600000||(S.level||1)<3){ toast('Не хватает '+fmt(need)+' ₽'); return; }
+  lastOffer=Date.now(); queueModal({kind:'mn_short', need:need},true); },true);
+MODAL15.mn_short=function(box,m,btn){ var p=packFor(m.need), ws=weekendStart(), wkOk=ws&&!(S.mnWk===ws)&&WK.cash>=m.need;
+  box.append(el('<div class="mn-h"><div class="eyebrow">Касса</div><h2>Не хватает '+fmt(m.need)+' ₽</h2><p>Можно подкопить, а можно добрать прямо сейчас и сразу вложить в кофейню.</p></div>'));
+  if(wkOk) box.append(el('<div class="mn-card mn-wk"><b>'+WK.n+' · вдвое выгоднее</b><span>+'+fmt(WK.cash)+' ₽ и гостей +20% на сутки. Только до воскресенья.</span></div>'), btn('Взять за '+WK.stars+' ★',function(){ closeModal(); buyStars(WK.id); }));
+  box.append(el('<div class="mn-card"><b>'+esc(p[3])+'</b><span>+'+fmt(p[1])+' ₽ в кассу без налога и гостей +20% на сутки. Останется ещё '+fmt(Math.max(0,p[1]-m.need))+' ₽.</span></div>'), btn('Добрать за '+fmt(p[2])+' ★',function(){ closeModal(); buyStars(p[0]); },wkOk?'ghost':''), btn('Подкоплю сам',closeModal,'ghost'));
+};
+
+/* ---------- набор выходных в магазине и одно окно за выходные ---------- */
+try{ var _items=shop29Items; shop29Items=function(){ var all=_items.apply(this,arguments); var ws=weekendStart();
+  if(ws&&all&&all.money&&Array.isArray(all.money.list)&&!all.money.list.some(function(x){return x.id==='weekend';})){
+    var left=Math.max(0,Math.ceil((weekendEnds(ws)-Date.now())/3600000)); var bought=S.mnWk===ws;
+    all.money.list.unshift({id:'weekend', n:WK.n, d:(bought?'Куплен на эти выходные.':'+'+fmt(WK.cash)+' ₽, вдвое выгоднее обычных пакетов. Осталось '+left+' ч.'), stars:WK.stars, prev:'cash', k:'12 млн ₽', owned:bought}); }
+  return all; }; }catch(e){}
+var _buy=buyStars; buyStars=function(item){ if(item==='weekend'&&weekendStart()) { var ws=weekendStart(); var _oi=tg&&tg.openInvoice; } return _buy.apply(this,arguments); };
+var _ops=window.__mnOps;
+function wkPopup(){ var ws=weekendStart(); if(!ws||!canPay()||(S.level||1)<3) return; if(S.mnWkSeen===ws||S.mnWk===ws) return; if(sheet||modals.length) return;
+  S.mnWkSeen=ws; save(); queueModal({kind:'mn_wk'}); }
+MODAL15.mn_wk=function(box,m,btn){ var ws=weekendStart(), left=ws?Math.max(0,Math.ceil((weekendEnds(ws)-Date.now())/3600000)):0;
+  box.append(el('<div class="mn-h"><div class="eyebrow">Только в выходные</div><h2>'+WK.n+'</h2><p>+'+fmt(WK.cash)+' ₽ в кассу и гостей +20% на сутки. Это вдвое выгоднее обычных пакетов. Один раз за выходные, осталось '+left+' ч.</p></div>'),
+    btn('Взять за '+WK.stars+' ★',function(){ closeModal(); buyStars(WK.id); }), btn('Не сейчас',closeModal,'ghost')); };
+setInterval(function(){ try{ if(S&&document.getElementById('sMoney')) wkPopup(); }catch(e){} },20000);
+/* отмечаем покупку набора, когда пришла оплата: деньги приходят операцией give с суммой набора */
+var _income=income; income=function(a,cat,leg){ try{ if(cat==='admin'&&Math.round(a)===WK.cash&&weekendStart()) S.mnWk=weekendStart(); }catch(e){} return _income.apply(this,arguments); };
+
+var css=document.createElement('style'); css.textContent='button.mn-short{opacity:.55}.mn-h h2{margin:2px 0 6px}.mn-h p{margin:0 0 10px;font-size:14px;line-height:1.4}.mn-card{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:12px;background:#fbf4e6;border:1.5px solid #e2cfae;margin:0 0 8px;font-size:13.5px;line-height:1.35}.mn-card b{font-size:14.5px;color:#2e1d10}.mn-wk{background:#2e1d10;border-color:#2e1d10}.mn-wk b{color:#ffd27a}.mn-wk span{color:#f0d8a8}';
+document.head.appendChild(css);
+window.mnShort=function(need){ lastOffer=0; queueModal({kind:'mn_short',need:need},true); };
 })();
 
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
