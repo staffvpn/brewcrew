@@ -24,22 +24,28 @@ const definitions=[
 ];
 const items=definitions.map(([id,name,rarity,slot,description])=>({id,name,rarity,slot,description,kind:'item',image:'img/supplier/front/'+id+(['cups','sugar','cupstand','tower'].includes(id)?'-v5':'')+'.png'}));
 const tiers=[
- {id:'first',name:'Утренний завоз',bag:'first',cost:25000,hours:0,expansion:false,weights:[75,22,3,0,0],pool:['cups','sugar','dripper','beans','napkins','plant','clock','poster','grinder']},
- {id:'hall',name:'Барная поставка',bag:'hall',cost:250000,hours:5,expansion:false,weights:[55,30,12,3,0],pool:items.filter(i=>i.rarity<4).map(i=>i.id)},
- {id:'author',name:'Поставка шефа',bag:'author',cost:1500000,hours:20,expansion:true,weights:[55,28,12,4,1],pool:items.map(i=>i.id)}
+ {id:'first',name:'Утренний завоз',bag:'first',cups:60,cost:25000,hours:0,expansion:false,weights:[75,22,3,0,0],pool:['cups','sugar','dripper','beans','napkins','plant','clock','poster','grinder']},
+ {id:'hall',name:'Барная поставка',bag:'hall',cups:140,cost:250000,hours:5,expansion:false,weights:[55,30,12,3,0],pool:items.filter(i=>i.rarity<4).map(i=>i.id)},
+ {id:'author',name:'Поставка шефа',bag:'author',cups:300,cost:1500000,hours:20,expansion:true,weights:[55,28,12,4,1],pool:items.map(i=>i.id)}
 ];
 const currencies=['cash','xp'].flatMap(kind=>rarities.map((r,rarity)=>({id:kind+'_'+rarity,name:kind==='cash'?'Валюта':'Опыт',rarity,kind,slot:null,image:'img/supplier/'+kind+'.png',description:kind==='cash'?'Сохраняется в инвентаре.':'Применяется из инвентаря.'})));
 const rewards=items.concat(currencies),kindWeights={item:70,cash:20,xp:10},giftOrders=60;
 for(const t of tiers)t.pool.push(...currencies.filter(i=>t.weights[i.rarity]>0).map(i=>i.id));
-function migrate(s){if(s.version===2)return s;s.version=2;s.giftProgress=Number(s.giftProgress)||0;s.giftTickets=Number(s.giftTickets)||0;s.equipped.table=s.equipped.table||null;return s;}
-function fresh(){return{version:2,giftProgress:0,giftTickets:0,earned:0,seconds:0,seals:0,owned:{},equipped:{shelf:null,wall:null,table:null,machine:null},pity:{first:0,hall:0,author:0},opened:0,freeUsed:false,history:[],pending:null};}
+function migrate(s){
+ s.equipped=s.equipped||{};s.equipped.table=s.equipped.table||null;
+ s.gifts=s.gifts||{};for(const t of tiers)if(!s.gifts[t.id])s.gifts[t.id]={progress:t.id==='first'?Math.max(0,Math.floor(Number(s.giftProgress)||0)):0,tickets:t.id==='first'?Math.max(0,Math.floor(Number(s.giftTickets)||0)):0};
+ for(const t of tiers){const g=s.gifts[t.id];g.tickets=Math.max(0,Math.floor(Number(g.tickets)||0));g.progress=Math.max(0,Math.floor(Number(g.progress)||0));g.tickets+=Math.floor(g.progress/t.cups);g.progress%=t.cups;}
+ delete s.giftProgress;delete s.giftTickets;s.version=3;return s;
+}
+function fresh(){return{version:3,gifts:Object.fromEntries(tiers.map(t=>[t.id,{progress:0,tickets:0}])),earned:0,seconds:0,seals:0,owned:{},equipped:{shelf:null,wall:null,table:null,machine:null},pity:{first:0,hall:0,author:0},opened:0,freeUsed:false,history:[],pending:null};}
+
 function unlocked(t,s,expanded){return s.seconds>=t.hours*3600&&(!t.expansion||expanded);}
 function odds(t,pity){const w=t.weights.map((v,i)=>pity>=10&&i<2?0:v),total=w.reduce((a,b)=>a+b,0);return w.map(v=>v/total*100);}
 function pick(t,pity,r1,r2,r3=0){if(![r1,r2,r3].every(n=>Number.isFinite(n)&&n>=0&&n<1))throw Error('Некорректная случайная выборка');const w=odds(t,pity);let n=r1*100,rarity=w.findLastIndex(v=>v>0);for(let i=0;i<w.length;i++){n-=w[i];if(n<0){rarity=i;break;}}const kind=r3<.7?'item':r3<.9?'cash':'xp',pool=rewards.filter(i=>t.pool.includes(i.id)&&i.rarity===rarity&&i.kind===kind);return pool[Math.floor(r2*pool.length)];}
 function value(item,t){return item.kind==='cash'?Math.round(t.cost*[.08,.2,.5,1,2][item.rarity]/100)*100:item.kind==='xp'?Math.round([15,35,75,150,300][item.rarity]*[1,2,4][tiers.indexOf(t)]):0;}
 function probability(t,pity,item){const pool=rewards.filter(i=>t.pool.includes(i.id)&&i.rarity===item.rarity&&i.kind===item.kind);return pool.length?odds(t,pity)[item.rarity]*kindWeights[item.kind]/100/pool.length:0;}
 function award(s,item,record){const duplicate=item.kind==='item'&&!!s.owned[item.id],seals=duplicate?rarities[item.rarity].seals:0;if(duplicate)s.seals+=seals;else if(item.kind==='item')s.owned[item.id]={at:record.at,source:record.tier};const row={...record,item:item.id,kind:item.kind,duplicate,seals};s.history.unshift(row);s.history=s.history.slice(0,60);s.pending=row;s.opened++;return row;}
-function sale(s,n=1){const total=s.giftProgress+Math.max(0,Math.floor(n));s.giftTickets+=Math.floor(total/giftOrders);s.giftProgress=total%giftOrders;}
+function sale(s,n=1){if(!Number.isSafeInteger(n)||n<1)return;migrate(s);for(const t of tiers){const g=s.gifts[t.id],total=g.progress+n;g.tickets+=Math.floor(total/t.cups);g.progress=total%t.cups;}}
 function account(s,delta,cat){if(delta<0)s.earned=Math.max(0,s.earned+delta);else if(['sales','tips'].includes(cat))s.earned+=delta;}
-return{version:2,rarities,items,rewards,tiers,kindWeights,giftOrders,fresh,migrate,unlocked,odds,pick,value,probability,award,account,sale};
+return{version:3,rarities,items,rewards,tiers,kindWeights,giftOrders,fresh,migrate,unlocked,odds,pick,value,probability,award,account,sale};
 });
