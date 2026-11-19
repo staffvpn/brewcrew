@@ -9,7 +9,7 @@
 <script src="save-manager.js"></script>
 <script src="cash-journal.js"></script>
 <script src="badge-art.js"></script>
-<script src="staff-skin-art.js?v=20261118-r2"></script>
+<script src="staff-skin-art.js?v=20261119-walk"></script>
 <script src="blogger-nikita-art.js?v=20261118-walk"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -2405,7 +2405,8 @@ function supplier(){ return SUPPLIERS[S.supplier] || SUPPLIERS.normal; }
 /* ---------- состояние сотрудника: одна шкала вместо трёх ---------- */
 function staffState(s){ return clamp(s.mood*0.5 + (100 - s.fatigue)*0.3 + (s.pat==null?100:s.pat)*0.2, 0, 100); }
 function stateLabel(v){ return v>=80 ? 'Огонь' : v>=60 ? 'Нормально' : v>=45 ? 'Устал' : v>=30 ? 'На грани' : 'Пишет заявление'; }
-function waiterWalkSpeed(s){return 54*clamp(staffSpeed(s),.85,1.5);}
+function hallWalkSpeed(s){return 46*clamp(staffSpeed(s),1,1.35);}
+function waiterWalkSpeed(s){return hallWalkSpeed(s);}
 function staffHasDecision(s){return S.incidents.some(i=>i.sid===s.id&&evDef(i)?.cat==='staff')||S.pending.some(i=>i.data?.sid===s.id&&EV[i.ev]?.cat==='staff');}
 function staffQuitRisk(s,unpaid){const condition=staffState(s);return (.004+.056*clamp((60-condition)/60,0,1)+(unpaid ? .12 : 0))*(s.legendId ? .4 : 1);}
 function staffWishKind(s){const choices=['raise','training','bonus','dayoff'];if(s.fatigue>=50||staffState(s)<60)choices.push('dayoff','dayoff','dayoff');return pick(choices);}
@@ -5569,7 +5570,7 @@ const ARGUE_PAIRS = [['Кто опять кинул питчер с молоко
 function washerQ(s){ return clamp(1 - (s.lvl-1)*0.025 - s.rank*0.12 - (s.legendId===1 ? 0.6 : 0), 0.2, 1); }
 function washerWalk(id, r, s, p, dt){
   S.dishes = S.dishes || {};
-  const now = performance.now()/1000, sp = 42 * Math.min(1.6, staffSpeed(s)), legend = s.legendId===1 ? 3 : 1, q = washerQ(s);
+  const now = performance.now()/1000, sp = hallWalkSpeed(s), legend = s.legendId===1 ? 3 : 1, q = washerQ(s);
   const hallOnly = p.k === 1 || id === 'hall2';
   p.washing = false; p.riot = false;
   // генеральная уборка: высшая должность, раз в игровой день
@@ -5756,7 +5757,7 @@ function simRoom(id, dt){
   r.queue.forEach((g,i)=>{ g.qx = QUEUE_X + i*24; });
   const head = r.queue[0];
   if(head && head.state==='queue' && Math.hypot(head.x-QUEUE_X, head.y-QUEUE_Y) < 2 && st.orderT < Infinity){
-    head.prog += dt / (head.dumb ? DUMB_T : st.orderT * KIND_F[head.kind||'norm']);
+    head.prog = (Number.isFinite(head.prog)?head.prog:0) + dt / (head.dumb ? DUMB_T : st.orderT * (KIND_F[head.kind]||KIND_F.norm));
     if(head.dumb && !head.asked && id===S.active){ head.asked = true; bubble2(0, 0, head.q, 4200, head); }
     if(head.kind==='fast' && !head.said && id===S.active && chance(0.35)){ head.said = true; bubble2(0, 0, pickLine(FAST_LINES, 'fast'), 2400, head); }
     if(head.h===SPR_KID && !head.said && id===S.active && chance(0.3)){ head.said = true; bubble2(0, 0, pickLine(KID_LINES, 'kid'), 2600, head); }
@@ -11464,22 +11465,12 @@ staffSpeed = function(s){ let v = _staffSpeed937.apply(this, arguments); try{ if
     if(served937(room) >= CAP937 * bar) v *= 0.35; }
 }catch(e){} return v; };
 
-/* ---------- затупы ---------- */
-const STALL937 = {
-  'Кассир':['Так, с пятитысячной... это сколько сдачи?', 'Подождите, акция «второй со скидкой» — это на второй или на первый?', 'Терминал думает. Я тоже думаю', 'Чек застрял. Как и я', 'Вы сказали «без сахара» или «с сахаром»? Повторите медленно', 'Скидка по карте — это сколько процентов от процента?'],
-  'Бариста':['Ещё раз: раф или латте?', 'Ой, не то молоко. Переделываю', 'Питчер куда-то делся. Вот же он был', 'Я забыл, сколько шотов. Давайте два, на всякий', 'Пена опала. Это знак. Переделаю', 'Секунду, кофемолка решила подумать о жизни'],
-  'Официант':['Это был пятый стол или пятый гость?', 'Несу не туда. Разворачиваюсь', 'Кто заказывал сырники? Никто? А кому я их несу?', 'Перепутал заказы двух столов. Минуту'],
-  'Повар':['Сырники прилипли. Все. Начинаю заново', 'Где лопатка? Кто взял лопатку?', 'Плита не включается. А, включаю']};
-function stallChance937(s){ let p = 1/80; if((s.lvl||1) < 5) p *= 1.6; if((s.fatigue||0) > 60) p *= 1.5; if(s.quirk === 'sleepy' || s.quirk === 'blogger' || s.quirk === 'philo' || s.quirk === 'lover') p *= 1.5; if(s.quirk === 'workaholic' || s.quirk === 'genius') p *= 0.6; if(s.rank >= 2) p *= 0.6; if(s.legendId || s.prize) p *= 0.3; return p; }
+/* ---------- completed orders continue without hidden real-time delays ---------- */
 const _completeOrder937 = completeOrder;
-completeOrder = function(id, g, tapped){ try{
-  if(g && g.stallUntil){ if(Date.now() < g.stallUntil){ if(tapped){ g.stallUntil = Date.now() + Math.max(0, (g.stallUntil - Date.now())/2); sfx('tap'); toast('Подсказал — дело пошло быстрее'); } return; } }
-  else if(g && !g.stallDone && !g.reg){ const ws = workingStaff(id).filter(s => !s.isYou && (s.role === 'Кассир' || s.role === 'Бариста'));
-    const s = ws.length ? pick(ws) : null;
-    if(s && chance(stallChance937(s))){ g.stallUntil = Date.now() + R(6000, 15000); g.stallDone = true; const rr = rt(id);
-      if(id === S.active && rr.staff[s.id]) bubble2(0, 0, pick(STALL937[s.role] || STALL937['Бариста']), 3200, rr.staff[s.id]);
-      S.c.stalls937 = (S.c.stalls937 || 0) + 1; return; } }
-}catch(e){}
+completeOrder = function(id, g, tapped){
+  if(!g||rt(id).queue[0]!==g||g.state!=='queue')return;
+  // No hidden real-time stall after the order bar is already complete.
+  if(g){delete g.stallUntil;delete g.stallDone;}
   const qa = rt(id).queue.length; const r = _completeOrder937.apply(this, arguments);
   try{ if(rt(id).queue.length < qa){ const k = hrKey937(); if(!S.c.hr937 || S.c.hr937.k !== k) S.c.hr937 = {k, n:{}}; S.c.hr937.n[id] = (S.c.hr937.n[id] || 0) + 1;
     /* возврат: остыл, не то молоко, не тот сироп */
@@ -15060,6 +15051,7 @@ MODAL15.bc_checkout=function(box,m,btn){bcLegalCheckout.apply(this,arguments);va
 var BC_STAFF_SHEET=new Image(),BC_STAFF_DRAW=null;
 var BC_STAFF_SKINS=window.BrewCrewStaffArt||{clips:{}};
 Object.assign(CM,BC_STAFF_SKINS.clips);
+for(const [name,clip]of Object.entries(BC_STAFF_SKINS.clips))if(clip.guestWalkStable)delete BC_EYES[name];
 BC_STAFF_SHEET.onload=function(){PORT={};structDirty=true;if(S)renderPanel();};
 BC_STAFF_SHEET.src=BC_STAFF_SKINS.src||'';
 window.bcStaffVariant=function(s){
@@ -15560,7 +15552,7 @@ var bcRemovableBadgesInv=renderInv;renderInv=function(p){bcRemovableBadgesInv.ap
 function bcTapServiceGuest(id,r,x,y){const hit=g=>!g.hidden&&x>g.x-18&&x<g.x+18&&y>g.y-g.h-3&&y<g.y+5;const head=r.queue[0];if(head&&head.state==='queue'&&hit(head)&&Math.hypot(head.x-QUEUE_X,head.y-QUEUE_Y)<3){completeOrder(id,head,true);return true;}for(const g of r.guests){if((g.state==='wait'||g.state==='toPick')&&hit(g)){const job=r.jobs.find(j=>j.g===g);if(job){job.p+=.22;tapFx(g.x,g.y-g.h-8);sfx('tap');if(job.p>=1)finishJob(id,job);return true;}}}return false;}
 function bcStaffBlocksService(r,x,y){if(x>QUEUE_X-40&&x<QUEUE_X+40&&y>QUEUE_Y-18&&y<QUEUE_Y+70)return true;return r.guests.some(g=>!g.hidden&&['queue','wait','toPick'].includes(g.state)&&Math.abs(x-g.x)<30&&y>g.y-6&&y<g.y+60);}
 function bcStaffIdleSpot(r,p){const width=Math.max(W,...TABLES.map(t=>t.x+42));const points=[];for(let y=Math.max(BAR_BOT+110,340);y<H-20;y+=36)for(const x of [width-24,40,132,224])points.push([x,y]);return points.find(([x,y])=>!bcStaffBlocksService(r,x,y)&&!TABLES.some(t=>Math.abs(x-t.x)<42&&y>t.y-30&&y<t.y+38)&&!Object.values(r.staff).some(other=>other!==p&&Math.hypot(other.x-x,other.y-y)<20))||[width-24,Math.min(H-22,342)];}
-var bcServiceStaffWalk=staffWalk;staffWalk=function(id,r,s,p,dt){if(id!=='main'||!(p.walker||s.role==='Официант'||s.role==='Мойщица'&&p.k===1)||p.job||p.goal)return bcServiceStaffWalk.apply(this,arguments);const badDestination=Number.isFinite(p.tx)&&bcStaffBlocksService(r,p.tx,p.ty),badStop=(!p.walk||s.distract)&&bcStaffBlocksService(r,p.x,p.y);if(badDestination||badStop||p._serviceIdle){const dest=p._serviceIdle||bcStaffIdleSpot(r,p);p._serviceIdle=dest;p.tx=dest[0];p.ty=dest[1];p.home=dest;if(moveTo(p,dest[0],dest[1],s.role==='Официант'?waiterWalkSpeed(s):42*Math.min(1.6,staffSpeed(s)),dt)){p.walk=false;p.idle=4;p._serviceIdle=null;}return;}const result=bcServiceStaffWalk.apply(this,arguments);if(!p.job&&!p.goal&&bcStaffBlocksService(r,p.tx,p.ty)){const dest=bcStaffIdleSpot(r,p);p.tx=dest[0];p.ty=dest[1];}return result;};window.staffWalk=staffWalk;
+var bcServiceStaffWalk=staffWalk;staffWalk=function(id,r,s,p,dt){if(id!=='main'||!(p.walker||s.role==='Официант'||s.role==='Мойщица'&&p.k===1)||p.job||p.goal)return bcServiceStaffWalk.apply(this,arguments);const badDestination=Number.isFinite(p.tx)&&bcStaffBlocksService(r,p.tx,p.ty),badStop=(!p.walk||s.distract)&&bcStaffBlocksService(r,p.x,p.y);if(badDestination||badStop||p._serviceIdle){const dest=p._serviceIdle||bcStaffIdleSpot(r,p);p._serviceIdle=dest;p.tx=dest[0];p.ty=dest[1];p.home=dest;if(moveTo(p,dest[0],dest[1],hallWalkSpeed(s),dt)){p.walk=false;p.idle=4;p._serviceIdle=null;}return;}const result=bcServiceStaffWalk.apply(this,arguments);if(!p.job&&!p.goal&&bcStaffBlocksService(r,p.tx,p.ty)){const dest=bcStaffIdleSpot(r,p);p.tx=dest[0];p.ty=dest[1];}return result;};window.staffWalk=staffWalk;
 
 // Retired talk requests must not penalize employees from an existing save.
 var bcStaffTalkMigrate=migrate;migrate=function(){const result=bcStaffTalkMigrate.apply(this,arguments);for(const s of S.staff||[])if(s.wish?.k==='respect')s.wish=null;return result;};
