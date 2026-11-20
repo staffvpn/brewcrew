@@ -15927,6 +15927,10 @@ function drawRoaster(x0,y0){ var t=performance.now()/1000; shadow(x0,y0,15); ctx
   ctx.restore();
 }
 })();
+/* 20.11: Маша больше не приходит в кофейню, карточка остаётся в «Гостях» */
+(function(){ var _vt=vipTick; vipTick=function(dt){ if(typeof VIPRUN!=='undefined'&&VIPRUN) return _vt.apply(this,arguments);
+  var v=null, old; try{ v=vipState('masha'); old=v.next; v.next=Date.now()+1e12; }catch(e){}
+  try{ return _vt.apply(this,arguments); } finally { if(v) v.next=old; } }; })();
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
