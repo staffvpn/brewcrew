@@ -15144,15 +15144,15 @@ function nkFollowCat(m,dt){
  moveTo(cat,target[0],target[1],54,dt);
 }
 var nkPeople=bgPeople;bgPeople=function(e){var people=nkPeople.apply(this,arguments);if(NKRUN&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)){if(NKRUN!==e)people.push(NKRUN);if(NKRUN.cat&&NKRUN.cat!==e)people.push(NKRUN.cat);}return people;};
-function bgSpecialActors(e){return [VIPRUN,LZRUN].concat(NKRUN&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)?[NKRUN,NKRUN.cat]:[]).filter(function(p){return p&&p!==e;});}
+function bgSpecialActors(e){return [VIPRUN,LZRUN].concat(NKRUN&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)?[NKRUN,NKRUN.cat]:[]).filter(function(p){return p&&p!==e&&p.walk;});} /* 20.11: стоящий особый гость больше не стопорит очередь и выход, мешает только на ходу */
 var nkOriginalDraw=draw;draw=function(){var value=nkOriginalDraw.apply(this,arguments);nkTick(DRAW_DT);return value;};
 var nkUpgradeProps=sceneUpgradeProps;sceneUpgradeProps=function(st,u,items,now,r){nkUpgradeProps.apply(this,arguments);if(NKRUN&&!st.outdoor&&S&&S.active==='main'&&!(typeof bcVisitClose!=='undefined'&&bcVisitClose)){var actor=NKRUN,cat=NKRUN.cat;items.push({y:actor.y,f:function(){shadow(actor.x,actor.y,9);nkDraw(actor);}});if(cat)items.push({y:cat.y,f:function(){shadow(cat.x,cat.y,5);nkDraw(cat);}});}};window.sceneUpgradeProps=sceneUpgradeProps;
 var nkRenderMore=renderMore;renderMore=function(p){
  nkRenderMore.apply(this,arguments);if(sub!=='book')return;var grid=p.querySelector('.vip-grid');if(!grid||grid.querySelector('[data-blogger="nikita"]'))return;
- var card=el('<button class="vip-tile met" data-blogger="nikita"><img src="img/bloggers/nikita-icon.png" alt="Никита с котом Филей"><b>Никита</b><span>Бариста · с котом Филей</span><i>'+(window.nkLive&&nkLive()?(S.nik&&S.nik.n?('Штампов: '+S.nik.n+' из 5'):'Придёт сам'):'Скоро')+'</i></button>');card.onclick=function(){queueModal({kind:'nikita_card'},true);};grid.appendChild(card);
+ var card=el('<button class="vip-tile met" data-blogger="nikita"><img src="img/bloggers/nikita-icon.png?v=2" alt="Никита с котом Филей"><b>Никита</b><span>Бариста · с котом Филей</span><i>'+(window.nkLive&&nkLive()?(S.nik&&S.nik.n?('Штампов: '+S.nik.n+' из 5'):'Придёт сам'):'Скоро')+'</i></button>');card.onclick=function(){queueModal({kind:'nikita_card'},true);};grid.appendChild(card);
 };
 MODAL15.nikita_card=function(box,m,btn){
- box.append(el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png" alt="Никита и Филя"><div><div class="eyebrow">Особый гость · блогер</div><h2>Никита и Филя</h2><p>Никита приходит со своим вислоухим котом Филей. Филя гуляет рядом.</p><p>История их визита появится позже.</p></div></div>'));
+ box.append(el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png?v=2" alt="Никита и Филя"><div><div class="eyebrow">Особый гость · блогер</div><h2>Никита и Филя</h2><p>Никита приходит со своим вислоухим котом Филей. Филя гуляет рядом.</p><p>История их визита появится позже.</p></div></div>'));
  if(nkCanPreview())box.append(btn('Посмотреть прогулку',function(){if(!nkStartPreview())toast(nkReady()?'Прогулка уже идёт':'Персонаж ещё загружается');},'primary'));
  box.append(btn('Закрыть',closeModal,'ghost'));
 };
@@ -15197,21 +15197,28 @@ function start(){ var v=nkS();
   NKRUN={id:'nikita-ev',_kind:'nikita',_specialGuest:true,_event:true,v:v.n,x:DOOR[0],y:DOOR[1],h:64,t:0,walk:false,stage:'in',_ph:Math.random()};
   NKRUN.cat={id:'filya-ev',_kind:'filya',_specialGuest:true,isPet:true,x:DOOR[0]+19,y:DOOR[1],h:21,t:0,walk:false,stage:'in'};
   bubble2(0,0,VIS[v.n].hi,3000,NKRUN); structDirty=true; }
+function nkMove(m,x,y,sp,dt){ var x0=m.x,y0=m.y, ok=moveTo(m,x,y,sp,dt);
+  if(ok){ m._st=0; return true; }
+  if(Math.hypot(m.x-x0,m.y-y0)>0.05){ m._st=0; return false; }
+  m._st=(m._st||0)+dt; if(m._st<1.2) return false;
+  /* маршрут перекрыт толпой: идём напрямую, сквозь людей, как обычный гость */
+  var dx=x-m.x, dy=y-m.y, d=Math.hypot(dx,dy), st=sp*dt; m.walk=true; if(Math.abs(dx)>.5) m.flip=dx<0;
+  if(d<=st){ m.x=x; m.y=y; m._st=0; return true; } m.x+=dx/d*st; m.y+=dy/d*st; return false; }
 function evTick(dt){ var m=NKRUN; dt=Math.min(.1,Math.max(0,Number(dt)||0)); m.t+=dt; try{ nkFollowCat(m,dt); }catch(e){}
-  if(m.stage==='in'){ m.walk=true; if(moveTo(m,150,QUEUE_Y+46,44,dt)){ m.walk=false; m.stage='ask'; queueModal({kind:'nik', v:m.v},true); } return; }
+  if(m.stage==='in'){ m.walk=true; if(nkMove(m,150,QUEUE_Y+46,44,dt)){ m.walk=false; m.stage='ask'; queueModal({kind:'nik', v:m.v},true); } return; }
   if(m.stage==='ask') return;
   if(m.stage==='tour'){ if(!m.route){ m.route=stops(m.v); m.ri=0; } var st=m.route[m.ri]; if(!st){ m.stage='out'; return; }
-    if(!m.at){ m.walk=true; if(moveTo(m,st.x,st.y,46,dt)){ m.walk=false; m.at=true; m.wait=0; bubble2(0,0,st.say,2600,m); } return; }
+    if(!m.at){ m.walk=true; if(nkMove(m,st.x,st.y,46,dt)){ m.walk=false; m.at=true; m.wait=0; bubble2(0,0,st.say,2600,m); } return; }
     m.wait+=dt; if(m.wait>=st.dur){ m.at=false; m.ri++; } return; }
   if(m.stage==='out'){ m.stage='leave'; }
-  if(m.stage==='leave'){ if(!m.departed&&moveTo(m,DOOR[0]+14,DOOR[1],46,dt)) m.departed=true; if(m.departed&&Math.hypot(m.cat.x-DOOR[0]-14,m.cat.y-DOOR[1])<8){ NKRUN=null; structDirty=true; } }
+  if(m.stage==='leave'){ if(!m.departed&&nkMove(m,DOOR[0]+14,DOOR[1],46,dt)) m.departed=true; if(m.departed&&Math.hypot(m.cat.x-DOOR[0]-14,m.cat.y-DOOR[1])<8){ NKRUN=null; structDirty=true; } }
 }
 function done(){ var v=nkS(), m=NKRUN; v.n=Math.max(v.n,(m?m.v:v.n)+1); v.next=Date.now()+30*60000; v.nextDay=S.day+RI(2,3); if(v.n>=3&&v.filaDay<0){ v.filaDay=S.day-1; } if(m){ m.stage='tour'; m.route=null; m.at=false; } save(); }
 var _nkTickBase=nkTick;
 nkTick=function(dt){
   if(!S||S.active!=='main'||(typeof bcVisitClose!=='undefined'&&bcVisitClose)) return _nkTickBase(dt);
   try{ filaTick(dt); }catch(e){}
-  if(NKRUN&&NKRUN._event){ if(modals.length||sheet) return; return evTick(dt); }
+  if(NKRUN&&NKRUN._event){ return evTick(dt); } /* 20.11: не замирать в дверях, пока открыто окно или вкладка */
   if(!NKRUN&&canStart()) start();
   return _nkTickBase(dt);
 };
@@ -15228,9 +15235,9 @@ function filaTick(dt){ var v=S.nik; if(!v||v.n<3||!nkLive()) { FILA=null; return
     if((S.gm||0)<v.filaAt) return;
     var p=filaSpot(); v.filaDay=S.day; FILA={id:'filya-day',_kind:'filya',_specialGuest:true,isPet:true,x:DOOR[0],y:DOOR[1],h:21,t:0,tx:p.x,ty:p.y,stage:'in',gm0:S.gm||0}; structDirty=true; return; }
   var f=FILA; dt=Math.min(.1,Math.max(0,Number(dt)||0)); f.t+=dt;
-  if(f.stage==='in'){ f.walk=true; if(moveTo(f,f.tx,f.ty,40,dt)){ f.walk=false; f.stage='sit'; } return; }
+  if(f.stage==='in'){ f.walk=true; if(nkMove(f,f.tx,f.ty,40,dt)){ f.walk=false; f.stage='sit'; } return; }
   if(f.stage==='sit'){ if((S.gm||0)-f.gm0>180||!isWorking()) f.stage='out'; return; }
-  if(f.stage==='out'){ f.walk=true; if(moveTo(f,DOOR[0]+14,DOOR[1],54,dt)){ FILA=null; structDirty=true; } }
+  if(f.stage==='out'){ f.walk=true; if(nkMove(f,DOOR[0]+14,DOOR[1],54,dt)){ FILA=null; structDirty=true; } }
 }
 var _supNk=sceneUpgradeProps; sceneUpgradeProps=function(st,u,items,now,r){ _supNk.apply(this,arguments);
   if(!FILA||st.outdoor||!S||S.active!=='main'||(typeof bcVisitClose!=='undefined'&&bcVisitClose)) return;
@@ -15242,7 +15249,7 @@ cv.addEventListener('pointerdown',function(e){ var f=FILA; if(!f||S.active!=='ma
     nkFetch(function(st){ var s1=st&&st.live?st.s1:null; if(s1){ S.nik.s1w=st.w; S.nik.s1=s1; save(); } queueModal({kind:'nik_fila', s1:s1},true); }); } },{capture:true});
 
 /* ---------- окна ---------- */
-function head(tag,h,ps){ return el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png" alt="Никита и Филя"><div><div class="eyebrow">'+esc(tag)+'</div><h2>'+esc(h)+'</h2>'+ps.map(function(p){return '<p>'+esc(p)+'</p>';}).join('')+'</div></div>'); }
+function head(tag,h,ps){ return el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png?v=2" alt="Никита и Филя"><div><div class="eyebrow">'+esc(tag)+'</div><h2>'+esc(h)+'</h2>'+ps.map(function(p){return '<p>'+esc(p)+'</p>';}).join('')+'</div></div>'); }
 function stampsHtml(n){ var h='<div class="nk-st">'; for(var i=0;i<5;i++) h+='<i class="'+(i<n?'on':'')+'">'+(i<n?'Ш':'')+'</i>'; return h+'</div>'; }
 MODAL15.nik=function(box,m,btn){ var k=m.v, tag='Никита · визит '+(k+1)+' из 5';
   if(k===0){ box.append(head('Особый гость · бариста','Никита и Филя',['Никита из канала «ЗаДРИПанный кофейник». Бариста, выступает на чемпионатах и собирает штампы кофеен в свой паспорт. С ним вислоухий кот Филя.','«Хорошая чашка для начала. Ставлю первый штамп». Филя запрыгивает на стойку.']), el(stampsHtml(1)));
@@ -15260,7 +15267,7 @@ MODAL15.nik=function(box,m,btn){ var k=m.v, tag='Никита · визит '+(k
     box.append(btn('Добавить в меню',function(){ S.nik.drink=true; S.nik.passport=true; try{ isUnlocked('filya_filter'); }catch(e){} toast('В меню: Фильтр Фили, 450 ₽'); closeModal(); done(); })); return; }
 };
 MODAL15.nik_fila=function(box,m,btn){
-  box.append(el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png" alt="Филя"><div><div class="eyebrow">Шифр Никиты</div><h2>Филя</h2><p>'+(m.s1?'Филя трётся о ногу. На ошейнике выцарапано: <b class="nk-syl">'+esc(m.s1)+'</b>':'Филя трётся о ногу и уходит. Ошейник не разглядеть: нужно открыть игру из Telegram.')+'</p><p>Это первый слог ключа. Второй ищи в канале Brew Crew.</p></div></div>'));
+  box.append(el('<div class="vip-card"><img src="img/bloggers/nikita-icon.png?v=2" alt="Филя"><div><div class="eyebrow">Шифр Никиты</div><h2>Филя</h2><p>'+(m.s1?'Филя трётся о ногу. На ошейнике выцарапано: <b class="nk-syl">'+esc(m.s1)+'</b>':'Филя трётся о ногу и уходит. Ошейник не разглядеть: нужно открыть игру из Telegram.')+'</p><p>Это первый слог ключа. Второй ищи в канале Brew Crew.</p></div></div>'));
   box.append(btn('Открыть шифр',function(){ closeModal(); queueModal({kind:'nikita_card'},true); }), btn('Закрыть',closeModal,'ghost'));
 };
 function decode(text,key){ var A='АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', k=String(key||'').toUpperCase().replace(/Ё/g,'Е').replace(/[^А-Я]/g,''); if(!k) return text; var j=0;
