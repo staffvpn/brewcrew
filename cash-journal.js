@@ -7,7 +7,7 @@
  function finishOfflineDay(s){if(offline?.row){add(s,offline.row);offline.row=null;}}
  function beginOffline(){if(offline){offline.depth++;return;}offline={depth:1,row:null};}
  function endOffline(){if(!offline)return;if(--offline.depth)return;const s=state();if(s)finishOfflineDay(s);offline=null;}
- function schedule(){if(timer)return;timer=setTimeout(()=>{timer=null;flush();},5000);}
+ function schedule(){if(timer)return;timer=setTimeout(()=>{timer=null;flush();},60000);}
  async function request(data){const response=await fetch('/api/cash-ledger',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({initData:tg()?.initData,...data}),signal:AbortSignal.timeout(15000)});if(!response.ok)throw Error('Журнал пока недоступен');const r=await response.json();if(!r.ok)throw Error('Журнал пока недоступен');return r;}
  function flush(){return inflight||(inflight=flushNow().finally(()=>inflight=null));}
  async function flushNow(){const s=state();if(flushing||!s||!tg()?.initData||!window.BrewCrewLegal?.has()||!window.BrewCrewSaves?.canWrite())return;const l=log(s);if(!l.pending.length)return;flushing=true;try{while(l.pending.length&&state()===s){const rows=l.pending.slice(0,100),r=await request({action:'append',rows});const accepted=new Set(r.accepted);l.pending=l.pending.filter(r=>!accepted.has(r.id));hooks.save();if(!accepted.size)break;}}catch{schedule();}finally{flushing=false;}}
