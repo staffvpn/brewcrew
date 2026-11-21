@@ -15573,7 +15573,11 @@ var PREV_SAVED=0; try{ var _r=JSON.parse(localStorage.getItem('brewcrew_max13')|
 function mskDay(t){ return new Date((t||Date.now())+3*3600000).toISOString().slice(0,10); }
 function dayNum(d){ return Math.floor(Date.parse(d+'T00:00:00Z')/DAY); }
 function giveStaff(role,lvl){ var s=makeStaff(role); if(lvl){ s.lvl=lvl; s.shifts=Math.max(s.shifts||0,lvl*3); } hire(s,'main','white'); if(S.isOpen) s.today='work'; structDirty=true; try{ syncScene('main'); }catch(e){} return s; }
-function needRole(){ var has=function(r){ return S.staff.some(function(s){return s.role===r;}); }; return !has('Бариста')?'Бариста':!has('Кассир')?'Кассир':pick(['Бариста','Кассир']); }
+function needRole(){ var cnt=function(r){ return S.staff.filter(function(s){return s.role===r&&!s.isYou&&s.today!=='sub';}).length; };
+  if(!cnt('Бариста')) return 'Бариста'; if(!cnt('Кассир')) return 'Кассир';
+  var free=['Бариста','Кассир','Официант','Мойщица'].filter(function(r){ try{ return ROLES[r]&&cnt(r)<staffCap(r); }catch(e){ return false; } });
+  if(!free.length) return 'Бариста';
+  free.sort(function(a,b){ return cnt(a)/Math.max(1,staffCap(a))-cnt(b)/Math.max(1,staffCap(b)); }); return free[0]; }
 function freeUpg(id){ var rm=room('main'); if(!rm) return false; var u=UPG.find(function(x){return x.id===id;}); var cap=99; try{ cap=bcUpgradeCap(u,'main'); }catch(e){} if((rm.upg[id]||0)>=cap) return false; rm.upg[id]=(rm.upg[id]||0)+1; structDirty=true; try{ syncScene('main'); }catch(e){} return true; }
 function cash(v){ S.money+=v; return fmt(v)+' ₽'; }
 
@@ -15931,6 +15935,18 @@ function drawRoaster(x0,y0){ var t=performance.now()/1000; shadow(x0,y0,15); ctx
 (function(){ var _vt=vipTick; vipTick=function(dt){ if(typeof VIPRUN!=='undefined'&&VIPRUN) return _vt.apply(this,arguments);
   var v=null, old; try{ v=vipState('masha'); old=v.next; v.next=Date.now()+1e12; }catch(e){}
   try{ return _vt.apply(this,arguments); } finally { if(v) v.next=old; } }; })();
+/* 21.11: кнопки заданий ведут в нужные разделы, фокус дня виден в «Делах» */
+(function(){
+  Object.assign(TASK_GO,{inventory:['stock','Склад'], tips:['tips','Банка чаевых'], reviews:['guests','Гости'], delivery:['menu','Меню'], kitchen:['up','Улучшения'], rush:['team','Команда']});
+  var _os=openSheet; openSheet=function(k,tab){ if(k==='hall'&&tab==='tips'){ queueModal({kind:'tips'},true); return; } return _os.apply(this,arguments); };
+  var _rt=renderTasks; renderTasks=function(p){ _rt.apply(this,arguments); try{
+    if(S.level<2||p.querySelector('.bx-focus')) return;
+    var cur=S.focus&&S.focus.day===S.day?FOCUS[S.focus.k]:null;
+    var c=el('<div class="card bx-focus"><div class="row"><span class="t">Фокус дня</span><span class="sp"></span><span class="tag'+(cur?'':' warn')+'">'+(cur?esc(cur.n):'Не выбран')+'</span></div><div class="d">'+(cur?esc(cur.d)+' Сменить можно в следующий игровой день.':'Скорость, качество, продажи или атмосфера. Выбирается раз в день.')+'</div></div>');
+    if(!cur){ var b=el('<div class="row"><button class="btn">Выбрать фокус</button></div>'); b.querySelector('button').onclick=function(){ queueModal({kind:'focus'},true); }; c.appendChild(b); }
+    var ev=p.querySelector('.bc-task-events'), first=p.querySelector('.card'); if(ev) ev.after(c); else if(first) p.insertBefore(c,first); else p.appendChild(c);
+  }catch(e){} };
+})();
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
