@@ -46,6 +46,7 @@ function value(item,t){return item.kind==='cash'?Math.round(t.cost*[.08,.2,.5,1,
 function probability(t,pity,item){const pool=rewards.filter(i=>t.pool.includes(i.id)&&i.rarity===item.rarity&&i.kind===item.kind);return pool.length?odds(t,pity)[item.rarity]*kindWeights[item.kind]/100/pool.length:0;}
 function award(s,item,record){const duplicate=item.kind==='item'&&!!s.owned[item.id],seals=duplicate?rarities[item.rarity].seals:0;if(duplicate)s.seals+=seals;else if(item.kind==='item')s.owned[item.id]={at:record.at,source:record.tier};const row={...record,item:item.id,kind:item.kind,duplicate,seals};s.history.unshift(row);s.history=s.history.slice(0,60);s.pending=row;s.opened++;return row;}
 function sale(s,n=1){if(!Number.isSafeInteger(n)||n<1)return;migrate(s);for(const t of tiers){const g=s.gifts[t.id],total=g.progress+n;g.tickets+=Math.floor(total/t.cups);g.progress=total%t.cups;}}
+function resale(item,t){return item?.kind==='item'&&t?Math.min(t.cost-1,Math.floor(t.cost*[.12,.2,.32,.45,.6][item.rarity]/100)*100):0;}
 function account(s,delta,cat){if(delta<0)s.earned=Math.max(0,s.earned+delta);else if(['sales','tips'].includes(cat))s.earned+=delta;}
-return{version:3,rarities,items,rewards,tiers,kindWeights,giftOrders,fresh,migrate,unlocked,odds,pick,value,probability,award,account,sale};
+return{version:3,rarities,items,rewards,tiers,kindWeights,giftOrders,fresh,migrate,unlocked,odds,pick,value,probability,award,account,sale,resale};
 });

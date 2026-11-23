@@ -10,3 +10,5 @@ R.sale(s,59);assert.deepEqual(s.gifts.first,{progress:59,tickets:0});R.sale(s,1)
 const before=JSON.stringify(s.gifts);for(const n of [NaN,-1,1.5,Infinity])R.sale(s,n);assert.equal(JSON.stringify(s.gifts),before);
 const old={...R.fresh(),version:2,giftProgress:59,giftTickets:4,owned:{cups:{at:10}},seals:17};delete old.gifts;R.migrate(old);assert.equal(old.version,3);assert.deepEqual(old.gifts.first,{progress:59,tickets:4});assert.deepEqual(old.gifts.hall,{progress:0,tickets:0});assert.equal(old.seals,17);assert(old.owned.cups);R.migrate(old);assert.equal(old.gifts.first.tickets,4);
 console.log('PASS supplier v3: prize odds, guarantees, budgets and duplicate rewards; independent 60/140/300-cup goals, typed tickets and idempotent legacy migration.');
+
+for(const t of R.tiers)for(const i of R.items){const price=R.resale(i,t);assert(price>0&&price<t.cost);}
