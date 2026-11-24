@@ -117,6 +117,7 @@ export async function channelTick(env, origin) {
         await mark(env, skey, ok); return; } }
     // Елизавета из «кофеРУинер»: пост и рассылка в момент запуска
     if (await lizaTick(env, origin)) return;
+    if (await winterPostTick(env, origin)) return;
     if (await leraPostTick(env, origin)) return;
     if (await nikitaPostTick(env, origin)) return;
     if (await giftsPostTick(env, origin)) return;
@@ -260,6 +261,26 @@ async function nkChannelTick(env, origin) {
   await mark(env, key, ok); return true;
 }
 // подарки первой недели и сундук возвращения: один пост (19.11.2026)
+// зимнее обновление: один пост (24.11.2026)
+async function winterPostTick(env, origin) {
+  if (await posted(env, 'winter_1124')) return false;
+  const ok = await post(env, origin, 'winter_banner.jpg', [
+    "<b>В кофейне зима</b>",
+    "",
+    "На улице минус, а у вас в зале новые истории.",
+    "",
+    "<b>Новые ситуации.</b> Снегопад, и половина команды застряла в пробках. Батареи не греют, в зале +14. Дворник предлагает чистить вход за чашку кофе. Мальчик платит за раф монетками из копилки. Вместо молока привезли ящик мандаринов. Зомби из квеста напротив заказывает восемь капучино. И ещё десяток событий, в каждом свой выбор и свои последствия.",
+    "",
+    "<b>Гости разговаривают.</b> Теперь те, кто сидит за одним столиком, болтают между собой. Прислушайтесь, иногда это лучше сериала.",
+    "",
+    "<b>Рыжий кот.</b> Однажды в дверь проскользнёт кот, весь в снегу. Как его назвать, что сказать санитарной проверке и останется ли он у вас навсегда, решать вам.",
+    "",
+    "<b>Шоу «Тайный критик».</b> Телеканал выбрал вашу кофейню для реалити. Ведущий-провокатор, подставной гость и монтаж, который может сделать из вас звезду или «кофейню ада». Всё зависит от того, как поведёт себя команда.",
+    "",
+    "Перезапустите игру, чтобы всё появилось."
+  ].join('\n'));
+  await mark(env, 'winter_1124', ok); return true;
+}
 async function giftsPostTick(env, origin) {
   if (await posted(env, 'gifts_1119')) return false;
   const ok = await post(env, origin, 'updates.jpg', [
