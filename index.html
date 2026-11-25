@@ -6545,7 +6545,7 @@ function renderSettings(p){
     const curI = interiorOf(S.active);
     const ic = el(`<div class="card"><div class="t">Интерьер зала «${esc(roomDef(S.active).n)}»</div><div class="subnav"></div><div class="d">${curI ? 'Действует: '+esc(INTERIOR_FX[curI].d) : 'Обычный интерьер без бонусов.'}</div></div>`);
     const nav = ic.querySelector('.subnav');
-    [['','Домашний']].concat(own.map(k=>[k, INTERIORS[k].n])).forEach(([k,n])=>{ const b = el(`<button class="chipbtn" aria-pressed="${(S.interior||{})[S.active]===k || (!k && !(S.interior||{})[S.active])}">${n}</button>`); b.onclick = () => { S.interior = S.interior || {}; S.interior[S.active] = k; save(); renderSheet(); }; nav.appendChild(b); });
+    [['','Домашний']].concat(own.map(k=>[k, INTERIORS[k].n])).forEach(([k,n])=>{ const b = el(`<button class="chipbtn" aria-pressed="${(S.interior||{})[S.active]===k || (!k && !(S.interior||{})[S.active])}">${n}</button>`); b.onclick = () => { setInteriorStyle(k,S.active); save(); renderSheet(); }; nav.appendChild(b); });
     p.appendChild(ic);
   }
   const misc = el(`<div class="card"><div class="t">Игра</div><div class="d">«${esc(S.name)}», ${placeName()}, игровой день ${S.day}. Прогресс сохраняется на устройстве${cloudOK()?' и в облаке Telegram':''}.</div><div class="row wrap"></div></div>`);
@@ -10871,7 +10871,7 @@ szApplyUnlock = function(rw, info, silent){
   if(rw.k === 'team'){ S.staff.forEach(s => { if(!s.isYou){ s.mood = Math.min(100, s.mood + 15); s.fatigue = Math.max(0, (s.fatigue||0) - 20); } }); if(!silent) toast('Команда отдохнула и довольна'); return; }
   if(rw.k === 'frametry'){ const opts = FRAME_SHOP.filter(k => !frameOwned(k)); const k = pick(opts.length ? opts : FRAME_SHOP); S.c.frameTry = {k, until: Date.now() + 3*86400000}; S.c.signFrame = k; structDirty = true; if(!silent) toast('Рамка «'+SIGN_FRAMES[k].n+'» на 3 дня'); return; }
   if(rw.k === 'styletry'){ const opts = ['int_soviet','int_loft','int_scandi','int_neon'].filter(k => !(S.ent && (S.ent.interiors||[]).includes(k))); const k = pick(opts.length ? opts : ['int_loft']);
-    S.promoStyles = S.promoStyles || {}; S.promoStyles[k] = Date.now() + 3*86400000; S.interior = S.interior || {}; S.interior.main = k; try{ mergeInteriors(); }catch(e){} structDirty = true; if(!silent) toast('Стиль «'+INTERIORS[k].n+'» на 3 дня'); return; }
+    S.promoStyles = S.promoStyles || {}; S.promoStyles[k] = Date.now() + 3*86400000; mergeInteriors(); setInteriorStyle(k); if(!silent) toast('Стиль «'+INTERIORS[k].n+'» на 3 дня'); return; }
   return _szApply932.apply(this, arguments); };
 
 /* ===== 9.3: завтраки (25 ур.) и ночной бар (35 ур.) ===== */
@@ -13025,7 +13025,7 @@ shopPanel=function(p){ _sp7(p);
     Object.keys(INT_STYLE).forEach(function(k){ if(INTERIORS[k]&&THEMES[INT_STYLE[k]]) list.push([k,INTERIORS[k].n.replace(' (сезон)','')]); });
     list.forEach(function(it){ var k=it[0], has=!k||(function(){ var o=(S.interior||{})[S.active]; S.interior=S.interior||{}; S.interior[S.active]=k; var r=interiorOf(S.active)===k; S.interior[S.active]=o; return r; })();
       var b=el('<button class="'+(cur===k?'on':'')+(has?'':' lock')+'">'+esc(it[1])+(has?'':'<s>нет в коллекции</s>')+'</button>');
-      b.onclick=function(){ if(!has){ toast('Этот стиль открывается в сезоне или премиум-магазине'); return; } S.interior=S.interior||{}; S.interior[S.active]=k; try{ sfx('tap'); save(); }catch(e){} structDirty=true; renderSheet(); };
+      b.onclick=function(){ if(!has){ toast('Этот стиль открывается в сезоне или премиум-магазине'); return; } setInteriorStyle(k,S.active); sfx('tap'); save(); renderSheet(); };
       sg.appendChild(b); });
     if(hero&&hero.nextSibling) p.insertBefore(c,hero.nextSibling); else p.appendChild(c);
   }catch(e){ console.error(e); }
@@ -13160,10 +13160,20 @@ wallDecor=function(now){
     pimg(n,s[0],s[1],h); if(n==='neon') glowAt(s[0],s[1]-13,26,'255,110,190',0.2+0.05*Math.sin(now*3)); });
 };
 /* --- кофемашина и кофемолка из магазина --- */
-function machDraw(){ var m=window.MACH_SKIN, g=window.GRIND_SKIN;
-  if(!(window.BrewCrewSupplier&&window.BrewCrewSupplier.drawMachine(80,TOP+0.5))){if(m&&m!=='std'&&DEC[m]&&DEC[m].naturalWidth) pimg(m,80,TOP+0.5,45); else img('mach',57,TOP,45);}
-  if(!(window.BrewCrewSupplier&&window.BrewCrewSupplier.drawGrinder(124,TOP+0.5))){if(g&&g!=='std'&&DEC[g]&&DEC[g].naturalWidth) pimg(g,124,TOP+0.5,39); else img('grind2',114,TOP,39);}
- }
+function machDraw(){
+  const m=window.MACH_SKIN, g=window.GRIND_SKIN;
+  const grand=themeKey()===bcLuxury.grand;
+  const machineDrawn=window.BrewCrewSupplier?.drawMachine(80,TOP+.5) || (grand&&m==='std'&&bcLuxurySprite('winter_machine',76,TOP,44));
+  if(!machineDrawn){
+    if(m&&m!=='std'&&DEC[m]?.naturalWidth) pimg(m,80,TOP+0.5,45);
+    else img('mach',57,TOP,45);
+  }
+  const grinderDrawn=window.BrewCrewSupplier?.drawGrinder(124,TOP+.5) || (grand&&g==='std'&&bcLuxurySprite('winter_grinder',124,TOP,38));
+  if(!grinderDrawn){
+    if(g&&g!=='std'&&DEC[g]?.naturalWidth) pimg(g,124,TOP+0.5,39);
+    else img('grind2',114,TOP,39);
+  }
+}
 /* --- вывеска --- */
 var _sg8=sceneSign;
 window.sceneSign=function(st,u,now){ var sk=window.SIGN_SKIN||'std', fk=window.SIGN_FONT||'std';
@@ -13248,11 +13258,14 @@ shopPanel=function(p){
       var card=el('<div class="u6it'+(cur===key?' on':'')+'"><div class="u6pv u8tp"><img src="'+ax('st_'+it[1])+'"></div><div class="u6nm">'+it[2]+'</div><div class="u8ds">'+it[3]+'</div><div class="u6act"></div></div>');
       var a=card.querySelector('.u6act');
       if(cur===key) a.appendChild(el('<span class="u6on">Стоит</span>'));
-      else if(has){ var eb=el('<button class="u6alt">Поставить</button>'); eb.onclick=function(){ S.interior=S.interior||{}; S.interior[S.active]=key; try{ sfx('tap'); save(); }catch(e){} structDirty=true; renderSheet(); }; a.appendChild(eb); }
-      else a.appendChild(el('<span class="u8lk">сезон или премиум</span>'));
+      if(has&&(cur!==key||hasInteriorOverrides())){
+        var button=el('<button class="u6alt">'+(cur===key?'Восстановить стиль':'Поставить')+'</button>');
+        button.onclick=function(){setInteriorStyle(key,S.active);sfx('tap');save();renderSheet();};
+        a.appendChild(button);
+      }else if(!has) a.appendChild(el('<span class="u8lk">сезон или премиум</span>'));
       grid.appendChild(card); });
     p.appendChild(grid);
-    p.appendChild(el('<div class="u6note">Стиль меняет стены, пол, мебель и свет целиком. Всё из остальных разделов ставится поверх любого стиля.</div>'));
+    p.appendChild(el('<div class="u6note">Стиль заменяет оформление зала. Купленные предметы можно снова применить в магазине.</div>'));
     return;
   }
   SKIN_DEF[cat].forEach(function(d){
@@ -13264,7 +13277,7 @@ shopPanel=function(p){
       bb.onclick=function(){ if(cat==='room'&&id==='deep'&&!S.skinOwned['room:wide']){ toast('Сначала нужно расширение вправо'); return; } if(S.money<price){ toast('Не хватает денег'); return; } spend(price,'other','Магазин: '+nm); S.skinOwned[cat+':'+id]=1; equip(cat,id); PORT={}; try{ sfx('level'); }catch(e){} toast('Куплено: '+nm); save(); renderSheet(); renderHud(); };
       a.appendChild(bb); var tb=el('<button class="u6alt u9try">Примерить</button>'); tb.onclick=function(){ tryOn(cat,id,nm,price); }; a.appendChild(tb); }
     else if(on){ a.appendChild(el('<span class="u6on">'+(multi?'Стоит':'Выбрано')+'</span>')); if(multi){ var ob=el('<button class="u6alt">Убрать</button>'); ob.onclick=function(){ k[cat][id]=0; applySkins(); save(); renderSheet(); }; a.appendChild(ob); } }
-    else { var eb2=el('<button class="u6alt">'+(multi?'Поставить':'Выбрать')+'</button>'); eb2.onclick=function(){ equip(cat,id); PORT={}; try{ sfx('tap'); }catch(e){} save(); renderSheet(); }; a.appendChild(eb2); }
+    else { var eb2=el('<button class="u6alt">'+(cat==='uni'?'Выбрать':'Применить')+'</button>'); eb2.onclick=function(){ equip(cat,id); PORT={}; try{ sfx('tap'); }catch(e){} save(); renderSheet(); }; a.appendChild(eb2); }
     grid.appendChild(card);
   });
   p.appendChild(grid);
@@ -13947,7 +13960,7 @@ function atmosphereCard(grid,cat,q,where,bonus){
   var id=q[0],price=q[2],k=skinS(),has=owns(cat,id),on=MULTI[cat]?!!k[cat][id]:k[cat]===id;
   if(cat==='lux'){has=!!S.skinOwned['lux:'+id];on=has&&!!k.lux[id];}
   var card=el('<div class="u6it'+(on?' on':'')+'"><div class="u6pv">'+preview(cat,id)+'</div><div class="u6nm">'+esc(q[1])+'</div><p class="u15place">'+esc(where)+(bonus?' · '+esc(bonus):'')+'</p><div class="u6act"></div></div>'),a=card.querySelector('.u6act');
-  var b=el('<button class="'+(has?'u6alt':'u6buy')+'">'+(has?(on?'Убрать':'Поставить'):nf(price)+' ₽')+'</button>');
+  var b=el('<button class="'+(has?'u6alt':'u6buy')+'">'+(has?(on?'Убрать':'Применить'):nf(price)+' ₽')+'</button>');
   b.onclick=function(){
     if(!has){if(S.money<price){toast('Не хватает денег');return;}spend(price,'other','Магазин: '+q[1]);S.skinOwned[cat+':'+id]=1;}
     if(MULTI[cat])k[cat][id]=on?0:1;else k[cat]=on?'none':id;
@@ -13973,7 +13986,7 @@ shopPanel=function(p){
   if(cat==='style'){
     var prices={int_loft:85000,int_scandi:95000,int_soviet:65000,int_neon:125000,int_autumn:75000,int_winter:90000};
     p.querySelectorAll('.u6it').forEach(function(c,i){var it=STYLES8[i],locked=c.querySelector('.u8lk');if(!it||!locked)return;var key=it[0],b=el('<button class="u6buy">'+nf(prices[key])+' ₽</button>');
-      b.onclick=function(){var price=prices[key];if(S.money<price){toast('Не хватает денег');return;}spend(price,'other','Стиль: '+it[2]);S.ent=S.ent||{};S.ent.interiors=S.ent.interiors||[];if(S.ent.interiors.indexOf(key)<0)S.ent.interiors.push(key);S.szStyles=S.szStyles||[];if(S.szStyles.indexOf(key)<0)S.szStyles.push(key);S.interior=S.interior||{};S.interior[S.active]=key;structDirty=true;save();renderSheet();renderHud();};locked.replaceWith(b);
+      b.onclick=function(){var price=prices[key];if(S.money<price){toast('Не хватает денег');return;}spend(price,'other','Стиль: '+it[2]);S.ent=S.ent||{};S.ent.interiors=S.ent.interiors||[];if(S.ent.interiors.indexOf(key)<0)S.ent.interiors.push(key);S.szStyles=S.szStyles||[];if(S.szStyles.indexOf(key)<0)S.szStyles.push(key);setInteriorStyle(key,S.active);save();renderSheet();renderHud();};locked.replaceWith(b);
     });
   }
 };
@@ -14052,7 +14065,7 @@ var auditBack=themeBack;themeBack=function(E,now){auditBack(E,now);if(luxOn('d_a
 var auditWall=wallDecor;wallDecor=function(now){auditWall(now);if(luxOn('clock'))put('clock',104,31,16,16);};
 var auditFloor=floorDecor14;floorDecor14=function(items,now){auditFloor(items,now);if(luxOn('d_jukebox'))items.push({y:H-20,f:function(){pimg('d_jukebox',RW()-48,H-20,42);}});};
 var auditCard=atmosphereCard;
-atmosphereCard=function(grid,cat,q,where,bonus){if(cat!=='lux')return auditCard(grid,cat,q,where,bonus);var k=skinS(),id=q[0],has=!!S.skinOwned['lux:'+id],on=has&&!!k.lux[id];var card=el('<div class="u6it'+(on?' on':'')+'"><div class="u6pv">'+preview(cat,id)+'</div><div class="u6nm">'+esc(q[1])+'</div><p class="u15place">'+esc(where)+' · '+esc(bonus)+'</p><div class="u6act"></div></div>');var b=el('<button class="'+(has?'u6alt':'u6buy')+'">'+(has?(on?'Убрать':'Поставить'):q[2]+' ★')+'</button>');b.onclick=function(){if(!has){if(tg&&tg.initData)buyStars('lux_'+id);else toast('Покупка за звёзды доступна в Telegram');return;}k.lux[id]=on?0:1;applySkins();save();renderSheet();};card.querySelector('.u6act').appendChild(b);grid.appendChild(card);};
+atmosphereCard=function(grid,cat,q,where,bonus){if(cat!=='lux')return auditCard(grid,cat,q,where,bonus);var k=skinS(),id=q[0],has=!!S.skinOwned['lux:'+id],on=has&&!!k.lux[id];var card=el('<div class="u6it'+(on?' on':'')+'"><div class="u6pv">'+preview(cat,id)+'</div><div class="u6nm">'+esc(q[1])+'</div><p class="u15place">'+esc(where)+' · '+esc(bonus)+'</p><div class="u6act"></div></div>');var b=el('<button class="'+(has?'u6alt':'u6buy')+'">'+(has?(on?'Убрать':'Применить'):q[2]+' ★')+'</button>');b.onclick=function(){if(!has){if(tg&&tg.initData)buyStars('lux_'+id);else toast('Покупка за звёзды доступна в Telegram');return;}k.lux[id]=on?0:1;applySkins();save();renderSheet();};card.querySelector('.u6act').appendChild(b);grid.appendChild(card);};
 var auditShop=shopPanel;
 shopPanel=function(p){var cat=window.__shopCat||'style';if(cat==='lux'||cat==='atmosphere'){window.__shopCat='style';_sp14(p);window.__shopCat=cat;p.querySelectorAll('.u6grid,.u6note').forEach(function(e){e.remove();});p.querySelectorAll('.u6cat').forEach(function(b){b.classList.toggle('on',b.textContent===(cat==='lux'?'Люкс ★':'Декор'));});var grid=el('<div class="u6grid"></div>');if(cat==='lux'){var positions={x_cat:'Передняя барная стойка',x_gram:'Задняя рабочая столешница',x_chand:'Потолок справа от вывески',clock:'Задняя стена',d_aquarium:'Задняя рабочая столешница',d_jukebox:'У правой стены'};LUX.forEach(function(l){atmosphereCard(grid,'lux',[l[0],l[1],l[2]],positions[l[0]],l[5]);});}else atmosphereEntries.forEach(function(a){atmosphereCard(grid,a[0],a[1],a[0]==='lamp'?'Под потолком вне вывески':a[1][0]==='d_floorlamp'?'У правой стены':'Верхняя часть стены');});p.appendChild(grid);p.appendChild(el('<div class="u6note">'+(cat==='lux'?'Цены в звёздах Telegram.':'Свет и украшения за игровые рубли.')+'</div>'));return;}auditShop(p);if(cat==='art'){p.querySelectorAll('.u15place').forEach(function(n){n.textContent='Задняя стена. Нажми «Показать в зале», чтобы увидеть место.';});p.querySelectorAll('.u9try').forEach(function(b){b.textContent='Показать в зале';});}};
 // Replace the old paid border collection, retaining owned legacy borders for compatibility.
@@ -14346,7 +14359,7 @@ function bcAdminStatus(){
 function bcAdminEntitlements(r){
   if(!r)return;S.ent=Object.assign({},r,{at:Date.now()});S.szStyles=S.szStyles||[];
   (r.interiors||[]).forEach(function(k){if(S.szStyles.indexOf(k)<0)S.szStyles.push(k);});
-  (r.lux||[]).forEach(function(id){skinS();S.skinOwned['lux:'+id]=1;skinS().lux[id]=1;});
+  (r.lux||[]).forEach(function(id){const k=skinS();S.skinOwned['lux:'+id]=1;if(k.lux[id]===undefined)k.lux[id]=1;});
   mergeInteriors();passWatch(true);if(typeof flag34Apply==='function')flag34Apply();applySkins();
 }
 async function bcAdminPurchase(data){
@@ -14379,7 +14392,7 @@ shopPanel=function(p){
       if(category==='room'&&id==='deep'&&!S.skinOwned['room:wide']){toast('Сначала нужно расширение вправо');return;}
       b.disabled=true;try{
         var r=await bcAdminPurchase(category==='lux'?{kind:'premium',item:'lux_'+id}:{kind:'skin',category:category,id:id});if(!r)return;
-        if(category==='style'){S.interior=S.interior||{};S.interior[S.active]=id;}
+        if(category==='style'){setInteriorStyle(id,S.active);}
         else{skinS();S.skinOwned[category+':'+id]=1;equip(category,id);}
         PORT={};applySkins();save();structDirty=true;renderSheet();renderHud();toast('Куплено для теста');
       }finally{b.disabled=false;}
@@ -14533,7 +14546,7 @@ shopPanel=function(p){
   bcOwnGoldMachine(false);var has=!!(S.goldMachine||S.skinOwned&&S.skinOwned['mach:'+BC_GOLD_MACHINE]),on=has&&skinS().mach===BC_GOLD_MACHINE;
   var card=el('<div class="u6it bc-season-machine'+(on?' on':'')+'"><div class="u6pv"><img src="img/season-gold-machine.png" alt="Золотая кофемашина, вид спереди"></div><div class="u6nm">Золотая кофемашина</div><p class="u15place">Награда пропуска · 20-я ступень. Остаётся навсегда.</p><div class="u6act"></div></div>'),act=card.querySelector('.u6act');
   if(on)act.appendChild(el('<span class="u6on">Выбрано</span>'));
-  else {var b=el('<button class="u6alt">'+(has?'Поставить':'Открыть пропуск')+'</button>');b.onclick=function(){if(!has){openSheet('hall','season');return;}skinS().mach=BC_GOLD_MACHINE;applySkins();save();renderSheet();};act.appendChild(b);}
+  else {var b=el('<button class="u6alt">'+(has?'Применить':'Открыть пропуск')+'</button>');b.onclick=function(){if(!has){openSheet('hall','season');return;}equip('mach',BC_GOLD_MACHINE);save();renderSheet();};act.appendChild(b);}
   var grid=p.querySelector('.u6grid');if(grid)grid.prepend(card);
 };
 /* Rebuild permanent rewards from recorded claims; never replay spent consumables. */
@@ -14611,7 +14624,7 @@ function bcStoreReceipt(r){
  (r.skins||[]).forEach(function(x){skinS();if(x.category==='room'){S.c=S.c||{};S.c.roomLicenses=S.c.roomLicenses||{};S.c.roomLicenses[x.id]=1;if(S.c.roomResetAt&&(+x.at||0)<=S.c.roomResetAt&&!S.skinOwned['room:'+x.id])return;}S.skinOwned[x.category+':'+x.id]=1;});
  if(BC_PAID_WANTED){var sku=BC_PAID_WANTED,p=BC_STORE[sku],ready=false;
   if(r.skins&&r.skins.some(function(x){return bcStoreSku(x.category,x.id)===sku;})){equip(p.category,p.skin);ready=true;}
-  else if((r.interiors||[]).includes(sku)){S.interior=S.interior||{};S.interior.main=sku;ready=true;}
+  else if((r.interiors||[]).includes(sku)){setInteriorStyle(sku);ready=true;}
   else if(sku.indexOf('lux_')===0&&(r.lux||[]).includes(sku.slice(4))){skinS().lux=skinS().lux||{};skinS().lux[sku.slice(4)]=1;ready=true;}
   else if((r.frames||[]).includes(sku)){S.c.signFrame=sku.slice(6);ready=true;}
   if(ready){BC_PAID_WANTED=null;applySkins();save();structDirty=true;}
@@ -14842,7 +14855,7 @@ var bcGameExt=ext34;ext34=function(k){return !!(S&&S.c&&S.c.gameOwned&&S.c.gameO
 var bcGameNew=newState;newState=function(){if(S)bcGameRestore();var previous=S&&S.c&&S.c.gameOwned,next=bcGameNew.apply(this,arguments);next.c=next.c||{};next.c.gameOwned=JSON.parse(JSON.stringify(previous||{}));next.c.mixedShopMigrated=1;BC_GAME_PREVIEW=null;Object.keys(next.c.gameOwned).forEach(function(sku){var p=BC_STORE[sku];if(p&&p.category==='room'){next.c.roomLicenses=next.c.roomLicenses||{};next.c.roomLicenses[p.skin]=1;}});return next;};
 var bcGameReceipt=bcStoreReceipt;
 bcStoreReceipt=function(r){bcGameReceipt.apply(this,arguments);if(!S||!r||!r.ok)return;S.c=S.c||{};S.c.gameOwned=S.c.gameOwned||{};(r.skins||[]).forEach(function(x){var sku=bcStoreSku(x.category,x.id);if(BC_STORE[sku]&&BC_STORE[sku].currency==='GAME')S.c.gameOwned[sku]=1;});(r.interiors||[]).concat(r.extras||[]).forEach(function(sku){if(BC_STORE[sku]&&BC_STORE[sku].currency==='GAME')S.c.gameOwned[sku]=1;});bcGameRestore(true);};
-function bcGameEquip(sku){var p=BC_STORE[sku];if(p.category==='style'){S.szStyles=S.szStyles||[];if(!S.szStyles.includes(sku))S.szStyles.push(sku);S.interior=S.interior||{};S.interior[S.active||'main']=sku;mergeInteriors();}
+function bcGameEquip(sku){var p=BC_STORE[sku];if(p.category==='style'){S.szStyles=S.szStyles||[];if(!S.szStyles.includes(sku))S.szStyles.push(sku);mergeInteriors();setInteriorStyle(sku,S.active||'main');}
  else if(p.category){S.skinOwned=S.skinOwned||{};S.skinOwned[p.category+':'+p.skin]=1;equip(p.category,p.skin);}
  else {if(sku==='music')S.c.mu34=S.c.mu34||'jazz';if(sku==='uniform')S.c.uf34=S.c.uf34||'classic';}
  applySkins();fitRoom();}
@@ -15300,6 +15313,37 @@ window.__nkDbg=function(){ var v=nkS(); return {live:nkLive(),n:v.n,next:v.next-
 
 var bcGuestsStyle=document.createElement('style');bcGuestsStyle.textContent='.bc-guests-nav{display:flex;gap:8px;margin:0 0 16px}.bc-guests-nav button{flex:1;min-height:42px}.bc-guests-nav button[aria-selected=true]{background:#714d31!important;color:#fff4e1!important}html body .sheet #panel .bc-cafe-row{display:grid!important;grid-template-columns:42px minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;text-align:left!important;padding:12px!important;min-height:74px!important}.u6sum:empty{display:none!important}.bc-cafe-avatar{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:13px;background:#e9d4ae;color:#6b492b;font-size:22px;font-weight:800}html body .sheet #panel .bc-cafe-meta{display:block!important;min-width:0;text-align:left!important}html body .sheet #panel .bc-cafe-meta .t{overflow-wrap:anywhere;text-align:left!important;margin:0!important;font-size:15px!important}html body .sheet #panel .bc-cafe-meta .d{margin:5px 0 0!important;font-size:11px!important;text-align:left!important;line-height:1.4!important}html body .sheet #panel .bc-cafe-row>.btn{align-self:center!important;justify-self:end!important;flex:none;width:auto!important;min-height:42px;margin:0!important;padding:9px 13px}.bc-guests-body h3{margin:8px 0 10px}';document.head.appendChild(bcGuestsStyle);
 
+// Applying a complete style clears cosmetic selections while retaining their ownership.
+const INTERIOR_SKIN_DEFAULTS = {
+  floor:'oak',backfloor:'auto',wall:'cream',win:'win',table:'light',chair:'walnut',
+  bstool:'std',bar:'std',barf:'std',mach:'std',grind:'std',lamp:'none',sign:'std',font:'std'
+};
+const INTERIOR_DECOR_SKINS = ['art','decor','lux','barmat'];
+function hasInteriorOverrides(){
+  const skin = skinS();
+  return Object.entries(INTERIOR_SKIN_DEFAULTS).some(([key,value])=>skin[key]!==value)
+    || INTERIOR_DECOR_SKINS.some(key=>Object.values(skin[key]).some(Boolean))
+    || Object.values(S.supplierDrops?.equipped||{}).some(Boolean);
+}
+window.setInteriorStyle = function(id,roomId='main'){
+  const skin = skinS();
+  Object.assign(skin, INTERIOR_SKIN_DEFAULTS);
+  for(const category of INTERIOR_DECOR_SKINS){
+    for(const item of Object.keys(skin[category])) skin[category][item]=0;
+  }
+  for(const item of S.ent?.lux||[]) skin.lux[item]=0;
+  for(const key of Object.keys(S.skinOwned)) if(key.startsWith('lux:')) skin.lux[key.slice(4)]=0;
+  const supplier = S.supplierDrops?.equipped;
+  if(supplier) for(const slot of Object.keys(supplier)) supplier[slot]=null;
+  // The gold machine stays in the collection and a receipt refresh respects the style.
+  if(S.goldMachine||S.skinOwned['mach:'+BC_GOLD_MACHINE]){
+    S.c=S.c||{};
+    S.c.seasonGoldSprite=1;
+  }
+  S.interior={...S.interior,[roomId]:id};
+  applySkins();
+};
+
 /* Complete luxury interiors and the December pass's permanent final style. */
 const bcLuxury = BrewCrewLuxuryInteriors;
 const bcLuxuryTab = SKIN_CAT.findIndex(([key])=>key==='lux');
@@ -15335,12 +15379,13 @@ function bcLuxuryImage(file){
 }
 function bcLuxurySprite(file,x,y,h,maxWidth=Infinity){
   const image = bcLuxuryImage(file);
-  if(!image) return;
+  if(!image) return false;
   const scale = Math.min(h/image.naturalHeight,maxWidth/image.naturalWidth);
   const w = image.naturalWidth*scale, height = image.naturalHeight*scale;
   ctx.save();ctx.imageSmoothingEnabled=false;
   ctx.drawImage(image,x-w/2,y-height,w,height);
   ctx.restore();
+  return true;
 }
 const bcBaseLuxuryWall = themeWall;
 themeWall = function(E,now){
@@ -15410,41 +15455,10 @@ themeBack = function(E,now){
   bcBaseLuxuryBack(E,now);
   if(E.key===bcLuxury.grand) bcLuxurySprite('winter_tree',222,TOP+1,30);
 };
-const bcBaseLuxuryEquipment = machDraw;
-machDraw = function(){
-  if(themeKey()!==bcLuxury.grand || !bcLuxuryImage('winter_machine') || !bcLuxuryImage('winter_grinder')){
-    return bcBaseLuxuryEquipment();
-  }
-  bcLuxurySprite('winter_machine',76,TOP,44);
-  bcLuxurySprite('winter_grinder',124,TOP,38);
-};
-
 function bcLuxuryLabEnabled(){
   return !!window.BrewCrewLab && bcAdminTest;
 }
-function bcLuxuryLabCanvas(dialog,id){
-  const layout = bcVisitState({it:id,n:S.name,lv:S.level,pv:2,gm:S.gm,weather:S.weather,
-    up:room('main').upg,open:false,kt:S.kitchen?.tier,sk:skinS(),
-    so:Object.keys(S.skinOwned||{}).filter(key=>S.skinOwned[key])});
-  const poster = dialog.querySelector('img');
-  const canvas = el('<canvas class="bc-luxury-preview-image" role="img" aria-label="Примерка интерьера в тестовой кофейне" hidden></canvas>');
-  poster.after(canvas);
-  let frame, last=0;
-  function draw(now){
-    if(!dialog.open) return;
-    if(now-last>=120){
-      try{bcVisitFrame(layout,canvas,last?Math.min(.15,(now-last)/1000):.1);}
-      catch(error){console.error('Interior preview:',error);return;}
-      last=now;
-      poster.hidden=true;
-      canvas.hidden=false;
-    }
-    frame=requestAnimationFrame(draw);
-  }
-  frame=requestAnimationFrame(draw);
-  dialog.addEventListener('close',()=>cancelAnimationFrame(frame),{once:true});
-}
-function bcLuxuryPreview(id,live=false){
+function bcLuxuryPreview(id){
   const style = bcLuxury.styles[id];
   const dialog = el('<dialog class="bc-luxury-dialog" aria-labelledby="bc-luxury-title">'+
     '<h2 id="bc-luxury-title">'+esc(style.name)+'</h2>'+
@@ -15453,12 +15467,11 @@ function bcLuxuryPreview(id,live=false){
   dialog.addEventListener('close',()=>dialog.remove(),{once:true});
   document.body.append(dialog);
   dialog.showModal();
-  if(live&&bcLuxuryLabEnabled()) bcLuxuryLabCanvas(dialog,id);
 }
 function bcLuxuryOwned(id){
   return !S.c?.adminBlocks?.[id] && (hasInterior(id) || (S.szStyles||[]).includes(id));
 }
-function bcLuxuryCard(id,labPreview=false){
+function bcLuxuryCard(id){
   const style = bcLuxury.styles[id], product = BC_STORE[id];
   const owned = bcLuxuryOwned(id), equipped = interiorOf('main')===id && owned;
   const card = el('<article class="u6it bc-luxury-card'+(equipped?' on':'')+'" data-bc-sku="'+id+'">'+
@@ -15467,21 +15480,24 @@ function bcLuxuryCard(id,labPreview=false){
     '<div class="u6nm">'+esc(style.name)+'</div><p class="u8ds">'+esc(style.description)+'</p><div class="u6act"></div></article>');
   card.querySelector('.bc-luxury-preview').onclick = () => bcLuxuryPreview(id);
   const actions = card.querySelector('.u6act');
-  if(labPreview){
-    const tryStyle = el('<button type="button" class="u6alt">Примерить в зале</button>');
-    tryStyle.onclick = () => bcLuxuryPreview(id,true);
-    actions.append(tryStyle);
-    return card;
-  }
-  if(equipped){ actions.append(el('<span class="u6on">Стоит</span>')); return card; }
-  if(owned){
-    const equipStyle = el('<button type="button" class="u6alt">Поставить</button>');
-    equipStyle.onclick = () => {
-      if(!bcLuxuryOwned(id)) return;
-      S.interior = {...S.interior, main:id};
-      applySkins(); save(); renderSheet();
-    };
-    actions.append(equipStyle);
+  const lab = bcLuxuryLabEnabled();
+  if(equipped) actions.append(el('<span class="u6on">Стоит</span>'));
+  if(lab || owned){
+    if(!equipped || hasInteriorOverrides()){
+      const label = equipped ? 'Восстановить стиль' : 'Поставить';
+      const equipStyle = el('<button type="button" class="u6alt">'+label+'</button>');
+      equipStyle.onclick = () => {
+        if(lab && bcLuxuryLabEnabled()){
+          S.szStyles=S.szStyles||[];
+          if(!S.szStyles.includes(id)) S.szStyles.push(id);
+        }else if(!bcLuxuryOwned(id)) return;
+        setInteriorStyle(id);
+        save();
+        if(lab){ saveCloud(); openSheet(null); }
+        else renderSheet();
+      };
+      actions.append(equipStyle);
+    }
     return card;
   }
   const buy = el('<button type="button" class="u6buy">Купить</button>');
@@ -15496,12 +15512,11 @@ shopPanel = function(p){
   bcBaseLuxuryShop(p);
   const baseGrid = p.querySelector(':scope > .u6grid');
   if(!baseGrid) return;
-  if(window.__shopCat==='style' && bcLuxuryOwned(bcLuxury.grand)){
+  if(window.__shopCat==='style' && (bcLuxuryLabEnabled() || bcLuxuryOwned(bcLuxury.grand))){
     baseGrid.prepend(bcLuxuryCard(bcLuxury.grand));
   }else if(window.__shopCat==='lux'){
     const grid = el('<div class="u6grid u8st bc-luxury-grid" aria-label="Люксовые интерьеры"></div>');
-    const labPreview = bcLuxuryLabEnabled();
-    for(const id of Object.keys(bcLuxury.styles)) if(id!==bcLuxury.grand) grid.append(bcLuxuryCard(id,labPreview));
+    for(const id of Object.keys(bcLuxury.styles)) if(id!==bcLuxury.grand) grid.append(bcLuxuryCard(id));
     baseGrid.before(el('<h3 class="h">Интерьеры</h3>'),grid,el('<h3 class="h">Предметы декора</h3>'));
   }
 };
@@ -15516,16 +15531,8 @@ const bcBaseLuxurySeason = renderSeason;
 renderSeason = function(p){
   bcBaseLuxurySeason(p);
   const rw = szReward('p',50), cell = p.querySelector('.sz-row:last-child .sz-cell.p');
-  if(!rw.finalStyle && bcLuxuryLabEnabled()){
-    const labReward = el('<section class="bc-luxury-lab-season" aria-label="Предпросмотр декабрьского пропуска">'+
-      '<h3 class="h">Декабрьский пропуск</h3><p class="d">Награда 50-й ступени платной ветки</p></section>');
-    labReward.append(bcLuxuryCard(bcLuxury.grand,true));
-    p.querySelector('.sz-pass')?.after(labReward);
-  }
   if(!rw.finalStyle || !cell) return;
-  const preview = el('<button type="button" class="btn ghost">Посмотреть зал</button>');
-  preview.onclick = () => bcLuxuryPreview(rw.finalStyle,bcLuxuryLabEnabled());
-  cell.append(el('<p class="d">Интерьер навсегда, сейф на '+fmt(rw.v)+' ₽ и золотая рамка.</p>'),preview);
+  cell.append(el('<p class="d">Сейф на '+fmt(rw.v)+' ₽ и золотая рамка.</p>'));
   if(bcLuxuryOwned(rw.finalStyle)){
     const equipLink = el('<button type="button" class="btn ghost">К стилям зала</button>');
     equipLink.onclick = () => {window.__shopCat='style';window.__shopSc=0;openSheet('hall','shop');};
@@ -15541,8 +15548,6 @@ html body .bc-luxury-dialog{box-sizing:border-box;width:min(92vw,520px);max-heig
 html body .bc-luxury-dialog::backdrop{background:#1b130dcc}
 html body .bc-luxury-dialog h2{margin:0 0 12px}
 html body .bc-luxury-preview-image{width:100%;max-height:52vh;object-fit:contain;image-rendering:pixelated;border-radius:12px}
-html body canvas.bc-luxury-preview-image:not([hidden]){display:block;width:auto;max-width:100%;margin:auto}
-html body .bc-luxury-lab-season .bc-luxury-card{max-width:320px}
 html body .bc-luxury-reward{object-fit:cover;border-radius:7px}
 `;
 document.head.append(bcLuxuryCss);
