@@ -15431,7 +15431,32 @@ machDraw = function(){
   bcLuxurySprite('winter_grinder',124,TOP,38);
 };
 
-function bcLuxuryPreview(id){
+function bcLuxuryLabEnabled(){
+  return !!window.BrewCrewLab && bcAdminTest;
+}
+function bcLuxuryLabCanvas(dialog,id){
+  const layout = bcVisitState({it:id,n:S.name,lv:S.level,pv:2,gm:S.gm,weather:S.weather,
+    up:room('main').upg,open:false,kt:S.kitchen?.tier,sk:skinS(),
+    so:Object.keys(S.skinOwned||{}).filter(key=>S.skinOwned[key])});
+  const poster = dialog.querySelector('img');
+  const canvas = el('<canvas class="bc-luxury-preview-image" role="img" aria-label="Примерка интерьера в тестовой кофейне" hidden></canvas>');
+  poster.after(canvas);
+  let frame, last=0;
+  function draw(now){
+    if(!dialog.open) return;
+    if(now-last>=120){
+      try{bcVisitFrame(layout,canvas,last?Math.min(.15,(now-last)/1000):.1);}
+      catch(error){console.error('Interior preview:',error);return;}
+      last=now;
+      poster.hidden=true;
+      canvas.hidden=false;
+    }
+    frame=requestAnimationFrame(draw);
+  }
+  frame=requestAnimationFrame(draw);
+  dialog.addEventListener('close',()=>cancelAnimationFrame(frame),{once:true});
+}
+function bcLuxuryPreview(id,live=false){
   const style = bcLuxury.styles[id];
   const dialog = el('<dialog class="bc-luxury-dialog" aria-labelledby="bc-luxury-title">'+
     '<h2 id="bc-luxury-title">'+esc(style.name)+'</h2>'+
@@ -15440,11 +15465,12 @@ function bcLuxuryPreview(id){
   dialog.addEventListener('close',()=>dialog.remove(),{once:true});
   document.body.append(dialog);
   dialog.showModal();
+  if(live&&bcLuxuryLabEnabled()) bcLuxuryLabCanvas(dialog,id);
 }
 function bcLuxuryOwned(id){
   return !S.c?.adminBlocks?.[id] && (hasInterior(id) || (S.szStyles||[]).includes(id));
 }
-function bcLuxuryCard(id){
+function bcLuxuryCard(id,labPreview=false){
   const style = bcLuxury.styles[id], product = BC_STORE[id];
   const owned = bcLuxuryOwned(id), equipped = interiorOf('main')===id && owned;
   const card = el('<article class="u6it bc-luxury-card'+(equipped?' on':'')+'" data-bc-sku="'+id+'">'+
@@ -15453,6 +15479,12 @@ function bcLuxuryCard(id){
     '<div class="u6nm">'+esc(style.name)+'</div><p class="u8ds">'+esc(style.description)+'</p><div class="u6act"></div></article>');
   card.querySelector('.bc-luxury-preview').onclick = () => bcLuxuryPreview(id);
   const actions = card.querySelector('.u6act');
+  if(labPreview){
+    const tryStyle = el('<button type="button" class="u6alt">Примерить в зале</button>');
+    tryStyle.onclick = () => bcLuxuryPreview(id,true);
+    actions.append(tryStyle);
+    return card;
+  }
   if(equipped){ actions.append(el('<span class="u6on">Стоит</span>')); return card; }
   if(owned){
     const equipStyle = el('<button type="button" class="u6alt">Поставить</button>');
@@ -15480,7 +15512,8 @@ shopPanel = function(p){
     baseGrid.prepend(bcLuxuryCard(bcLuxury.grand));
   }else if(window.__shopCat==='lux'){
     const grid = el('<div class="u6grid u8st bc-luxury-grid" aria-label="Люксовые интерьеры"></div>');
-    for(const id of Object.keys(bcLuxury.styles)) if(id!==bcLuxury.grand) grid.append(bcLuxuryCard(id));
+    const labPreview = bcLuxuryLabEnabled();
+    for(const id of Object.keys(bcLuxury.styles)) if(id!==bcLuxury.grand) grid.append(bcLuxuryCard(id,labPreview));
     baseGrid.before(el('<h3 class="h">Интерьеры</h3>'),grid,el('<h3 class="h">Предметы декора</h3>'));
   }
 };
@@ -15495,9 +15528,15 @@ const bcBaseLuxurySeason = renderSeason;
 renderSeason = function(p){
   bcBaseLuxurySeason(p);
   const rw = szReward('p',50), cell = p.querySelector('.sz-row:last-child .sz-cell.p');
+  if(!rw.finalStyle && bcLuxuryLabEnabled()){
+    const labReward = el('<section class="bc-luxury-lab-season" aria-label="Предпросмотр декабрьского пропуска">'+
+      '<h3 class="h">Декабрьский пропуск</h3><p class="d">Награда 50-й ступени платной ветки</p></section>');
+    labReward.append(bcLuxuryCard(bcLuxury.grand,true));
+    p.querySelector('.sz-pass')?.after(labReward);
+  }
   if(!rw.finalStyle || !cell) return;
   const preview = el('<button type="button" class="btn ghost">Посмотреть зал</button>');
-  preview.onclick = () => bcLuxuryPreview(rw.finalStyle);
+  preview.onclick = () => bcLuxuryPreview(rw.finalStyle,bcLuxuryLabEnabled());
   cell.append(el('<p class="d">Интерьер навсегда, сейф на '+fmt(rw.v)+' ₽ и золотая рамка.</p>'),preview);
   if(bcLuxuryOwned(rw.finalStyle)){
     const equipLink = el('<button type="button" class="btn ghost">К стилям зала</button>');
@@ -15514,6 +15553,8 @@ html body .bc-luxury-dialog{box-sizing:border-box;width:min(92vw,520px);max-heig
 html body .bc-luxury-dialog::backdrop{background:#1b130dcc}
 html body .bc-luxury-dialog h2{margin:0 0 12px}
 html body .bc-luxury-preview-image{width:100%;max-height:52vh;object-fit:contain;image-rendering:pixelated;border-radius:12px}
+html body canvas.bc-luxury-preview-image:not([hidden]){display:block;width:auto;max-width:100%;margin:auto}
+html body .bc-luxury-lab-season .bc-luxury-card{max-width:320px}
 html body .bc-luxury-reward{object-fit:cover;border-radius:7px}
 `;
 document.head.append(bcLuxuryCss);
