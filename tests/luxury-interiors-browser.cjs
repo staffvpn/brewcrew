@@ -56,6 +56,11 @@ async function main() {
       S.hours={open:20,close:22};S.isOpen=false;S.gm=600;
       S.nw={off:true};
       while(modals.length) closeModal();
+      skinS();
+      Object.assign(S.skinOwned,{'floor:herr':1,'table:dark':1,'art:a_big1':1,'lux:x_cat':1,'room:wide':1});
+      S.goldMachine=true;
+      equip('room','wide');equip('floor','herr');equip('table','dark');
+      equip('art','a_big1');equip('lux','x_cat');
       openShop();
     });
 
@@ -78,6 +83,22 @@ async function main() {
     await checkout.getByRole('button',{name:/Купить за 599/}).click();
     await page.waitForFunction(id => interiorOf('main')===id,paidStyle);
     assert.deepEqual(invoices,[paidStyle]);
+    assert.deepEqual(await page.evaluate(() => {
+      const k=skinS();
+      return [k.floor,k.table,k.art.a_big1,k.lux.x_cat,k.mach,k.room,
+        owns('floor','herr'),owns('table','dark'),owns('art','a_big1'),S.skinOwned['lux:x_cat']];
+    }), ['oak','light',0,0,'std','wide',true,true,true,1]);
+
+    await page.evaluate(() => {
+      window.__shopCat='floor';openSheet('hall','shop');
+    });
+    await page.locator('[data-bc-sku="skin_floor_herr"]').getByRole('button',{name:'Применить',exact:true}).click();
+    await page.evaluate(() => {
+      window.__shopCat='table';openSheet('hall','shop');
+    });
+    await page.locator('[data-bc-sku="skin_table_dark"]').getByRole('button',{name:'Применить',exact:true}).click();
+    assert.deepEqual(await page.evaluate(() => [interiorOf('main'),skinS().floor,skinS().table]),
+      [paidStyle,'herr','dark']);
 
     await page.evaluate(() => {
       while(modals.length) closeModal();
@@ -86,7 +107,7 @@ async function main() {
     });
     const finale = page.locator('.sz-row').last().locator('.sz-cell.p');
     assert.match(await finale.innerText(),/Зимний гранд/);
-    assert.equal(await finale.getByRole('button',{name:'Посмотреть зал'}).count(),1);
+    assert.equal(await finale.getByRole('button',{name:/Посмотреть зал|Примерить/}).count(),0);
     assert.equal(await page.evaluate(() => szClaim('p',50,true)),'Ещё не открыто');
     assert.equal(await page.evaluate(() => {S.sz.sp=50*SZ_TIER;return szClaim('p',50,true);}), 'Нужен пропуск сезона');
     await page.evaluate(() => {
@@ -107,6 +128,17 @@ async function main() {
     assert.match(await reward.innerText(),/Стоит/);
     await page.evaluate(() => openSheet(null));
     await sceneAssets;
+    assert.deepEqual(await page.evaluate(() => [skinS().floor,skinS().table,skinS().mach]),
+      ['oak','light','std']);
+
+    await page.evaluate(() => {window.__shopCat='mach';openSheet('hall','shop');});
+    await page.locator('.bc-season-machine').getByRole('button',{name:'Применить',exact:true}).click();
+    assert.deepEqual(await page.evaluate(() => [interiorOf('main'),window.MACH_SKIN,window.GRIND_SKIN]),
+      [grand,'m_season_gold','std']);
+    await page.evaluate(() => {window.__shopCat='style';openSheet('hall','shop');});
+    await reward.getByRole('button',{name:'Восстановить стиль',exact:true}).click();
+    assert.equal(await page.evaluate(() => window.MACH_SKIN),'std');
+    assert.equal(await page.locator('.bc-season-machine').count(),0);
 
     await page.evaluate(() => {
       sessionStorage.setItem('test-date',Date.parse('2027-01-10T12:00:00+03:00'));
@@ -117,7 +149,7 @@ async function main() {
     await page.waitForFunction(id => !!S && interiorOf('main')===id,grand);
     assert.equal(await page.evaluate(id => S.szStyles.filter(k => k===id).length,grand),1);
     assert.deepEqual(errors,[]);
-    console.log('PASS: PixelLab previews, Stars invoice and receipt, exclusive and idempotent Dec. tier 50, scene assets, rollover and reload.');
+    console.log('PASS: full styles, reapplying owned items, restoring a style, December tier 50, rollover and reload.');
   } finally {
     await browser.close();
   }
