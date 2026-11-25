@@ -16124,6 +16124,13 @@ function bwTick(){ var now=Date.now(); if(now-chk<50000) return; chk=now;
 }
 window.BW={push:function(id){ pushIncident(id); }};
 })();
+/* 25.11: «Люкс» первым в магазине и открывается по умолчанию */
+(function(){ try{ var i=SKIN_CAT.findIndex(function(c){ return c[0]==='lux'; }); if(i>0){ var c=SKIN_CAT.splice(i,1)[0]; SKIN_CAT.unshift(c); } }catch(e){}
+  if(!window.__shopCat) window.__shopCat='lux';
+  var _rs=renderSheet; renderSheet=function(){ var r=_rs.apply(this,arguments); try{ var c=document.querySelector('.u6cats'); if(c){ var b=[].find.call(c.children,function(x){ return /^Люкс/.test(x.textContent); }); if(b&&c.firstChild!==b){ c.insertBefore(b,c.firstChild); } } }catch(e){} return r; }; })();
+/* 25.11: Лиза не возвращается сразу, если визит прервался (закрыли игру до конца визита) */
+(function(){ var _lt=lizaTick; lizaTick=function(dt){ var was=LZRUN; var r=_lt.apply(this,arguments);
+  if(!was&&LZRUN){ try{ var v=lzState(); v.next=Math.max(v.next||0, Date.now()+12*3600000); save(); }catch(e){} } return r; }; })();
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
