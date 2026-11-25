@@ -1,0 +1,126 @@
+const assert = require('node:assert/strict');
+const { chromium } = require('playwright');
+const { acceptLegal } = require('./legal-fixture.cjs');
+
+const paidStyle = 'int_lux_art_deco';
+const grand = 'int_winter_grand';
+
+async function main() {
+  const browser = await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+  try {
+    const page = await browser.newPage({viewport:{width:390,height:844}});
+    const errors = [];
+    const invoices = [];
+    const art = new Set();
+    let receipt = [];
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('response', response => {
+      if(response.ok() && response.url().includes('/img/interiors/')) art.add(response.url().split('/').at(-1));
+    });
+    await page.addInitScript(() => {
+      const NativeDate = Date;
+      const december = NativeDate.parse('2026-12-10T12:00:00+03:00');
+      const timestamp = () => Number(sessionStorage.getItem('test-date')) || december;
+      window.Date = class extends NativeDate {
+        constructor(...args) { super(...(args.length ? args : [timestamp()])); }
+        static now() { return timestamp(); }
+      };
+      window.Telegram = {WebApp:{
+        initData:'fixture',initDataUnsafe:{user:{id:12345}},ready(){},expand(){},onEvent(){},
+        setHeaderColor(){},setBackgroundColor(){},disableVerticalSwipes(){},enableClosingConfirmation(){},
+        openInvoice(_link, callback){ callback('paid'); },
+        BackButton:{show(){},hide(){},onClick(){}},
+        HapticFeedback:{impactOccurred(){},notificationOccurred(){},selectionChanged(){}}
+      }};
+    });
+    await page.route('**/telegram-web-app.js*', route => route.fulfill({contentType:'text/javascript',body:''}));
+    await page.route('**/api/**', async route => {
+      const path = new URL(route.request().url()).pathname;
+      if(path==='/api/invoice') {
+        const item = route.request().postDataJSON().item;
+        invoices.push(item);
+        receipt = [item];
+        await route.fulfill({json:{ok:true,link:'https://t.me/$testinvoice'}});
+        return;
+      }
+      await route.fulfill({json:{ok:true,exists:false,adminTest:false,ops:[],maint:{on:false},
+        interiors:receipt,skins:[],extras:[],passes:[],lux:[],top:[]}});
+    });
+    await page.goto(process.env.BC_TEST_URL || 'http://127.0.0.1:8770/');
+    await page.locator('#own').fill('Награды сезона');
+    await acceptLegal(page);
+    await page.locator('#quick').click();
+    await page.getByRole('button',{name:'Поехали',exact:true}).click();
+    await page.waitForFunction(() => !!S);
+    await page.evaluate(() => {
+      S.hours={open:20,close:22};S.isOpen=false;S.gm=600;
+      S.nw={off:true};
+      while(modals.length) closeModal();
+      openShop();
+    });
+
+    const collection = page.locator('.bc-luxury-grid');
+    assert.equal(await collection.locator('.bc-luxury-card').count(),12);
+    assert.equal(await collection.locator(`[data-bc-sku="${grand}"]`).count(),0);
+    const first = collection.locator(`[data-bc-sku="${paidStyle}"]`);
+    assert.match(await first.innerText(),/599/);
+    await first.getByRole('button',{name:/Посмотреть интерьер/}).click();
+    const dialog = page.locator('dialog[open]');
+    await dialog.locator('img').evaluate(image => image.decode());
+    await dialog.getByRole('button',{name:'Закрыть'}).click();
+    await dialog.waitFor({state:'detached'});
+    await page.evaluate(() => {while(modals.length) closeModal();});
+    assert.equal(await page.evaluate(id => (S.szStyles||[]).includes(id),paidStyle),false);
+    await first.getByRole('button',{name:'Купить',exact:true}).click();
+    const checkout = page.locator('#modalRoot .modal');
+    await checkout.waitFor();
+    await page.waitForFunction(() => performance.now()-MODAL_AT>=450);
+    await checkout.getByRole('button',{name:/Купить за 599/}).click();
+    await page.waitForFunction(id => interiorOf('main')===id,paidStyle);
+    assert.deepEqual(invoices,[paidStyle]);
+
+    await page.evaluate(() => {
+      while(modals.length) closeModal();
+      S.sz={id:sezId(),sp:49*SZ_TIER,acc:0,claimed:{f:[],p:[]},login:null,profit:0,v50:true};
+      openSheet('hall','season');
+    });
+    const finale = page.locator('.sz-row').last().locator('.sz-cell.p');
+    assert.match(await finale.innerText(),/Зимний гранд/);
+    assert.equal(await finale.getByRole('button',{name:'Посмотреть зал'}).count(),1);
+    assert.equal(await page.evaluate(() => szClaim('p',50,true)),'Ещё не открыто');
+    assert.equal(await page.evaluate(() => {S.sz.sp=50*SZ_TIER;return szClaim('p',50,true);}), 'Нужен пропуск сезона');
+    await page.evaluate(() => {
+      while(modals.length) closeModal();
+      S.ent.passes=[{id:'fixture-pass',season:sezId()}];renderSheet();
+    });
+    await finale.getByRole('button',{name:'Забрать',exact:true}).click();
+    assert.equal(await page.evaluate(id => S.szStyles.filter(k => k===id).length,grand),1);
+    assert.equal(await page.evaluate(() => S.inv.filter(i => i.n===50 && i.track==='p' && i.k==='money').length),1);
+    assert.equal(await page.evaluate(() => szClaim('p',50,true)),'Уже забрано');
+    await finale.getByRole('button',{name:'К стилям зала'}).click();
+    const reward = page.locator(`[data-bc-sku="${grand}"]`);
+    const files = ['winter_machine.png','winter_grinder.png','winter_garland.png','winter_tree.png','winter_shelf.png','winter_window.png'];
+    const sceneAssets = Promise.all(files.filter(file=>!art.has(file)).map(file=>
+      page.waitForResponse(response=>response.ok() && response.url().endsWith('/'+file))));
+    await reward.getByRole('button',{name:'Поставить',exact:true}).click();
+    assert.equal(await page.evaluate(() => interiorOf('main')),grand);
+    assert.match(await reward.innerText(),/Стоит/);
+    await page.evaluate(() => openSheet(null));
+    await sceneAssets;
+
+    await page.evaluate(() => {
+      sessionStorage.setItem('test-date',Date.parse('2027-01-10T12:00:00+03:00'));
+      szState();pathDaily();save();
+    });
+    assert.equal(await page.evaluate(() => szReward('p',50).finalStyle),undefined);
+    await page.reload();
+    await page.waitForFunction(id => !!S && interiorOf('main')===id,grand);
+    assert.equal(await page.evaluate(id => S.szStyles.filter(k => k===id).length,grand),1);
+    assert.deepEqual(errors,[]);
+    console.log('PASS: PixelLab previews, Stars invoice and receipt, exclusive and idempotent Dec. tier 50, scene assets, rollover and reload.');
+  } finally {
+    await browser.close();
+  }
+}
+
+main().catch(error => { console.error(error);process.exitCode=1; });
