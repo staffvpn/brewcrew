@@ -2,7 +2,7 @@ import {guardNewCafe} from '../_recovery.js';
 import {safeAdminSnapshot} from '../_admin-assets.js';
 import { publicCafe } from '../_cafe-public.js';
 // POST /api/track — игра раз в минуту сообщает, что игрок онлайн, и его краткие показатели.
-import { json, mskDay, verifyInitData, dispatchReminders, ADMINS, parseRef, bindReferrer, payReferrer, sezId } from '../_lib.js';
+import { json, mskDay, verifyInitData, dispatchReminders, ADMINS, tgApi, parseRef, bindReferrer, payReferrer, sezId } from '../_lib.js';
 import { promoWatch } from '../_promo.js';
 import { opsFor } from '../_admin.js';
 import { channelTick, tourWeek, post as channelPost, worldInfo } from '../_channel.js';
@@ -73,6 +73,17 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // особый гость недели: итог игрока
   if (!ADMINS.includes(user.id) && s.bs && typeof s.bs === 'object' && s.bs.w === tourWeek(now)) {
     try { await env.DB.prepare('INSERT OR IGNORE INTO boss (week, tg_id, boss, pass, res, cafe, first_name, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)').bind(s.bs.w, user.id, str(s.bs.id, 20), Math.max(0, Math.min(3, Math.round(Number(s.bs.pass) || 0))), str(s.bs.res, 10), str(s.cafe), str(user.first_name), now).run(); } catch {}
+  }
+  // грубые ответы на отзывы: игра сама помечает по списку слов, сервер только пересылает админам, ничего не хранит
+  if (Array.isArray(s.rude) && s.rude.length && !ADMINS.includes(user.id)) {
+    const e = v => String(v || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+    const items = s.rude.slice(0, 3).filter(x => x && typeof x.t === 'string');
+    if (items.length) {
+      const who = (user.username ? '@' + user.username : e(user.first_name)) + ' · «' + e(str(s.cafe)) + '» · id ' + user.id;
+      const text = '<b>Грубый ответ на отзыв</b>\n' + who + '\n\n' + items.map(x => 'Отзыв (' + Math.max(1, Math.min(5, Number(x.s) || 0)) + '★): «' + e(String(x.r || '').slice(0, 120)) + '»\nОтвет: «' + e(x.t.slice(0, 280)) + '»').join('\n\n');
+      const send = Promise.all(ADMINS.map(a => tgApi(env, 'sendMessage', { chat_id: a, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Карточка игрока', callback_data: 'p:u:' + user.id }]] } }).catch(() => {})));
+      if (waitUntil) waitUntil(send); else await send;
+    }
   }
   // общая цель: миллион стаканов
   try { await goalTrack(env, user.id, s.gc, dt); } catch {}
