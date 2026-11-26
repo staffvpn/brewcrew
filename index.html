@@ -16723,7 +16723,77 @@ var _lc=leagueCard; leagueCard=function(){ var c=_lc.apply(this,arguments); try{
     if(has('snowball')&&!r.me&&!d.thrown){ var b=el('<button class="w26-sb" title="Кинуть снежок">Снежок</button>'); b.onclick=function(ev){ ev.stopPropagation(); b.disabled=true;
       apiPost('/api/league',{op:'snow', i:i}).then(function(res){ if(res&&res.d) LG.d=res.d; toast(res&&res.ok?'Снежок попал в «'+res.hit+'»':((res&&res.error)||'Не получилось')); renderSheet(); }).catch(function(){ toast('Нет связи'); b.disabled=false; }); }; row.appendChild(b); } }); }catch(e){} return c; };
 try{ var st=document.createElement('style'); st.textContent='.w26-sb{margin-left:6px;padding:2px 8px;border-radius:10px;border:1px solid #9fd6e6;background:#eaf7fc;color:#1e5a6e;font:600 11px "Golos Text",sans-serif}.w26-sn{font-style:normal;font-size:10px;color:#3f8fb0;margin-left:4px}'; document.head.appendChild(st); }catch(e){}
+window.W26POS=function(){ var o=(S&&S.w26&&S.w26.own)||{}, on=winterNow()&&S.active==='main'; return {husky:on&&o.husky?HUS:null, yeti:on&&o.yeti&&isWorking()?YETI:null, pen:on&&o.penguin&&PEN.on?PEN:null, ded:on&&o.ded&&isWorking()?{x:TX+40,y:by()}:null}; };
 window.W26={own:function(k){ applyW(k); }, all:function(){ Object.keys(RF).forEach(function(n){ applyW(RF[n][0]); }); Object.keys(RP).forEach(function(n){ applyW(RP[n][0]); }); }};
+})();
+/* ================= 26.11: возвращаем смешное — события окном и чаще, «Пока тебя не было», «Вестник района», тап по гостю и котам, живее зал ================= */
+(function(){
+var FUNNY={normal:1, absurd:1};
+function isFunny(inc){ var d=evDef(inc); return !!(d&&FUNNY[d.cat]); }
+
+/* 1. смешные события всплывают окном и приходят чаще */
+var _pi=pushIncident; pushIncident=function(id,data){ var before=S.uid; var r=_pi.apply(this,arguments);
+  try{ var inc=S.incidents.find(function(i){ return i.uid>=before&&i.id===id; }); if(inc&&isFunny(inc)&&!HOOK.quiet) queueModal({kind:'inc', uid:inc.uid, auto:true}); }catch(e){} return r; };
+HOOK.event=pushIncident;
+var _se=scheduleEvents; scheduleEvents=function(nowReal){ var a=S.nextEv, b=S.nextAbsurd; var r=_se.apply(this,arguments);
+  try{ if(S.nextEv!==a&&S.nextEv>nowReal+5*60000) S.nextEv=nowReal+R(150,300)*1000; if(S.nextAbsurd!==b&&S.nextAbsurd>nowReal+10*60000) S.nextAbsurd=nowReal+R(360,600)*1000;
+    if(a==null&&S.nextEv) S.nextEv=Math.min(S.nextEv,nowReal+90000); }catch(e){} return r; };
+
+/* 2. сгоревшее событие решает команда, а развязку показываем потом */
+var _ei=expireIncident; expireIncident=function(inc){ try{ if(inc&&isFunny(inc)&&inc.id!=='absent'&&inc.id!=='conflict'){ var d=evDef(inc); if(d&&d.o&&d.o.length){
+    var ok=d.o.map(function(o,k){ return k; }).filter(function(k){ var o=d.o[k]; return !o.req||o.req(S,inc); }); var k=pick(ok.length?ok:[0]);
+    var opt=fillText(d.o[k].t,inc); var res=resolveIncident(inc,k,true)||{}; S.missed=(S.missed||[]).concat([{t:res.title||fillText(d.t,inc), o:opt, out:res.out||''}]).slice(-6); HOOK.struct(); save(); return; } } }catch(e){}
+  return _ei.apply(this,arguments); };
+MODAL15.missed=function(box,m,btn){ var list=(S.missed||[]).slice(-5); S.missed=[]; save();
+  box.append(el('<div class="eyebrow">Пока тебя не было</div>')); box.append(el('<h2>Команда решила сама</h2>'));
+  list.forEach(function(x){ box.append(el('<div class="fun-miss"><b>'+esc(x.t)+'</b><span class="fun-o">Решили: '+esc(x.o)+'</span><span>'+esc(x.out)+'</span></div>')); });
+  box.append(btn('Ну ладно',function(){ closeModal(); })); };
+
+/* 3. «Вестник района» в конце дня */
+var _ri=resolveIncident; resolveIncident=function(inc,i,auto){ var r=_ri.apply(this,arguments); try{ var d=evDef(inc); if(d&&r&&r.out&&d.cat!=='result'&&d.cat!=='inspect'){ S.news=(S.news||[]).concat([{t:r.title||fillText(d.t,inc), out:r.out}]).slice(-12); } }catch(e){} return r; };
+var FILLER=['Голуби у метро объявили забастовку: требуют круассаны','Синоптики обещают завтра погоду. Какую, не уточнили','Конкуренты напротив снова сломали кофемашину. Говорят, сама','В районе открылась третья шаурмичная за неделю. Жители держатся','Местный кот признан самым ленивым в округе. Он не стал комментировать','Управа перекладывает плитку. Опять','Пенсионер Михалыч победил в споре о том, когда трава была зеленее','Курьер заблудился в двух дворах и нашёл себя','Учёные выяснили: понедельник длиннее пятницы на два часа','Сосед сверху купил перфоратор. Подробности утром'];
+function firstSentence(t){ t=String(t||'').replace(/\s+/g,' ').trim(); if(t.length<=190) return t; var cut=t.slice(0,190), k=Math.max(cut.lastIndexOf('. '),cut.lastIndexOf('! '),cut.lastIndexOf('? ')); return k>40?cut.slice(0,k+1):cut.replace(/\s+\S*$/,'')+'…'; }
+var _cd=closeDay; closeDay=function(){ var day=S.day; var r=_cd.apply(this,arguments); try{ var items=(S.news||[]).slice(); S.news=[]; if(!items.length&&chance(0.5)) return r;
+  items=items.sort(function(){ return Math.random()-0.5; }).slice(0,2); var head=items.map(function(x){ return {h:x.t, b:firstSentence(x.out)}; }); head.push({h:'Новости района', b:pick(FILLER)});
+  S.newsLast={day:day, items:head}; queueModal({kind:'news'},false); }catch(e){} return r; };
+MODAL15.news=function(box,m,btn){ var n=S.newsLast||{items:[]}; box.append(el('<div class="eyebrow">Вестник района · день '+(n.day||S.day)+'</div>')); box.append(el('<h2>'+esc(String(S.name||'Кофейня'))+' снова в новостях</h2>'));
+  n.items.forEach(function(x,i){ box.append(el('<div class="fun-news'+(i===0?' lead':'')+'"><b>'+esc(x.h)+'</b><span>'+esc(x.b)+'</span></div>')); });
+  box.append(btn('Дочитал',function(){ closeModal(); })); };
+
+/* 4. тап по гостю, коту и зверям — реплика (не мешает тапам «помочь») */
+var TAP_Q=['Я просто стою, мне можно','Не тыкайте, я в образе','Я тут уже двадцать минут. Это не повод','Можно без рук? Я ещё не проснулся','Вы бариста или экскурсовод?','Я выбираю. Это сложный процесс','Мне сказали, тут лучший раф. Проверяю слухи','Подождите, я пишу маме, что стою в очереди','У меня карта лояльности. Где-то. В другой куртке','Я не тороплюсь. Я медитирую в очереди'];
+var TAP_S=['Не трогайте, у меня латте остывает','Я тут работаю. В смысле, сижу с ноутбуком','Это моё место. Я тут уже как мебель','Вкусно. Но вы этого от меня не слышали','Можно ещё сахару? И смысла жизни','Я не сплю. Я думаю с закрытыми глазами','У вас тут уютно. Слишком уютно, я не уйду','Сфотографируйте меня с чашкой, пока пенка красивая','Бариста улыбнулся мне. Это что-то значит?','Я просто зашёл погреться и остался на три часа'];
+var TAP_W=['Ой, я вообще мимо шёл','Не толкайтесь, я ищу свободный стол','Тут всегда так людно?','Я ненадолго. На полдня'];
+var TAP_CAT=['Мяу. В смысле, где мой корм','Не гладь против шерсти, я на работе','Я тут главный. Вы просто арендуете','Мрр. Ладно, гладь, но быстро','Я сплю. Это важная работа'];
+var TAP_HUS=['Гав! Это значит «где мой кусочек круассана»','Ауууу!','Я не волк, я хаски. Это разное','*виляет хвостом так, что падает стул*'];
+var TAP_YETI=['Ррр. В смысле, здравствуйте','Не бойтесь, я стажёр','Я веган. Ем только шоколадные печенья','У меня шерсть не в кофе. Почти'];
+var TAP_PEN=['Доставка! Медленно, но с душой','Не задерживайте, у меня латте остывает','Я в шапке, мне не холодно'];
+var TAP_DED=['В семьдесят девятом зима была настоящая','Чего тыкаешь? Чай мой не трогай','Раньше кофе был лучше. И я был моложе'];
+function talk(text,obj){ try{ bubble2(0,0,text,2600,obj); sfx('tap'); }catch(e){} }
+cv.addEventListener('pointerdown',function(e){ try{ if(sheet||!S||(typeof modals!=='undefined'&&modals.length)) return; var b=cv.getBoundingClientRect(); var x=OX+(e.clientX-b.left)/b.width*VW, y=(e.clientY-b.top)/b.height*H; var r=rt(S.active); if(!r) return;
+  if(x>8&&x<136&&y>40&&y<BAR_TOP) return; if(x>190&&x<248&&y>BAR_TOP-34&&y<BAR_TOP+24) return;
+  if((r.mess||[]).some(function(m){ return Math.abs(m.x-x)<18&&Math.abs(m.y-y)<15; })) return;
+  for(var k in (r.dirty||{})){ var tb=k[0]==='t'?TABLES[+k.slice(1)]:null; if(tb&&Math.abs(x-tb.x)<22&&y>tb.y-26&&y<tb.y+12) return; }
+  if(typeof EV_SPOTS!=='undefined'&&EV_SPOTS.some(function(v){ return x>v.x-16&&x<v.x+16&&y>v.y-52&&y<v.y+4; })) return;
+  if(S.bw&&S.bw.cat&&S.bw.cat.end==='mascot'&&window.__bwCat){ var c=window.__bwCat; if(Math.abs(x-c[0])<16&&y>c[1]-16&&y<c[1]+6){ talk(pick(TAP_CAT),{x:c[0],y:c[1]-6}); return; } }
+  try{ if(window.W26POS){ var P=W26POS(); var hits=[[P.husky,TAP_HUS,12,20],[P.yeti,TAP_YETI,14,38],[P.pen,TAP_PEN,8,26],[P.ded,TAP_DED,10,34]];
+    for(var hI=0;hI<hits.length;hI++){ var h=hits[hI]; if(!h[0]) continue; if(Math.abs(x-h[0].x)<h[2]&&y>h[0].y-h[3]&&y<h[0].y+4){ talk(pick(h[1]),{x:h[0].x,y:h[0].y-h[3]+6}); return; } } } }catch(err2){}
+  var head=r.queue[0];
+  for(var i=r.guests.length-1;i>=0;i--){ var g=r.guests[i]; if(g.hidden||g.reg) continue; if(!(x>g.x-14&&x<g.x+14&&y>g.y-(g.h||40)&&y<g.y+4)) continue;
+    if(g===head&&g.state==='queue') return; if(g.state==='wait'||g.state==='toPick') return;
+    var pool=g.state==='sit'?TAP_S:(g.state==='queue'?TAP_Q:TAP_W); var key='tap'+g.gid; if(g._tapAt&&Date.now()-g._tapAt<2500) return; g._tapAt=Date.now(); talk(pick(pool),g); return; }
+}catch(err){} });
+window.FUN_TAP={cat:TAP_CAT,husky:TAP_HUS,yeti:TAP_YETI,pen:TAP_PEN,ded:TAP_DED};
+
+/* 5. зал живее: реплики раз в 40–70 секунд от любого гостя */
+var gT=25; var _bt=bubblesTick; bubblesTick=function(dt){ _bt.apply(this,arguments); try{ var r=RT[S.active]; if(!r) return; gT-=dt; if(gT>0) return; gT=R(40,70);
+  var cand=r.queue.filter(function(g){ return !g.hidden&&(g.state==='queue'||g.state==='sit'||g.state==='wait'); }); if(!cand.length) return; var g=pick(cand);
+  var line=g.state==='sit'&&chance(0.5)?pick(TAP_S):pickLine(GUEST_LINES14,'g'); bubble2(0,0,line,3000,g); }catch(e){} };
+
+/* показываем «Пока тебя не было», когда игрок вернулся */
+setInterval(function(){ try{ if(!S||!S.missed||!S.missed.length||document.hidden||sheet||modals.length) return; queueModal({kind:'missed'},false); }catch(e){} },4000);
+
+try{ var st=document.createElement('style'); st.textContent='.fun-miss,.fun-news{display:flex;flex-direction:column;gap:3px;padding:9px 0;border-top:1px dashed rgba(90,60,30,.25)}.fun-miss b,.fun-news b{font:800 14px "Golos Text",sans-serif}.fun-miss span,.fun-news span{font-size:13px;line-height:1.35}.fun-o{opacity:.7;font-style:italic}.fun-news.lead b{font-size:17px;text-transform:uppercase;letter-spacing:.02em}'; document.head.appendChild(st); }catch(e){}
 })();
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
