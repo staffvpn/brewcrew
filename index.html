@@ -15694,14 +15694,13 @@ function bcLuxuryDecorCard(item){
   const button=el('<button type="button" class="'+(owned||lab?'u6alt':'u6buy')+'">'+
     (blocked?'Доступ отозван':on?'Убрать':lab?'Поставить':owned?'Применить':'Купить')+'</button>');
   button.disabled=blocked;
-  button.onclick=async ()=>{
+  button.onclick=()=>{
     if(S.c?.adminBlocks?.[sku]) return;
+    const labEnabled=bcLuxuryLabEnabled();
     if(!owns(category,skin)){
-      if(!bcLuxuryLabEnabled() || currency==='GAME') return bcOpenCheckout(sku);
-      button.disabled=true;
-      const purchase=await bcAdminPurchase({kind:'premium',item:sku});
-      button.disabled=false;
-      if(!purchase || !owns(category,skin)) return;
+      if(!labEnabled || currency==='GAME') return bcOpenCheckout(sku);
+      // The preview loads its catalogue here and stores test selections in the sandbox save.
+      S.skinOwned[category+':'+skin]=1;
     }
     if(on && MULTI[category]){
       skinS()[category][skin]=0;
@@ -15710,7 +15709,7 @@ function bcLuxuryDecorCard(item){
       equip(category,on?INTERIOR_SKIN_DEFAULTS[category]:skin);
     }
     save();
-    if(bcLuxuryLabEnabled() && !on){saveCloud();openSheet(null);}
+    if(labEnabled && !on){saveCloud();openSheet(null);}
     else renderSheet();
   };
   const actions=card.querySelector('.u6act');
