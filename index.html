@@ -17127,6 +17127,8 @@ try{ var css=document.createElement('style'); css.textContent='.mk-say{backgroun
 window.PLAY={mk:function(){ return mkTry(); }, phone:function(){ PHONE={call:pick(CALLS),t:Date.now()}; }, bird:function(){ var tb=(function(){try{return bcPlacesTables();}catch(e){return [];}})().filter(function(t){return t&&t.x!=null;})[0]; if(tb) BIRD={x:tb.x-13,y:tb.y-13,t:Date.now()}; }, coin:function(){ COINS.push({x:120,y:350,v:100,room:S.active,t:Date.now()}); }, coins:function(){ return COINS; }};
 })();
 
+/* 26.11: Лиза больше не приходит в кофейню, карточка остаётся в «Гостях» */
+(function(){ var _lt=lizaTick; lizaTick=function(dt){ if(typeof LZRUN!=='undefined'&&LZRUN) return _lt.apply(this,arguments); }; })();
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
