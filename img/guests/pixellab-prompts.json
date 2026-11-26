@@ -1,0 +1,70 @@
+{
+  "violetguest": {
+    "sourceClips": "guest",
+    "pixelLab": [
+      {
+        "endpoint": "edit-image-pixen",
+        "prompt": "Repaint ALL SIX sprites as the SAME Brew Crew guest: a young adult woman, black chin-length hair, heavy asymmetrical fringe covering one eyebrow, visible vivid violet front lock near one temple, burgundy red oversized hoodie, dark slate jeans and black shoes, silver small bag strap. Keep the six original poses, grid positions, feet and transparency. Change hair and clothes only. Preserve eye positions and pixel scale. Same outfit and haircut in every view. No added objects or text.",
+        "seed": 79110,
+        "reference": "guest native guest rotations and seated frames",
+        "job": "6927353f-40d8-486d-aa4a-57f06d37be8d",
+        "usage": {
+          "seconds": 13.943466186523438
+        }
+      },
+      {
+        "endpoint": "edit-image-pixen",
+        "prompt": "Change the hair to a black asymmetric sleek bob, with just a few violet strands at the visible right temple. Change the coat to burgundy maroon hoodie. KEEP THIS EXACT REAR THREE-QUARTER POSE looking to the upper right. Only a small profile edge should show on the right. Do not turn the body or face toward us. Keep foot anchors, pose, scale and background. Adult guest.",
+        "seed": 79300,
+        "reference": "alternative-guest-north-east.png",
+        "job": "f7bd213e-422f-4e1e-b6af-1fcafdc04a6d",
+        "usage": {
+          "seconds": 26.193453311920166
+        }
+      }
+    ],
+    "processing": "transfer the PixelLab outfits and directional hair to the base guest frames, retaining all pose timings, foot and hand anchors"
+  },
+  "nightguest": {
+    "sourceClips": "guestm",
+    "pixelLab": [
+      {
+        "endpoint": "edit-image-pixen",
+        "prompt": "Restyle this same young ADULT man across all six poses. Recolor hair solid blue-black with an asymmetric long point of bangs down over one eye. Dark charcoal denim jacket with a clearly visible muted sage green T shirt, silver ear loop, black pants, dark canvas shoes. Exact same six pose angles, grid, size, anchors and transparency. Change only costume and black emo hairstyle. Pixel art.",
+        "seed": 79329,
+        "reference": "alternative-guestm.png",
+        "job": "b9019b5f-5f83-4ee5-9ab7-59921fc2c0a7",
+        "usage": {
+          "seconds": 12.957415342330933
+        }
+      }
+    ],
+    "processing": "transfer the PixelLab outfits and directional hair to the base guest frames, retaining all pose timings, foot and hand anchors"
+  },
+  "mintguest": {
+    "sourceClips": "guest",
+    "pixelLab": [
+      {
+        "endpoint": "edit-image-pixen",
+        "prompt": "Repaint ALL SIX sprites as the SAME Brew Crew guest: a young adult woman with short dark roots and striking pale platinum front bangs with mint green tips, plum-black denim jacket over a pale mint striped shirt, maroon trousers and black boots. Keep the six original poses, grid positions, feet and transparency. Change hair and clothes only. Preserve eye positions and pixel scale. Same outfit and haircut in every view. No added objects or text.",
+        "seed": 79136,
+        "reference": "guest native guest rotations and seated frames",
+        "job": "6d149d8e-eb28-423e-8764-d786f0b4b4fa",
+        "usage": {
+          "seconds": 23.500438451766968
+        }
+      },
+      {
+        "endpoint": "edit-image-pixen",
+        "prompt": "Change hair to short platinum hair with mint tips and dark roots. Dark plum jacket with a mint front partly visible and maroon trousers. KEEP EXACT REAR THREE-QUARTER POSE looking to the upper right. The back of head and jacket face us. Preserve original pose, silhouette, foot anchor and transparency. Young adult woman.",
+        "seed": 79319,
+        "reference": "alternative-guest-north-east.png",
+        "job": "3000a286-2c5a-44d9-89e8-1712fce08e09",
+        "usage": {
+          "seconds": 26.617588996887207
+        }
+      }
+    ],
+    "processing": "transfer the PixelLab outfits and directional hair to the base guest frames, retaining all pose timings, foot and hand anchors"
+  }
+}

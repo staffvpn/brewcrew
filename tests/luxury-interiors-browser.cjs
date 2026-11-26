@@ -6,6 +6,8 @@ const paidStyle = 'int_lux_art_deco';
 const grand = 'int_winter_grand';
 
 async function main() {
+  const {STORE_ITEMS} = await import('../functions/_store.js');
+  const price = STORE_ITEMS[paidStyle].stars;
   const browser = await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
   try {
     const page = await browser.newPage({viewport:{width:390,height:844}});
@@ -81,7 +83,7 @@ async function main() {
     assert.equal(await collection.locator('[data-bc-sku="int_lux_coral"]').count(),1);
     assert.equal(await collection.locator(`[data-bc-sku="${grand}"]`).count(),0);
     const first = collection.locator(`[data-bc-sku="${paidStyle}"]`);
-    assert.match(await first.innerText(),/599/);
+    assert.match(await first.innerText(),new RegExp(String(price)));
     await first.getByRole('button',{name:/Посмотреть интерьер/}).click();
     const dialog = page.locator('dialog[open]');
     const previewSize = await dialog.locator('img').evaluate(async image => {await image.decode();return [image.naturalWidth,image.naturalHeight];});
@@ -94,7 +96,7 @@ async function main() {
     const checkout = page.locator('#modalRoot .modal');
     await checkout.waitFor();
     await page.waitForFunction(() => performance.now()-MODAL_AT>=450);
-    await checkout.getByRole('button',{name:/Купить за 599/}).click();
+    await checkout.getByRole('button',{name:new RegExp('Купить за '+price)}).click();
     await page.waitForFunction(id => interiorOf('main')===id,paidStyle);
     assert.deepEqual(invoices,[paidStyle]);
     assert.deepEqual(await page.evaluate(() => {
