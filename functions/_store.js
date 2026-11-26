@@ -1500,7 +1500,7 @@ export const STORE_ITEMS = {
   "int_lux_art_deco": {
     "title": "Интерьер «Ар-деко»",
     "desc": "Тёмный паркет, латунные веера и изумрудный бархат.",
-    "stars": 599,
+    "stars": 299,
     "once": 1,
     "category": "style",
     "skin": "int_lux_art_deco",
@@ -1511,7 +1511,7 @@ export const STORE_ITEMS = {
   "int_lux_palace": {
     "title": "Интерьер «Версаль»",
     "desc": "Слоновая кость, золочёные панели и бордовый бархат.",
-    "stars": 599,
+    "stars": 299,
     "once": 1,
     "category": "style",
     "skin": "int_lux_palace",
@@ -1522,7 +1522,7 @@ export const STORE_ITEMS = {
   "int_lux_emerald": {
     "title": "Интерьер «Изумрудный клуб»",
     "desc": "Изумрудный бархат, тёмное дерево и витражи.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "style",
     "skin": "int_lux_emerald",
@@ -1533,7 +1533,7 @@ export const STORE_ITEMS = {
   "int_lux_sakura": {
     "title": "Интерьер «Сакура»",
     "desc": "Розовая штукатурка, ясень и бумажные фонари.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "style",
     "skin": "int_lux_sakura",
@@ -1544,7 +1544,7 @@ export const STORE_ITEMS = {
   "int_lux_onyx": {
     "title": "Интерьер «Оникс»",
     "desc": "Графитовый камень, сталь и холодный свет.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "style",
     "skin": "int_lux_onyx",
@@ -1555,7 +1555,7 @@ export const STORE_ITEMS = {
   "int_lux_terrace": {
     "title": "Интерьер «Ривьера»",
     "desc": "Лазурная плитка, песчаный камень и обивка цвета моря.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "style",
     "skin": "int_lux_terrace",
@@ -1566,7 +1566,7 @@ export const STORE_ITEMS = {
   "int_lux_library": {
     "title": "Интерьер «Библиотека»",
     "desc": "Ореховые панели, зелёная кожа и полки с книгами.",
-    "stars": 599,
+    "stars": 299,
     "once": 1,
     "category": "style",
     "skin": "int_lux_library",
@@ -1577,7 +1577,7 @@ export const STORE_ITEMS = {
   "int_lux_desert": {
     "title": "Интерьер «Медина»",
     "desc": "Охристые арки, медь и бирюзовая мозаика.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "style",
     "skin": "int_lux_desert",
@@ -1588,7 +1588,7 @@ export const STORE_ITEMS = {
   "int_lux_gallery": {
     "title": "Интерьер «Белая галерея»",
     "desc": "Светлый известняк, терраццо с кобальтовой крошкой и синие кресла.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "style",
     "skin": "int_lux_gallery",
@@ -1599,7 +1599,7 @@ export const STORE_ITEMS = {
   "int_lux_violet": {
     "title": "Интерьер «Сумерки»",
     "desc": "Глубокий индиго, угольное дерево, винный бархат и тёплый бронзовый свет.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "style",
     "skin": "int_lux_violet",
@@ -1610,7 +1610,7 @@ export const STORE_ITEMS = {
   "int_lux_orangery": {
     "title": "Интерьер «Оранжерея»",
     "desc": "Шалфейные рейки, ротанг и ботанические панно.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "style",
     "skin": "int_lux_orangery",
@@ -1621,7 +1621,7 @@ export const STORE_ITEMS = {
   "int_lux_copper": {
     "title": "Интерьер «Медный цех»",
     "desc": "Тёмный кирпич, заклёпки и патинированная медь.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "style",
     "skin": "int_lux_copper",
@@ -1632,7 +1632,7 @@ export const STORE_ITEMS = {
   "int_lux_observatory": {
     "title": "Интерьер «Обсерватория»",
     "desc": "Ночной сине-зелёный зал, бронза и кофемашина в духе старого телескопа.",
-    "stars": 599,
+    "stars": 299,
     "once": 1,
     "category": "style",
     "skin": "int_lux_observatory",
@@ -1643,7 +1643,7 @@ export const STORE_ITEMS = {
   "int_lux_coral": {
     "title": "Интерьер «Коралловый риф»",
     "desc": "Коралловая штукатурка, светлый травертин и бирюзовая эмаль.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "style",
     "skin": "int_lux_coral",
