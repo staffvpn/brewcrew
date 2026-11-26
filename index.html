@@ -16812,6 +16812,177 @@ try{ var st=document.createElement('style'); st.textContent='.fun-miss,.fun-news
     }catch(e){} return r; };
   setInterval(function(){ if(Date.now()<(window.__retUntil||0)) return; },5000);
 })();
+/* ================= 26.11: чат смены, странные гости, смешные отзывы, секретные достижения, причуда дня, пакости конкурентов ================= */
+(function(){
+function F(){ S.fun=S.fun||{c:{}}; S.fun.c=S.fun.c||{}; return S.fun; }
+function cnt(k,n){ var f=F(); f.c[k]=(f.c[k]||0)+(n||1); return f.c[k]; }
+function M(b){ var l=Math.max(1,(S&&S.level)||1); return Math.round(b*(1+0.25*(l-1))/100)*100; }
+function G(a,b,p){ return function(){ var w=chance(p==null?0.5:p)?a:b; var o={}; for(var k in w[0]) o[k]=w[0][k]; if(o.mS){ o.m=(o.mS>0?1:-1)*M(Math.abs(o.mS)); delete o.mS; } return {fx:o,out:w[1]}; }; }
+function crew(){ return S.staff.filter(function(s){ return !s.isYou&&s.today==='work'; }); }
+
+/* ---------- 1. чат смены ---------- */
+var CHAT=[
+ [['a','кто съел мой сырник из холодильника'],['b','я не съел, я попробовал'],['a','весь?']],
+ [['a','ребята, гость спросил, есть ли у нас раф без молока'],['b','скажи, что это американо'],['a','он обиделся']],
+ [['a','кофемашина опять пищит'],['b','это она так поёт'],['a','фальшиво']],
+ [['a','кто поставил мой плейлист на «грустный джаз»'],['b','это не я, это атмосфера']],
+ [['a','напоминаю: чаевые делим поровну'],['b','а печенье?'],['a','печенье не делим, печенье съедено']],
+ [['a','я сегодня пять раз сказал «хорошего дня»'],['b','а я один раз «хорошего вечера» в девять утра']],
+ [['a','гость заказал «как обычно»'],['b','а он кто?'],['a','впервые его вижу']],
+ [['a','кто взял мой фартук'],['b','он на тебе'],['a','спасибо, коллега']],
+ [['a','я нашёл в кассе пуговицу'],['b','это чаевые от Михалыча'],['a','он щедрый сегодня']],
+ [['a','давайте после смены в бар'],['b','мы и так в баре'],['a','в другом баре']],
+ [['a','если кто увидит начальство — пишите «кофе закончился»'],['b','кофе закончился'],['a','в смысле реально?']],
+ [['a','кто последний мыл питчер?'],['b','его мыло время'],['a','время не справилось']],
+ [['a','у нас минус три круассана'],['b','их съел курьер'],['a','какой курьер'],['b','внутренний']],
+ [['a','почему в журнале смены написано «всё сложно»'],['b','это я заполнял']],
+ [['a','пришёл гость с собакой и спросил меню для собаки'],['b','дай ему воду и комплимент']],
+ [['a','я научился рисовать лебедя'],['b','покажи'],['a','он сегодня в отпуске']],
+ [['a','кто включил кондиционер на +30'],['b','мне холодно морально']],
+ [['a','ура, пятница'],['b','сегодня вторник'],['a','у меня внутренняя пятница']],
+ [['a','мне снилось, что я эспрессо'],['b','и как?'],['a','горько и очень быстро кончилось']],
+ [['a','напоминаю, сырники на витрине для гостей'],['b','я тоже гость в душе']],
+ [['a','кто отвечает за музыку?'],['b','кто громче включил, тот и отвечает']],
+ [['a','гость оставил на салфетке номер телефона'],['b','чей?'],['a','свой. и подпись «для кофемашины»']]
+];
+var SOLO=[['a','кто-нибудь видел мой маркер для стаканов?'],['a','я снова написал на стакане «Дима» вместо «Даша». Это третий раз'],['a','сегодня всё идёт по плану. Плана нет, но всё идёт'],['a','если что, я на складе. Морально'],['a','официально заявляю: я устал, но красиво']];
+var chatEl=null, chatQ=[], chatBusy=false;
+function chatShow(name,text){ chatQ.push([name,text]); if(!chatBusy) chatNext(); }
+function chatNext(){ var m=chatQ.shift(); if(!m){ chatBusy=false; if(chatEl) chatEl.classList.remove('on'); return; } chatBusy=true;
+  if(!chatEl){ chatEl=document.createElement('div'); chatEl.className='fchat'; document.body.appendChild(chatEl); }
+  chatEl.innerHTML='<i>Чат смены</i><b>'+esc(m[0])+'</b><span>'+esc(m[1])+'</span>'; chatEl.classList.add('on'); cnt('chat');
+  setTimeout(chatNext, Math.min(5200, 1900+m[1].length*45)); }
+function chatSeq(){ var c=crew(); if(!c.length) return; var a=pick(c), others=c.filter(function(s){return s!==a;}), b=others.length?pick(others):null;
+  var seq=b?pick(CHAT):[pick(SOLO)]; seq.forEach(function(m){ var who=m[0]==='a'?a:b; if(who) chatShow(who.name, m[1]); }); }
+window.funChat=chatShow;
+
+/* ---------- 5. причуда дня ---------- */
+var QK=[
+ {k:'date', a:'после свидания: улыбается и путает сиропы. Гости не против', l:['Это был ванильный? Или карамельный? Неважно, всё прекрасно','Вам с корицей? А, вы не просили. Ну пусть будет','Сегодня всё бесплатно! Шучу. Но очень хочется'], fx:{check:1.02}},
+ {k:'sleep', a:'не выспал[ся|ась] и уверяет, что кофе на [него|неё] не действует', l:['Кто включил утро?','Я не сплю, я экономлю энергию','Эспрессо мне. Двойной. Внутривенно'], fx:{}},
+ {k:'diet', a:'на диете: смотрит на круассаны с ненавистью и продаёт их лучше всех', l:['Возьмите круассан. Пожалуйста. Уберите его от меня','Эклер? Конечно. Мне нельзя, а вам можно','Я не голодный. Я злой'], fx:{check:1.03}},
+ {k:'bet', a:'проиграл[|а] спор и весь день называет гостей «сударь» и «сударыня»', l:['Сударь, ваш капучино','Сударыня, извольте сдачу','Чего изволите, ваше сиятельство?'], fx:{soul:1}},
+ {k:'champ', a:'готовится к чемпионату по латте-арту: каждая чашка шедевр, но в два раза дольше', l:['Подождите, у лебедя крыло кривое','Это не сердце, это анатомически точное сердце','Ещё секунду. Искусство не терпит спешки'], fx:{check:1.04}},
+ {k:'machine', a:'поругал[ся|ась] с кофемашиной и разговаривает с ней только через коллег', l:['Передай кофемашине, что я с ней не разговариваю','Скажи ей, пусть сама себя чистит','Она первая начала'], fx:{}},
+ {k:'boss', a:'решил[|а], что сегодня [он|она] управляющ[ий|ая], и всем раздаёт указания', l:['Так, коллеги, планёрка через пять минут','Я тут подумал и всё переставил','Кто разрешил улыбаться без меня?'], fx:{}},
+ {k:'rent', a:'прочитал[|а] новости про аренду и экономит каждую салфетку', l:['Одна салфетка на гостя. Это политика','Сахар выдаю под роспись','Вы точно будете допивать? Я спрашиваю для бюджета'], fx:{check:1.01}},
+ {k:'music', a:'прин[ёс|есла] свой плейлист и включает только его', l:['Послушайте, это шедевр. Третий раз подряд','Нет, переключать нельзя, это концептуальный альбом','Гости танцуют? Значит, я прав'], fx:{soul:1}},
+ {k:'crush', a:'влюбил[ся|ась] в постоянного гостя и рисует ему сердечки на пенке', l:['Ой, он пришёл. Не смотрите на меня','Вам сердечко? Всем сегодня сердечко','Я просто вежливый. Очень вежливый'], fx:{soul:1}},
+ {k:'cold', a:'простудил[ся|ась], но героически вышел[|а] на смену в маске', l:['Я в порядке. Кхе. Совершенно','Не подходите близко, я заразно красивый','Чай с имбирём мне, а вам кофе'], fx:{}},
+ {k:'veteran', a:'вспомнил[|а] свой первый рабочий день и рассказывает всем, как было раньше', l:['А вот в моё время рожок держали двумя руками','Раньше молоко было жирнее. И мы тоже','Я тут с открытия. С какого — неважно'], fx:{}}
+];
+function quirkToday(){ var f=F(); return f.quirk&&f.quirk.day===S.day?f.quirk:null; }
+function newQuirk(){ var c=crew(); if(!c.length) return; var s=pick(c), q=pick(QK); F().quirk={day:S.day, sid:s.id, k:q.k}; if(q.fx.soul) try{ meter('soul',q.fx.soul); }catch(e){}
+  var fem=s.sex==='f'; var txt=q.a.replace(/\[([^|\]]*)\|([^\]]*)\]/g,function(_,m1,f1){ return fem?f1:m1; }); setTimeout(function(){ chatShow('Управляющий', s.name+' сегодня '+txt); },2500); }
+var _mm=modMul; modMul=function(k){ var m=_mm(k); try{ var q=quirkToday(); if(q&&k==='check'){ var d=QK.find(function(x){ return x.k===q.k; }); if(d&&d.fx.check&&S.staff.some(function(s){ return s.id===q.sid&&s.today==='work'; })) m*=d.fx.check; } }catch(e){} return m; };
+
+/* ---------- 2. странные гости ---------- */
+var WEIRD={
+ blogger:{n:'Блогер со светом', in:['Привет, мои сладкие, мы в кофейне!','Так, свет поставили, сейчас будет контент'], tap:['Не смотрите в кадр','Сделайте пенку сердечком, у меня эфир','Ещё дубль, пожалуйста, я моргнула']},
+ courier:{n:'Курьер с коробом', in:['Я на минутку погреться','Мне кофе, а пицца не моя, не смотрите'], tap:['Короб не трогайте, там чей-то ужин','У меня ещё шесть заказов, но кофе важнее','Рейтинг пять звёзд, если без очереди']},
+ dog:{n:'Гость с собакой', in:['Мне латте, а ей пап-латте','Она воспитанная. Почти'], tap:['Она не кусается, она так здоровается','Можно ей водички? И печенье. И погладить','Её зовут Булка. Она тут главная']},
+ snob:{n:'Кофейный сноб', in:['Сколько граммов в вашем эспрессо? Я проверю','Я принёс свои весы, не обижайтесь'], tap:['Девятнадцать грамм? А должно быть восемнадцать с половиной','Какой у вас помол? Я по звуку слышу, что крупный','Ладно. Вкусно. Но я вам этого не говорил']},
+ spy:{n:'Подозрительный турист', in:['Я просто турист. Можно сфоткать вашу кофемашину?','Какие у вас поставщики? Спрашиваю для себя'], tap:['Я не от конкурентов. Честно','Это не блокнот, это дневник','Очки тёмные, потому что солнце. Внутри']},
+ call:{n:'Гость на созвоне', in:['Да, Илья, я на связи. Нет, я не в кофейне','Сейчас скину презентацию. Мне раф, пожалуйста'], tap:['Я на мьюте, говорите','Коллеги, у меня всё. Мне ещё эклер','Илья, вы пропадаете. Это кофемолка']},
+ runner:{n:'Бегун', in:['Мне что-нибудь без всего. Я на пробежке','Двадцать километров позади, хочу круассан'], tap:['Не задерживайте, у меня пульс остывает','Это не пот, это энтузиазм','Пробежка закончилась у вас, совпадение']}
+};
+var WK=Object.keys(WEIRD), weirdActive=null;
+var _sg=spawnGuest; spawnGuest=function(id,reg){ var r=_sg.apply(this,arguments); try{ if(reg||id!==S.active||weirdActive||(S.level||1)<2||!chance(0.07)) return r; var rr=rt(id), g=rr.guests[rr.guests.length-1]; if(!g||g.reg||g.weird) return r;
+  var k=pick(WK); g.weird=k; weirdActive=g; cnt('weird'); setTimeout(function(){ try{ if(g.state!=='leave'&&!g.hidden) bubble2(0,0,pick(WEIRD[k].in),3000,g); }catch(e){} },1400); }catch(e){} return r; };
+function gh(g){ return 62*((g.h||56)/56); }
+function pxr(x,y,w,h,c){ ctx.fillStyle=c; ctx.fillRect(Math.round(x),Math.round(y),w,h); }
+function drawWeird(g,now){ var x=g.x, y=g.y, H=gh(g), t=now/1000, k=g.weird, sit=g.state==='sit';
+  if(k==='blogger'){ var lx=x+17, ly=y; pxr(lx,ly-34,1.2,34,'#3a3a40'); pxr(lx-4,ly-1,9,1.5,'#3a3a40'); ctx.save(); ctx.strokeStyle='#fff8e0'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(lx+0.6,ly-40,5,0,7); ctx.stroke(); ctx.globalAlpha=0.18+0.06*Math.sin(t*3); ctx.fillStyle='#fff6c8'; ctx.beginPath(); ctx.arc(lx+0.6,ly-40,13,0,7); ctx.fill(); ctx.restore(); pxr(lx-1.2,ly-42.5,3.6,5,'#222'); }
+  else if(k==='courier'&&!sit){ var bt=y-H*1.12; pxr(x-11,bt,22,20,'#f2c230'); pxr(x-11,bt,22,3,'#d9a614'); pxr(x-11,bt+17,22,3,'#d9a614'); ctx.fillStyle='#3a2a10'; ctx.font='800 4px "Golos Text",sans-serif'; ctx.textAlign='center'; ctx.fillText('ЕДА',x,bt+11); ctx.textAlign='left'; }
+  else if(k==='dog'){ var dx=x+(sit?13:12), dy=y+(sit?2:0), wag=Math.sin(t*10)*1.5; ctx.save(); ctx.globalAlpha=0.25; ctx.fillStyle='#000'; ctx.beginPath(); ctx.ellipse(dx,dy+1,6,2,0,0,7); ctx.fill(); ctx.restore(); pxr(dx-5,dy-7,10,5,'#c88a4a'); pxr(dx+3,dy-11,5,5,'#c88a4a'); pxr(dx+6,dy-9,2,2,'#2a1a10'); pxr(dx+4,dy-12,2,2,'#8a5a2a'); pxr(dx-4,dy-2,1.5,2,'#8a5a2a'); pxr(dx+2,dy-2,1.5,2,'#8a5a2a'); pxr(dx-7,dy-8+wag*0.3,3,1.5,'#c88a4a');
+    if(!sit){ ctx.strokeStyle='#c0392b'; ctx.lineWidth=0.6; ctx.beginPath(); ctx.moveTo(x+4,y-H*0.45); ctx.quadraticCurveTo(x+8,y-12,dx+4,dy-9); ctx.stroke(); } }
+  else if(k==='snob'){ pxr(x+5,y-H*0.5,7,1.5,'#b8bec5'); pxr(x+7,y-H*0.5-3,3,3,'#f3e8d3'); pxr(x+7.5,y-H*0.5-3.5,2,1,'#5a3a22'); ctx.fillStyle='#2a2a2a'; ctx.font='600 2.6px "Golos Text",sans-serif'; ctx.fillText('18.5',x+6,y-H*0.5+3.2); }
+  else if(k==='spy'){ pxr(x-5,y-H*0.8,10,2.2,'#111'); pxr(x-1,y-H*0.8,2,1,'#333'); if(!sit){ pxr(x-4,y-H*0.52,8,5,'#2a2a30'); pxr(x-1,y-H*0.52+1,3,3,'#6a8aaa'); pxr(x-5,y-H*0.6,1,6,'#2a2a30'); } }
+  else if(k==='call'){ ctx.strokeStyle='#222'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.arc(x,y-H*0.8,6.5,Math.PI*1.05,Math.PI*1.95); ctx.stroke(); pxr(x-7,y-H*0.8-1,2.5,4,'#222'); pxr(x+4.5,y-H*0.8-1,2.5,4,'#222'); ctx.beginPath(); ctx.moveTo(x-6,y-H*0.78+2); ctx.lineTo(x-3,y-H*0.7); ctx.stroke(); if((t%2)<1){ ctx.save(); ctx.globalAlpha=0.6; ctx.fillStyle='#4a4a4a'; ctx.font='700 5px sans-serif'; ctx.fillText('...',x+8,y-H*0.9); ctx.restore(); } }
+  else if(k==='runner'){ pxr(x-6,y-H*0.92,12,2.2,'#e0453a'); pxr(x+6,y-H*0.92,3,1.5,'#e0453a'); if(!sit){ pxr(x+6,y-H*0.5,3,7,'#4ab0e8'); pxr(x+6,y-H*0.5,3,1.5,'#2a7aa8'); } for(var i=0;i<2;i++){ var kk=((t*1.5+i*0.5)%1); ctx.save(); ctx.globalAlpha=0.6*(1-kk); pxr(x-7-i*2,y-H*0.85+kk*8,1,1.5,'#9fd6ea'); ctx.restore(); } }
+}
+var _sup=sceneUpgradeProps; sceneUpgradeProps=function(st,u,items,now,r){ _sup.apply(this,arguments); try{ var rr=rt(S.active); if(!rr||st.outdoor) return;
+  rr.guests.forEach(function(g){ if(g.weird&&!g.hidden&&g.state!=='leave'||(g.weird&&g.state==='leave'&&g.x<VW+OX)) items.push({y:g.y+((g.weird==='courier'||g.weird==='blogger')?-0.2:0.2),f:function(){ drawWeird(g,now); }}); });
+  if(weirdActive&&(rr.guests.indexOf(weirdActive)<0)) weirdActive=null; }catch(e){} };
+window.sceneUpgradeProps=sceneUpgradeProps;
+cv.addEventListener('pointerdown',function(e){ try{ if(sheet||!S||modals.length) return; var b=cv.getBoundingClientRect(); var x=OX+(e.clientX-b.left)/b.width*VW, y=(e.clientY-b.top)/b.height*H; var rr=rt(S.active);
+  for(var i=rr.guests.length-1;i>=0;i--){ var g=rr.guests[i]; if(!g.weird||g.hidden) continue; if(x>g.x-16&&x<g.x+16&&y>g.y-gh(g)&&y<g.y+4){ if(g===rr.queue[0]&&g.state==='queue') return; if(g.state==='wait'||g.state==='toPick') return; g._tapAt=Date.now(); bubble2(0,0,pick(WEIRD[g.weird].tap),2800,g); cnt('taps'); return; } } }catch(err){} },true);
+
+/* ---------- 3. смешные отзывы ---------- */
+try{
+ REV_TXT[1].push('Одна звезда. Кофе слишком горячий, а я слишком нежный','Бариста не узнал меня. Я хожу сюда второй раз в жизни','Попросил сделать как дома. Сделали как у них дома. Не понравилось','Капучино было без души. Душа была в соседнем стакане','Не было свободных розеток. Пришлось общаться с людьми','Кот проигнорировал меня. Это была последняя капля','Заказал раф, получил осознание, что жизнь проходит');
+ REV_TXT[2].push('Две звезды. Одна за кофе, вторая за то, что бариста извинился за мою собственную ошибку','Было вкусно, но я пришёл ругаться','Сахар в пакетиках, а у меня травма от пакетиков','Музыка хорошая, но не моя','Кофе нормальный, но слишком честный, я не готов к такому');
+ REV_TXT[3].push('Три звезды. Средний кофе для среднего человека. Я обиделся','Всё нормально. Слишком нормально. Подозрительно','Пришёл на минутку, просидел три часа. Ставлю три, потому что я опоздал на работу','Кофе как моя зарплата: вроде есть, а вроде и нет','Бариста улыбнулся, я растерялся и забыл, что хотел заказать');
+ REV_TXT[4].push('Четыре звезды. Пятую оставлю себе на вырост','Бариста посмотрел на меня как мама в детстве. Тепло и с подозрением','Хороший кофе. Пошёл на работу и даже не плакал','Пенка такая плотная, что на неё можно поставить ложку и ипотеку','Минус звезда за то, что круассаны закончились на мне','Здесь можно сидеть с ноутбуком и выглядеть занятым. Идеально');
+ REV_TXT[5].push('Пять звёзд. Пришёл грустным, ушёл грустным, но с кофе','Бариста запомнил моё имя. Теперь мне неловко сюда не ходить','Лучший раф в районе. Не говорите моей маме, она тоже варит','Ставлю пять, потому что шесть нельзя','Был с девушкой, ушёл с девушкой и тортом. Магия','Кот лёг мне на ноутбук и отправил письмо начальнику. Повышение мне одобрили','Кофе такой, что я позвонил бывшей и сказал спасибо');
+}catch(e){}
+try{ var _rr=replyReview; replyReview=function(id,rid){ var r=_rr.apply(this,arguments); try{ if(rid==='joke'&&r) cnt('joke'); }catch(e){} return r; }; }catch(e){}
+
+/* ---------- 6. пакости конкурентов ---------- */
+function rv(inc){ var r=pick(RIVALS); inc.sname=r.n; inc.rid=r.id; return true; }
+function win(){ cnt('revenge'); }
+def('rp_flyers',{cat:'normal',t:'Листовки про тараканов',x:'У входа разложены листовки: «В кофейне напротив видели таракана размером с круассан». Внизу мелко: «{s}».',pre:rv,o:[
+ {t:'Повесить ответ: «Наш таракан — талисман, гладить можно»',fx:function(){ win(); return {fx:{soul:2,mod:['traffic',1.08,6,'Ответные листовки: гостей +8%']},out:'Гостям смешно, листовки фотографируют. Кто-то спросил, где таракана можно погладить.'}; }},
+ {t:'Выкинуть их листовки им под дверь',fx:G([{chaos:2,pathos:1},'Выкинули. Утром листовок у них под дверью стало вдвое больше. Это была ошибка.'],[{chaos:1},'Ночью листовки унёс ветер. Прямо к ним в окно. Справедливость.'])},
+ {t:'Позвать санэпид к себе и повесить акт проверки',fx:function(){ return {fx:{m:-M(800),rep:2},out:'Акт «Нарушений нет» висит у входа в рамке. Таракан на листовках выглядит неубедительно.'}; }}]});
+def('rp_cookie',{cat:'normal',t:'Печенье у очереди',x:'«{s}» поставили у вашей очереди промоутера с бесплатным печеньем. Половина очереди уже жуёт и смотрит в их сторону.',pre:rv,o:[
+ {t:'Купить у промоутера всё печенье оптом',fx:function(){ win(); return {fx:{m:-M(600),soul:1},out:'Промоутер ушёл домой счастливый и без печенья. Печенье раздали своим гостям к кофе.'}; }},
+ {t:'Раздать своё печенье, но с кофе',fx:function(){ return {fx:{m:-M(400),mod:['traffic',1.05,4,'Печеньковая война: гостей +5%']},out:'Печеньковая война. Гости в выигрыше, вы почти.'}; }},
+ {t:'Ничего не делать',fx:{mod:['traffic',0.88,3,'Печенье конкурентов: гостей −12%']},out:'Очередь доела чужое печенье и пришла к вам за кофе. Но не вся.'}]});
+def('rp_hotdog',{cat:'normal',t:'Хот-дог под окнами',x:'Под вашими окнами пляшет человек в костюме хот-дога с табличкой «Кофе в "{s}" вкуснее». Дети в восторге.',pre:rv,o:[
+ {t:'Вынести хот-догу кофе и переманить',fx:function(){ win(); return {fx:{soul:2,mod:['traffic',1.1,4,'Хот-дог за вас: гостей +10%']},out:'Хот-дог попробовал раф, задумался и перевернул табличку. Теперь он танцует за вас.'}; }},
+ {t:'Нанять свой костюм круассана',fx:function(){ return {fx:{m:-M(900),chaos:2,mod:['traffic',1.14,4,'Битва костюмов: гостей +14%']},out:'Битва хот-дога и круассана собрала толпу. Победила дружба и ваша касса.'}; }},
+ {t:'Вызвать полицию',fx:{rep:-1,pathos:2},out:'Полиция приехала, посмеялась и сфотографировалась с хот-догом. Хот-дог выложил фото с подписью «Даже полиция за нас».'}]});
+def('rp_reviews',{cat:'normal',t:'Отзывы-близнецы',x:'За ночь на картах появилось пять одинаковых отзывов: «Кофе как вода из лужи». У всех авторов нет аватарок, последний подписан «привет от {s}».',pre:rv,o:[
+ {t:'Ответить каждому стихами',fx:function(){ win(); return {fx:{soul:2,rep:1},out:'«Ваш отзыв как лужа — мелок и не нужен». Ответы набрали больше лайков, чем отзывы.'}; }},
+ {t:'Пожаловаться в поддержку карт',fx:G([{rep:1},'Поддержка удалила все пять. Конкуренты написали шестой, но с ошибками.'],[{pathos:1},'Поддержка ответила через неделю: «Спасибо за обращение». Отзывы висят.'],0.6)},
+ {t:'Написать им такие же',fx:{chaos:3,rep:-1,pathos:2},out:'Война отзывов. Через день район читал ваши перепалки как сериал. Рейтинг у обоих просел.'}]});
+def('rp_milk',{cat:'normal',t:'Скупили молоко',x:'«{s}» скупили всё молоко в ближайшем магазине, пока у вас кончался запас. Продавщица разводит руками.',pre:rv,o:[
+ {t:'Перейти на растительное и назвать это трендом',fx:function(){ win(); return {fx:{soul:1,mod:['check',1.04,8,'Растительный тренд: чек +4%']},out:'Табличка «Сегодня только овсяное. Это осознанность». Гости в восторге, кто-то впервые попробовал и остался.'}; }},
+ {t:'Съездить на рынок',fx:function(){ return {fx:{m:-M(700)},out:'Бариста вернулся с рынка с молоком, творогом и семечками. Семечки не просили.'}; }},
+ {t:'Попросить молока у шаурмичной',fx:G([{soul:2},'Ашот дал молоко и сказал: «Против общего врага — вместе». Союз заключён.'],[{chaos:2},'Ашот дал айран. Капучино на айране — смелый эксперимент.'])}]});
+def('rp_order',{cat:'normal',t:'Тридцать капучино',x:'Позвонили и заказали 30 капучино «для офиса». Никто не пришёл. Номер ведёт в «{s}».',pre:rv,o:[
+ {t:'Отнести все тридцать им в зал с запиской «Вы забыли»',fx:function(){ win(); return {fx:{m:-M(500),soul:2,rep:1},out:'Их гости пили ваш кофе и спрашивали, где вы находитесь. Записку конкуренты повесили на стену. Видимо, от злости.'}; }},
+ {t:'Продать по акции «Чужой заказ −50%»',fx:function(){ return {fx:{m:M(400),chaos:1},out:'Гости разобрали всё за десять минут. Акцию просят повторить.'}; }},
+ {t:'Вылить и забыть',fx:{m:-600,pathos:1},out:'Тридцать капучино ушли в раковину. Мойщица видела всё и молчит. Пока.'}]});
+def('rp_sign',{cat:'normal',t:'Подкрученная вывеска',x:'Утром на вывеске горят не все буквы, получилось что-то неприличное. Сторож видел ночью человека в фартуке «{s}».',pre:rv,o:[
+ {t:'Оставить на день и сделать мемом',fx:function(){ win(); return {fx:{chaos:2,mod:['traffic',1.12,6,'Мем с вывеской: гостей +12%']},out:'Фото вывески разлетелось по районным чатам. Люди приходят посмотреть и заодно берут кофе.'}; }},
+ {t:'Срочно починить',fx:function(){ return {fx:{m:-M(1200),rep:1},out:'Электрик починил за час и сказал, что такое видит третий раз за месяц. В разных кофейнях.'}; }},
+ {t:'Ночью подкрутить их вывеску',fx:{chaos:3,pathos:2,rep:-1},out:'Утром у них горело «...ОФЕ ...ЕТ». Счёт один-один. Война продолжается.'}]});
+var rpT=0;
+
+/* ---------- 4. секретные достижения ---------- */
+var ACH=[
+ ['fire3','Отдел кадров плачет','Уволить троих за один игровой день',function(f){ return (f.c['fired_'+S.day]||0)>=3; }],
+ ['zombie','Зомби-апокалипсис отменён','Встретить зомби с квеста',function(f){ return f.c.zombie>=1; }],
+ ['absurd','Абсурд — это норма','Решить 25 абсурдных событий',function(){ return (S.c&&S.c.absurd||0)>=25; }],
+ ['taps','Тыкалка','Потыкать в гостей 100 раз',function(f){ return (f.c.taps||0)>=100; }],
+ ['news','Читатель газет','Прочитать 7 выпусков «Вестника района»',function(f){ return (f.c.news||0)>=7; }],
+ ['joke','Остряк','Отшутиться на 10 отзывов',function(f){ return (f.c.joke||0)>=10; }],
+ ['revenge','Мститель','Красиво ответить конкурентам 3 раза',function(f){ return (f.c.revenge||0)>=3; }],
+ ['owl','Сова','Зайти в игру между 3 и 5 ночи',function(){ var h=new Date(Date.now()+3*3600000).getUTCHours(); return h>=3&&h<5; }],
+ ['chat','Душа чата','Прочитать 50 сообщений в чате смены',function(f){ return (f.c.chat||0)>=50; }],
+ ['weird','Магнит для странных','Встретить 10 странных гостей',function(f){ return (f.c.weird||0)>=10; }],
+ ['cat','Кошачья дипломатия','Оставить кота в кофейне',function(){ return !!(S.bw&&S.bw.cat&&S.bw.cat.end==='mascot'); }],
+ ['away','Где ты был?','Вернуться после недели отсутствия',function(){ return !!(S.rc&&S.rc.pending&&S.rc.pending.days>=7); }]
+];
+function achTick(){ var f=F(); f.ach=f.ach||{}; ACH.forEach(function(a){ if(f.ach[a[0]]) return; var ok=false; try{ ok=a[3](f); }catch(e){} if(ok){ f.ach[a[0]]=1; try{ badgeAdd('fun_'+a[0],a[1],a[2]); }catch(e){} toast('Секретное достижение: «'+a[1]+'»'); try{ sfx('level'); }catch(e){} save(); } }); }
+try{ var _af=applyFx; applyFx=function(fx,inc){ try{ if(fx&&(fx.fire||fx.fire2)&&!fx.quit) cnt('fired_'+S.day,(fx.fire?1:0)+(fx.fire2?1:0)); if(inc&&inc.id==='bw_zombie') cnt('zombie'); }catch(e){} return _af.apply(this,arguments); }; }catch(e){}
+try{ var _n=MODAL15.news; MODAL15.news=function(){ cnt('news'); return _n.apply(this,arguments); }; }catch(e){}
+
+/* ---------- тик ---------- */
+var chatT=90, lastDay=null, qT=60;
+var _bt=bubblesTick; bubblesTick=function(dt){ _bt.apply(this,arguments); try{ if(!S) return;
+  if(lastDay!==S.day){ if(lastDay!=null&&S.isOpen) newQuirk(); lastDay=S.day; if(!quirkToday()&&S.isOpen&&crew().length&&!F().quirk) newQuirk(); }
+  if(!S.isOpen||document.hidden) return;
+  chatT-=dt; if(chatT<=0){ chatT=R(150,330); if(!(S.rush&&S.rush.until>absNow())) chatSeq(); }
+  var q=quirkToday(); qT-=dt; if(q&&qT<=0){ qT=R(70,140); var d=QK.find(function(x){ return x.k===q.k; }), p=RT[S.active]&&RT[S.active].staff[q.sid]; if(d&&p) bubble2(0,0,pick(d.l),2800,p); }
+  rpT-=dt; if(rpT<=0){ rpT=R(1200,2100); if(rpT&&(S.level||1)>=3&&F().rpInit) pushIncident(pick(['rp_flyers','rp_cookie','rp_hotdog','rp_reviews','rp_milk','rp_order','rp_sign'])); F().rpInit=1; }
+}catch(e){} };
+setInterval(function(){ try{ if(S) achTick(); }catch(e){} },6000);
+try{ var css=document.createElement('style'); css.textContent='.fchat{position:fixed;left:10px;top:calc(env(safe-area-inset-top,0px) + 112px);max-width:72%;background:rgba(36,26,20,.92);color:#f6ead6;border-radius:12px;padding:7px 11px 8px;font:500 13px/1.3 "Golos Text",sans-serif;z-index:60;transform:translateY(12px);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}.fchat.on{opacity:1;transform:none}.fchat i{display:block;font-style:normal;font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.6}.fchat b{color:#ffcf7a;margin-right:5px}'; document.head.appendChild(css); }catch(e){}
+window.FUN2={chat:chatSeq, quirk:newQuirk, weird:function(k){ var rr=rt(S.active), g=rr.guests.find(function(g){ return !g.reg&&!g.hidden; }); if(g){ g.weird=k||pick(WK); weirdActive=g; } return g; }, ach:achTick};
+})();
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
