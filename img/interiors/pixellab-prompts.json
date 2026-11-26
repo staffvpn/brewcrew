@@ -831,16 +831,14 @@
     "processing": "isolate main sprite and crop alpha"
   },
   "lux_desert-machine.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to aged copper with turquoise enamel detail, two brass round gauges and cream cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
-    "seed": 61145,
-    "reference": "season-gold-machine.png",
-    "job": "f1d87a15-c472-4790-b05f-5740b82fff58",
+    "endpoint": "create-image-pixen",
+    "prompt": "Brew Crew game pixel art. Orthographic front elevation of a double-group espresso machine. Exactly head-on at dial height, centered and symmetric. Only the flat front face is visible. Perfectly horizontal top edge, two equally spaced brew heads. Flat transparent background, no floor, top plane, side planes, perspective, signs or text. arched classic enamel facade, two round dials. Finish: main enamel in aged dark copper, turquoise base and dials, brushed copper trim.",
+    "seed": 72002,
     "usage": {
       "type": "usd",
-      "usd": 0.007642317295074463
+      "usd": 0.008863661130269368
     },
-    "processing": "isolate main sprite and crop alpha"
+    "processing": "trim transparent margins; checked in-game from the front"
   },
   "lux_emerald-long.png": {
     "endpoint": "edit-image-pixen",
@@ -856,15 +854,15 @@
   },
   "lux_emerald-machine.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to deep emerald lacquer with matte-brass gauges and chrome groupheads, espresso cups ivory. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
-    "seed": 61045,
-    "reference": "season-gold-machine.png",
-    "job": "abede498-403c-4f86-8876-f9edebc073cf",
+    "prompt": "Recolor ONLY, pixel for pixel. Preserve this exact totally flat straight-on front elevation, identical transparent silhouette, horizontal top and base, and the positions on both halves. Keep all original geometry perfectly unchanged. New finish: body and upper fascia in deep emerald green lacquer, aged brass trim and dials. Keep crisp pixel edges. No perspective, side face, top face, base shadow, lettering, added objects or background.",
+    "seed": 72008,
+    "reference": "front-elevation-classic.png",
+    "job": "717f263f-504d-478a-901a-3c945f9b5a10",
     "usage": {
-      "type": "usd",
-      "usd": 0.0071817254755232075
+      "seconds": 21.13422679901123
     },
-    "processing": "isolate main sprite and crop alpha"
+    "referenceAsset": "lux_copper-machine.png",
+    "processing": "trim transparent margins; checked in-game from the front"
   },
   "lux_gallery-back.png": {
     "endpoint": "create-image-pixen",
@@ -889,16 +887,14 @@
     "processing": "trim to fascia and countertop lip"
   },
   "lux_gallery-machine.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to modern squared white porcelain and brushed metal facade with a narrow cobalt band, white cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
-    "seed": 61165,
-    "reference": "season-gold-machine.png",
-    "job": "4fa09e91-19fe-4a3a-ace7-8f859b08aa07",
+    "endpoint": "create-image-pixen",
+    "prompt": "Brew Crew game pixel art. Orthographic front elevation of a double-group espresso machine. Exactly head-on at dial height, centered and symmetric. Only the flat front face is visible. Perfectly horizontal top edge, two equally spaced brew heads. Flat transparent background, no floor, top plane, side planes, perspective, signs or text. clean rectangular flat fascia, two round dials. Finish: body and fascia in ivory porcelain, thin cobalt blue inset trim and silver metal group heads.",
+    "seed": 72016,
     "usage": {
       "type": "usd",
-      "usd": 0.005954794910218981
+      "usd": 0.009093280553817749
     },
-    "processing": "isolate main sprite and crop alpha"
+    "processing": "trim transparent margins; checked in-game from the front"
   },
   "lux_library-back.png": {
     "endpoint": "create-image-pixen",
@@ -923,16 +919,14 @@
     "processing": "isolate main sprite and crop alpha"
   },
   "lux_library-machine.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to deep green enamel body, dark walnut side trim, polished aged bronze hardware and white cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
-    "seed": 61125,
-    "reference": "season-gold-machine.png",
-    "job": "a0fc6496-3791-45e9-8b90-4a3a4767017d",
+    "endpoint": "create-image-pixen",
+    "prompt": "Brew Crew game pixel art. Orthographic front elevation of a double-group espresso machine. Exactly head-on at dial height, centered and symmetric. Only the flat front face is visible. Perfectly horizontal top edge, two equally spaced brew heads. Flat transparent background, no floor, top plane, side planes, perspective, signs or text. arched classic enamel facade, two round dials. Finish: body and upper fascia in forest green enamel, dark walnut base and antique bronze trim.",
+    "seed": 72023,
     "usage": {
       "type": "usd",
-      "usd": 0.009744930691189237
+      "usd": 0.009622116141849095
     },
-    "processing": "isolate main sprite and crop alpha"
+    "processing": "trim transparent margins; checked in-game from the front"
   },
   "lux_library-shelf.png": {
     "endpoint": "edit-image-pixen",
@@ -1001,16 +995,14 @@
     "processing": "isolate main sprite and crop alpha"
   },
   "lux_observatory-machine.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to petrol blue enamel dome with rounded bronze lens-like pressure gauge and two brass groupheads, pewter counterside, ivory cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
-    "seed": 61245,
-    "reference": "season-gold-machine.png",
-    "job": "cc08d8bb-da28-47e6-9202-327938fc65bb",
+    "endpoint": "create-image-pixen",
+    "prompt": "Brew Crew game pixel art. Orthographic front elevation of a double-group espresso machine. Exactly head-on at dial height, centered and symmetric. Only the flat front face is visible. Perfectly horizontal top edge, two equally spaced brew heads. Flat transparent background, no floor, top plane, side planes, perspective, signs or text. clean rectangular flat fascia, two round dials. Finish: body in dark petrol blue enamel, two large brass circular gauges like lenses, darker bronze drip tray.",
+    "seed": 72030,
     "usage": {
       "type": "usd",
-      "usd": 0.0072017167939080135
+      "usd": 0.0092965653207567
     },
-    "processing": "isolate main sprite and crop alpha"
+    "processing": "trim transparent margins; checked in-game from the front"
   },
   "lux_observatory-shelf.png": {
     "endpoint": "edit-image-pixen",
@@ -1103,15 +1095,15 @@
   },
   "lux_orangery-machine.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to sage enamel, gleaming bronze fittings, pale honey-oak accent and cream cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
-    "seed": 61205,
-    "reference": "season-gold-machine.png",
-    "job": "37b87055-d380-438d-804b-1d136122338d",
+    "prompt": "Recolor ONLY, pixel for pixel. Preserve this exact totally flat straight-on front elevation, identical transparent silhouette, horizontal top and base, and the positions on both halves. Keep all original geometry perfectly unchanged. New finish: body and fascia in pale sage enamel, champagne brass details and pale honey-wood colored base. Keep crisp pixel edges. No perspective, side face, top face, base shadow, lettering, added objects or background.",
+    "seed": 72036,
+    "reference": "front-elevation-rounded.png",
+    "job": "3fd4fa17-c3dc-4d75-a487-316811bfa758",
     "usage": {
-      "type": "usd",
-      "usd": 0.008477289332283868
+      "seconds": 14.463973045349121
     },
-    "processing": "isolate main sprite and crop alpha"
+    "referenceAsset": "lux_coral-machine.png",
+    "processing": "trim transparent margins; checked in-game from the front"
   },
   "lux_palace-lamp.png": {
     "endpoint": "create-image-pixen",
@@ -1136,16 +1128,14 @@
     "processing": "isolate main sprite and crop alpha"
   },
   "lux_palace-machine.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to an ivory and pearl enamel body with a curved gilded rail, antique bronze round dials, porcelain cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
-    "seed": 61025,
-    "reference": "season-gold-machine.png",
-    "job": "73241e97-8f0d-4f96-b31a-3da16d04fb3b",
+    "endpoint": "create-image-pixen",
+    "prompt": "Brew Crew game pixel art. Orthographic front elevation of a double-group espresso machine. Exactly head-on at dial height, centered and symmetric. Only the flat front face is visible. Perfectly horizontal top edge, two equally spaced brew heads. Flat transparent background, no floor, top plane, side planes, perspective, signs or text. arched classic enamel facade, two round dials. Finish: body in light ivory enamel with gilded edges, antique gold front details and porcelain cups.",
+    "seed": 72044,
     "usage": {
       "type": "usd",
-      "usd": 0.005
+      "usd": 0.009162833637661405
     },
-    "processing": "isolate main sprite and crop alpha"
+    "processing": "trim transparent margins; checked in-game from the front"
   },
   "lux_sakura-front.png": {
     "endpoint": "create-image-pixen",
@@ -1159,15 +1149,15 @@
   },
   "lux_sakura-machine.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to pale off-white and rose enamel, copper fittings, small blossom etched in one corner, two cream cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
-    "seed": 61065,
-    "reference": "season-gold-machine.png",
-    "job": "b19c36e3-0a46-490e-a874-6778e2dd7bcf",
+    "prompt": "Recolor ONLY, pixel for pixel. Preserve this exact totally flat straight-on front elevation, identical transparent silhouette, horizontal top and base, and the positions on both halves. Keep all original geometry perfectly unchanged. New finish: body in pale cream enamel, blush pink trim and a pale rose front, with small copper accents. Keep crisp pixel edges. No perspective, side face, top face, base shadow, lettering, added objects or background.",
+    "seed": 72050,
+    "reference": "front-elevation-rounded.png",
+    "job": "1f3bfa04-ecd2-4fd5-919c-bbaf97f289d4",
     "usage": {
-      "type": "usd",
-      "usd": 0.007599907689624362
+      "seconds": 16.53668975830078
     },
-    "processing": "isolate main sprite and crop alpha"
+    "referenceAsset": "lux_coral-machine.png",
+    "processing": "trim transparent margins; checked in-game from the front"
   },
   "lux_terrace-long.png": {
     "endpoint": "edit-image-pixen",
@@ -1182,16 +1172,14 @@
     "processing": "isolate main sprite and crop alpha"
   },
   "lux_terrace-machine.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to cream and azure enamel, small bronze dials, pale turquoise cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
-    "seed": 61105,
-    "reference": "season-gold-machine.png",
-    "job": "864f659c-dd6b-4e63-b44b-411517f7e167",
+    "endpoint": "create-image-pixen",
+    "prompt": "Brew Crew game pixel art. Orthographic front elevation of a double-group espresso machine. Exactly head-on at dial height, centered and symmetric. Only the flat front face is visible. Perfectly horizontal top edge, two equally spaced brew heads. Flat transparent background, no floor, top plane, side planes, perspective, signs or text. rounded corners on the flat and symmetric fascia, two tiny dials. Finish: body in cultured ivory white, azure blue body fascia and thin bronze controls, pale turquoise porcelain cups.",
+    "seed": 72058,
     "usage": {
       "type": "usd",
-      "usd": 0.006439684708913167
+      "usd": 0.00899719132317437
     },
-    "processing": "isolate main sprite and crop alpha"
+    "processing": "trim transparent margins; checked in-game from the front"
   },
   "lux_terrace-shelf.png": {
     "endpoint": "edit-image-pixen",
