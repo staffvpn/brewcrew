@@ -1,0 +1,145 @@
+{
+  "asphalt-floor.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. Fill all the image with a top-down aged concrete basement floor texture for a game. Large, lightly visible slabs of faded graphite-grey concrete, fine worn cracks and restrained marks of old burgundy paint, tiny mineral flakes. A few dark seams, subtle value range, dull matte, warm charcoal, no shadows and no bright random white pixels. Quiet even uniform texture at all edges. No furniture, people, writing, walls or floor boundary. Flat floor material seen directly from overhead, repeatable.",
+    "seed": 78340,
+    "request": {
+      "view": "high top-down",
+      "size": [
+        144,
+        100
+      ],
+      "transparent": false
+    },
+    "usage": {
+      "type": "usd",
+      "usd": 0.007089751349555122
+    },
+    "processing": "crop off the border and mirror at the seams"
+  },
+  "bluti-fruti.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. An original illustrated small irregular coffee-shop sticker cutout. Two anthropomorphic takeaway coffee-cup fairies wearing crooked lids lean close and whisper to each other with mischievous amused expressions, each has a little simple butterfly wing. Dusty mint and violet with bold pale cream contour and short hand-inked pink sparkles. Cute and irreverent early internet zine, readable at small size. Floating characters only, no rectangle, frame, typography, lettering, photograph, shadows or wall.",
+    "seed": 78454,
+    "request": {
+      "view": "side",
+      "size": [
+        104,
+        72
+      ],
+      "transparent": true
+    },
+    "usage": {
+      "type": "usd",
+      "usd": 0.009488343000411988
+    },
+    "processing": "crop transparent margins"
+  },
+  "jump-rope-owl.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. One witty handmade small collectible cafe counter toy, original design: a stern round purple-grey little owl with bright amber eyes hovers jumping over a thin jewel-pink jump rope. A thin clear curved support attaches to a tiny flat dark bronze round tabletop plinth. Its little wings are at its sides holding rope handles. The arc of the rope is easy to see against transparency, extending around the owl above its head. Front-on orthographic with clean readable outline and limited colors. No text, wall, scene, floor or other objects.",
+    "seed": 78435,
+    "request": {
+      "view": "side",
+      "size": [
+        76,
+        92
+      ],
+      "transparent": true
+    },
+    "usage": {
+      "type": "usd",
+      "usd": 0.008990098158518475
+    },
+    "processing": "crop transparent margins"
+  },
+  "lost-tapes.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. One isolated wall-hung handmade display of three vintage audio cassettes arranged in a neat slightly crooked row on a short battered dark walnut plank with two thin warm metal brackets. Purple, faded coral and ice mint labels with no lettering. A narrow piece of purple tape holding the middle cassette in place. Front elevation. Original game prop sprite, transparent outside, no wall, floor, music device, extra objects, people, text or perspective.",
+    "seed": 78416,
+    "request": {
+      "view": "side",
+      "size": [
+        96,
+        72
+      ],
+      "transparent": true
+    },
+    "usage": {
+      "type": "usd",
+      "usd": 0.008739362981584337
+    },
+    "processing": "crop transparent margins"
+  },
+  "party-rug.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. One isolated long narrow rectangular threadbare red vintage rug viewed directly overhead with horizontal long side, flat ground-plane game sprite. Faded rust burgundy fabric with black and dusty cream angular diamond medallions, olive-green small accents, short uneven warm ivory fringe only at the left and right edges, one discreet teal square repair patch carefully stitched on one corner. Flat top down, no tall pile or shadows, transparent exterior, no scene, no text, no furniture, no floor.",
+    "seed": 78397,
+    "request": {
+      "view": "high top-down",
+      "size": [
+        152,
+        76
+      ],
+      "transparent": true
+    },
+    "usage": {
+      "type": "usd",
+      "usd": 0.00752074768808153
+    },
+    "processing": "crop transparent margins"
+  },
+  "pigeon-hole.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. An isolated game wall decal, front view. One irregular oval hole punched through thin old plaster. Rough uneven chipped edges expose small dark brick fragments and individual cracks. Deep dim violet behind the hole. One round grey city pigeon with pale-iridescent neck, silly wide eyes and a very small beak peeking out into the cafe. Keep the pigeon clearly readable centered inside the hole. Irregular broken outline, fully transparent outside around it. No rectangle, floor, lettering, bullets, weapon, surroundings or furniture.",
+    "seed": 78378,
+    "request": {
+      "view": "side",
+      "size": [
+        112,
+        84
+      ],
+      "transparent": true
+    },
+    "usage": {
+      "type": "usd",
+      "usd": 0.007036113818486532
+    },
+    "processing": "crop transparent margins; remove loose fragments"
+  },
+  "rehearsal-wall.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. Straight-on orthographic continuous elevation wall texture, edge-to-edge at every border. An old basement rehearsal room empty wall. Dusty plum-grey matte painted plaster top section, irregular small chips reveal rusty brick very sparingly, low bare dark burgundy brick wainscot, thin dark painted division. Two-thirds muted plaster with room for separate graffiti and accessories. No large exposed holes, devices, lights, shelves, furniture, letters, borders, door, windows, floor or perspective. The wall is one continuous strip across the image.",
+    "seed": 78321,
+    "request": {
+      "view": "side",
+      "size": [
+        308,
+        96
+      ],
+      "transparent": false
+    },
+    "usage": {
+      "type": "usd",
+      "usd": 0.008602668285369874
+    }
+  },
+  "riot-raccoon.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. A single isolated irregular spray-painted graffiti illustration on a transparent background. Flat head-on wall art. A mischievous raccoon mascot with dark mask and one torn ear holds a tiny takeaway espresso cup like a handheld microphone, two angular mint and dusty lilac spray strokes plus a small coral star accent, charcoal outlines. Tiny scattered matching spray paint at edges. Punk zine humor, high contrast at small size. No flat colored rectangle, brick, wall, sticker border, words, lettering, tag or drop shadow.",
+    "seed": 78359,
+    "request": {
+      "view": "side",
+      "size": [
+        128,
+        80
+      ],
+      "transparent": true
+    },
+    "usage": {
+      "type": "usd",
+      "usd": 0.006755982690387302
+    },
+    "processing": "crop transparent margins"
+  }
+}

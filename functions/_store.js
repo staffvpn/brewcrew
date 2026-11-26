@@ -1,6 +1,94 @@
 // Permanent shop catalogue. GAME is earned cafe cash; XTR is Telegram Stars.
 // Historical Stars amounts remain on GAME entries for already-created invoice quotes.
 export const STORE_ITEMS = {
+  "skin_wall_lux_rehearsal": {
+    "title": "Стена репетиционной",
+    "desc": "Пыльная штукатурка и потёртый кирпич, как в подвале, где репетирует группа.",
+    "stars": 0,
+    "category": "wall",
+    "skin": "lux_rehearsal",
+    "once": 1,
+    "oldCoins": 0,
+    "currency": "GAME",
+    "gamePrice": 95000
+  },
+  "skin_floor_lux_asphalt": {
+    "title": "Бетон до ремонта",
+    "desc": "Пол зала из старых бетонных плит со сколами и следами краски.",
+    "stars": 0,
+    "category": "floor",
+    "skin": "lux_asphalt",
+    "once": 1,
+    "oldCoins": 0,
+    "currency": "GAME",
+    "gamePrice": 150000
+  },
+  "lux_riot_raccoon": {
+    "title": "Енот на разогреве",
+    "desc": "Граффити с енотом, который держит стакан как микрофон.",
+    "stars": 119,
+    "category": "lux",
+    "skin": "riot_raccoon",
+    "once": 1,
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
+  },
+  "lux_pigeon_hole": {
+    "title": "Дыра к соседям",
+    "desc": "Пролом в штукатурке. Изнутри за твоим заказом наблюдает голубь.",
+    "stars": 149,
+    "category": "lux",
+    "skin": "pigeon_hole",
+    "once": 1,
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
+  },
+  "lux_party_rug": {
+    "title": "Ковёр с вписки",
+    "desc": "Вытершийся бордовый ковёр с ромбами и одной заметной заплаткой.",
+    "stars": 129,
+    "category": "lux",
+    "skin": "party_rug",
+    "once": 1,
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
+  },
+  "skin_decor_lost_tapes": {
+    "title": "Кассеты без подписей",
+    "desc": "Три старые демки на настенной полке. Средняя держится на скотче.",
+    "stars": 0,
+    "category": "decor",
+    "skin": "lost_tapes",
+    "once": 1,
+    "oldCoins": 0,
+    "currency": "GAME",
+    "gamePrice": 55000
+  },
+  "lux_jump_rope_owl": {
+    "title": "Сова на скакалке",
+    "desc": "Фигурка на стойке. На случай фразы «Да тут точно ничего не случится».",
+    "stars": 149,
+    "category": "lux",
+    "skin": "jump_rope_owl",
+    "once": 1,
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
+  },
+  "skin_decor_bluti_fruti": {
+    "title": "Блути-фрути",
+    "desc": "Наклейка на стойку с двумя стаканчиками, которые шепчутся о гостях.",
+    "stars": 0,
+    "category": "decor",
+    "skin": "bluti_fruti",
+    "once": 1,
+    "oldCoins": 0,
+    "currency": "GAME",
+    "gamePrice": 75000
+  },
   "skin_floor_herr": {
     "title": "Ёлочка",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
