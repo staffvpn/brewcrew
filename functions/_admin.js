@@ -16,7 +16,7 @@ const CITY = { msk: 'Москва', spb: 'Петербург', kzn: 'Казан�
 const ago = ts => { if (!ts) return 'никогда'; const m = Math.round((Date.now() - ts) / 60000); if (m < 2) return 'только что'; if (m < 60) return m + ' мин назад'; const h = Math.round(m / 60); if (h < 48) return h + ' ч назад'; return Math.round(h / 24) + ' дн назад'; };
 const short = ts => { if (!ts) return '—'; const m = Math.round((Date.now() - ts) / 60000); if (m < 3) return 'в игре'; if (m < 60) return m + ' мин'; const h = Math.round(m / 60); if (h < 48) return h + ' ч'; return Math.round(h / 24) + ' дн'; };
 const when = ts => new Date(ts).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-const OPN = { refgift: 'Реферальный бонус', level: 'Уровень', cash: 'Покупка денег', give: 'Начислено', take: 'Списано', set: 'Баланс', wipe: 'Удаление', ent: 'Покупки обновлены', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименование', staff: 'Легенда в команду', grant: 'Выдано', xp: 'Опыт', sp: 'Очки сезона', badge: 'Значок', manage:'Изменение имущества' };
+const OPN = { refgift: 'Реферальный бонус', level: 'Уровень', cash: 'Покупка денег', give: 'Начислено', take: 'Списано', set: 'Баланс', wipe: 'Удаление', ent: 'Покупки обновлены', msg: 'Сообщение', fpraise: 'Похвала от друга', fgift: 'Чаевые от друга', fprank: 'Таракан от друга', rename: 'Переименование', staff: 'Легенда в команду', grant: 'Выдано', xp: 'Опыт', sp: 'Очки сезона', badge: 'Значок', badgepin: 'Закреплённый значок', badgeunpin: 'Снято закрепление значка', manage:'Изменение имущества' };
 const STYLES = Object.entries(SHOP).filter(([id])=>id.startsWith('int_')||/^frame_coffee_/.test(id)).map(([id,p])=>[id,p.title]);
 const COVERS = [['updates.jpg', 'Обновления'], ['events.jpg', 'События'], ['banner.jpg', 'Баннер'], ['hall.jpg', 'Новый зал']];
 const PAGE = 10;
@@ -227,7 +227,7 @@ async function vInventory(env,id,note){
 async function vAssetPage(env,id,group,page=0){
  if(!ASSET_GROUPS[group])return vInventory(env,id);const entries=await assetEntries(env,id,group);page=Math.max(0,Math.min(Math.ceil(entries.length/8)-1,Number(page)||0));
  const start=page*8,kb=entries.slice(start,start+8).map((a,i)=>[B(a.title,'p:ait:'+id+':'+group+':'+(start+i))]);
- const nav=[];if(page>0)nav.push(B('‹ Назад','p:agroup:'+id+':'+group+':'+(page-1)));if(start+8<entries.length)nav.push(B('Дальше ›','p:agroup:'+id+':'+group+':'+(page+1)));if(nav.length)kb.push(nav);kb.push([B('‹ Имущество','p:inv:'+id),...HOME]);
+ const nav=[];if(page>0)nav.push(B('‹ Назад','p:agroup:'+id+':'+group+':'+(page-1)));if(start+8<entries.length)nav.push(B('Дальше ›','p:agroup:'+id+':'+group+':'+(page+1)));if(nav.length)kb.push(nav);if(group==='badges')kb.push([B('Закрепить значок','p:pin:'+id),B('Снять закрепление','p:unpin:'+id)]);kb.push([B('‹ Имущество','p:inv:'+id),...HOME]);
  return{banner:'admin/'+({resources:'resources',staff:'staff',inventory:'items',badges:'badges'}[group]||'inventory')+'.png',text:'<b>'+esc(ASSET_GROUPS[group])+'</b>\n\n'+(entries.length?'Выбери предмет. Страница '+(page+1)+' из '+Math.ceil(entries.length/8)+'.':'Пока пусто. Снимок обновится при следующем входе игрока.')+(group==='resources'?'\nЕдиницы указаны в названии: для зерна — граммы, для молока и сиропа — миллилитры.':''),kb};
 }
 async function vAssetDetail(env,id,group,index){
@@ -269,6 +269,7 @@ export async function adminInput(env, chat, from, msgId, text) {
   const show = async v => { await tgApi(env, 'deleteMessage', { chat_id: chat, message_id: msgId }); if (st.msg_id) { const r = await adminPanel(env,'editMessageText',{chat_id:st.chat,message_id:st.msg_id,screen:st.mode},v,from); if (r && r.ok) return; } const r2 = await adminPanel(env,'sendMessage',{chat_id:chat},v,from); if (r2 && r2.ok) await setState(env, from, null, null, chat, r2.result.message_id); };
   const done = async v => { await clearState(env, from); await show(v); };
   const m = st.mode;
+  if(m==='pin_title'){const t=String(text).trim();if(t.length<2||t.length>40){await show(ask('Закреплённый значок','Нужно от 2 до 40 символов.','p:agroup:'+data.id+':badges:0'));return true;}await setState(env,from,'pin_dur',{id:data.id,title:t},st.chat,st.msg_id);await show({text:'<b>Закрепить «'+esc(t)+'»</b>\n\nНа какой срок?',kb:[[B('1 день','p:pind:'+data.id+':1'),B('3 дня','p:pind:'+data.id+':3'),B('7 дней','p:pind:'+data.id+':7')],[B('30 дней','p:pind:'+data.id+':30'),B('Навсегда','p:pind:'+data.id+':0')],[B('Отмена','p:agroup:'+data.id+':badges:0')]]});return true;}
   if(m==='asset_badge'){const title=String(text).trim();if(title.length<2||title.length>40){await show(ask('Название значка','Нужно от 2 до 40 символов.','p:inv:'+data.id));return true;}await done(await assetConfirmation(env,data.id,{kind:'badgegift',id:'newbadge',action:'give',title},from));return true;}
   if(m==='asset_amount'){
     const amount=data.data?.id==='rep'?Number(String(text).replace(',','.')):parseAmount(text),d=validateAssetAction({...data.data,amount});
@@ -324,7 +325,7 @@ export async function adminCallback(env, cq) {
   if(act==='icons'){await edit(await adminIconsView(env,from));return answer('');}
   const id = Number(parts[2]);
   // любое нажатие сбрасывает ожидание ввода, кроме подтверждений
-  if (!['allgo', 'pngo'].includes(act)) await setState(env, from, null, null, chat, mid);
+  if (!['allgo', 'pngo', 'pind'].includes(act)) await setState(env, from, null, null, chat, mid);
   if (act === 'mt') { await edit(await vMaint(env)); return answer(''); }
   if (act === 'mt1') { await setMaint(env, { on: true }, from); await edit(await vMaint(env, 'Включено. Игроки увидят заглушку в течение минуты.')); return answer('Техработы включены'); }
   if (act === 'mt0') { await setMaint(env, { on: false }, from); await edit(await vMaint(env, 'Выключено. Игра у всех продолжится в течение минуты.')); return answer('Техработы выключены'); }
@@ -353,6 +354,9 @@ export async function adminCallback(env, cq) {
   if(act==='agroup'){await edit(await vAssetPage(env,id,parts[3],parts[4]));return answer('');}
   if(act==='ait'){await edit(await vAssetDetail(env,id,parts[3],Number(parts[4])));return answer('');}
   if(act==='afind')return wait('asset_find',{id},ask('Найти предмет','Пришли название из магазина.','p:inv:'+id));
+  if(act==='pin')return wait('pin_title',{id},ask('Закреплённый значок','Пришли название от 2 до 40 символов. Значок будет показан рядом с кофейней, игрок не сможет его снять или сменить, пока не истечёт срок или ты не снимешь закрепление.','p:agroup:'+id+':badges:0'));
+  if(act==='pind'){const st=await getState(env,from);const t=st&&st.data?JSON.parse(st.data).title:null;if(!t)return answer('Начни заново: «Закрепить значок»',true);const days=[0,1,3,7,30].includes(Number(parts[3]))?Number(parts[3]):3;await addOp(env,id,'badgepin',days,t,from);await setState(env,from,null,null,chat,mid);await edit(await vAssetPage(env,id,'badges',0));return answer('Значок «'+t+'» закреплён'+(days?' на '+days+' дн.':' навсегда')+'. Применится при входе игрока',true);}
+  if(act==='unpin'){await addOp(env,id,'badgeunpin',null,null,from);await edit(await vAssetPage(env,id,'badges',0));return answer('Закрепление снимется при входе игрока',true);}
   if(act==='gl'){const level=[10,20,30].includes(Number(parts[3]))?Number(parts[3]):20;await edit(await assetConfirmation(env,id,{id:'legend'+level,kind:'staffgift',action:'give'},from));return answer('');}
   if(act==='glmenu'){await edit({text:'<b>Выдать сотрудника</b>\n\nСотрудник выйдет на смену при входе игрока.',kb:[[B('Легенда 10 уровня','p:gl:'+id+':10'),B('20 уровня','p:gl:'+id+':20')],[B('30 уровня','p:gl:'+id+':30')],[B('‹ Имущество','p:inv:'+id)]]});return answer('');}
   if(act==='ap'){

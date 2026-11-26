@@ -6866,10 +6866,6 @@ function renderMore(p){
       const row = card.lastElementChild;
       const add = (label, fn, cls) => { const bt = el(`<button class="btn ${cls||''}">${esc(label)}</button>`); bt.onclick = fn; row.appendChild(bt); };
       if(r.status==='open'){
-        add('Зайти познакомиться', ()=>{ toast(rivalAction(r.id,'visit')); save(); renderPanel(); }, 'ghost');
-        add('Переманить сотрудника', ()=>{ toast(rivalAction(r.id,'poach')); save(); renderPanel(); }, 'ghost');
-        add('Накидать фейковых отзывов', ()=>{ toast(rivalAction(r.id,'fake')); save(); renderPanel(); }, 'ghost');
-        add('Натравить санитарку', ()=>{ toast(rivalAction(r.id,'san')); save(); renderPanel(); }, 'red');
       }
       if(r.status==='sale') add('Переговоры о покупке', ()=>queueModal({kind:'rival', rid:r.id}, true));
       if(r.status==='sold') add('Перейти в зал', ()=>{ S.active = 'rv_'+r.id; syncScene(S.active); renderHud(); tab='up'; renderPanel(); });
@@ -10038,7 +10034,7 @@ MODAL15.focus = (box, m, btn) => {
   box.append(opts, btn('Без фокуса', closeModal, 'ghost'));
 };
 const _openDay26 = openDay;
-openDay = function(){ const r = _openDay26.apply(this, arguments); try{ if(!HOOK.quiet && S.level >= 2 && !(S.focus && S.focus.day===S.day) && !(modals||[]).some(m=>m.kind==='focus')) queueModal({kind:'focus'}); }catch(e){} return r; };
+openDay = function(){ const r = _openDay26.apply(this, arguments); /* 26.11: фокус дня убран */ return r; };
 
 /* продажа сети: новое название и чистый рейтинг */
 const _sellFr26 = sellFranchise;
@@ -16272,7 +16268,7 @@ function drawRoaster(x0,y0){ var t=performance.now()/1000; shadow(x0,y0,15); ctx
   Object.assign(TASK_GO,{inventory:['stock','Склад'], tips:['tips','Банка чаевых'], reviews:['guests','Гости'], delivery:['menu','Меню'], kitchen:['up','Улучшения'], rush:['team','Команда']});
   var _os=openSheet; openSheet=function(k,tab){ if(k==='hall'&&tab==='tips'){ queueModal({kind:'tips'},true); return; } return _os.apply(this,arguments); };
   var _rt=renderTasks; renderTasks=function(p){ _rt.apply(this,arguments); try{
-    if(S.level<2||p.querySelector('.bx-focus')) return;
+    return; /* 26.11: фокус дня убран */
     var cur=S.focus&&S.focus.day===S.day?FOCUS[S.focus.k]:null;
     var c=el('<div class="card bx-focus"><div class="row"><span class="t">Фокус дня</span><span class="sp"></span><span class="tag'+(cur?'':' warn')+'">'+(cur?esc(cur.n):'Не выбран')+'</span></div><div class="d">'+(cur?esc(cur.d)+' Сменить можно в следующий игровой день.':'Скорость, качество, продажи или атмосфера. Выбирается раз в день.')+'</div></div>');
     if(!cur){ var b=el('<div class="row"><button class="btn">Выбрать фокус</button></div>'); b.querySelector('button').onclick=function(){ queueModal({kind:'focus'},true); }; c.appendChild(b); }
@@ -16958,7 +16954,7 @@ var ACH=[
  ['absurd','Абсурд — это норма','Решить 25 абсурдных событий',function(){ return (S.c&&S.c.absurd||0)>=25; }],
  ['taps','Тыкалка','Потыкать в гостей 100 раз',function(f){ return (f.c.taps||0)>=100; }],
  ['news','Читатель газет','Прочитать 7 выпусков «Вестника района»',function(f){ return (f.c.news||0)>=7; }],
- ['joke','Остряк','Отшутиться на 10 отзывов',function(f){ return (f.c.joke||0)>=10; }],
+ ['joke','Писатель','Ответить на 10 отзывов своими словами',function(f){ return (f.c.joke||0)>=10; }],
  ['revenge','Мститель','Красиво ответить конкурентам 3 раза',function(f){ return (f.c.revenge||0)>=3; }],
  ['owl','Сова','Зайти в игру между 3 и 5 ночи',function(){ var h=new Date(Date.now()+3*3600000).getUTCHours(); return h>=3&&h<5; }],
  ['chat','Душа чата','Прочитать 50 сообщений в чате смены',function(f){ return (f.c.chat||0)>=50; }],
@@ -16983,6 +16979,154 @@ setInterval(function(){ try{ if(S) achTick(); }catch(e){} },6000);
 try{ var css=document.createElement('style'); css.textContent='.fchat{position:fixed;left:10px;top:calc(env(safe-area-inset-top,0px) + 112px);max-width:72%;background:rgba(36,26,20,.92);color:#f6ead6;border-radius:12px;padding:7px 11px 8px;font:500 13px/1.3 "Golos Text",sans-serif;z-index:60;transform:translateY(12px);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}.fchat.on{opacity:1;transform:none}.fchat i{display:block;font-style:normal;font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.6}.fchat b{color:#ffcf7a;margin-right:5px}'; document.head.appendChild(css); }catch(e){}
 window.FUN2={chat:chatSeq, quirk:newQuirk, weird:function(k){ var rr=rt(S.active), g=rr.guests.find(function(g){ return !g.reg&&!g.hidden; }); if(g){ g.weird=k||pick(WK); weirdActive=g; } return g; }, ach:achTick};
 })();
+/* ================= 26.11: ответ на отзыв своими словами, отзывов меньше ================= */
+(function(){
+var AFTER={bad:['Автор: «Ну ладно, может, зайду ещё»','Автор: «Не ожидал, что ответят»','Автор поставил лайк вашему ответу','Автор: «Посмотрим»','Автор молча удалил одну звезду из гнева. Шучу, не удалил'],
+  mid:['Автор: «Спасибо, что ответили»','Автор: «Окей, зайду ещё»','Под ответом три лайка','Автор: «Справедливо»'],
+  good:['Автор: «Вам спасибо!»','Автор: «Лучшая кофейня, я же говорил»','Под ответом 40 лайков','Автор: «Записал вас в избранное»','Автор: «Ну всё, теперь я постоянный»']};
+var _rr=renderReviews; renderReviews=function(p){ _rr.apply(this,arguments); try{
+  var list=(S.reviews||[]).slice(0,8), cards=p.querySelectorAll('.card.review');
+  cards.forEach(function(c,i){ var rv=list[i], row=c.querySelector('.row.wrap'); if(!rv||!row) return; row.innerHTML='';
+    var b=el('<button class="btn">Ответить</button>'); b.onclick=function(){ queueModal({kind:'rvreply', id:rv.id},true); }; row.appendChild(b); });
+  var empty=p.querySelector('.empty'); if(empty) empty.textContent='Отзывов пока нет. Они появляются сами, примерно раз-два за день. На каждый можно ответить своими словами.';
+}catch(e){} };
+MODAL15.rvreply=function(box,m,btn){ var rv=(S.reviews||[]).find(function(x){ return x.id===m.id; }); if(!rv||rv.reply){ closeModal(); return; }
+  box.append(el('<div class="eyebrow">Ответ на отзыв · '+rv.stars+' из 5</div>')); box.append(el('<h2>'+esc(rv.author)+'</h2>')); box.append(el('<p class="d">«'+esc(rv.text)+'»</p>'));
+  var ta=el('<textarea class="rv-ta" maxlength="280" rows="4" placeholder="Напиши ответ от имени кофейни"></textarea>'); box.append(ta);
+  var cnt=el('<div class="rv-cnt">0 / 280</div>'); box.append(cnt); ta.addEventListener('input',function(){ cnt.textContent=ta.value.length+' / 280'; });
+  box.append(btn('Опубликовать',function(){ var t=ta.value.replace(/\s+/g,' ').trim(); if(t.length<2){ toast('Напиши хоть пару слов'); return; }
+    rv.reply='own'; rv.replyText=t; var bad=rv.stars<=2, good=rv.stars>=4; rv.after=pick(AFTER[bad?'bad':good?'good':'mid']);
+    repAdd(bad?0.02:0.01); try{ meter('soul',1); }catch(e){} try{ taskProg('reviews',1); }catch(e){}
+    try{ S.fun=S.fun||{c:{}}; S.fun.c.joke=(S.fun.c.joke||0)+1; }catch(e){}
+    S.replyLog=(S.replyLog||[]).concat([{d:S.day, s:rv.stars, r:rv.text.slice(0,120), t:t, at:Date.now()}]).slice(-50);
+    save(); closeModal(); toast('Ответ опубликован'); try{ sfx('tap'); }catch(e){} renderSheet(); }));
+  box.append(btn('Отмена',closeModal,'ghost'));
+  setTimeout(function(){ try{ ta.focus(); }catch(e){} },150); };
+var _rt=reviewTick; reviewTick=function(){ if(!chance(0.33)) return; return _rt.apply(this,arguments); };
+var _nt=newTasks; newTasks=function(){ var r=_nt.apply(this,arguments); try{ (S.tasks||[]).forEach(function(t){ if(t.kind==='reviews'&&!t.done&&!t.prog){ t.goal=1; t.label='Ответить на отзыв'; } }); }catch(e){} return r; };
+try{ (S&&S.tasks||[]).forEach(function(t){ if(t.kind==='reviews'&&!t.done&&t.goal>1&&!t.prog){ t.goal=1; t.label='Ответить на отзыв'; } }); }catch(e){}
+try{ var css=document.createElement('style'); css.textContent='.rv-ta{width:100%;box-sizing:border-box;border:1.5px solid #e2cfae;border-radius:10px;padding:9px 10px;font:500 15px/1.35 "Golos Text",sans-serif;background:#fffaf0;color:#2a1a10;resize:none;margin:6px 0 2px}.rv-cnt{font-size:11px;opacity:.6;text-align:right;margin-bottom:8px}'; document.head.appendChild(css); }catch(e){}
+})();
+
+/* ================= 26.11: чаевые сами, личные чаевые, собери заказ сам («я передумал»), новые места для тапов, закреплённые значки ================= */
+(function(){
+function M(b){ var l=Math.max(1,(S&&S.level)||1); return Math.round(b*(1+0.25*(l-1))/50)*50; }
+function chat(n,t){ try{ if(window.funChat) funChat(n,t); }catch(e){} }
+
+/* ---------- чаевые: команда делит сама в конце дня ---------- */
+var _cd=closeDay; closeDay=function(){ var j=(S&&S.tips&&S.tips.jar)||0, msg=null; if(j>0){ try{ msg=tipsGive(); }catch(e){} } var r=_cd.apply(this,arguments); if(msg&&!HOOK.quiet) setTimeout(function(){ chat('Управляющий', msg); },1500); return r; };
+var _qm=queueModal; queueModal=function(m,front){ if(m&&m.kind==='tips'){ toast('Чаевые команда делит сама в конце дня. Сейчас в банке '+fmt((S.tips&&S.tips.jar)||0)+' ₽'); return; } return _qm.apply(this,arguments); };
+var _nt=newTasks; newTasks=function(){ var r=_nt.apply(this,arguments); try{ S.tasks=(S.tasks||[]).filter(function(t){ return t.kind!=='tips'; }); }catch(e){} return r; };
+try{ if(S&&S.tasks) S.tasks=S.tasks.filter(function(t){ return t.kind!=='tips'||t.done; }); }catch(e){}
+
+/* ---------- личные чаевые: тебе лично, когда сам обслужил ---------- */
+var PT=[
+ ['Пуговицу и записку «на чёрный день»',0],['Лотерейный билет. Проверили: проигрыш. Как и вся жизнь',0],['Совет: «Никогда не открывай кофейню». Поздно',0],
+ ['Визитку ритуального агентства со скидкой 10%. «На всякий случай»',0],['Пять рублей и взгляд, полный жалости',5],['Купон «Второй развод бесплатно»',0],
+ ['Сто рублей и фразу «купи себе нормальную работу»',100],['Обещание вписать тебя в завещание. Гостю 24 года',0],['Половинку сэндвича. Надкусанную',0],
+ ['Скрепку со словами «ты же собираешь себя по кусочкам, пригодится»',0],['Пакетик сахара с подписью «подсласти себе жизнь»',0],
+ ['Чек из ресторана на 40 000. Видимо, чтобы ты знал своё место',0],['Голосовое на четыре минуты. Первые две секунды «спасибо», дальше тишина',0],
+ ['Фантик. Без конфеты. Без объяснений',0],['Купюру в 500 рублей, нарисованную ребёнком. Красивую',0],['Монету «на удачу». Через минуту гость вернулся и забрал её',0],
+ ['Кактус в горшке: «Он такой же колючий, как ваш бариста»',0],['Билет в один конец до Воркуты. «Тебе нужнее»',0],['Номер своего психолога. «Он мне больше не помогает, может, тебе поможет»',0],
+ ['2 000 рублей и записку «за то, что не спросил, почему я плачу»',2000],['Тысячу рублей одной монетой по десять. Считали всей сменой',1000],
+ ['Пятьсот рублей и просьбу «никому не говори, что я тут был»',500],['Триста рублей. «Это не чаевые, это аванс за следующий раз»',300],
+ ['Двести рублей и крошки от круассана на всей стойке',200],['Пятьдесят рублей, завёрнутые в салфетку с номером телефона. Номер мамы гостя',50]
+];
+var ptLast=0;
+function personalTip(g){ if(Date.now()-ptLast<90000||!chance(0.12)) return; ptLast=Date.now(); var t=pick(PT), v=t[1]?M(t[1]):0;
+  if(v) income(v,'events','Личные чаевые'); try{ if(g) bubble2(0,0,v?'Это лично вам':'Это вам. Лично',2200,g); }catch(e){}
+  setTimeout(function(){ toast('Тебе лично оставили: '+t[0]+(v?' (+'+fmt(v)+' ₽)':'')); },400); try{ S.fun=S.fun||{c:{}}; S.fun.c.ptips=(S.fun.c.ptips||0)+1; }catch(e){} }
+var _co=completeOrder; completeOrder=function(id,g,tapped){ var r=_co.apply(this,arguments); try{ if(tapped&&!HOOK.quiet) personalTip(g); }catch(e){} return r; };
+
+/* ---------- собери заказ сам ---------- */
+var MILKF={'Обычное':'', 'Овсяное':'на овсяном', 'Кокосовое':'на кокосовом', 'Без лактозы':'на безлактозном'};
+var ADDF={'Без сахара':'без сахара', 'Карамель':'с карамелью', 'Ваниль':'с ванилью', 'Лаванда':'с лавандой'};
+function mkOrder(){ var d=pick(D_DRINKS), nm=D_NOMILK.indexOf(d)>=0; return {d:d, s:pick(D_SIZES), m:nm?'':(chance(0.55)?pick(D_MILKS.slice(1)):'Обычное'), a:chance(0.6)?pick(D_ADDS):''}; }
+function sayOrder(o){ return [o.d.toLowerCase(), o.s, MILKF[o.m]||'', ADDF[o.a]||''].filter(Boolean).join(' '); }
+var ASK=['Мне, пожалуйста, ','Будьте добры, ','Так, мне ','Сделайте мне ','Мне как обычно: ','Ой, давайте ','Мне срочно '];
+var CHANGE=[
+ ['m','Ой, а можно на овсяном? Я передумал. Переделайте'],['m','Знаете, давайте на кокосовом. Я сегодня тропический'],['m','Стоп, я вспомнил, у меня лактоза. Переделайте на безлактозном'],
+ ['s','А можно побольше? Я передумал, давайте L. Новый, да'],['s','Ой, это много. Мне бы S. Переделаете?'],
+ ['a','А можно без сахара? Я на диете. С сегодняшнего дня. С этой секунды'],['a','Знаете, добавьте лаванду. Хочу почувствовать себя в Провансе'],['a','Уберите карамель, мне тренер запретил. Он смотрит в окно'],
+ ['d','Я передумал. Хочу раф. Нет, не этот, новый'],['d','Слушайте, а давайте капучино. Латте я уже не хочу. Совсем'],['d','Ой, мне кажется, я хотел флэт уайт. Хотя я не знаю, что это. Давайте его']];
+var GRUMBLE=['Это не то, что я просил. Но я выпью. С обидой','Ну... ладно. Я запомню','Вы перепутали, но я сегодня добрый','Это вообще что? А, ладно, вкусно'];
+var THANKS=['Идеально. Вы читаете мысли','Вот это я понимаю, сервис','Наконец-то кто-то меня услышал','Запомню вас. В хорошем смысле'];
+var mkT=0;
+function chOk(c,o){ var t=c[1];
+  if(c[0]==='m') return D_NOMILK.indexOf(o.d)<0 && !((/овсян/.test(t)&&o.m==='Овсяное')||(/кокос/.test(t)&&o.m==='Кокосовое')||(/лактоз/.test(t)&&o.m==='Без лактозы'));
+  if(c[0]==='s') return /L\./.test(t)?o.s!=='L':o.s!=='S';
+  if(c[0]==='a') return /без сахара/.test(t)?o.a!=='Без сахара':/лаванд/.test(t)?o.a!=='Лаванда':o.a==='Карамель';
+  if(c[0]==='d') return !((/раф/i.test(t)&&o.d==='Раф')||(/капучино/.test(t)&&o.d==='Капучино')||(/флэт/.test(t)&&o.d==='Флэт уайт'));
+  return true; }
+function mkGuest(){ var r=rt(S.active); var g=r.queue[0]; return g&&g.state==='queue'?g:null; }
+MODAL15.mk=function(box,m,btn){ var st=m.st||(m.st={o:mkOrder(), stage:0, cart:null, changed:false}); var o=st.o;
+  box.append(el('<div class="eyebrow">Собери заказ сам</div>'));
+  box.append(el('<h2>'+(st.stage===0?'Гость у кассы':'Гость передумал')+'</h2>'));
+  box.append(el('<div class="mk-say">«'+esc(st.stage===0?st.ask+sayOrder(o):st.change)+'»</div>')); if(st.stage) box.append(el('<div class="mk-now">Теперь заказ: '+esc(sayOrder(o))+'</div>'));
+  var cur={d:null,s:null,m:null,a:''}, wrap=el('<div class="mkw"></div>'); box.append(wrap);
+  function chips(label,arr,key,dis){ var gp=el('<div class="dgrp"><div class="l">'+label+'</div><div class="dchips"></div></div>'); arr.forEach(function(v){ var b=el('<button aria-pressed="'+(cur[key]===v)+'">'+v+'</button>'); if(dis) b.disabled=true; b.onclick=function(){ cur[key]=(cur[key]===v&&key==='a')?'':v; if(key==='d'&&D_NOMILK.indexOf(v)>=0) cur.m=''; draw(); }; gp.querySelector('.dchips').appendChild(b); }); return gp; }
+  function draw(){ wrap.innerHTML=''; var nm=cur.d&&D_NOMILK.indexOf(cur.d)>=0; wrap.append(chips('Напиток',D_DRINKS,'d'),chips('Размер',D_SIZES,'s'),chips('Молоко',D_MILKS,'m',nm),chips('Добавка, можно без',D_ADDS,'a'));
+    var ready=cur.d&&cur.s&&(nm||cur.m); var b=el('<button class="btn"'+(ready?'':' disabled')+'>Отдать гостю</button>'); b.onclick=function(){ give(); }; wrap.appendChild(b); }
+  function same(a,b){ return a.d===b.d&&a.s===b.s&&(a.m||'Обычное')===(b.m||'Обычное')&&(a.a||'')===(b.a||''); }
+  function give(){ var got={d:cur.d,s:cur.s,m:D_NOMILK.indexOf(cur.d)>=0?'':cur.m,a:cur.a}; var ok=same(got,o), g=mkGuest();
+    if(ok&&st.stage===0&&chance(0.3)){ var ch=pick(CHANGE.filter(function(c){ return chOk(c,o); })), n={d:o.d,s:o.s,m:o.m,a:o.a};
+      if(ch[0]==='m'){ if(D_NOMILK.indexOf(n.d)>=0) n.d='Латте'; var mm=D_MILKS.filter(function(x){ return x!==n.m&&x!=='Обычное'; }); n.m=/овсян/.test(ch[1])?'Овсяное':/кокос/.test(ch[1])?'Кокосовое':/лактоз/.test(ch[1])?'Без лактозы':pick(mm); }
+      if(ch[0]==='s'){ n.s=/L\./.test(ch[1])?'L':/ S/.test(ch[1])?'S':pick(D_SIZES.filter(function(x){return x!==n.s;})); if(n.s===o.s) n.s=o.s==='L'?'S':'L'; }
+      if(ch[0]==='a'){ n.a=/без сахара/.test(ch[1])?'Без сахара':/лаванд/.test(ch[1])?'Лаванда':/карамель/.test(ch[1])?'':pick(D_ADDS.filter(function(x){return x!==n.a;})); if(n.a===o.a) n.a=o.a?'':'Ваниль'; }
+      if(ch[0]==='d'){ n.d=/раф/i.test(ch[1])?'Раф':/капучино/.test(ch[1])?'Капучино':/флэт/.test(ch[1])?'Флэт уайт':pick(D_DRINKS.filter(function(x){return x!==n.d;})); if(n.d===o.d) n.d=o.d==='Раф'?'Латте':'Раф'; if(D_NOMILK.indexOf(n.d)<0&&!n.m) n.m='Обычное'; if(D_NOMILK.indexOf(n.d)>=0) n.m=''; }
+      st.o=n; st.stage=1; st.change=ch[1]; try{ if(g) bubble2(0,0,'Я передумал',2000,g); sfx('door'); }catch(e){} closeModal(); queueModal(m,true); return; }
+    closeModal(); var tipv=ok?M(st.stage?320:180):0;
+    if(ok){ income(tipv,'events','Собрал заказ сам'); addXp(st.stage?14:8); repAdd(0.005); toast((st.stage?'Переделал и попал. ':'Точно в цель. ')+'Чаевые +'+fmt(tipv)+' ₽'); try{ if(g) bubble2(0,0,pick(st.stage?['Вот теперь да. Хотя знаете, я бы и тот выпил','Отлично. Завтра опять передумаю','Спасибо за терпение. Его у вас много']:THANKS),2600,g); sfx('coin'); }catch(e){} try{ if(g) personalTip(g); }catch(e){} }
+    else { toast('Не совсем то, что просили'); try{ if(g) bubble2(0,0,pick(GRUMBLE),2600,g); }catch(e){} }
+    try{ S.fun=S.fun||{c:{}}; S.fun.c.mk=(S.fun.c.mk||0)+1; }catch(e){} save(); }
+  draw(); box.append(btn('Пусть команда соберёт',closeModal,'ghost')); };
+function mkTry(){ if(!S||!S.isOpen||HOOK.quiet||modals.length||sheet||document.hidden||(S.rush&&S.rush.until>absNow())) return false; if(!mkGuest()) return false;
+  queueModal({kind:'mk', st:{o:mkOrder(), stage:0, ask:pick(ASK)}},false); return true; }
+
+/* ---------- новые места для тапов: монетка, телефон, птица ---------- */
+var COINS=[], PHONE=null, BIRD=null, phT=150, brT=220, seenLeave=new WeakSet();
+function phoneSpot(){ return {x:136, y:(typeof BAR_TOP!=='undefined'?BAR_TOP:182)+3}; }
+function drawCoin(c,now){ ctx.save(); var __p=[c.x,c.y]; ctx.translate(__p[0],__p[1]); ctx.scale(1.5,1.5); ctx.translate(-__p[0],-__p[1]); try{  var b=Math.sin(now/300+c.x)*0.6; ctx.save(); ctx.globalAlpha=0.3; ctx.fillStyle='#000'; ctx.beginPath(); ctx.ellipse(c.x,c.y+1,3,1,0,0,7); ctx.fill(); ctx.restore(); ctx.fillStyle='#e8b830'; ctx.beginPath(); ctx.ellipse(c.x,c.y-1+b,2.8,2,0,0,7); ctx.fill(); ctx.fillStyle='#fff3b0'; ctx.fillRect(c.x-1,c.y-2+b,1,1);  }finally{ ctx.restore(); } }
+function drawPhone(now){ ctx.save(); var __p=[phoneSpot().x,phoneSpot().y]; ctx.translate(__p[0],__p[1]); ctx.scale(1.7,1.7); ctx.translate(-__p[0],-__p[1]); try{  var p=phoneSpot(), sh=Math.sin(now/40)*1.2; ctx.fillStyle='#2a2a30'; ctx.fillRect(p.x-4+sh,p.y-6,8,5); ctx.fillStyle='#55c06a'; ctx.fillRect(p.x-3+sh,p.y-5,6,3); if((now/250|0)%2){ ctx.strokeStyle='#e04a3a'; ctx.lineWidth=0.8; ctx.beginPath(); ctx.arc(p.x+sh,p.y-4,7,-2.4,-0.7); ctx.stroke(); ctx.beginPath(); ctx.arc(p.x+sh,p.y-4,10,-2.3,-0.8); ctx.stroke(); }  }finally{ ctx.restore(); } }
+function drawBird(now){ ctx.save(); var __p=[BIRD.x,BIRD.y]; ctx.translate(__p[0],__p[1]); ctx.scale(1.8,1.8); ctx.translate(-__p[0],-__p[1]); try{  var b=BIRD, hop=Math.abs(Math.sin(now/180))*1.5; ctx.fillStyle='#7a6a5a'; ctx.beginPath(); ctx.ellipse(b.x,b.y-3-hop,3.4,2.4,0,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(b.x+2.6,b.y-5.2-hop,1.7,0,7); ctx.fill(); ctx.fillStyle='#e8a02a'; ctx.fillRect(b.x+4,b.y-5.4-hop,1.6,0.8); ctx.fillStyle='#111'; ctx.fillRect(b.x+3,b.y-5.8-hop,0.8,0.8); ctx.fillStyle='#5a4a3a'; ctx.fillRect(b.x-4.5,b.y-3.5-hop,2,1.2);  }finally{ ctx.restore(); } }
+var _sup=sceneUpgradeProps; sceneUpgradeProps=function(st,u,items,now,r){ _sup.apply(this,arguments); try{ if(st.outdoor||!S) return;
+  COINS.forEach(function(c){ if(c.room===S.active) items.push({y:c.y,f:function(){ drawCoin(c,now); }}); });
+  if(PHONE&&S.active==='main') items.push({y:(typeof BAR_FACE!=='undefined'?BAR_FACE:192)+1.5,f:function(){ drawPhone(now); }});
+  if(BIRD&&S.active==='main') items.push({y:BIRD.y+0.5,f:function(){ drawBird(now); }}); }catch(e){} };
+window.sceneUpgradeProps=sceneUpgradeProps;
+var CALLS=[[1,'Заказ навынос на шесть капучино. Курьер уже едет'],[1,'Офис напротив заказал кофе на всех. Опять'],[0,'Мама: «Ты поел?»'],[0,'Это налоговая? А, кофейня. Тогда мне раф'],[0,'Гудки. Кто-то просто дышит в трубку и кладёт'],[0,'«Здравствуйте, вас беспокоит служба безопасности банка». Положили'],[1,'Спрашивают, можно ли забронировать столик на свидание. Можно'],[0,'Хотели заказать пиццу. Пришлось расстроить']];
+var STEAL=['Голубь утащил круассан и съел его на подоконнике у всех на глазах','Воробей ушёл с половиной эклера. Гордо','Птица клюнула сахар из сахарницы и улетела. Сахарница перевёрнута'];
+cv.addEventListener('pointerdown',function(e){ try{ if(sheet||!S||modals.length) return; var b=cv.getBoundingClientRect(); var x=OX+(e.clientX-b.left)/b.width*VW, y=(e.clientY-b.top)/b.height*H, used=false;
+  for(var i=0;i<COINS.length;i++){ var c=COINS[i]; if(c.room===S.active&&Math.abs(x-c.x)<12&&Math.abs(y-c.y)<11){ COINS.splice(i,1); var v=chance(0.15)?0:M(c.v); if(v){ income(v,'tips','Монетка с пола'); try{ tapFx(c.x,c.y-6); sfx('coin'); }catch(err){} } else toast(pick(['Это была пуговица','Это была крышка от бутылки','Монетка оказалась шоколадной. Съел'])); used=true; break; } }
+  if(!used&&PHONE&&S.active==='main'){ var p=phoneSpot(); if(Math.abs(x-p.x)<14&&Math.abs(y-p.y-4)<14){ var c2=PHONE.call; PHONE=null; if(c2[0]){ var v2=M(1200); income(v2,'events','Заказ по телефону'); toast(c2[1]+'. +'+fmt(v2)+' ₽'); try{ sfx('coin'); }catch(err){} } else chat('Телефон', c2[1]); used=true; } }
+  if(!used&&BIRD&&S.active==='main'&&Math.abs(x-BIRD.x)<14&&y>BIRD.y-20&&y<BIRD.y+6){ BIRD=null; try{ sfx('clink'); }catch(err){} toast(pick(['Птица улетела, обиженно чирикнув','Кыш! Голубь ушёл пешком, с достоинством','Воробей улетел и кажется, показал жест'])); used=true; }
+  if(used){ e.stopImmediatePropagation(); e.preventDefault(); } }catch(err){} },true);
+var _bt=bubblesTick; bubblesTick=function(dt){ _bt.apply(this,arguments); try{ if(!S||!S.isOpen||HOOK.quiet) return; var r=rt(S.active);
+  r.guests.forEach(function(g){ if(g.state==='leave'&&!seenLeave.has(g)){ seenLeave.add(g); if(COINS.length<3&&chance(0.07)&&g.y<DOOR[1]-10) COINS.push({x:g.x+R(-6,6), y:g.y+2, v:R(40,150), room:S.active, t:Date.now()}); } });
+  COINS=COINS.filter(function(c){ return Date.now()-c.t<180000; });
+  phT-=dt; if(phT<=0){ phT=R(240,420); if(!PHONE&&S.active==='main') PHONE={call:pick(CALLS), t:Date.now()}; }
+  if(PHONE&&Date.now()-PHONE.t>22000){ PHONE=null; }
+  brT-=dt; if(brT<=0){ brT=R(360,600); if(!BIRD&&S.active==='main'){ var tbs=(function(){try{return bcPlacesTables();}catch(e){return [];}})().filter(function(t){ return t&&t.x!=null; }); var tb=tbs.length?pick(tbs):null; if(tb) BIRD={x:tb.x+(chance(0.5)?-13:13), y:tb.y-13, t:Date.now()}; } }
+  if(BIRD&&Date.now()-BIRD.t>25000){ BIRD=null; spend(M(150),'other','Птица утащила выпечку'); chat('Мойщица', pick(STEAL)); }
+  mkT-=dt; if(mkT<=0){ mkT=mkTry()?R(330,520):30; }
+}catch(e){} };
+mkT=R(150,240);
+
+/* ---------- закреплённые значки от администрации ---------- */
+function pinSlot(id){ try{ var sl=bcBadgeSlots().filter(function(x){ return x&&x!==id; }); S.badgeSlots=[id].concat(sl).slice(0,3); while(S.badgeSlots.length<3) S.badgeSlots.push(null); }catch(e){} S.badgeOn=id; }
+function pinId(t){ var h=0; for(var i=0;i<t.length;i++) h=(h*31+t.charCodeAt(i))|0; return 'pin_'+Math.abs(h); }
+var _ot=onTrack; onTrack=function(r){ try{ if(r&&r.ok&&S&&Array.isArray(r.ops)) r.ops.forEach(function(o){
+    if(o.op==='badgepin'&&o.text){ var t=String(o.text).slice(0,40), id=pinId(t); badgeAdd(id,t,'Закреплён администрацией'); var days=Number(o.amount)||0; var prev=(S.badgePin&&S.badgePin.prev)||S.badgeOn; S.badgePin={id:id, until:days?Date.now()+days*86400000:0, prev:prev===id?null:prev}; pinSlot(id); try{ renderHud(); structDirty=true; }catch(e){} toast('Администрация закрепила значок «'+t+'»'+(days?' на '+days+' дн.':'')); }
+    if(o.op==='badgeunpin'&&S.badgePin){ var pv=S.badgePin.prev; S.badgePin=null; toast('Закреплённый значок снят'); } }); }catch(e){} return _ot.apply(this,arguments); };
+try{ var _bch=bcBadgeChoose; bcBadgeChoose=function(id,slot){ var p=S&&S.badgePin; if(p&&(slot===0||id===p.id)){ toast('Первое место занято значком от администрации'); return; } return _bch.apply(this,arguments); }; }catch(e){}
+setInterval(function(){ try{ var p=S&&S.badgePin; if(!p) return; var exists=(S.badgeList||[]).some(function(b){ return b.id===p.id; });
+  if(!exists||(p.until&&Date.now()>p.until)){ S.badgePin=null; try{ bcBadgeSlots(); }catch(e){} save(); return; }
+  if(S.badgeOn!==p.id||(S.badgeSlots&&S.badgeSlots[0]!==p.id)){ pinSlot(p.id); toast('Этот значок закреплён администрацией и не снимается'); save(); } }catch(e){} },1500);
+
+try{ var css=document.createElement('style'); css.textContent='.mk-say{background:#fff6e0;border:1.5px dashed #e2cfae;border-radius:12px;padding:10px 12px;margin:4px 0 10px;font:600 15px/1.35 "Golos Text",sans-serif;color:#2a1a10}.mk-now{font:600 13px var(--body);color:#8a7258;margin:-4px 0 10px}.mkw .dgrp{margin:0 0 8px}.mkw .dgrp .l{font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:#8a7258;margin-bottom:4px}.mkw .dchips button{background:#f6efe2;color:#2a1d15;border:2px solid #cdb894;border-radius:8px}.mkw .dchips button[aria-pressed="true"]{background:#2a1d15;color:#f6efe2;border-color:#2a1d15}.mkw .dchips button[disabled]{opacity:.3}.mkw .btn{width:100%;margin-top:6px}'; document.head.appendChild(css); }catch(e){}
+window.PLAY={mk:function(){ return mkTry(); }, phone:function(){ PHONE={call:pick(CALLS),t:Date.now()}; }, bird:function(){ var tb=(function(){try{return bcPlacesTables();}catch(e){return [];}})().filter(function(t){return t&&t.x!=null;})[0]; if(tb) BIRD={x:tb.x-13,y:tb.y-13,t:Date.now()}; }, coin:function(){ COINS.push({x:120,y:350,v:100,room:S.active,t:Date.now()}); }, coins:function(){ return COINS; }};
+})();
+
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
