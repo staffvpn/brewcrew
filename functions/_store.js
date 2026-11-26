@@ -1499,7 +1499,7 @@ export const STORE_ITEMS = {
   },
   "int_lux_art_deco": {
     "title": "Интерьер «Ар-деко»",
-    "desc": "Чёрный мрамор, латунные арки и янтарный свет.",
+    "desc": "Тёмный паркет, латунные веера и изумрудный бархат.",
     "stars": 599,
     "once": 1,
     "category": "style",
@@ -1587,7 +1587,7 @@ export const STORE_ITEMS = {
   },
   "int_lux_gallery": {
     "title": "Интерьер «Белая галерея»",
-    "desc": "Известняк, терраццо и кобальтовая мебель.",
+    "desc": "Светлый известняк, терраццо с кобальтовой крошкой и синие кресла.",
     "stars": 599,
     "once": 1,
     "category": "style",
@@ -1598,7 +1598,7 @@ export const STORE_ITEMS = {
   },
   "int_lux_violet": {
     "title": "Интерьер «Сумерки»",
-    "desc": "Сливовые стены, сиреневый бархат и лунная подсветка.",
+    "desc": "Глубокий индиго, угольное дерево, винный бархат и тёплый бронзовый свет.",
     "stars": 599,
     "once": 1,
     "category": "style",
@@ -1625,6 +1625,28 @@ export const STORE_ITEMS = {
     "once": 1,
     "category": "style",
     "skin": "int_lux_copper",
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
+  },
+  "int_lux_observatory": {
+    "title": "Интерьер «Обсерватория»",
+    "desc": "Ночной сине-зелёный зал, бронза и кофемашина в духе старого телескопа.",
+    "stars": 599,
+    "once": 1,
+    "category": "style",
+    "skin": "int_lux_observatory",
+    "oldCoins": 0,
+    "currency": "XTR",
+    "gamePrice": 0
+  },
+  "int_lux_coral": {
+    "title": "Интерьер «Коралловый риф»",
+    "desc": "Коралловая штукатурка, светлый травертин и бирюзовая эмаль.",
+    "stars": 599,
+    "once": 1,
+    "category": "style",
+    "skin": "int_lux_coral",
     "oldCoins": 0,
     "currency": "XTR",
     "gamePrice": 0

@@ -7,7 +7,7 @@ const selected=()=>S?.c?.labLongTable;
 const active=()=>loaded&&canPlace()&&styles.some(s=>s[0]===selected());
 const seats=()=>[{table:8,side:0,x:84,y:467},{table:8,side:1,x:84,y:498},{table:9,side:0,x:184,y:467},{table:9,side:1,x:184,y:498},{table:10,side:0,x:134,y:467},{table:10,side:1,x:134,y:498}];
 const seat=e=>active()&&e&&S.active==='main'&&e.state==='sit'?seats().find(s=>{const q=slotOf('main',e.seat);return q[2]==='table'&&q[3]===s.table&&q[4]===s.side;}):null;
-function drawPart(kind,x,bottom,width,height){const im=art[selected()]?.[kind];if(!im?.naturalWidth)return;const h=height||im.naturalHeight*width/im.naturalWidth;ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(im,x-width/2,bottom-h,width,h);ctx.restore();}
+function drawPart(kind,x,bottom,width,height){const original=art[selected()]?.[kind];if(!original?.naturalWidth)return;const im=window.bcLuxuryLongFurniture?.(kind,original)||original;const h=height||im.naturalHeight*width/im.naturalWidth;ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(im,x-width/2,bottom-h,width,h);ctx.restore();}
 const oldLayout=layoutSlots,oldCount=tableCount,oldTable=sceneTable,oldChair=sceneChair,oldProps=sceneUpgradeProps;
 window.layoutSlots=function(){oldLayout.apply(this,arguments);if(!active()||TABLES.length<10)return;
  TABLES[8]={x:84,y:476};TABLES[9]={x:184,y:476};TABLES.push({x:134,y:476});
