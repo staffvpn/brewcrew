@@ -16755,6 +16755,7 @@ var FILLER=['Голуби у метро объявили забастовку: �
 function firstSentence(t){ t=String(t||'').replace(/\s+/g,' ').trim(); if(t.length<=190) return t; var cut=t.slice(0,190), k=Math.max(cut.lastIndexOf('. '),cut.lastIndexOf('! '),cut.lastIndexOf('? ')); return k>40?cut.slice(0,k+1):cut.replace(/\s+\S*$/,'')+'…'; }
 var _cd=closeDay; closeDay=function(){ var day=S.day; var r=_cd.apply(this,arguments); try{ var items=(S.news||[]).slice(); S.news=[]; if(!items.length&&chance(0.5)) return r;
   items=items.sort(function(){ return Math.random()-0.5; }).slice(0,2); var head=items.map(function(x){ return {h:x.t, b:firstSentence(x.out)}; }); head.push({h:'Новости района', b:pick(FILLER)});
+  if(HOOK.quiet||Date.now()<(window.__retUntil||0)){ S.newsAway=(S.newsAway||[]).concat(head.slice(0,2)).slice(-4); return r; }
   S.newsLast={day:day, items:head}; queueModal({kind:'news'},false); }catch(e){} return r; };
 MODAL15.news=function(box,m,btn){ var n=S.newsLast||{items:[]}; box.append(el('<div class="eyebrow">Вестник района · день '+(n.day||S.day)+'</div>')); box.append(el('<h2>'+esc(String(S.name||'Кофейня'))+' снова в новостях</h2>'));
   n.items.forEach(function(x,i){ box.append(el('<div class="fun-news'+(i===0?' lead':'')+'"><b>'+esc(x.h)+'</b><span>'+esc(x.b)+'</span></div>')); });
@@ -16791,9 +16792,25 @@ var gT=25; var _bt=bubblesTick; bubblesTick=function(dt){ _bt.apply(this,argumen
   var line=g.state==='sit'&&chance(0.5)?pick(TAP_S):pickLine(GUEST_LINES14,'g'); bubble2(0,0,line,3000,g); }catch(e){} };
 
 /* показываем «Пока тебя не было», когда игрок вернулся */
-setInterval(function(){ try{ if(!S||!S.missed||!S.missed.length||document.hidden||sheet||modals.length) return; queueModal({kind:'missed'},false); }catch(e){} },4000);
+setInterval(function(){ try{ if(!S||!S.missed||!S.missed.length||document.hidden||sheet||modals.length||Date.now()<(window.__retUntil||0)+5000) return; queueModal({kind:'missed'},false); }catch(e){} },4000);
 
 try{ var st=document.createElement('style'); st.textContent='.fun-miss,.fun-news{display:flex;flex-direction:column;gap:3px;padding:9px 0;border-top:1px dashed rgba(90,60,30,.25)}.fun-miss b,.fun-news b{font:800 14px "Golos Text",sans-serif}.fun-miss span,.fun-news span{font-size:13px;line-height:1.35}.fun-o{opacity:.7;font-style:italic}.fun-news.lead b{font-size:17px;text-transform:uppercase;letter-spacing:.02em}'; document.head.appendChild(st); }catch(e){}
+})();
+/* 26.11: после долгого отсутствия — одна газета вместо пачки окон */
+(function(){
+  var incN=0;
+  var _cu=catchUp; catchUp=function(){ window.__retUntil=Date.now()+10000; incN=0; return _cu.apply(this,arguments); };
+  var _qm=queueModal; queueModal=function(m,front){ try{ if(m&&Date.now()<(window.__retUntil||0)){
+      if(m.kind==='news'||m.kind==='missed') return;
+      if(m.kind==='inc'){ incN++; if(incN>1) return; }
+      if(m.kind==='away'){ m.extra={news:(S.newsAway||[]).splice(0), missed:(S.missed||[]).splice(0)}; save(); } } }catch(e){} return _qm.apply(this,arguments); };
+  var _sm=showModal; showModal=function(){ var r=_sm.apply(this,arguments); try{ var m=modals[0]; if(!m||m.kind!=='away'||!m.extra||m._x) return r; m._x=1;
+      var root=document.getElementById('modalRoot'), btn=root&&root.querySelector('button.btn:last-of-type'); if(!btn) return r;
+      var items=[]; (m.extra.missed||[]).slice(-3).forEach(function(x){ items.push(['Без тебя: '+x.t, 'Команда решила: «'+x.o+'». '+x.out]); });
+      (m.extra.news||[]).forEach(function(x){ if(items.length<5) items.push([x.h, x.b]); });
+      items.slice(0,5).forEach(function(it){ btn.parentNode.insertBefore(el('<div class="newsitem"><b>'+esc(it[0])+'</b><p>'+esc(it[1])+'</p></div>'), btn); });
+    }catch(e){} return r; };
+  setInterval(function(){ if(Date.now()<(window.__retUntil||0)) return; },5000);
 })();
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
