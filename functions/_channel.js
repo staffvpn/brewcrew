@@ -117,6 +117,7 @@ export async function channelTick(env, origin) {
         await mark(env, skey, ok); return; } }
     // Елизавета из «кофеРУинер»: пост и рассылка в момент запуска
     if (await lizaTick(env, origin)) return;
+    if (await goalPushTick(env, origin)) return;
     if (await winterPostTick(env, origin)) return;
     if (await leraPostTick(env, origin)) return;
     if (await nikitaPostTick(env, origin)) return;
@@ -262,6 +263,25 @@ async function nkChannelTick(env, origin) {
 }
 // подарки первой недели и сундук возвращения: один пост (19.11.2026)
 // зимнее обновление: один пост (24.11.2026)
+async function goalPushTick(env, origin) {
+  if (await posted(env, 'goal_push_1126')) return false;
+  const ok = await post(env, origin, 'goal_banner.jpg', [
+    "<b>Дожимаем миллион</b>",
+    "",
+    "Район продал уже 642 тысячи стаканов. До миллиона осталось 357 тысяч и четыре дня: цель закрывается 1 декабря в 00:00 по Москве.",
+    "",
+    "Это много. Но каждый стакан, проданный вживую, идёт в общий счётчик.",
+    "",
+    "Что нового, чтобы было чем заняться за стойкой:",
+    "— Гости иногда просят собрать заказ своими руками. И иногда передумывают. Терпите, они платят больше.",
+    "— На отзывы теперь отвечаете своими словами.",
+    "— Звонит телефон, прилетают голуби, гости роняют мелочь. Тапайте.",
+    "— Иногда гости оставляют чаевые лично вам. Не всегда деньгами.",
+    "",
+    "Открываем кофейни и дожимаем."
+  ].join('\n'));
+  await mark(env, 'goal_push_1126', ok); return true;
+}
 async function winterPostTick(env, origin) {
   if (await posted(env, 'winter_1124')) return false;
   const ok = await post(env, origin, 'winter_banner.jpg', [
