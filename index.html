@@ -16778,7 +16778,7 @@ cv.addEventListener('pointerdown',function(e){ try{ if(sheet||!S||(typeof modals
   var head=r.queue[0];
   for(var i=r.guests.length-1;i>=0;i--){ var g=r.guests[i]; if(g.hidden||g.reg) continue; if(!(x>g.x-14&&x<g.x+14&&y>g.y-(g.h||40)&&y<g.y+4)) continue;
     if(g===head&&g.state==='queue') return; if(g.state==='wait'||g.state==='toPick') return;
-    var pool=g.state==='sit'?TAP_S:(g.state==='queue'?TAP_Q:TAP_W); var key='tap'+g.gid; if(g._tapAt&&Date.now()-g._tapAt<2500) return; g._tapAt=Date.now(); talk(pick(pool),g); return; }
+    return; } /* 26.11: реплики по тапу на гостя убраны, гости разговаривают сами */
 }catch(err){} });
 window.FUN_TAP={cat:TAP_CAT,husky:TAP_HUS,yeti:TAP_YETI,pen:TAP_PEN,ded:TAP_DED};
 
@@ -16902,7 +16902,7 @@ var _sup=sceneUpgradeProps; sceneUpgradeProps=function(st,u,items,now,r){ _sup.a
   if(weirdActive&&(rr.guests.indexOf(weirdActive)<0)) weirdActive=null; }catch(e){} };
 window.sceneUpgradeProps=sceneUpgradeProps;
 cv.addEventListener('pointerdown',function(e){ try{ if(sheet||!S||modals.length) return; var b=cv.getBoundingClientRect(); var x=OX+(e.clientX-b.left)/b.width*VW, y=(e.clientY-b.top)/b.height*H; var rr=rt(S.active);
-  for(var i=rr.guests.length-1;i>=0;i--){ var g=rr.guests[i]; if(!g.weird||g.hidden) continue; if(x>g.x-16&&x<g.x+16&&y>g.y-gh(g)&&y<g.y+4){ if(g===rr.queue[0]&&g.state==='queue') return; if(g.state==='wait'||g.state==='toPick') return; g._tapAt=Date.now(); bubble2(0,0,pick(WEIRD[g.weird].tap),2800,g); cnt('taps'); return; } } }catch(err){} },true);
+  for(var i=rr.guests.length-1;i>=0;i--){ var g=rr.guests[i]; if(!g.weird||g.hidden) continue; if(x>g.x-16&&x<g.x+16&&y>g.y-gh(g)&&y<g.y+4){ if(g===rr.queue[0]&&g.state==='queue') return; if(g.state==='wait'||g.state==='toPick') return; g._tapAt=Date.now(); e.stopImmediatePropagation(); if(window.GMENU_WEIRD) GMENU_WEIRD(g,WEIRD[g.weird].n); cnt('taps'); return; } } }catch(err){} },true);
 
 /* ---------- 3. смешные отзывы ---------- */
 try{
@@ -17129,6 +17129,80 @@ window.PLAY={mk:function(){ return mkTry(); }, phone:function(){ PHONE={call:pic
 
 /* 26.11: Лиза больше не приходит в кофейню, карточка остаётся в «Гостях» */
 (function(){ var _lt=lizaTick; lizaTick=function(dt){ if(typeof LZRUN!=='undefined'&&LZRUN) return _lt.apply(this,arguments); }; })();
+/* ================= 26.11: тап по гостю больше не даёт реплику; у некоторых гостей появляется «дело» — значок над головой, по тапу меню ================= */
+(function(){
+function M(b){ var l=Math.max(1,(S&&S.level)||1); return Math.round(b*(1+0.25*(l-1))/50)*50; }
+function GH(g){ return 62*((g.h||56)/56); }
+function kick(g,line){ var r=rt(S.active); r.queue=r.queue.filter(function(x){ return x!==g; }); r.pickup=(r.pickup||[]).filter(function(x){ return x!==g; }); if(g.seat!=null&&r.seats&&r.seats[g.seat]===g) r.seats[g.seat]=null; g.state='leave'; g.kicked=true; g.hidden=false; try{ S.c.kicked=(S.c.kicked||0)+1; }catch(e){} if(line) try{ bubble2(0,0,line,2600,g); }catch(e){} }
+function say(g,t){ try{ bubble2(0,0,t,2800,g); }catch(e){} }
+/* исходы: [текст, деньги(+/-), репутация, выгнать?, реплика гостя] */
+var ASKS={
+ laptop:{ic:'!', t:'Ноутбук и один американо', d:'Сидит четвёртый час. Розетка занята, стол на четверых занят, американо давно остыл.', who:'sit',
+  talk:[['Спросили, не хочет ли он чего-нибудь ещё. Взял чизкейк и раф. Совесть проснулась',220,0.002,0,'Ой, да, я засиделся'],['Спросили, не нужно ли ещё что-нибудь. Он попросил пароль от вайфая ещё раз',0,0,0,'А пароль какой?']],
+  treat:[['Принесли ему печенье. Он поднял глаза от ноутбука впервые за три часа и написал хороший отзыв',-60,0.006,0,'Вы лучшие, я тут диплом пишу']],
+  kick:[['Попросили освободить стол. Ушёл, громко захлопнув ноутбук. Стол сразу заняла семья с пирожными',0,-0.002,1,'Я вообще-то работаю'],['Вежливо намекнули. Он сказал, что всё равно уже уходит. Врал, но ушёл',0,0,1,'Ладно, я понял']]},
+ loud:{ic:'!', t:'Громкая связь', d:'Обсуждает по громкой связи чей-то развод. Весь зал уже знает имя адвоката.', who:'any',
+  talk:[['Попросили говорить потише. Переключился на голосовые. Стало хуже',0,-0.001,0,'Это голосовое, это другое'],['Попросили потише. Он извинился и вышел договорить на улицу',0,0.003,0,'Ой, простите, увлёкся']],
+  treat:[['Угостили его водой. Он понял намёк, поблагодарил и выключил громкую связь',-30,0.004,0,'Понял, понял']],
+  kick:[['Попросили выйти. Зал проводил его аплодисментами',0,0.008,1,'Мам, я перезвоню']]},
+ ownfood:{ic:'!', t:'Своя шаурма', d:'Достал из пакета шаурму и разложил на вашей салфетке. Пахнет на весь зал.', who:'sit',
+  talk:[['Объяснили, что своё у нас нельзя. Он купил у вас лимонад «запить». Компромисс',150,0,0,'Ну хоть запить можно?'],['Сказали, что так нельзя. Он предложил кусочек. Бариста согласился',0,-0.002,0,'Будешь? Свежая']],
+  treat:[['Принесли ему соус от шефа. Он сказал, что это лучшая шаурма в его жизни, и ушёл с пятью звёздами',-40,0.003,0,'Вот это сервис']],
+  kick:[['Попросили выйти со своей едой. Ушёл доедать на крыльцо. Запах остался',0,0.002,1,'Да пожалуйста']]},
+ regular:{ic:'…', t:'Постоянный гость хочет поболтать', d:'Ходит каждое утро. Сегодня явно хочет кому-то что-то рассказать.', who:'any',
+  talk:[['Выслушали историю про его кота, который открыл холодильник. Оставил чаевые за терапию',260,0.004,0,'Вы единственные, кто меня слушает'],['Он рассказал, что уходит на пенсию и будет приходить теперь дважды в день. Это угроза или подарок, решайте сами',120,0.003,0,'Теперь я ваш навсегда'],['Сорок минут про рыбалку. Бариста научился вязать узлы',80,0.002,0,'Короче, щука была вот такая']],
+  treat:[['Сделали ему кофе за счёт заведения. Он растрогался и привёл завтра троих коллег',-80,0.006,0,'Ну вы даёте']],
+  kick:[['Сказали, что сейчас не до разговоров. Он молча допил кофе. Кажется, вы разбили сердце пенсионеру',0,-0.006,1,'Понял. Не буду мешать']]},
+ date:{ic:'…', t:'Ждёт свидание', d:'Пришёл на первое свидание с цветами. Девушка с сайта знакомств опаздывает уже на сорок минут и не отвечает.', who:'sit',
+  talk:[['Бариста сказал, что она наверняка в пробке. Через пять минут она пришла. Он оставил щедрые чаевые',300,0.003,0,'Она пришла! Спасибо вам'],['Поговорили. Выяснилось, что она ждёт его в другой кофейне с таким же названием. Он убежал',0,0.001,1,'Это же на другом конце города'],['Утешали как могли. Он подарил цветы бариста и ушёл',0,0.002,1,'Возьмите, вам нужнее']],
+  treat:[['Принесли ему десерт «чтобы ждать было не так грустно». Она пришла, увидела десерт и решила, что он очень заботливый. Вас позвали на свадьбу',-100,0.006,0,'Если что, это я заказал']],
+  kick:[['Сказали, что столик нужен. Он ушёл с цветами под дождь. Даже кот посмотрел на вас с осуждением',0,-0.006,1,'Ну и день']]},
+ complain:{ic:'!', t:'Недоволен напитком', d:'Держит стакан двумя пальцами и смотрит на бариста так, будто тот поцарапал его машину.', who:'any',
+  talk:[['Спросили, что не так. «Пенка грустная». Переделали с весёлой пенкой. Доволен',0,0.003,0,'Вот, другое дело'],['Спросили, что не так. Сказал, что всё так, просто день плохой. Поговорили, стало легче всем',0,0.002,0,'Простите, это не вы, это понедельник']],
+  treat:[['Переделали за счёт заведения и добавили печенье. Он сказал, что впервые за неделю кто-то о нём позаботился',-70,0.006,0,'Спасибо. Правда']],
+  kick:[['Предложили поискать кофе получше в другом месте. Ушёл писать отзыв. Длинный',0,-0.008,1,'Ну вы ещё узнаете']]},
+ kid:{ic:'…', t:'Ребёнок ждёт маму', d:'Мальчик лет восьми сидит один и рисует на салфетке. Мама сказала, что «на пять минут». Прошёл час.', who:'sit',
+  talk:[['Поговорили с ним. Он нарисовал вашу кофейню. На рисунке у бариста три руки, и это правда',0,0.004,0,'Это вы, а это кот'],['Спросили, где мама. «На маникюре». Понятно',0,0.001,0,'Она скоро. Наверное']],
+  treat:[['Сделали ему какао с зефиром. Мама вернулась, увидела и оставила 500 за няню',500,0.004,0,'А можно ещё зефирку?']],
+  kick:[['Попросили его подождать на улице. Мама вернулась, и вы узнали, что она пишет для «Вестника района»',0,-0.012,1,'Я маме расскажу']]},
+ weird:{ic:'!', t:'', d:'', who:'any',
+  talk:[['Поговорили. Ничего не поняли, но гость остался доволен и оставил чаевые',150,0.002,0,'Вы классные, я вас отмечу'],['Поговорили. Теперь вы знаете слишком много',0,0,0,'Только никому']],
+  treat:[['Угостили печеньем. Гость сфотографировал его с девяти ракурсов и выложил с отметкой кофейни',-40,0.006,0,'Это пойдёт в сторис']],
+  kick:[['Попросили на выход. Ушёл, но обещал вернуться. Звучало угрожающе',0,0,1,'Я ещё вернусь']]}
+};
+var KEYS=['laptop','loud','ownfood','regular','date','complain','kid'];
+var cur=null, askT=120;
+function eligible(g,who){ if(!g||g.hidden||g.reg||g.weird||g.askDone||g.state==='leave'||g.kicked||g.vip||g.ask) return false; var r=rt(S.active); if(g===r.queue[0]) return false; if(g.state==='wait'||g.state==='toPick') return false; if(who==='sit') return g.state==='sit'; return g.state==='sit'||g.state==='queue'; }
+function assign(){ var r=rt(S.active); if(!r||cur) return false; var k=pick(KEYS), a=ASKS[k]; var pool=r.guests.filter(function(g){ return eligible(g,a.who); }); if(!pool.length) return false; var g=pick(pool); g.ask=k; g.askAt=Date.now(); cur=g; return true; }
+window.GMENU_WEIRD=function(g,name){ if(!g||g.state==='leave'||g.askDone) return; g.ask='weird'; g.askName=name; g.askAt=Date.now(); openMenu(g); };
+function openMenu(g){ if(modals.length||sheet) return; queueModal({kind:'gmenu', gid:g.gid, g:g},true); }
+MODAL15.gmenu=function(box,m,btn){ var g=m.g; if(!g||g.state==='leave'||!g.ask){ setTimeout(closeModal,0); return; } var a=ASKS[g.ask]||ASKS.weird;
+  box.append(el('<div class="eyebrow">Гость</div>'));
+  box.append(el('<h2>'+esc(g.ask==='weird'?(g.askName||'Странный гость'):a.t)+'</h2>'));
+  box.append(el('<p>'+esc(g.ask==='weird'?'Ведёт себя необычно. Остальные гости уже косятся.':a.d)+'</p>'));
+  function go(kind){ var o=pick(a[kind]); closeModal(); g.ask=null; g.askDone=true; if(cur===g) cur=null;
+    if(o[1]>0) income(M(o[1]),'events','Гость'); else if(o[1]<0) spend(M(-o[1]),'other','За счёт заведения');
+    if(o[2]) repAdd(o[2]); if(o[3]) kick(g,o[4]); else say(g,o[4]);
+    toast(o[0]+(o[1]>0?'. +'+fmt(M(o[1]))+' ₽':'')); try{ S.fun=S.fun||{c:{}}; S.fun.c.gmenu=(S.fun.c.gmenu||0)+1; }catch(e){} save(); }
+  box.append(btn('Поговорить',function(){ go('talk'); }), btn('Угостить за счёт заведения',function(){ go('treat'); },'ghost'), btn('Выгнать',function(){ go('kick'); },'ghost'));
+  box.append(btn('Не трогать',function(){ closeModal(); },'ghost')); };
+/* значок над головой */
+var _sup=sceneUpgradeProps; sceneUpgradeProps=function(st,u,items,now,r){ _sup.apply(this,arguments); try{ if(st.outdoor||!S) return; var rr=rt(S.active);
+  rr.guests.forEach(function(g){ if(!g.ask||g.hidden||g.state==='leave') return; var a=ASKS[g.ask]||ASKS.weird; items.push({y:g.y+0.6,f:function(){ var x=g.x, y=g.y-GH(g)-7+Math.sin(now/260)*1.2;
+    ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x+0.6,y+0.8,6.4,5.4,0,0,7); ctx.fill();
+    ctx.fillStyle=a.ic==='!'?'#e2553e':'#fff8ea'; ctx.beginPath(); ctx.ellipse(x,y,6,5,0,0,7); ctx.fill(); ctx.beginPath(); ctx.moveTo(x-2,y+4); ctx.lineTo(x,y+7.5); ctx.lineTo(x+2,y+4); ctx.fill();
+    ctx.strokeStyle='#2a1a10'; ctx.lineWidth=0.7; ctx.beginPath(); ctx.ellipse(x,y,6,5,0,0,7); ctx.stroke();
+    if(a.ic==='!'){ ctx.fillStyle='#fff'; ctx.fillRect(x-0.7,y-3,1.4,4); ctx.fillRect(x-0.7,y+2,1.4,1.3); } else { ctx.fillStyle='#2a1a10'; [-2.6,0,2.6].forEach(function(d){ ctx.fillRect(x+d-0.6,y-0.6,1.3,1.3); }); } }}); }); }catch(e){} };
+window.sceneUpgradeProps=sceneUpgradeProps;
+cv.addEventListener('pointerdown',function(e){ try{ if(sheet||!S||modals.length) return; var b=cv.getBoundingClientRect(); var x=OX+(e.clientX-b.left)/b.width*VW, y=(e.clientY-b.top)/b.height*H; var r=rt(S.active);
+  for(var i=r.guests.length-1;i>=0;i--){ var g=r.guests[i]; if(!g.ask||g.hidden||g.state==='leave'||g.weird) continue; if(x>g.x-15&&x<g.x+15&&y>g.y-GH(g)-16&&y<g.y+4){ e.stopImmediatePropagation(); e.preventDefault(); openMenu(g); return; } } }catch(err){} },true);
+var _bt=bubblesTick; bubblesTick=function(dt){ _bt.apply(this,arguments); try{ if(!S||!S.isOpen||HOOK.quiet) return;
+  if(cur&&(cur.state==='leave'||!cur.ask||Date.now()-cur.askAt>50000)){ if(cur.ask&&cur.state!=='leave'){ cur.ask=null; } cur=null; }
+  rt(S.active).guests.forEach(function(g){ if(g.weird&&!g.ask&&!g.askDone&&g.state!=='leave'&&!g.hidden){ g.ask='weird'; g.askAt=Date.now(); } if(g.ask&&g!==cur&&g.ask!=='weird'&&Date.now()-g.askAt>50000) g.ask=null; });
+  askT-=dt; if(askT<=0){ askT=assign()?R(150,260):20; } }catch(e){} };
+window.GMENU={force:function(k){ cur=null; var r=rt(S.active); var g=r.guests.filter(function(x){ return eligible(x,'any'); })[0]; if(!g) return false; g.ask=k||'regular'; g.askAt=Date.now(); cur=g; return g.gid; }};
+})();
+
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
 BrewCrewLegal.install();
 BrewCrewSaves.init({key:KEY,boot:function(data){boot(data);},newGame:function(){renderStart();},save:save,
