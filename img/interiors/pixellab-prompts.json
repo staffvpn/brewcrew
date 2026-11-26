@@ -1,70 +1,62 @@
 {
   "lux_art_deco.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. 1920s Art Deco lounge, polished black marble, brushed brass fan inlays and arches, emerald velvet chairs, amber glass lighting, small black-and-cream marble checks.",
-    "seed": 51901,
-    "job": "fd6aa9c6-235d-4879-a76b-007988079366",
-    "usage": null
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
   },
   "lux_art_deco-wall.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. 1920s Art Deco lounge, polished black marble, brushed brass fan inlays and arches, emerald velvet chairs, amber glass lighting, small black-and-cream marble checks.",
-    "seed": 51901,
-    "job": "fd6aa9c6-235d-4879-a76b-007988079366",
-    "usage": null,
-    "crop": [
-      160,
-      9,
-      199,
-      69
-    ]
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. An orthographic straight-on 2D game wall texture only. Fill the canvas edge to edge, deep charcoal green plaster over dark walnut wainscoting, delicate geometrical gold fan inlays spaced evenly, warm quiet architecture. The wall continues horizontally at the same height. No perspective, lamps, windows, lighting beams, signs, shelves, people, objects, counters, floors, room corners, solid margins or isolated objects. Pixel art background, crisply edged. No text.",
+    "seed": 61000,
+    "usage": {
+      "type": "usd",
+      "usd": 0.008589343521330093
+    }
   },
   "lux_copper.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Copper roastery, reddish-brown aged brick, patinated copper trim with small rivets, teal velvet seats, charcoal concrete, warm utility lamps.",
-    "seed": 51912,
-    "job": "3a06cc67-0095-4884-8dbf-6653c55f188c",
-    "usage": null
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
   },
   "lux_copper-wall.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Copper roastery, reddish-brown aged brick, patinated copper trim with small rivets, teal velvet seats, charcoal concrete, warm utility lamps.",
-    "seed": 51912,
-    "job": "3a06cc67-0095-4884-8dbf-6653c55f188c",
-    "usage": null,
-    "crop": [
-      126,
-      27,
-      169,
-      73
-    ]
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. An orthographic straight-on 2D game wall texture only. Fill the canvas edge to edge, continuous dark red-brown exposed brick, regular staggered horizontal brick courses, warm brown mortar, no holes and no fixtures. The wall continues horizontally at the same height. No perspective, lamps, windows, lighting beams, signs, shelves, people, objects, counters, floors, room corners, solid margins or isolated objects. Pixel art background, crisply edged. No text.",
+    "seed": 61220,
+    "usage": {
+      "type": "usd",
+      "usd": 0.011018357223934598
+    }
   },
   "lux_desert.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Luxury Moroccan cafe, terracotta arches, restrained turquoise mosaic, copper bar edge, ochre plaster and sand-toned terrazzo, teal upholstery.",
-    "seed": 51908,
-    "job": "fcbd9870-cfad-4ff8-9aa9-2deaa239230a",
-    "usage": null
-  },
-  "lux_desert-wall.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Luxury Moroccan cafe, terracotta arches, restrained turquoise mosaic, copper bar edge, ochre plaster and sand-toned terrazzo, teal upholstery.",
-    "seed": 51908,
-    "job": "fcbd9870-cfad-4ff8-9aa9-2deaa239230a",
-    "usage": null,
-    "crop": [
-      168,
-      15,
-      196,
-      76
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
     ]
   },
+  "lux_desert-wall.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. An orthographic straight-on 2D game wall texture only. Fill the canvas edge to edge, warm terracotta tadelakt wall, evenly repeated shallow pointed horseshoe niche outlines in ochre plaster, subtle carved borders continuous to the edges. The wall continues horizontally at the same height. No perspective, lamps, windows, lighting beams, signs, shelves, people, objects, counters, floors, room corners, solid margins or isolated objects. Pixel art background, crisply edged. No text.",
+    "seed": 61140,
+    "usage": {
+      "type": "usd",
+      "usd": 0.010766862604353163
+    }
+  },
   "lux_emerald.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Private emerald club, forest green upholstery, dark walnut bar, leaded jewel-toned stained glass, patinated bronze, rich wood parquet.",
-    "seed": 51903,
-    "job": "3ccf976d-1421-4e54-ab70-d46f7779c346",
-    "usage": null
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
   },
   "lux_emerald-wall.png": {
     "endpoint": "edit-image-pixen",
@@ -80,131 +72,114 @@
     ]
   },
   "lux_gallery.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Modern art gallery cafe, warm white limestone, fine terrazzo, cobalt chairs, one small geometric cobalt artwork, subtly yellow lamp light.",
-    "seed": 51909,
-    "job": "8d5b1499-1185-443e-adf8-63d20ad0992e",
-    "usage": null
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
   },
   "lux_gallery-wall.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Modern art gallery cafe, warm white limestone, fine terrazzo, cobalt chairs, one small geometric cobalt artwork, subtly yellow lamp light.",
-    "seed": 51909,
-    "job": "8d5b1499-1185-443e-adf8-63d20ad0992e",
-    "usage": null,
-    "crop": [
-      157,
-      5,
-      203,
-      70
-    ]
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. Minimalist WHITE-WHITE museum cafe wall with continuous ivory-white clean smooth plaster and a very narrow offset cobalt blue stripe in bottom ten pixels. Flat off-white architecture. Very faint fine horizontal hairline joints at two heights. Modern silky finish, clear pale bright beige, no rough stone, rock wall, no objects or shadows. Exact straight-on elevation; fill the entire horizontal strip. Flat pixel texture.",
+    "seed": 61172,
+    "usage": {
+      "type": "usd",
+      "usd": 0.01055919689602322
+    }
   },
   "lux_library.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Private reading room cafe, dark walnut book-lined wall, retain existing shelf sizes, muted green leather chairs, russet parquet and warm brass reading lamps.",
-    "seed": 51907,
-    "job": "e654639a-6eb1-4d71-b503-d7e6c9e53a1c",
-    "usage": null
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
   },
   "lux_library-wall.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Private reading room cafe, dark walnut book-lined wall, retain existing shelf sizes, muted green leather chairs, russet parquet and warm brass reading lamps.",
-    "seed": 51907,
-    "job": "e654639a-6eb1-4d71-b503-d7e6c9e53a1c",
-    "usage": null,
-    "crop": [
-      150,
-      7,
-      202,
-      67
-    ]
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. An orthographic straight-on 2D game wall texture only. Fill the canvas edge to edge, continuous dark walnut wall, elegant vertical fluting and clean rectangular panel moulding, quiet alternating wood tones continuing edge to edge. The wall continues horizontally at the same height. No perspective, lamps, windows, lighting beams, signs, shelves, people, objects, counters, floors, room corners, solid margins or isolated objects. Pixel art background, crisply edged. No text.",
+    "seed": 61120,
+    "usage": {
+      "type": "usd",
+      "usd": 0.00870182384385003
+    }
   },
   "lux_onyx.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Sleek graphite onyx lounge with subtle stone veining and brushed silver trim, dark blue chairs, warm neutral floor, pale crystalline task lights.",
-    "seed": 51905,
-    "job": "a99980d8-732f-4188-9cfe-0a5335072b50",
-    "usage": null
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
   },
   "lux_onyx-wall.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Sleek graphite onyx lounge with subtle stone veining and brushed silver trim, dark blue chairs, warm neutral floor, pale crystalline task lights.",
-    "seed": 51905,
-    "job": "a99980d8-732f-4188-9cfe-0a5335072b50",
-    "usage": null,
-    "crop": [
-      164,
-      27,
-      207,
-      71
-    ]
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. A bare contemporary luxury cafe wall of continuous FLAT smooth vertical dark graphite onyx slabs, subtly polished, very sparse thin silver-grey natural marbling. Mostly smooth dark charcoal. Narrow dark skirting at bottom. Clean contemporary rectangular slabs, no rubble, rocks, masonry, coarse brick, equipment, fixtures or light beams. Exact straight-on elevation; fill the entire horizontal strip. Flat pixel texture.",
+    "seed": 61092,
+    "usage": {
+      "type": "usd",
+      "usd": 0.008058677699830798
+    }
   },
   "lux_orangery.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Historic orangery cafe, sage green wooden slats, honey-toned rattan, light oak and leafy botanical accents, amber highlights, refined woven upholstery.",
-    "seed": 51911,
-    "job": "5b3290b7-82f0-46d7-a515-ebc4ecd425d4",
-    "usage": null
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
   },
   "lux_orangery-wall.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Historic orangery cafe, sage green wooden slats, honey-toned rattan, light oak and leafy botanical accents, amber highlights, refined woven upholstery.",
-    "seed": 51911,
-    "job": "5b3290b7-82f0-46d7-a515-ebc4ecd425d4",
-    "usage": null,
-    "crop": [
-      147,
-      29,
-      190,
-      71
-    ]
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. An orthographic straight-on 2D game wall texture only. Fill the canvas edge to edge, continuous sage green vertical Victorian timber wainscoting, calm pale sage plaster above and slim antique oak molding. The wall continues horizontally at the same height. No perspective, lamps, windows, lighting beams, signs, shelves, people, objects, counters, floors, room corners, solid margins or isolated objects. Pixel art background, crisply edged. No text.",
+    "seed": 61200,
+    "usage": {
+      "type": "usd",
+      "usd": 0.010845101356506348
+    }
   },
   "lux_palace.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Versailles salon, ivory wall panels with subtle gold moulding, buttercream stone and walnut, deep burgundy velvet chairs, discreet brass wall sconces.",
-    "seed": 51902,
-    "job": "b2c52560-16fb-43bc-8cd0-7f285a4d40f5",
-    "usage": null
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
   },
   "lux_palace-wall.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Versailles salon, ivory wall panels with subtle gold moulding, buttercream stone and walnut, deep burgundy velvet chairs, discreet brass wall sconces.",
-    "seed": 51902,
-    "job": "b2c52560-16fb-43bc-8cd0-7f285a4d40f5",
-    "usage": null,
-    "crop": [
-      157,
-      16,
-      203,
-      75
-    ]
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. A BARE WALL made only of very light ivory plaster, elegant thin gold French rectangular panel mouldings repeating left to right, and a cream base rail across the entire bottom. The whole scene is airy and softly sunlit, predominantly warm ivory/off-white. Classic Versailles. No objects at all, no furniture, lamps, metal columns, door, window, heavy shadows or dark colors. Exact straight-on elevation; fill the entire horizontal strip. Flat pixel texture.",
+    "seed": 61032,
+    "usage": {
+      "type": "usd",
+      "usd": 0.009408092790179783
+    }
   },
   "lux_sakura.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Elegant Japanese spring cafe, dusty rose plaster, light ash counter and floor, parchment paper lamps, small botanical sakura branch, raspberry velvet seats.",
-    "seed": 51904,
-    "job": "7ffa61e4-8efa-4a58-9b83-c70cc064c304",
-    "usage": null
-  },
-  "lux_sakura-wall.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Elegant Japanese spring cafe, dusty rose plaster, light ash counter and floor, parchment paper lamps, small botanical sakura branch, raspberry velvet seats.",
-    "seed": 51904,
-    "job": "7ffa61e4-8efa-4a58-9b83-c70cc064c304",
-    "usage": null,
-    "crop": [
-      119,
-      22,
-      154,
-      73
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
     ]
   },
+  "lux_sakura-wall.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. A bare pale pastel Japanese wall, composed only of smooth warm powder-pink plaster upper 65 percent and almost white natural ash vertical slim straight slats at the bottom. Straight rail; totally plain empty unadorned blush wall. Light gentle color and detailed pale natural wood grain, no green, grey, black or gold. Exact straight-on elevation; fill the entire horizontal strip. Flat pixel texture.",
+    "seed": 61072,
+    "usage": {
+      "type": "usd",
+      "usd": 0.008504328383339777
+    }
+  },
   "lux_terrace.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. French Riviera cafe, hand-glazed azure tiles and warm limestone, sea-blue velvet chairs, polished brass, sunny cream and blue palette.",
-    "seed": 51906,
-    "job": "fe857587-6683-4c48-875c-1b273ecbd598",
-    "usage": null
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
   },
   "lux_terrace-wall.png": {
     "endpoint": "edit-image-pixen",
@@ -220,24 +195,23 @@
     ]
   },
   "lux_violet.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Intimate twilight lounge, deep plum plaster, lavender velvet chairs, brushed silver, warm moon-shaped lamp glow, moody lilac-blue accents.",
-    "seed": 51910,
-    "job": "1f741407-ae41-4de5-a016-6c44a12a3b72",
-    "usage": null
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
   },
   "lux_violet-wall.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Keep the exact front-facing Brew Crew pixel-art layout, camera, counter and shelf dimensions, window position and two tables. Keep the same clean pixel clusters and walnut outlines. No text or people. Change only materials and tasteful lighting. Intimate twilight lounge, deep plum plaster, lavender velvet chairs, brushed silver, warm moon-shaped lamp glow, moody lilac-blue accents.",
-    "seed": 51910,
-    "job": "1f741407-ae41-4de5-a016-6c44a12a3b72",
-    "usage": null,
-    "crop": [
-      153,
-      9,
-      203,
-      78
-    ]
+    "prompt": "Recolor this entire flat full-width wall texture to a very dark midnight navy-blue dusk cafe wall. Keep the quiet wall geometry, width, low horizontal rail and simple continuous plaster bands. Dominant dark blue-black ink upper field, carbon-black wood panels at bottom and a subtle thin bronze rail. Absolutely bare continuous architectural backdrop, no objects, bottles, lights, windows, or pictures. Opaque wall artwork fills every pixel.",
+    "seed": 61195,
+    "reference": "quiet-wall-source.png",
+    "job": "1de5f6cf-979c-46bd-bf91-fd099389d87f",
+    "usage": {
+      "type": "usd",
+      "usd": 0.008493587123023139
+    }
   },
   "winter_grand.png": {
     "endpoint": "edit-image-pixen",
@@ -299,31 +273,27 @@
   },
   "lux_copper-table.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Copper roastery, reddish-brown aged brick, patinated copper trim with small rivets, teal velvet seats, charcoal concrete, warm utility lamps.",
-    "seed": 52412,
-    "job": "075d258b-ba5d-46a6-a90f-3ec04c186d2b",
-    "usage": null,
-    "crop": [
-      0,
-      0,
-      103,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as one round bistro table, same low player camera and centered three-legged pedestal, bare top in patinated copper with smoked teak. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean selective pixel outlines and subtle sprite shading. Same camera as reference.",
+    "seed": 61224,
+    "reference": "clean-table.png",
+    "job": "21feb406-5185-4a22-90dc-d5bbd5707ac1",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006163480758666993
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_copper-chair.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Copper roastery, reddish-brown aged brick, patinated copper trim with small rivets, teal velvet seats, charcoal concrete, warm utility lamps.",
-    "seed": 52412,
-    "job": "075d258b-ba5d-46a6-a90f-3ec04c186d2b",
-    "usage": null,
-    "crop": [
-      103,
-      0,
-      172,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as a right-facing three-quarter side chair; front of seat visible on the right, a single chair, all four feet in jade-teal velvet, aged copper frame. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean selective pixel outlines and subtle sprite shading. Same camera as reference.",
+    "seed": 61223,
+    "reference": "clean-chair.png",
+    "job": "64ba950f-eb8c-4095-8e42-0edffd15be0f",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006550028059217665
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_desert-table.png": {
     "endpoint": "edit-image-pixen",
@@ -383,87 +353,75 @@
   },
   "lux_gallery-table.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Modern art gallery cafe, warm white limestone, fine terrazzo, cobalt chairs, one small geometric cobalt artwork, subtly yellow lamp light.",
-    "seed": 52409,
-    "job": "8d94ef42-0c2f-4fb4-80eb-c745841448de",
-    "usage": null,
-    "crop": [
-      0,
-      0,
-      103,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as one round bistro table, same low player camera and centered three-legged pedestal, bare top in warm white polished terrazzo face with tiny sparse grey and blue stone chips, warm limestone edge and anodized champagne metal. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps. Transparent PNG. No extra objects or scenery.",
+    "seed": 61164,
+    "reference": "clean-table.png",
+    "job": "76e8a601-33dd-45bd-8ded-03cacf23af1c",
+    "usage": {
+      "type": "usd",
+      "usd": 0.007843786689970229
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_gallery-chair.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Modern art gallery cafe, warm white limestone, fine terrazzo, cobalt chairs, one small geometric cobalt artwork, subtly yellow lamp light.",
-    "seed": 52409,
-    "job": "8d94ef42-0c2f-4fb4-80eb-c745841448de",
-    "usage": null,
-    "crop": [
-      103,
-      0,
-      172,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as a right-facing three-quarter side chair; front of seat visible on the right, a single chair, all four feet in saturated cobalt blue upholstery, pale limestone-painted frame. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean selective pixel. Transparent PNG. No extra objects or scenery.",
+    "seed": 61163,
+    "reference": "clean-chair.png",
+    "job": "52c38341-b1f6-421d-8f8d-c0ad7c9c9aa6",
+    "usage": {
+      "type": "usd",
+      "usd": 0.007038487487369113
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_library-table.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Private reading room cafe, dark walnut book-lined wall, retain existing shelf sizes, muted green leather chairs, russet parquet and warm brass reading lamps.",
-    "seed": 52407,
-    "job": "86cc95b6-b1cd-45f5-94de-ca3205187ff0",
-    "usage": null,
-    "crop": [
-      0,
-      0,
-      103,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as one round bistro table, same low player camera and centered three-legged pedestal, bare top in traditional dark walnut rectangular millwork, green inset with slim restrained antique brass. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean. Transparent PNG. No extra objects or scenery.",
+    "seed": 61124,
+    "reference": "clean-table.png",
+    "job": "5498ba8a-900f-42fd-a85c-40a2bb3335fe",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006695113023122152
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_library-chair.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Private reading room cafe, dark walnut book-lined wall, retain existing shelf sizes, muted green leather chairs, russet parquet and warm brass reading lamps.",
-    "seed": 52407,
-    "job": "86cc95b6-b1cd-45f5-94de-ca3205187ff0",
-    "usage": null,
-    "crop": [
-      103,
-      0,
-      172,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as a right-facing three-quarter side chair; front of seat visible on the right, a single chair, all four feet in bottle green leather, dark walnut. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean selective pixel outlines and subtle sprite shading. Same camera as reference.",
+    "seed": 61123,
+    "reference": "clean-chair.png",
+    "job": "db14bc08-9577-4893-a50e-a9b442700b8c",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006889752599928115
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_onyx-table.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Sleek graphite onyx lounge with subtle stone veining and brushed silver trim, dark blue chairs, warm neutral floor, pale crystalline task lights.",
-    "seed": 52405,
-    "job": "8a08956f-114f-45f4-8bf9-cf8d4ad2a0e5",
-    "usage": null,
-    "crop": [
-      0,
-      0,
-      103,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as one round bistro table, same low player camera and centered three-legged pedestal, bare top in brushed silver against dark graphite onyx. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean selective pixel outlines and subtle sprite shading. Same camera as reference.",
+    "seed": 61084,
+    "reference": "clean-table.png",
+    "job": "9f233c4c-394d-4798-a027-5d269196747c",
+    "usage": {
+      "type": "usd",
+      "usd": 0.009550973706775242
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_onyx-chair.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Sleek graphite onyx lounge with subtle stone veining and brushed silver trim, dark blue chairs, warm neutral floor, pale crystalline task lights.",
-    "seed": 52405,
-    "job": "8a08956f-114f-45f4-8bf9-cf8d4ad2a0e5",
-    "usage": null,
-    "crop": [
-      103,
-      0,
-      172,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as a right-facing three-quarter side chair; front of seat visible on the right, a single chair, all four feet in midnight blue-black velvet and smoked ash. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean selective pixel outlines and subtle sprite shading. Same camera as reference.",
+    "seed": 61083,
+    "reference": "clean-chair.png",
+    "job": "e254bcd9-b467-45f1-8712-3f69b78b3e78",
+    "usage": {
+      "type": "usd",
+      "usd": 0.009615240308973524
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_orangery-table.png": {
     "endpoint": "edit-image-pixen",
@@ -509,17 +467,15 @@
   },
   "lux_palace-chair.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Versailles salon, ivory wall panels with subtle gold moulding, buttercream stone and walnut, deep burgundy velvet chairs, discreet brass wall sconces.",
-    "seed": 52402,
-    "job": "ea7db977-fb70-49fb-8da4-50a47e897ea4",
-    "usage": null,
-    "crop": [
-      103,
-      0,
-      172,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as a right-facing three-quarter side chair; front of seat visible on the right, a single chair, all four feet in wine red velvet with ivory or subtly gilded carved frame. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean selective pixel outlines and subtle sprite shading. Same camera as reference.",
+    "seed": 61023,
+    "reference": "clean-chair.png",
+    "job": "966d2857-c5a2-4b55-a894-5f352b2cf0fc",
+    "usage": {
+      "type": "usd",
+      "usd": 0.007188326517740885
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_sakura-table.png": {
     "endpoint": "edit-image-pixen",
@@ -579,31 +535,27 @@
   },
   "lux_violet-table.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Intimate twilight lounge, deep plum plaster, lavender velvet chairs, brushed silver, warm moon-shaped lamp glow, moody lilac-blue accents.",
-    "seed": 52410,
-    "job": "0e58a7d5-9d3d-4a7f-abaf-771191efb627",
-    "usage": null,
-    "crop": [
-      0,
-      0,
-      103,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as one round bistro table, same low player camera and centered three-legged pedestal, bare top in charcoal black satin wood with narrow smoked brass rim and muted dark plum rectangular inset. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean. Transparent PNG. No extra objects or scenery.",
+    "seed": 61184,
+    "reference": "clean-table.png",
+    "job": "6d1f0d7a-9a46-47f8-ae2e-0df004000e13",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006301008648342557
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_violet-chair.png": {
     "endpoint": "edit-image-pixen",
-    "prompt": "Only restyle the materials of the two separate Brew Crew game sprites. Round table on the left, chair on the right. Preserve both shapes, exact sprite positions, camera angle, feet, spacing, transparent background and pixel density. Remove the cloth from the tabletop. No added objects. Material direction: Intimate twilight lounge, deep plum plaster, lavender velvet chairs, brushed silver, warm moon-shaped lamp glow, moody lilac-blue accents.",
-    "seed": 52410,
-    "job": "0e58a7d5-9d3d-4a7f-abaf-771191efb627",
-    "usage": null,
-    "crop": [
-      103,
-      0,
-      172,
-      88
-    ],
-    "trimmed": true
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as a right-facing three-quarter side chair; front of seat visible on the right, a single chair, all four feet in dark wine plum velvet on smoked oak. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean selective pixel outlines and subtle sprite shading. Same camera as reference.",
+    "seed": 61183,
+    "reference": "clean-chair.png",
+    "job": "6d049879-6f9f-4d86-85cb-c2deb366d313",
+    "usage": {
+      "type": "usd",
+      "usd": 0.008060366763008966
+    },
+    "processing": "source silhouette, transparent crop"
   },
   "lux_art_deco-bar.png": {
     "endpoint": "edit-image-pixen",
@@ -619,32 +571,11 @@
     "job": "3239708e-9f33-4701-8ff7-c730214fe527",
     "usage": null
   },
-  "lux_desert-bar.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Restyle this one isolated front-facing Brew Crew cafe counter. Preserve the same warm crisp pixel art, exact original dimensions, outline, position, and front perspective. Same panel shape, add restrained luxury inlays and realistic material highlights. Transparent background with no other objects or text. Design source: Luxury Moroccan cafe, terracotta arches, restrained turquoise mosaic, copper bar edge, ochre plaster and sand-toned terrazzo, teal upholstery.",
-    "seed": 52908,
-    "job": "c5863d88-3833-4b5e-831a-b6115537b5af",
-    "usage": null
-  },
   "lux_emerald-bar.png": {
     "endpoint": "edit-image-pixen",
     "prompt": "Restyle this one isolated front-facing Brew Crew cafe counter. Preserve the same warm crisp pixel art, exact original dimensions, outline, position, and front perspective. Same panel shape, add restrained luxury inlays and realistic material highlights. Transparent background with no other objects or text. Design source: Private emerald club, forest green upholstery, dark walnut bar, leaded jewel-toned stained glass, patinated bronze, rich wood parquet.",
     "seed": 52903,
     "job": "135165b9-f9ea-4cdb-97d6-53a9d6d474d3",
-    "usage": null
-  },
-  "lux_gallery-bar.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Restyle this one isolated front-facing Brew Crew cafe counter. Preserve the same warm crisp pixel art, exact original dimensions, outline, position, and front perspective. Same panel shape, add restrained luxury inlays and realistic material highlights. Transparent background with no other objects or text. Design source: Modern art gallery cafe, warm white limestone, fine terrazzo, cobalt chairs, one small geometric cobalt artwork, subtly yellow lamp light.",
-    "seed": 52909,
-    "job": "eb54c500-2109-49f4-aa8d-41d99523b464",
-    "usage": null
-  },
-  "lux_library-bar.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Restyle this one isolated front-facing Brew Crew cafe counter. Preserve the same warm crisp pixel art, exact original dimensions, outline, position, and front perspective. Same panel shape, add restrained luxury inlays and realistic material highlights. Transparent background with no other objects or text. Design source: Private reading room cafe, dark walnut book-lined wall, retain existing shelf sizes, muted green leather chairs, russet parquet and warm brass reading lamps.",
-    "seed": 52907,
-    "job": "dcfeac79-8dff-4970-863d-8b425a893ba3",
     "usage": null
   },
   "lux_onyx-bar.png": {
@@ -654,13 +585,6 @@
     "job": "0cb93f41-9b02-4ade-bd0f-dd7eddb63e78",
     "usage": null
   },
-  "lux_orangery-bar.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Restyle this one isolated front-facing Brew Crew cafe counter. Preserve the same warm crisp pixel art, exact original dimensions, outline, position, and front perspective. Same panel shape, add restrained luxury inlays and realistic material highlights. Transparent background with no other objects or text. Design source: Historic orangery cafe, sage green wooden slats, honey-toned rattan, light oak and leafy botanical accents, amber highlights, refined woven upholstery.",
-    "seed": 52911,
-    "job": "e9fe9d2f-ec15-4794-9f92-84e65f4484b7",
-    "usage": null
-  },
   "lux_palace-bar.png": {
     "endpoint": "edit-image-pixen",
     "prompt": "Restyle this one isolated front-facing Brew Crew cafe counter. Preserve the same warm crisp pixel art, exact original dimensions, outline, position, and front perspective. Same panel shape, add restrained luxury inlays and realistic material highlights. Transparent background with no other objects or text. Design source: Versailles salon, ivory wall panels with subtle gold moulding, buttercream stone and walnut, deep burgundy velvet chairs, discreet brass wall sconces.",
@@ -668,25 +592,11 @@
     "job": "0db8f47f-7764-4302-91e6-7dbd577ba313",
     "usage": null
   },
-  "lux_sakura-bar.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Restyle this one isolated front-facing Brew Crew cafe counter. Preserve the same warm crisp pixel art, exact original dimensions, outline, position, and front perspective. Same panel shape, add restrained luxury inlays and realistic material highlights. Transparent background with no other objects or text. Design source: Elegant Japanese spring cafe, dusty rose plaster, light ash counter and floor, parchment paper lamps, small botanical sakura branch, raspberry velvet seats.",
-    "seed": 52904,
-    "job": "cf1f1d55-554b-465b-9ade-cc8548248cb8",
-    "usage": null
-  },
   "lux_terrace-bar.png": {
     "endpoint": "edit-image-pixen",
     "prompt": "Restyle this one isolated front-facing Brew Crew cafe counter. Preserve the same warm crisp pixel art, exact original dimensions, outline, position, and front perspective. Same panel shape, add restrained luxury inlays and realistic material highlights. Transparent background with no other objects or text. Design source: French Riviera cafe, hand-glazed azure tiles and warm limestone, sea-blue velvet chairs, polished brass, sunny cream and blue palette.",
     "seed": 52906,
     "job": "4c88df44-5af4-4451-83fb-f362158860dc",
-    "usage": null
-  },
-  "lux_violet-bar.png": {
-    "endpoint": "edit-image-pixen",
-    "prompt": "Restyle this one isolated front-facing Brew Crew cafe counter. Preserve the same warm crisp pixel art, exact original dimensions, outline, position, and front perspective. Same panel shape, add restrained luxury inlays and realistic material highlights. Transparent background with no other objects or text. Design source: Intimate twilight lounge, deep plum plaster, lavender velvet chairs, brushed silver, warm moon-shaped lamp glow, moody lilac-blue accents.",
-    "seed": 52910,
-    "job": "d7c745b7-b951-4363-864f-23eccfcae883",
     "usage": null
   },
   "winter_machine.png": {
@@ -766,5 +676,729 @@
     "job": "8b78ff87-b92b-43ab-97c7-4e77cd00fc90",
     "usage": null,
     "trimmed": false
+  },
+  "lux_art_deco-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit espresso-black, aged brass, emerald green and walnut, luxurious understated 1920s Art Deco. Countertop material: black-green marble with very thin antique brass lines. Take away the textile strip. Isolated in transparent space with clean outline, no seats or other objects. Orthographic Brew Crew pixel art. Entire furniture sprite inside canvas.",
+    "seed": 61009,
+    "reference": "long-template.png",
+    "job": "d2cc2557-214d-4e4c-91ef-f68844a860c3",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006553631888495551
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_art_deco-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to symmetrical black enamel rounded Art Deco machine with a thin brass sunburst crest and two ivory cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61005,
+    "reference": "season-gold-machine.png",
+    "job": "35d78c2f-7d1e-4911-91d8-b1e6eba91ffc",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006150045209460789
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_copper-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit warm industrial roastery, aged copper, dark brick, jade-patina highlights. Countertop material: patinated copper with smoked teak. Take away the textile strip. Isolated in transparent space with clean outline, no seats or other objects. Orthographic Brew Crew pixel art. Entire furniture sprite inside canvas.",
+    "seed": 61229,
+    "reference": "long-template.png",
+    "job": "8360cbd8-4005-477a-9538-68c2f34c7469",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006791733741760254
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_copper-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to hammered warm copper casing with jade-patina trim, black round gauges and cream cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61225,
+    "reference": "season-gold-machine.png",
+    "job": "a0f5992e-9cce-445e-8ec1-1694c7f55085",
+    "usage": {
+      "type": "usd",
+      "usd": 0.008974230527877807
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_coral-back.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using dusty coral raised scalloped fluting with turquoise enamel inlays, light travertine countertop edge. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  practical uninterrupted simple face millwork, distinct from the guest-facing bar, subtle details and broad top lip. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61262,
+    "usage": {
+      "type": "usd",
+      "usd": 0.012479886770248413
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_coral-chair.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as a right-facing three-quarter side chair; front of seat visible on the right, a single chair, all four feet in warm dusty coral velvet and bleached oak legs. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean selective pixel outlines and subtle sprite shading. Same camera as reference.",
+    "seed": 61263,
+    "reference": "clean-chair.png",
+    "job": "c9d0894e-912b-4f36-87bc-84e79cb6007c",
+    "usage": {
+      "type": "usd",
+      "usd": 0.007209736718071832
+    },
+    "processing": "source silhouette, transparent crop"
+  },
+  "lux_coral-front.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using dusty coral raised scalloped fluting with turquoise enamel inlays, light travertine countertop edge. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  a rich cabinet face and discreet decorative inlay suited to a guest-facing bar. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61261,
+    "usage": {
+      "type": "usd",
+      "usd": 0.0077708440091874866
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_coral-lamp.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated small champagne-brass sconce with a peach opal shell shade. Orthographic front view, transparent background. Full silhouette including mount, no rendered light beam, no wall or floor, no lettering.",
+    "seed": 61268,
+    "usage": {
+      "type": "usd",
+      "usd": 0.006991260952419705
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_coral-machine.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. A single complete compact professional two-group espresso machine for a 2D cafe simulator, directly from the front. Design: a rounded soft coral pink enamel casing with pastel aqua trim, a distinct turquoise horizontal face and silver two groupheads. Strict front elevation, symmetrical composition, flat base, screen left and right even. Render only the machine, centered with transparent margin. No people, scenery, text, table, ground or rim halo.",
+    "seed": 61276,
+    "usage": {
+      "type": "usd",
+      "usd": 0.009343798928790623
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_coral-shelf.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Preserve the reference shelf pair width, silhouette, vertical separation, bounds and transparency. Two empty straight-on rails with no objects, wall, text or perspective. Refinish as two pale coral-painted oak shelves with shell-shaped champagne brackets and pale trim. Clean deliberate Brew Crew pixel art clusters with restrained light.",
+    "seed": 61266,
+    "reference": "shelf.png",
+    "job": "605d7811-4106-4b56-b15e-7646f956235a",
+    "usage": {
+      "type": "usd",
+      "usd": 0.0072483107778761125
+    },
+    "processing": "align to original shelf bounds"
+  },
+  "lux_coral-wall.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. An evenly lit bare pale coral PINK contemporary coastal cafe wall. Smooth dusty peach pink plaster with evenly spaced carved curved scalloped shell moulding and subtle salmon pink gradients on a seafoam teal narrow base trim. Broad pale pink shapes dominant. Refinement of a coral themed cafe. No bricks, no stones, no shelf, no wall lamps. Exact straight-on elevation; fill the entire horizontal strip. Flat pixel texture.",
+    "seed": 61272,
+    "usage": {
+      "type": "usd",
+      "usd": 0.010697037696838378
+    }
+  },
+  "lux_desert-back.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using teal zellige tiles framed by warm dark copper and red-brown wood. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  practical uninterrupted simple face millwork, distinct from the guest-facing bar, subtle details and broad top lip. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61142,
+    "usage": {
+      "type": "usd",
+      "usd": 0.008071395556131998
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_desert-front.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using teal zellige tiles framed by warm dark copper and red-brown wood. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  a rich cabinet face and discreet decorative inlay suited to a guest-facing bar. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61141,
+    "usage": {
+      "type": "usd",
+      "usd": 0.007911680459976197
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_desert-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit Medina tea house, terracotta, muted ochre and turquoise, artisan Moroccan woodwork. Countertop material: teal zellige tiles framed by warm dark copper and red-brown wood. Take away the textile strip. Isolated in transparent space with clean outline, no seats or other objects. Orthographic Brew Crew pixel art. Entire furniture sprite inside canvas.",
+    "seed": 61149,
+    "reference": "long-template.png",
+    "job": "b457324d-771a-4b3d-baea-711090b0343e",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006426036887698704
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_desert-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to aged copper with turquoise enamel detail, two brass round gauges and cream cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61145,
+    "reference": "season-gold-machine.png",
+    "job": "f1d87a15-c472-4790-b05f-5740b82fff58",
+    "usage": {
+      "type": "usd",
+      "usd": 0.007642317295074463
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_emerald-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Keep exactly the same isolated long rectangular table in Brew Crew game perspective. Transform the ENTIRE existing tabletop, including all light and central cloth pixels, to polished dark green emerald stone with small low-contrast light emerald veins and narrow aged brass edge. Dark walnut apron and legs. Only emerald green, walnut and antique brass. Transparent outside the table. No linen, pale strip, chairs or objects.",
+    "seed": 61057,
+    "reference": "long-template.png",
+    "job": "4d91ad3f-bc63-4a8b-ad8f-d2581011ef0a",
+    "usage": {
+      "type": "usd",
+      "usd": 0.00751033639907837
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_emerald-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to deep emerald lacquer with matte-brass gauges and chrome groupheads, espresso cups ivory. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61045,
+    "reference": "season-gold-machine.png",
+    "job": "abede498-403c-4f86-8876-f9edebc073cf",
+    "usage": {
+      "type": "usd",
+      "usd": 0.0071817254755232075
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_gallery-back.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using warm white polished terrazzo face with tiny sparse grey and blue stone chips, warm limestone edge and anodized champagne metal. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  practical uninterrupted simple face millwork, distinct from the guest-facing bar, subtle details and broad top lip. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61162,
+    "usage": {
+      "type": "usd",
+      "usd": 0.00892710985077752
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_gallery-front.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Preserve one isolated horizontal front-elevation cabinet panel, same footprint and palette. Change all brown wood to ivory limestone-white, front panel to cream terrazzo with tiny blue mineral stones, add a subtle cobalt outline, cream stone top. Transparent outside. No object, ground, perspective or text.",
+    "seed": 61173,
+    "reference": "gallery-panel-source.png",
+    "job": "3b34fa17-fd7c-4ce4-975b-97aba4cd9291",
+    "usage": {
+      "type": "usd",
+      "usd": 0.00751875631014506
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_gallery-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to modern squared white porcelain and brushed metal facade with a narrow cobalt band, white cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61165,
+    "reference": "season-gold-machine.png",
+    "job": "4fa09e91-19fe-4a3a-ace7-8f859b08aa07",
+    "usage": {
+      "type": "usd",
+      "usd": 0.005954794910218981
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_library-back.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using traditional dark walnut rectangular millwork, green inset with slim restrained antique brass. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  practical uninterrupted simple face millwork, distinct from the guest-facing bar, subtle details and broad top lip. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61122,
+    "usage": {
+      "type": "usd",
+      "usd": 0.011024558385213216
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_library-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit quiet library cafe, warm dark walnut, aged brass, dark green upholstery. Countertop material: traditional dark walnut rectangular millwork, green inset with slim restrained antique brass. Take away the textile strip. Isolated in transparent space with clean outline, no seats or other objects. Orthographic Brew Crew pixel art. Entire furniture sprite inside canvas.",
+    "seed": 61129,
+    "reference": "long-template.png",
+    "job": "c6b9b8e9-b25b-4548-b288-01440896a287",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006189351267284818
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_library-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to deep green enamel body, dark walnut side trim, polished aged bronze hardware and white cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61125,
+    "reference": "season-gold-machine.png",
+    "job": "a0fc6496-3791-45e9-8b90-4a3a4767017d",
+    "usage": {
+      "type": "usd",
+      "usd": 0.009744930691189237
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_library-shelf.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Preserve the reference shelf pair width, silhouette, vertical separation, bounds and transparency. Two empty straight-on rails with no objects, wall, text or perspective. Refinish as two dark walnut shelves with thin antique brass edges and solid walnut brackets. Clean deliberate Brew Crew pixel art clusters with restrained light.",
+    "seed": 61126,
+    "reference": "shelf.png",
+    "job": "9b76f8f0-be1f-402d-9a87-e24915672d50",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006920232984754774
+    },
+    "processing": "align to original shelf bounds"
+  },
+  "lux_library-window.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Pixel-art Brew Crew library window. Same straight front-facing geometry and empty transparent glass holes, dimensions, and frame thickness. Refine as a carved dark walnut six-light library sash with a narrow bronze center rail and tiny gilded corner details. The glass is clear with completely transparent openings, no exterior scene, lamps, wall or text.",
+    "seed": 61127,
+    "reference": "winA.png",
+    "job": "8211e32e-1504-48ef-b20e-f1efd0bdebed",
+    "usage": {
+      "type": "usd",
+      "usd": 0.005
+    },
+    "processing": "align to original opening and frame"
+  },
+  "lux_observatory-back.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using petrol blue enamel inset with a small bronze astronomical rosette pattern, dark smoked stone countertop edge. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  practical uninterrupted simple face millwork, distinct from the guest-facing bar, subtle details and broad top lip. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61242,
+    "usage": {
+      "type": "usd",
+      "usd": 0.008167211479610867
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_observatory-chair.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as a right-facing three-quarter side chair; front of seat visible on the right, a single chair, all four feet in muted petrol-blue velvet, antiqued bronze frame. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Clean selective pixel outlines and subtle sprite shading. Same camera as reference.",
+    "seed": 61243,
+    "reference": "clean-chair.png",
+    "job": "29c949f5-bd3b-4cbb-af13-ce6079d6e1a7",
+    "usage": {
+      "type": "usd",
+      "usd": 0.0073060482872856995
+    },
+    "processing": "source silhouette, transparent crop"
+  },
+  "lux_observatory-front.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using petrol blue enamel inset with a small bronze astronomical rosette pattern, dark smoked stone countertop edge. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  a rich cabinet face and discreet decorative inlay suited to a guest-facing bar. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61241,
+    "usage": {
+      "type": "usd",
+      "usd": 0.008164388365215726
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_observatory-lamp.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated discreet antique bronze wall lamp, star-shaped brass frame with warm amber frosted glass. Orthographic front view, transparent background. Full silhouette including mount, no rendered light beam, no wall or floor, no lettering.",
+    "seed": 61248,
+    "usage": {
+      "type": "usd",
+      "usd": 0.007251659393310547
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_observatory-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to petrol blue enamel dome with rounded bronze lens-like pressure gauge and two brass groupheads, pewter counterside, ivory cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61245,
+    "reference": "season-gold-machine.png",
+    "job": "cc08d8bb-da28-47e6-9202-327938fc65bb",
+    "usage": {
+      "type": "usd",
+      "usd": 0.0072017167939080135
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_observatory-shelf.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Preserve the reference shelf pair width, silhouette, vertical separation, bounds and transparency. Two empty straight-on rails with no objects, wall, text or perspective. Refinish as two petrol-blue shelves with restrained brass edges and dark blue brackets. Clean deliberate Brew Crew pixel art clusters with restrained light.",
+    "seed": 61246,
+    "reference": "shelf.png",
+    "job": "72e42d31-abe8-4a74-b653-cb82e690927a",
+    "usage": {
+      "type": "usd",
+      "usd": 0.00672275021341112
+    },
+    "processing": "align to original shelf bounds"
+  },
+  "lux_observatory-wall.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. Empty dark matte petrol navy-blue plaster and low stained midnight teal oak wainscot, subtle bronze wood molding. Two faint etched orbit arcs and restrained bronze pinprick stars on a continuous dark teal empty wall. No objects, no lamps, no windows, no wallpaper patchwork. Exact straight-on elevation; fill the entire horizontal strip. Flat pixel texture.",
+    "seed": 61252,
+    "usage": {
+      "type": "usd",
+      "usd": 0.008337976535161336
+    }
+  },
+  "lux_onyx-lamp.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated small square brushed silver wall sconce with a warm white opal front diffuser. Orthographic front view, transparent background. Full silhouette including mount, no rendered light beam, no wall or floor, no lettering.",
+    "seed": 61088,
+    "usage": {
+      "type": "usd",
+      "usd": 0.00732488309012519
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_onyx-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit architectural graphite lounge, black onyx, off-white veining, blue-black velvet and brushed silver. Countertop material: brushed silver against dark graphite onyx. Take away the textile strip. Isolated in transparent space with clean outline, no seats or other objects. Orthographic Brew Crew pixel art. Entire furniture sprite inside canvas.",
+    "seed": 61089,
+    "reference": "long-template.png",
+    "job": "3b8245be-8732-4869-80f9-32fb7484e24f",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006729585700564915
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_onyx-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to graphite black enamel with brushed silver front and dark cool-blue dials, grey porcelain cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61085,
+    "reference": "season-gold-machine.png",
+    "job": "a71e7095-c8c0-444f-9b86-218e80319db8",
+    "usage": {
+      "type": "usd",
+      "usd": 0.00637405686908298
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_onyx-shelf.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Preserve the reference shelf pair width, silhouette, vertical separation, bounds and transparency. Two empty straight-on rails with no objects, wall, text or perspective. Refinish as dark smoked-glass shelves with two brushed-silver metal rails and discreet black steel brackets. Clean deliberate Brew Crew pixel art clusters with restrained light.",
+    "seed": 61086,
+    "reference": "shelf.png",
+    "job": "565d0c52-66f1-4579-85ba-263d0affa908",
+    "usage": {
+      "type": "usd",
+      "usd": 0.0069434883594512945
+    },
+    "processing": "align to original shelf bounds"
+  },
+  "lux_orangery-back.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using soft sage oak rectangular frames around a delicate woven rattan insert and pale honey-oak tabletop rim. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  practical uninterrupted simple face millwork, distinct from the guest-facing bar, subtle details and broad top lip. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61202,
+    "usage": {
+      "type": "usd",
+      "usd": 0.0077553096612294516
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_orangery-front.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Keep the one isolated front-facing rectangular cafe cabinet panel exactly positioned. Face contains ONLY a single large woven rattan insert with clean sage-painted oak border and pale warm oak countertop. Add a delicate gold line around rattan for the guest-facing bar. No glass, no books, drawers, furniture, lamp, object, text or background. Pure transparent margins.",
+    "seed": 61214,
+    "reference": "orangery-panel-source.png",
+    "job": "06762f36-0e85-497a-bc1f-2392a620387e",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006560299158096314
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_orangery-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to sage enamel, gleaming bronze fittings, pale honey-oak accent and cream cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61205,
+    "reference": "season-gold-machine.png",
+    "job": "37b87055-d380-438d-804b-1d136122338d",
+    "usage": {
+      "type": "usd",
+      "usd": 0.008477289332283868
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_palace-lamp.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated antique gold two-arm Rococo wall sconce with two unshaded ivory candle bulbs and a discreet curved gilded backplate. Orthographic front view, transparent background. Full silhouette including mount, no rendered light beam, no wall or floor, no lettering.",
+    "seed": 61028,
+    "usage": {
+      "type": "usd",
+      "usd": 0.006695794423421224
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_palace-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit warm ivory and antique gold with subdued Bordeaux velvet, classic Versailles salon. Countertop material: carved walnut with ivory stone and delicate gilded moulding. Take away the textile strip. Isolated in transparent space with clean outline, no seats or other objects. Orthographic Brew Crew pixel art. Entire furniture sprite inside canvas.",
+    "seed": 61029,
+    "reference": "long-template.png",
+    "job": "5c21ba9c-b7a5-4326-8d4b-581f84ee4801",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006524100542068482
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_palace-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to an ivory and pearl enamel body with a curved gilded rail, antique bronze round dials, porcelain cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61025,
+    "reference": "season-gold-machine.png",
+    "job": "73241e97-8f0d-4f96-b31a-3da16d04fb3b",
+    "usage": {
+      "type": "usd",
+      "usd": 0.005
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_sakura-front.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using pale ash and blush Shoji-inspired fine simple rectangular joinery with a pale ash countertop edge. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  a rich cabinet face and discreet decorative inlay suited to a guest-facing bar. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61061,
+    "usage": {
+      "type": "usd",
+      "usd": 0.009170663462744819
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_sakura-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to pale off-white and rose enamel, copper fittings, small blossom etched in one corner, two cream cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61065,
+    "reference": "season-gold-machine.png",
+    "job": "b19c36e3-0a46-490e-a874-6778e2dd7bcf",
+    "usage": {
+      "type": "usd",
+      "usd": 0.007599907689624362
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_terrace-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit Riviera cafe with warm pale limestone, marine blue, and sunlit brass. Countertop material: cyan ceramic inlays and warm pale limestone. Take away the textile strip. Isolated in transparent space with clean outline, no seats or other objects. Orthographic Brew Crew pixel art. Entire furniture sprite inside canvas.",
+    "seed": 61109,
+    "reference": "long-template.png",
+    "job": "6896e762-9c40-4a38-ba10-de05c3deffe1",
+    "usage": {
+      "type": "usd",
+      "usd": 0.008359078884124757
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_terrace-machine.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One isolated professional two-group espresso machine. Keep the reference front elevation, centerline, width, pose, footprint and transparent outline. Restyle to cream and azure enamel, small bronze dials, pale turquoise cups. Brew Crew crisp pixel art clusters, deliberate small highlight, no lettering, side view, loose objects, background, person or floor.",
+    "seed": 61105,
+    "reference": "season-gold-machine.png",
+    "job": "864f659c-dd6b-4e63-b44b-411517f7e167",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006439684708913167
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_terrace-shelf.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Preserve the reference shelf pair width, silhouette, vertical separation, bounds and transparency. Two empty straight-on rails with no objects, wall, text or perspective. Refinish as two seafoam blue ceramic-edged pale oak shelves with sturdy brass brackets. Clean deliberate Brew Crew pixel art clusters with restrained light.",
+    "seed": 61106,
+    "reference": "shelf.png",
+    "job": "58f209d5-3321-446f-a8a6-130c4ecc13e5",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006713562594519721
+    },
+    "processing": "align to original shelf bounds"
+  },
+  "lux_violet-back.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using charcoal black satin wood with narrow smoked brass rim and muted dark plum rectangular inset. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  practical uninterrupted simple face millwork, distinct from the guest-facing bar, subtle details and broad top lip. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61182,
+    "usage": {
+      "type": "usd",
+      "usd": 0.007751743131213718
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_violet-front.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using charcoal black satin wood with narrow smoked brass rim and muted dark plum rectangular inset. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  a rich cabinet face and discreet decorative inlay suited to a guest-facing bar. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61181,
+    "usage": {
+      "type": "usd",
+      "usd": 0.008243957228130764
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_violet-lamp.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated a compact crescent-shape bronze wall sconce with a very softly glowing amber opal globe. Orthographic front view, transparent background. Full silhouette including mount, no rendered light beam, no wall or floor, no lettering.",
+    "seed": 61188,
+    "usage": {
+      "type": "usd",
+      "usd": 0.006854868120617337
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_violet-machine.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. A single complete compact professional two-group espresso machine for a 2D cafe simulator, directly from the front. Design: dark indigo cylindrical casing with a wide charcoal face, two glowing bronze round dials, nickel groupheads and a deep plum enamel base. Strict front elevation, symmetrical composition, flat base, screen left and right even. Render only the machine, centered with transparent margin. No people, scenery, text, table, ground or rim halo.",
+    "seed": 61196,
+    "usage": {
+      "type": "usd",
+      "usd": 0.01170195296075609
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_coral-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit artisanal coral reef cafe, warm coral plaster, seafoam enamel, champagne brass and pale travertine. Countertop material: dusty coral raised scalloped fluting with turquoise enamel inlays, light travertine countertop edge. Take away the textile strip. Isolated in transparent space with clean outline, no seats or. Transparent PNG. No extra objects or scenery.",
+    "seed": 61269,
+    "reference": "long-template.png",
+    "job": "ad7f58c4-6e04-42c5-95ab-81e99b883381",
+    "usage": {
+      "type": "usd",
+      "usd": 0.008948723395665487
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_coral-table.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as one round bistro table, same low player camera and centered three-legged pedestal, bare top in dusty coral raised scalloped fluting with turquoise enamel inlays, light travertine countertop edge. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other objects. Transparent PNG. No extra objects or scenery.",
+    "seed": 61264,
+    "reference": "clean-table.png",
+    "job": "23b5bb67-4ca4-4076-b8f2-934498431c2d",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006432946152157254
+    },
+    "processing": "source silhouette, transparent crop"
+  },
+  "lux_gallery-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit sunlit minimalist contemporary art cafe, off-white limestone, warm terrazzo and vivid cobalt blue. Countertop material: warm white polished terrazzo face with tiny sparse grey and blue stone chips, warm limestone edge and anodized champagne metal. Take away the textile strip. Isolated in transparent space with. Transparent PNG. No extra objects or scenery.",
+    "seed": 61169,
+    "reference": "long-template.png",
+    "job": "83e3b135-492f-43f9-b286-1a88eadf52b0",
+    "usage": {
+      "type": "usd",
+      "usd": 0.007014721446567111
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_library-front.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using traditional dark walnut rectangular millwork, green inset with slim restrained antique brass. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  a rich cabinet face and discreet decorative inlay suited to a guest-facing bar. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61121,
+    "usage": {
+      "type": "usd",
+      "usd": 0.008946112049950494
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_observatory-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit vintage astronomical observatory cafe, almost black petrol blue, patinated bronze and smoky blue upholstery. Countertop material: petrol blue enamel inset with a small bronze astronomical rosette pattern, dark smoked stone countertop edge. Take away the textile strip. Isolated in transparent space with clean. Transparent PNG. No extra objects or scenery.",
+    "seed": 61249,
+    "reference": "long-template.png",
+    "job": "88fd2c75-5c4f-4757-b98b-129dfc74806c",
+    "usage": {
+      "type": "usd",
+      "usd": 0.010107795635859172
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_observatory-table.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Keep one isolated Brew Crew sprite at the exact source pose, direction, silhouette, canvas size and floor contact. Refinish as one round bistro table, same low player camera and centered three-legged pedestal, bare top in petrol blue enamel inset with a small bronze astronomical rosette pattern, dark smoked stone countertop edge. Transparent exterior opening around legs, no white halo, floor, wall, light spots, lamps, tableware or other. Transparent PNG. No extra objects or scenery.",
+    "seed": 61244,
+    "reference": "clean-table.png",
+    "job": "c0bb2b20-6c68-4308-8ddd-90b128c449ce",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006483928044637044
+    },
+    "processing": "source silhouette, transparent crop"
+  },
+  "lux_orangery-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit heritage orangery in sun, sage green oak joinery, rattan inlays, and honey-toned ash. Countertop material: soft sage oak rectangular frames around a delicate woven rattan insert and pale honey-oak tabletop rim. Take away the textile strip. Isolated in transparent space with clean outline, no seats or other. Transparent PNG. No extra objects or scenery.",
+    "seed": 61209,
+    "reference": "long-template.png",
+    "job": "e5686bb2-c687-49b7-8eca-22a5e9f21c9f",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006804306189219157
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_sakura-back.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp game pixel art for Brew Crew, restrained nuanced shading, clean pixel clusters and selective dark outlines. One isolated perfectly rectangular tile of a straight-on espresso bar counter, using pale ash and blush Shoji-inspired fine simple rectangular joinery with a pale ash countertop edge. Front elevation, fills most of square canvas. Straight horizontal lines, a narrow countertop lip at top,  practical uninterrupted simple face millwork, distinct from the guest-facing bar, subtle details and broad top lip. Extend the horizontal rails to the edges of the panel, with the panel vertical sides straight. Single cabinet section, no perspective, furniture, appliances, lamps, side walls or people. Outside the rectangle is pure transparency. No writing.",
+    "seed": 61062,
+    "usage": {
+      "type": "usd",
+      "usd": 0.008741011593076917
+    },
+    "processing": "trim to fascia and countertop lip"
+  },
+  "lux_sakura-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit Japanese kissaten in spring, pale rose, unbleached ash wood and muted copper, restrained Japanese craft. Countertop material: pale ash and blush Shoji-inspired fine simple rectangular joinery with a pale ash countertop edge. Take away the textile strip. Isolated in transparent space with clean outline, no seats. Transparent PNG. No extra objects or scenery.",
+    "seed": 61069,
+    "reference": "long-template.png",
+    "job": "a0977e26-d89a-421f-aaf7-c32eb13fc17a",
+    "usage": {
+      "type": "usd",
+      "usd": 0.006412150409486559
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_violet-long.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "One long rectangular cafe table, identical source silhouette, position, angle, width, leg locations and height. Refinish to fit moody refined dusk lounge, smoke charcoal, indigo midnight plaster, muted berry velvet and warm bronze, dark and subdued. Countertop material: charcoal black satin wood with narrow smoked brass rim and muted dark plum rectangular inset. Take away the textile strip. Isolated in transparent space with clean. Transparent PNG. No extra objects or scenery.",
+    "seed": 61189,
+    "reference": "long-template.png",
+    "job": "0eb732c4-b3dd-4c69-838f-e2d5828b4fb0",
+    "usage": {
+      "type": "usd",
+      "usd": 0.007372946235868667
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_coral.png": {
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
+  },
+  "lux_observatory.png": {
+    "source": "Brew Crew scene",
+    "preview": "Composite of the shipped PixelLab sprites in the standard hall",
+    "dimensions": [
+      320,
+      360
+    ]
+  },
+  "lux_emerald-chair-north.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Only change the colors of this existing isolated sprite. Keep EXACTLY all the brown vertical slender walnut spindles extending from crest down to seat and the original transparent silhouette. Replace the red and pink gingham fabric with plain rich emerald green leather in the exact seat fabric area. Keep the chair turned the exact same way seen from behind. Open transparent space between legs and beneath entire chair with no ground or shadow.",
+    "seed": 61063,
+    "reference": "long-chair-north.png",
+    "job": "9f0366ec-be2d-48aa-ba84-550b4df28a91",
+    "usage": {
+      "type": "usd",
+      "usd": 0.008710407627953424
+    },
+    "processing": "isolate main sprite and crop alpha"
+  },
+  "lux_emerald-chair-south.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Keep this single Brew Crew chair exactly in the same pose, facing and geometry. Refinish the seat and back padding in visibly saturated dark emerald-green leather and wood in dark chocolate walnut with subtle aged brass joinery. Transparent outside and between legs. No floor, wall, other objects or text.",
+    "seed": 61059,
+    "reference": "long-chair-south.png",
+    "job": "a3bd089d-6d41-4038-bc69-068ed1ef4e5c",
+    "usage": {
+      "type": "usd",
+      "usd": 0.007128568675782945
+    },
+    "processing": "isolate main sprite and crop alpha"
   }
 }
