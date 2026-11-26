@@ -1302,7 +1302,7 @@ export const STORE_ITEMS = {
   "lux_x_cat": {
     "title": "Золотой кот удачи",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 299,
+    "stars": 199,
     "once": 1,
     "category": "lux",
     "skin": "x_cat",
@@ -1313,7 +1313,7 @@ export const STORE_ITEMS = {
   "lux_x_gram": {
     "title": "Граммофон",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 349,
+    "stars": 199,
     "once": 1,
     "category": "lux",
     "skin": "x_gram",
@@ -1324,7 +1324,7 @@ export const STORE_ITEMS = {
   "lux_x_chand": {
     "title": "Хрустальная люстра",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 599,
+    "stars": 249,
     "once": 1,
     "category": "lux",
     "skin": "x_chand",
@@ -1335,7 +1335,7 @@ export const STORE_ITEMS = {
   "lux_clock": {
     "title": "Коллекционные часы",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 249,
+    "stars": 149,
     "once": 1,
     "category": "lux",
     "skin": "clock",
@@ -1346,7 +1346,7 @@ export const STORE_ITEMS = {
   "lux_d_aquarium": {
     "title": "Панорамный аквариум",
     "desc": "Оформление кофейни. Остаётся в коллекции.",
-    "stars": 499,
+    "stars": 249,
     "once": 1,
     "category": "lux",
     "skin": "d_aquarium",
