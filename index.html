@@ -1481,8 +1481,9 @@ function refreshCands(){
   if(!crew.some(x=>x.role==='Бариста')) must.push('Бариста'); if(!crew.some(x=>x.role==='Кассир')) must.push('Кассир');
   const rolePool = Object.keys(ROLES).filter(r=>staffCap(r) > 0);
   for(let i=0;i<(S.level>=4?4:3);i++){ const c = makeStaff(must[i] || pick(rolePool)); c.lvl = RI(1,3); if(chance(0.35)){ c.realLvl = c.lvl; c.lvl = c.lvl + RI(1,3); c.claim = true; } S.cands.push(c); }
-  const legP = 0.01 + 0.002*perk('agency');
-  if(S.day - (S.legendCandDay==null ? -99 : S.legendCandDay) >= 7 && chance(legP)){ const l = makeLegend(); if(l){ S.cands.push(l); S.legendCandDay = S.day; } }
+  const legP = 0.004 + 0.001*perk('agency'); // 27.11: легенды реже, и не больше двух в команде
+  const legN = S.staff.filter(x=>x.legendId).length;
+  if(legN < 2 && S.day - (S.legendCandDay==null ? -99 : S.legendCandDay) >= 14 && chance(legP)){ const l = makeLegend(); if(l){ S.cands.push(l); S.legendCandDay = S.day; } }
 }
 function hire(c, roomId, contract){
   c.room = roomId; c.contract = contract || 'white';
@@ -17273,6 +17274,92 @@ MODAL15.iv2=function(box,m,btn){ var c=(S.cands||[]).find(function(x){ return x.
   if(!full){ box.append(btn('Принять',function(){ take(false); }), btn('В серую',function(){ take(true); },'ghost')); }
   box.append(btn('Отказать',function(){ S.cands=S.cands.filter(function(x){ return x!==c; }); closeModal(); save(); try{ renderPanel(); }catch(e){} },'ghost'), btn('Подумать',function(){ closeModal(); save(); try{ renderPanel(); }catch(e){} },'ghost'));
   save(); };
+})();
+
+/* ================= 27.11: сюжет «Бизнес-центр напротив» — бесплатный кофе в офисы, слухи, дружба или война ================= */
+(function(){
+function O(){ S.ofc=S.ofc||{kicked:0,conv:0}; return S.ofc; }
+function beat(days,id){ S.pending.push({at:(S.day+days)*DAY_MIN+RI(10*60,17*60), ev:id}); }
+function M(b){ var l=Math.max(1,(S&&S.level)||1); return Math.round(b*(1+0.3*(l-1))/100)*100; }
+function goodOdds(){ return Math.min(0.75, 0.42+Math.max(0,(S.rep||3)-3)*0.12); }
+/* ---------- начало ---------- */
+def('of1',{cat:'story',t:'Бизнес-центр напротив',x:'Напротив открылся бизнес-центр «Галактика»: девять этажей, сорок офисов и ни одной кофейни. Только автомат на первом этаже. Бариста предлагает утром отнести офисникам бесплатный фильтр-кофе в термосах. Реклама почти бесплатная, но что они скажут, неизвестно.',o:[
+ {t:'Отнести термосы на все девять этажей',fx:function(){ O().all=1; beat(1,'of2'); return {fx:{m:-M(3000),moodAll:-2},out:'Бариста вернулся через два часа с пустыми термосами и пропуском на шее. Говорит, на седьмом этаже на него странно посмотрели.'}; }},
+ {t:'Только на пару этажей, для пробы',fx:function(){ beat(1,'of2'); return {fx:{m:-M(1000)},out:'Отнесли на четвёртый и седьмой. Охранник на входе тоже налил себе. Два раза.'}; }},
+ {t:'Не надо, сами придут',fx:function(){ O().skip=1; beat(RI(3,5),'of1b'); return {fx:{},out:'Сами не пришли. Зато автомат на первом этаже теперь продаёт «капучино» за 90 рублей.'}; }}]});
+def('of1b',{cat:'story',t:'Автомат побеждает',x:'Офисники «Галактики» так и пьют кофе из автомата. Вчера автомат выдал кому-то суп вместо латте, и тот выпил. Ещё раз отнести им нормальный кофе?',o:[
+ {t:'Отнести термосы',fx:function(){ beat(1,'of2'); return {fx:{m:-M(2000)},out:'Отнесли. Кто-то спросил, есть ли у вас суп.'}; }},
+ {t:'Забыть про них',fx:function(){ O().done='skip'; return {fx:{},out:'Пусть пьют суп.'}; }}]});
+/* ---------- слухи: 50 на 50 ---------- */
+def('of2',{cat:'story',t:'Что говорят в «Галактике»',x:'Прошли сутки. Бариста подслушал в лифте, что офисники думают про ваш кофе.',o:[
+ {t:'Узнать',fx:function(){ var o=O(); o.on=1;
+   if(chance(goodOdds()+(o.all?0.08:0))){ o.side='good'; beat(2,'og1'); return {fx:{mod:['traffic',1.12,48,'Офисы «Галактики» узнали про вас'],soul:1},out:pick(['На четвёртом этаже сказали: «Наконец-то нормальный кофе». Бухгалтерия создала чат «Кофе напротив». В нём уже 23 человека.','Отдел продаж решил, что это знак. Теперь у них утренний ритуал: все идут к вам. Даже стажёр.','Офисники постят ваш стакан в сторис с подписью «нашли». Кажется, вы стали модным местом.'])}; }
+   o.side='bad'; beat(1,'of3'); return {fx:{rep:-1},out:pick(['В общем чате «Галактики» написали: «Кофе из кофейни напротив на вкус как из машины, заклеенной скотчем». 46 лайков.','Седьмой этаж решил, что бесплатный кофе это подозрительно. Теперь там слух, что вы что-то в него добавляете.','Финансовый директор сказал: «Фильтр это для бедных». Весь отдел повторил за ним.'])}; }}]});
+def('of3',{cat:'story',t:'Офисники недовольны',x:'«Галактика» вас обсуждает, и не по-доброму. Что делаем?',o:[
+ {t:'Отнести ещё раз: раф и круассаны',fx:function(){ if(chance(0.6)){ O().side='good'; beat(2,'og1'); return {fx:{m:-M(5000),mod:['traffic',1.08,48,'«Галактика» передумала']},out:'Раф сработал. Седьмой этаж удалил своё сообщение и написал: «Беру слова назад, раф топ».'}; } beat(1,'ow1'); return {fx:{m:-M(5000)},out:'Круассаны съели, раф выпили и написали: «Подкупают». Теперь вас называют «скотч-кофе».'}; }},
+ {t:'Ответить в их чате с юмором',fx:function(){ if(chance(0.5)){ O().side='good'; beat(2,'og1'); return {fx:{soul:1},out:'Бариста написал: «Скотч у нас только на коробках с зерном». Чат смеялся, к обеду пришли двенадцать человек.'}; } beat(1,'ow1'); return {fx:{chaos:1},out:'Шутку не поняли. Скриншот разошёлся по всем этажам с подписью «Они ещё и хамят».'}; }},
+ {t:'Объявить «Галактике» войну',fx:function(){ beat(1,'ow1'); return {fx:{pathos:2},out:'Бариста повесил на дверь табличку «Офисникам с седьмого этажа обслуживание по записи». Записи нет.'}; }}]});
+/* ---------- война ---------- */
+def('ow1',{cat:'story',t:'Война с «Галактикой»',x:'Седьмой этаж повесил в лифте листовку: «Не ходите в кофейню напротив». Команда в ярости. Бариста предлагает внести офисников в чёрный список.',o:[
+ {t:'Чёрный список: офисников выгонять',fx:function(){ var o=O(); o.war=1; o.side='war'; beat(2,'ow2'); return {fx:{pathos:2,mod:['traffic',0.95,72,'Война с «Галактикой»']},out:'Теперь у офисников с бейджами «Галактики» над головой красный знак. Тапни, чтобы выставить.'}; }},
+ {t:'Повесить свою листовку: «Скидка 20% всем, кроме седьмого этажа»',fx:function(){ O().side='war'; beat(2,'ow2'); return {fx:{chaos:1,mod:['traffic',1.06,48,'Листовка против «Галактики»']},out:'Шестой и восьмой этажи пришли за скидкой и смеялись над седьмым. Седьмой не смеялся.'}; }},
+ {t:'Пойти мириться с тортом',fx:function(){ if(chance(0.5)){ O().side='good'; beat(2,'og1'); return {fx:{m:-M(4000),soul:2},out:'Торт съели, листовку сняли. Начальник седьмого этажа сказал: «Ладно, посмотрим».'}; } beat(2,'ow2'); return {fx:{m:-M(4000)},out:'Торт съели. Листовку не сняли. Рядом повесили вторую: «Спасибо за торт, всё равно не пойдём».'}; }}]});
+def('ow2',{cat:'story',t:'Ответный удар',x:'Из «Галактики» пришёл заказ на доставку: сорок капучино на седьмой этаж. Курьер приехал, а офис закрыт, на двери записка: «Мы на обеде. Навсегда».',o:[
+ {t:'Раздать капучино прохожим',fx:function(){ beat(2,'ow3'); return {fx:{m:-M(6000),soul:2,rep:1},out:'Прохожие были счастливы. Один записал видео «Кофейня раздаёт кофе бесплатно», оно набрало просмотров больше, чем весь бизнес-центр.'}; }},
+ {t:'Выставить счёт их директору',fx:function(){ beat(2,'ow3'); if(chance(0.5)) return {fx:{m:M(8000)},out:'Директор заплатил, извинился и пообещал разобраться с седьмым этажом. Седьмой этаж теперь ненавидит вас ещё сильнее.'}; return {fx:{chaos:1},out:'Директор сказал, что это не он. И добавил вас в чёрный список «Галактики». Теперь это взаимно.'}; }},
+ {t:'Отправить им сорок пицц с ананасами',fx:function(){ O().pizza=1; beat(2,'ow3'); return {fx:{m:-M(5000),chaos:2,pathos:2},out:'Пиццы приехали за их счёт. Половина офиса оказалась фанатами ананасов. Война пошла не по плану.'}; }}]});
+def('ow3',{cat:'story',t:'У них своя кофе-точка',x:'На первом этаже «Галактики» открыли кофе-точку: автомат, стажёр и табличка «Лучше, чем напротив». Гостей у вас стало меньше.',o:[
+ {t:'Переманить их стажёра',fx:function(){ try{ var c=makeStaff('Бариста'); c.lvl=3; c.name=c.sex==='f'?'Стажёрка Вика':'Стажёр Тёма'; S.cands.push(c); }catch(e){} beat(3,'ow4'); return {fx:{mod:['traffic',0.92,48,'Кофе-точка «Галактики»'],pathos:1},out:'Стажёр пришёл на собеседование в бейдже «Галактики». Он в кандидатах. Их точка теперь работает без бариста.'}; }},
+ {t:'Ждать, пока у них всё сломается',fx:function(){ beat(3,'ow4'); return {fx:{mod:['traffic',0.9,72,'Кофе-точка «Галактики»']},out:'Ждём. Бариста каждый час смотрит в окно на их автомат и что-то шепчет.'}; }},
+ {t:'Тайно продать им зерно похуже',fx:function(){ O().beans=1; beat(3,'ow4'); return {fx:{m:M(3000),chaos:2,mod:['traffic',0.93,48,'Кофе-точка «Галактики»']},out:'Через подставного поставщика им ушло зерно «Эконом-люкс». Его не пьют даже голуби.'}; }}]});
+def('ow4',{cat:'story',t:'Чем кончилась война',x:'Автомат в «Галактике» сломался на третий день. Внутри нашли скотч. Кофе-точку закрыли, а директор бизнес-центра пришёл к вам сам, без бейджа.',o:[
+ {t:'Принять капитуляцию: контракт на кофе для всего БЦ',fx:function(){ var o=O(); o.war=0; o.sub=Math.max(o.sub||0,2); o.done='peace'; badgeAdd('ofc_win','Победитель «Галактики»','Выиграл войну с бизнес-центром и заключил мир'); return {fx:{m:M(20000),soul:2,mod:['traffic',1.1,72,'Мир с «Галактикой»']},out:'Подписали мир. Седьмой этаж теперь берёт у вас двойной эспрессо и молчит. Каждый вечер «Галактика» платит по договору.'}; }},
+ {t:'Добить: «Офисникам из Галактики вход запрещён» навсегда',fx:function(){ var o=O(); o.war=2; o.done='war'; badgeAdd('ofc_enemy','Враг бизнес-центра','Так и не простил «Галактику»'); return {fx:{pathos:3,rep:-1},out:'Табличка висит на двери. Офисники обходят кофейню по другой стороне улицы. Иногда кто-то всё равно заходит, тогда его можно выставить.'}; }}]});
+/* ---------- дружба ---------- */
+def('og1',{cat:'story',t:'Офисный абонемент',x:'Бухгалтерия «Галактики» хочет абонемент: тридцать кофе каждое утро по безналу. Просят скидку 25%.',o:[
+ {t:'Согласиться на скидку',fx:function(){ O().sub=1; beat(3,'og2'); return {fx:{soul:1},out:'Договор подписан. Каждое утро курьер «Галактики» уносит две подставки по 15 стаканов. Деньги приходят в конце дня.'}; }},
+ {t:'Без скидки, по полной цене',fx:function(){ beat(3,'og2'); if(chance(0.5)){ O().sub=2; return {fx:{},out:'Бухгалтерия поворчала и согласилась. «Галактика» платит полную цену.'}; } return {fx:{},out:'Бухгалтерия обиделась и ушла к автомату. Но отдел продаж всё равно ходит к вам.'}; }},
+ {t:'Отказать: у нас не столовая',fx:function(){ beat(3,'og2'); return {fx:{pathos:1},out:'Бухгалтерия ушла молча. Отдел продаж всё равно ходит.'}; }}]});
+def('og2',{cat:'story',t:'Скотч-кофемашина',x:'В «Галактике» сломалась офисная кофемашина. Сисадмин починил её скотчем. Через час она взорвалась капучино на весь опенспейс. Весь бизнес-центр идёт к вам. Прямо сейчас.',o:[
+ {t:'Все на смену, берём очередь',fx:function(){ beat(3,'og3'); return {fx:{mod:['traffic',1.6,3,'Весь БЦ у вас'],moodAll:-5},out:'Очередь до угла. Касса звенит, команда потеет. Сисадмин пришёл последним и попросил кофе «без скотча».'}; }},
+ {t:'Только по записи: у нас не резиновая',fx:function(){ beat(3,'og3'); return {fx:{mod:['traffic',1.2,3,'Часть БЦ у вас'],rep:-1},out:'Записали двадцать человек. Остальные стояли под окнами и смотрели, как пьют записавшиеся.'}; }}]});
+def('og3',{cat:'story',t:'Корпоратив',x:'HR «Галактики» хочет провести у вас корпоратив: шестьдесят человек, караоке и конкурс «Кто быстрее выпьет эспрессо».',o:[
+ {t:'Закрыться под корпоратив',fx:function(){ beat(3,'og4'); return {fx:{close:4,m:M(60000),chaos:2},out:'Финансовый директор пел «Рюмку водки на столе» над капучино. Конкурс выиграла бухгалтер Нина: шесть эспрессо за минуту. Ей вызвали такси до луны.'}; }},
+ {t:'Отказать: у нас кофейня, а не банкетный зал',fx:function(){ beat(3,'og4'); return {fx:{soul:1},out:'HR огорчилась, но оценила принципиальность. Говорит, это «очень по-брендовому».'}; }}]});
+def('og4',{cat:'story',t:'Предложение директора',x:'Директор «Галактики» лично пришёл в кофейню и предлагает поставить ваш кофе-поинт прямо в холле бизнес-центра. Ваше имя на табличке у лифтов.',o:[
+ {t:'Открыть кофе-поинт в холле',fx:function(){ var o=O(); o.point=1; o.sub=Math.max(o.sub||0,1); o.done='friend'; badgeAdd('ofc_friend','Кофе «Галактики»','Кофе-поинт в холле бизнес-центра'); return {fx:{m:-M(50000),soul:2},out:'Поинт открыт. На табличке у лифтов ваше название, и каждый день оттуда приходит выручка.'}; }},
+ {t:'Отказаться: пусть ходят к нам',fx:function(){ var o=O(); o.done='friend'; badgeAdd('ofc_friend','Кофе «Галактики»','Дружба с бизнес-центром'); return {fx:{mod:['traffic',1.1,96,'Вся «Галактика» ходит к вам']},out:'Директор кивнул: «Уважаю». Теперь вся «Галактика» ходит к вам пешком. Говорят, это полезно для шагов.'}; }}]});
+/* ---------- старт сюжета ---------- */
+var chk=0;
+var _bt=bubblesTick; bubblesTick=function(dt){ _bt.apply(this,arguments); try{ var now=Date.now(); if(now-chk<50000) return; chk=now;
+  if(!S||!S.isOpen||HOOK.quiet||S.active!=='main') return; var o=O(); if(o.st) return;
+  if((S.level||1)<4||S.day<4) return; if(S.incidents.some(function(i){ return EV[i.id]&&EV[i.id].cat==='story'; })) return;
+  if(chance(0.25)){ o.st=S.day; pushIncident('of1'); save(); } }catch(e){} };
+/* ---------- деньги по договору каждый вечер ---------- */
+var _cd=closeDay; closeDay=function(){ var r=_cd.apply(this,arguments); try{ var o=S.ofc; if(o&&o.sub){ var v=M([0,7000,9500][Math.min(2,o.sub)]+(o.point?6000:0)); income(v,'events','Договор с «Галактикой»'); } }catch(e){} return r; };
+/* ---------- офисники в зале: бейдж на шее, во время войны их можно выставить ---------- */
+var _sg=spawnGuest; spawnGuest=function(id,reg){ var r=_sg.apply(this,arguments); try{ var o=S.ofc; if(!o||!o.on||reg||id!==S.active) return r; var rr=rt(id), g=rr.guests[rr.guests.length-1]; if(!g||g.reg||g.weird||g.office) return r;
+  if(chance(o.war?0.28:0.2)){ g.office=1; } }catch(e){} return r; };
+function GH(g){ return 62*((g.h||56)/56); }
+var _sup=sceneUpgradeProps; sceneUpgradeProps=function(st,u,items,now,r){ _sup.apply(this,arguments); try{ if(st.outdoor||!S||!S.ofc||!S.ofc.on) return; var war=S.ofc.war;
+  rt(S.active).guests.forEach(function(g){ if(!g.office||g.hidden||g.state==='leave') return; items.push({y:g.y+0.55,f:function(){ var H=GH(g), x=g.x, cy=g.y-H*0.52;
+    ctx.strokeStyle='#2f6fd0'; ctx.lineWidth=0.9; ctx.beginPath(); ctx.moveTo(x-3,cy-H*0.14); ctx.lineTo(x,cy); ctx.lineTo(x+3,cy-H*0.14); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.fillRect(x-2,cy,4,5); ctx.fillStyle='#2f6fd0'; ctx.fillRect(x-2,cy,4,1.4);
+    if(war){ var y=g.y-H-7+Math.sin(now/240)*1.1; ctx.fillStyle='#c8361f'; ctx.beginPath(); ctx.arc(x,y,5.4,0,7); ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(x-3,y); ctx.lineTo(x+3,y); ctx.stroke(); } }}); }); }catch(e){} };
+window.sceneUpgradeProps=sceneUpgradeProps;
+var KICK=['Я вообще-то просто погреться','Мы ещё вернёмся. С юристом','Вы пожалеете. В нашем чате 400 человек','Я с шестого этажа! А, нет, с седьмого','Ну и ладно, у нас автомат','Я на вас напишу. В Slack','Это дискриминация по бейджу'];
+var STAY=['Можно я тихо? Я из бухгалтерии','Я не с седьмого, честно','Я тайно за вас. Только никому'];
+cv.addEventListener('pointerdown',function(e){ try{ var o=S&&S.ofc; if(!o||!o.war||sheet||modals.length) return; var b=cv.getBoundingClientRect(); var x=OX+(e.clientX-b.left)/b.width*VW, y=(e.clientY-b.top)/b.height*H; var r=rt(S.active);
+  for(var i=r.guests.length-1;i>=0;i--){ var g=r.guests[i]; if(!g.office||g.hidden||g.state==='leave') continue; if(x>g.x-15&&x<g.x+15&&y>g.y-GH(g)-14&&y<g.y+4){ e.stopImmediatePropagation(); e.preventDefault();
+    r.queue=r.queue.filter(function(q){ return q!==g; }); r.pickup=(r.pickup||[]).filter(function(q){ return q!==g; }); if(g.seat!=null&&r.seats[g.seat]===g) r.seats[g.seat]=null;
+    g.state='leave'; g.kicked=true; g.office=0; o.kicked=(o.kicked||0)+1; meter('pathos',0.4); repAdd(-0.002); try{ bubble2(0,0,pick(KICK),2600,g); sfx('door'); }catch(err){}
+    if(o.kicked===5) toast('Выставили пятого офисника. В «Галактике» о вас уже легенды'); if(o.kicked===15){ badgeAdd('ofc_bouncer','Вышибала','Выставил 15 офисников «Галактики»'); } save(); return; } } }catch(err){} },true);
+/* разговоры офисников в зале */
+var tT=40; var _bt2=bubblesTick; bubblesTick=function(dt){ _bt2.apply(this,arguments); try{ if(!S||!S.ofc||!S.ofc.on||HOOK.quiet) return; tT-=dt; if(tT>0) return; tT=R(45,90);
+  var gs=rt(S.active).guests.filter(function(g){ return g.office&&!g.hidden&&g.state!=='leave'; }); if(!gs.length) return; var g=pick(gs);
+  var L=S.ofc.war?['Нас тут не любят, я чувствую','Я сказал на ресепшене, что иду к стоматологу','Если увидят свои, скажу, что за шпионажем', 'Тихо, бариста смотрит']:['Опять планёрка в девять','Кто-нибудь знает пароль от вайфая в «Галактике»?','Я тут больше времени провожу, чем в офисе','Начальник думает, что я в туалете','Возьму два: себе и тимлиду, чтоб не ругался','У нас в офисе кофемашина на скотче, а тут красота'];
+  if(S.ofc.war&&chance(0.3)) L=STAY; bubble2(0,0,pick(L),2600,g); }catch(e){} };
+window.OFC={start:function(){ O().st=S.day; pushIncident('of1'); }, s:function(){ return O(); }};
 })();
 
 // Resolve storage before exposing a new-cafe form. Existing saves pass through the legal gate in place.
