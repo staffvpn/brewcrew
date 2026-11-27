@@ -117,6 +117,7 @@ export async function channelTick(env, origin) {
         await mark(env, skey, ok); return; } }
     // Елизавета из «кофеРУинер»: пост и рассылка в момент запуска
     if (await lizaTick(env, origin)) return;
+    if (await officePostTick(env, origin)) return;
     if (await goalPushTick(env, origin)) return;
     if (await winterPostTick(env, origin)) return;
     if (await leraPostTick(env, origin)) return;
@@ -263,6 +264,25 @@ async function nkChannelTick(env, origin) {
 }
 // подарки первой недели и сундук возвращения: один пост (19.11.2026)
 // зимнее обновление: один пост (24.11.2026)
+async function officePostTick(env, origin) {
+  if (await posted(env, 'office_1127')) return false;
+  const ok = await post(env, origin, 'office_banner.jpg', [
+    "<b>Напротив открылась «Галактика»</b>",
+    "",
+    "Девять этажей, сорок офисов и ни одной кофейни. Только автомат на первом этаже и одна очень старая кофемашина.",
+    "",
+    "Новый сюжет начнётся сам, когда кофейня дорастёт до 4 уровня. Как он пойдёт, решаете вы. Офисники могут стать вашими лучшими гостями. А могут и нет.",
+    "",
+    "Ещё в этом обновлении:",
+    "— Собеседования стали настоящими: выбираете вопросы, даёте тестовое задание, а кандидат может удивить.",
+    "— У некоторых гостей над головой появляется знак. Тапните, с ними можно поговорить, угостить или выставить за дверь.",
+    "— Гости иногда просят собрать заказ своими руками. И иногда передумывают.",
+    "— Пока вас нет, выручка копится в сейфе, а он вмещает только 6 часов. Заходите почаще.",
+    "",
+    "Открываем кофейни."
+  ].join('\n'));
+  await mark(env, 'office_1127', ok); return true;
+}
 async function goalPushTick(env, origin) {
   if (await posted(env, 'goal_push_1126')) return false;
   const ok = await post(env, origin, 'goal_banner.jpg', [
