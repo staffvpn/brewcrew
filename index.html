@@ -13214,11 +13214,12 @@ if(typeof swipeDeck!=='undefined') window.swipeDeck=function(p,id){
     var cnt=list.filter(function(s){ return s.role===c.role&&s.today!=='sub'&&!s.isYou; }).length, full=cnt>=staffCap(c.role);
     var cw=0, cg=0, pw=shiftPay(Object.assign({},c,{contract:'white'})), pg=shiftPay(Object.assign({},c,{contract:'grey'}));
     var portraitStyle=sprStyle(staffSpr(c),74);
-    var card=el('<div class="card u8cand"><div class="u8ct"><div class="u8cp"></div><div class="u8ci"><div class="t">'+esc(c.name)+'</div><div class="u8tags"><span>'+esc(c.role)+'</span><span>ур. '+c.lvl+(c.claim?' · со слов':'')+'</span>'+(c.legendId?'<span class="lg">легенда района</span>':'')+'</div>'+(full?'<div class="d u8full">Мест на эту роль нет</div>':'')+'</div></div>'+
+    var card=el('<div class="card u8cand"><div class="u8ct"><div class="u8cp"></div><div class="u8ci"><div class="t">'+esc(c.name)+'</div><div class="u8tags"><span>'+esc(c.role)+'</span><span>ур. '+c.lvl+(c.claim&&!c.interviewed?' · со слов':'')+'</span>'+(c.legendId?'<span class="lg">легенда района</span>':'')+(c.interviewed&&!c.legendId?'<span>'+(c.quirk&&c.quirk!=='none'?esc(qN(c)):'без странностей')+'</span>':'')+'</div>'+(!c.interviewed&&!c.legendId?'<button class="btn ghost u8iv" style="margin-top:6px;padding:6px 10px;font-size:13px">Собеседование</button>':'')+(full?'<div class="d u8full">Мест на эту роль нет</div>':'')+'</div></div>'+
       '<div class="u8cb"><button class="btn u8y"'+(full||S.money<cw?' disabled':'')+'><b>Принять</b><small>'+fmt(pw)+' ₽/смена</small></button><button class="btn alt u8g"'+(full||S.money<cg?' disabled':'')+'><b>В серую</b><small>'+fmt(pg)+' ₽/смена</small></button><button class="btn alt u8n"><b>Отказать</b><small>&nbsp;</small></button></div></div>');
     var face=card.querySelector('.u8cp'),sprite=document.createElement('div');sprite.className='spr';sprite.style.cssText=portraitStyle;face.style.display='flex';face.style.alignItems='flex-end';face.style.justifyContent='center';face.appendChild(sprite);
     var hireIt=function(grey){ if(full){ toast('Мест на эту роль нет'); return; } var cost=grey?cg:cw; if(S.money<cost){ toast('Не хватает денег'); return; } doHire(c,id,grey?'grey':'white',cost); };
     card.querySelector('.u8y').onclick=function(){ hireIt(false); }; card.querySelector('.u8g').onclick=function(){ hireIt(true); };
+    var ivb=card.querySelector('.u8iv'); if(ivb) ivb.onclick=function(){ try{ sfx('tap'); }catch(e){} queueModal({kind:'interview', cid:c.id}, true); };
     card.querySelector('.u8n').onclick=function(){ try{ sfx('tap'); }catch(e){} S.cands=S.cands.filter(function(x){ return x!==c; }); save(); renderPanel(); };
     p.appendChild(card);
   });
