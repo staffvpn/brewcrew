@@ -1,7 +1,41 @@
 // Permanent shop catalogue. GAME is earned cafe cash; XTR is Telegram Stars.
 // Historical Stars amounts remain on GAME entries for already-created invoice quotes.
 export const STORE_ITEMS = {
+  "skin_chair_high_five": {
+    "title": "Кресло «Дай пять»",
+    "desc": "Кресло-ладонь из красного велюра. Гости сидят прямо на ладони.",
+    "category": "chair",
+    "skin": "high_five",
+    "currency": "GAME",
+    "stars": 0,
+    "once": 1,
+    "oldCoins": 0,
+    "gamePrice": 325000
+  },
+  "skin_decor_receipt_oracle": {
+    "title": "Автомат «Чек судьбы»",
+    "desc": "Нажми на автомат на стойке и вытяни чек с предсказанием.",
+    "category": "decor",
+    "skin": "receipt_oracle",
+    "currency": "GAME",
+    "stars": 0,
+    "once": 1,
+    "oldCoins": 0,
+    "gamePrice": 140000
+  },
+  "lux_coffee_ufo": {
+    "title": "Кофейное НЛО",
+    "desc": "Подвесная тарелка с лучом, в котором завис последний стаканчик.",
+    "category": "lux",
+    "skin": "coffee_ufo",
+    "currency": "XTR",
+    "stars": 179,
+    "once": 1,
+    "oldCoins": 0,
+    "gamePrice": 0
+  },
   "skin_wall_lux_rehearsal": {
+    "archived": true,
     "title": "Стена репетиционной",
     "desc": "Пыльная штукатурка и потёртый кирпич, как в подвале, где репетирует группа.",
     "stars": 0,
@@ -13,6 +47,7 @@ export const STORE_ITEMS = {
     "gamePrice": 95000
   },
   "skin_floor_lux_asphalt": {
+    "archived": true,
     "title": "Бетон до ремонта",
     "desc": "Пол зала из старых бетонных плит со сколами и следами краски.",
     "stars": 0,
@@ -24,6 +59,7 @@ export const STORE_ITEMS = {
     "gamePrice": 150000
   },
   "lux_riot_raccoon": {
+    "archived": true,
     "title": "Енот на разогреве",
     "desc": "Граффити с енотом, который держит стакан как микрофон.",
     "stars": 119,
@@ -35,6 +71,7 @@ export const STORE_ITEMS = {
     "gamePrice": 0
   },
   "lux_pigeon_hole": {
+    "archived": true,
     "title": "Дыра к соседям",
     "desc": "Пролом в штукатурке. Изнутри за твоим заказом наблюдает голубь.",
     "stars": 149,
@@ -46,6 +83,7 @@ export const STORE_ITEMS = {
     "gamePrice": 0
   },
   "lux_party_rug": {
+    "archived": true,
     "title": "Ковёр с вписки",
     "desc": "Вытершийся бордовый ковёр с ромбами и одной заметной заплаткой.",
     "stars": 129,
@@ -57,6 +95,7 @@ export const STORE_ITEMS = {
     "gamePrice": 0
   },
   "skin_decor_lost_tapes": {
+    "archived": true,
     "title": "Кассеты без подписей",
     "desc": "Три старые демки на настенной полке. Средняя держится на скотче.",
     "stars": 0,
@@ -79,6 +118,7 @@ export const STORE_ITEMS = {
     "gamePrice": 0
   },
   "skin_decor_bluti_fruti": {
+    "archived": true,
     "title": "Блути-фрути",
     "desc": "Наклейка на стойку с двумя стаканчиками, которые шепчутся о гостях.",
     "stars": 0,

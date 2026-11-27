@@ -10,6 +10,7 @@ export async function onRequestPost({ request, env }) {
   if (!body || typeof body !== 'object' || typeof body.item !== 'string') return json({ok:false},400);
   const item = Object.hasOwn(SHOP, body.item) ? SHOP[body.item] : null;
   if (!item) return json({ ok: false, error: 'unknown item' }, 400);
+  if (item.archived) return json({ ok: false, error: 'Предмет снят с продажи' }, 400);
   if(body.shopVersion!==2)return json({ok:false,error:'Цены магазина обновились. Перезапусти игру перед покупкой.'},409);
   if (item.weekend) {
     const ws = weekendStart(); if (!ws) return json({ ok: false, error: 'Набор выходных продаётся с пятницы 18:00 до воскресенья 23:59' });

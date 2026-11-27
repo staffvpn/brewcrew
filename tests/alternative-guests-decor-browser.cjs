@@ -5,13 +5,16 @@ const {chromium} = require('playwright');
 const {acceptLegal} = require('./legal-fixture.cjs');
 
 const wall = 'skin_wall_lux_rehearsal';
-const floor = 'skin_floor_lux_asphalt';
-const tapes = 'skin_decor_lost_tapes';
-const sticker = 'skin_decor_bluti_fruti';
+const chair = 'skin_chair_high_five';
+const oracle = 'skin_decor_receipt_oracle';
 const owl = 'lux_jump_rope_owl';
+const ufo = 'lux_coffee_ufo';
 
 async function main() {
   const {STORE_ITEMS} = await import('../functions/_store.js');
+  const {onRequestGet} = await import('../functions/api/shop.js');
+  const {GIFTABLE} = await import('../functions/_lib.js');
+  const available = new Set((await (await onRequestGet()).json()).items.map(item=>item.sku));
   const browser = await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
   try {
     const page = await browser.newPage({viewport:{width:390,height:844}});
@@ -41,7 +44,7 @@ async function main() {
         ops:[],interiors:[],skins:[],extras:[],passes:[],lux,top:[]}});
     });
     await page.goto(process.env.BC_TEST_URL||'http://127.0.0.1:8770/');
-    await page.locator('#own').fill('Подвальный клуб');
+    await page.locator('#own').fill('Чек судьбы');
     await acceptLegal(page);
     await page.locator('#quick').click();
     await page.getByRole('button',{name:'Поехали',exact:true}).click();
@@ -51,12 +54,16 @@ async function main() {
       S.isOpen=false;S.gm=600;S.hours={open:20,close:22};S.money=1000000;
     });
     const catalog=await page.evaluate(()=>BrewCrewLuxuryDecor);
-    assert.equal(catalog.length,8);
+    assert.equal(catalog.length,11);
+    assert.equal(catalog.filter(item=>item.archived).length,7);
+    assert(GIFTABLE(ufo));
+    assert(!GIFTABLE('lux_pigeon_hole'));
     for(const item of catalog){
       const product=STORE_ITEMS[item.sku];
       assert.equal(product.title,item.title);
       assert.equal(product.currency,item.currency);
       assert.equal(product.category,item.category);
+      assert.equal(available.has(item.sku),!item.archived);
       assert.equal(product[item.currency==='GAME'?'gamePrice':'stars'],item.price);
     }
 
@@ -71,32 +78,52 @@ async function main() {
       await page.waitForFunction(item=>S.c.gameOwned[item],sku);
       await modal.getByRole('heading',{name:STORE_ITEMS[sku].title,exact:true}).waitFor({state:'hidden'});
     }
-    await buyForRubles('wall',wall);
-    await buyForRubles('floor',floor);
-    await buyForRubles('atmosphere',tapes);
-    await buyForRubles('atmosphere',sticker);
-    assert.equal(await page.evaluate(()=>S.money),625000);
+    await openTab('wall');
+    assert.equal(await card(wall).count(),0);
+    await buyForRubles('chair',chair);
+    await buyForRubles('atmosphere',oracle);
+    assert.equal(await page.evaluate(()=>S.money),535000);
     assert.deepEqual(await page.evaluate(()=>{
-      const k=skinS(); return [k.wall,k.floor,!!k.decor.lost_tapes,!!k.decor.bluti_fruti];
-    }),['lux_rehearsal','lux_asphalt',true,true]);
+      const k=skinS();return [k.chair,!!k.decor.receipt_oracle];
+    }),['high_five',true]);
+
+    await openTab('atmosphere');
+    await card(oracle).getByRole('button',{name:'Вытянуть чек'}).click();
+    const receipt=modal.locator('.bc-oracle-receipt');
+    const first=await receipt.innerText();
+    assert(first.length>20);
+    await page.waitForFunction(()=>performance.now()-MODAL_AT>=450);
+    await modal.getByRole('button',{name:'Забрать чек'}).click();
+    await receipt.waitFor({state:'hidden'});
+    await page.evaluate(()=>openSheet(null));
+    const tap=await page.evaluate(()=>{
+      const box=document.getElementById('cv').getBoundingClientRect();
+      return [box.left+(84-OX)*box.width/VW,box.top+(BAR_TOP-8)*box.height/H];
+    });
+    await page.mouse.click(...tap);
+    assert.notEqual(await receipt.innerText(),first);
+    await page.waitForFunction(()=>performance.now()-MODAL_AT>=450);
+    await modal.getByRole('button',{name:'Забрать чек'}).click();
+    await receipt.waitFor({state:'hidden'});
 
     await openTab('lux');
-    assert.equal(await page.locator('.bc-lux-decor-grid .bc-lux-decor-card').count(),4);
-    assert.equal(await card(wall).count(),0);
+    assert.equal(await page.locator('.bc-lux-decor-grid .bc-lux-decor-card').count(),2);
+    assert.equal(await card(owl).count(),1);
+    assert.equal(await card('lux_pigeon_hole').count(),0);
     assert(await card('lux_x_cat').count()>0);
-    await card(owl).getByRole('button',{name:'Купить',exact:true}).click();
+    await card(ufo).getByRole('button',{name:'Купить',exact:true}).click();
     await page.waitForFunction(()=>performance.now()-MODAL_AT>=450);
-    await modal.getByRole('button',{name:/Купить за 149/}).click();
-    await page.waitForFunction(()=>S.skinOwned['lux:jump_rope_owl'] && skinS().lux.jump_rope_owl);
-    assert.deepEqual(invoices,[owl]);
+    await modal.getByRole('button',{name:/Купить за 179/}).click();
+    await page.waitForFunction(()=>S.skinOwned['lux:coffee_ufo'] && skinS().lux.coffee_ufo);
+    assert.deepEqual(invoices,[ufo]);
     await page.evaluate(()=>{while(modals.length)closeModal();renderSheet();});
-    await card(owl).getByRole('button',{name:'Убрать',exact:true}).click();
-    assert.equal(await page.evaluate(()=>skinS().lux.jump_rope_owl),0);
-    await card(owl).getByRole('button',{name:'Применить',exact:true}).click();
+    await card(ufo).getByRole('button',{name:'Убрать',exact:true}).click();
+    assert.equal(await page.evaluate(()=>skinS().lux.coffee_ufo),0);
+    await card(ufo).getByRole('button',{name:'Применить',exact:true}).click();
     await page.evaluate(()=>openSheet(null));
-    for(const asset of ['rehearsal-wall.png','asphalt-floor.png','lost-tapes.png','bluti-fruti.png','jump-rope-owl.png']){
-      if(!assets.has(asset)) await page.waitForResponse(response=>response.ok() && response.url().endsWith('/'+asset));
-    }
+    await page.waitForFunction(()=>performance.getEntriesByType('resource')
+      .some(entry=>entry.name.endsWith('/img/interiors/decor/coffee-ufo.png')));
+    assert(assets.has('coffee-ufo.png'));
 
     const review=await page.evaluate(()=>{
       const rng=Math.random;
@@ -110,12 +137,21 @@ async function main() {
     });
     assert(catalog.some(item=>item.review===review.text));
     assert(review.stars>=3);
-    await page.evaluate(()=>{setInteriorStyle('int_lux_violet');save();});
+    await page.evaluate(()=>{
+      S.skinOwned['wall:lux_rehearsal']=1;
+      equip('wall','lux_rehearsal');
+      setInteriorStyle('int_lux_violet');
+      save();
+    });
     assert.deepEqual(await page.evaluate(()=>{
       const k=skinS();
-      return [k.wall,k.floor,!!k.decor.lost_tapes,!!k.decor.bluti_fruti,!!k.lux.jump_rope_owl,
-        owns('wall','lux_rehearsal'),owns('floor','lux_asphalt'),owns('lux','jump_rope_owl')];
-    }),['cream','oak',false,false,false,true,true,true]);
+      return [k.wall,k.chair,!!k.decor.receipt_oracle,!!k.lux.coffee_ufo,
+        owns('wall','lux_rehearsal'),owns('chair','high_five'),owns('lux','coffee_ufo')];
+    }),['cream','walnut',false,false,true,true,true]);
+    await openTab('wall');
+    assert.equal(await page.getByRole('heading',{name:'Куплено ранее'}).count(),1);
+    await card(wall).getByRole('button',{name:'Применить',exact:true}).click();
+    assert.equal(await page.evaluate(()=>skinS().wall),'lux_rehearsal');
 
     const html=readFileSync(path.join(__dirname,'..','index.html'),'utf8');
     const originalClips=JSON.parse(html.match(/^var CM=(\{.*?\});/m)[1]);
@@ -161,7 +197,7 @@ async function main() {
       [['f',true,0,false,true],['m',true,0,false,true],['f',true,0,false,true]]);
     assert.deepEqual(guestArt.observed,guestArt.ids.map(id=>[id,false]));
     assert.deepEqual(errors,[]);
-    console.log('PASS: eight decorations and both payment paths; application, removal, style reset and guest reviews; three adult guest appearances with 35 poses and 156 frames each.');
+    console.log('PASS: new decor and both payment paths; counter tap and receipt; discontinued items remain re-equippable for owners; all three guests retain their 35 poses.');
   } finally {
     await browser.close();
   }

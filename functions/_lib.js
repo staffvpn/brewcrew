@@ -104,7 +104,7 @@ export function weekendStart(ts = Date.now()) {
   const back = dow === 5 ? 0 : dow === 6 ? 1 : 2;
   return Date.UTC(m.getUTCFullYear(), m.getUTCMonth(), m.getUTCDate() - back, 18) - 3 * 3600000;
 }
-export const GIFTABLE = id => id !== 'weekend' && !!SHOP[id] && SHOP[id].currency!=='GAME' && !SHOP[id].sub && id !== 'rename' && id !== 'flagship' && id !== 'starter';
+export const GIFTABLE = id => id !== 'weekend' && !!SHOP[id] && !SHOP[id].archived && SHOP[id].currency!=='GAME' && !SHOP[id].sub && id !== 'rename' && id !== 'flagship' && id !== 'starter';
 export async function giftCheck(env, from, to, item) {
   if (!GIFTABLE(item)) return { ok: false, error: 'Это нельзя подарить' };
   if (!to || to === from) return { ok: false, error: 'Выбери другую кофейню' };
