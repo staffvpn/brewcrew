@@ -141,5 +141,77 @@
       "usd": 0.006755982690387302
     },
     "processing": "crop transparent margins"
+  },
+  "hand-seat.png": {
+    "endpoint": "edit-image-pixen",
+    "prompt": "Turn this exact bright red velvet open-hand armchair strongly to the right, approximately 65 degrees, a clear side three-quarter elevation. Backrest fingers are on the left, palm and cushion face right and stay visible. Keep the distinctive padded five fingers, coral velvet construction and short walnut pedestal. Centered and completely isolated in transparency, same pixel size and style. No person, ground, signage, text or shadow.",
+    "seed": 79821,
+    "request": {
+      "view": "side",
+      "size": [
+        96,
+        96
+      ],
+      "transparent": true
+    },
+    "job": "e6f0715f-cb37-426e-b3ad-e4a6e6f2fb6d",
+    "usage": {
+      "seconds": 12.458336591720581
+    },
+    "reference": "hand-seat-draft.png",
+    "referencePixelLab": {
+      "endpoint": "create-image-pixen",
+      "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. Exactly one bright warm rust-red velvet armchair shaped like a single upright open human hand, facing screen right in strict side three-quarter game view. Five rounded padded fingers form an unmistakable backrest rising behind the seat. The palm is the broad level seat at the bottom of the fingers, a small thumb curling beside the seat. A short slim dark walnut pedestal on the floor. Quirky designer furniture, warm red coral with peach highlights, no anatomy details or gore. Orthographic pixel art furniture sprite. Transparent outside, no wall, person, cast shadow, extra limbs, text or room.",
+      "seed": 79840,
+      "request": {
+        "view": "side",
+        "size": [
+          96,
+          96
+        ],
+        "transparent": true
+      },
+      "usage": {
+        "type": "usd",
+        "usd": 0.007418277581532797
+      }
+    },
+    "processing": "crop transparent margins, reserve foot anchor for both table directions"
+  },
+  "coffee-ufo.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. One isolated small handmade hanging cafe kinetic ornament. Compact flying saucer, dark blueberry enamel and mint with a small lilac glass dome, almost head-on with symmetric oval silhouette. A very short translucent mint cone of light directly below levitates ONE distinctly readable small cream paper coffee cup with rusty orange sleeve, entirely separate from saucer. A handful of restrained pale glints inside the beam. Mid-century toy design with deliberate pixel clusters. Transparent outside silhouette and no large box behind the beam. No letters, aliens, extra cups, floor, walls, or room.",
+    "seed": 79878,
+    "request": {
+      "view": "side",
+      "size": [
+        116,
+        96
+      ],
+      "transparent": true
+    },
+    "usage": {
+      "type": "usd",
+      "usd": 0.007263523313734267
+    },
+    "processing": "crop transparent margins; make the existing light beam translucent"
+  },
+  "receipt-oracle.png": {
+    "endpoint": "create-image-pixen",
+    "prompt": "Crisp 2D pixel art for a cozy cafe simulator, polished small deliberate pixel clusters, warm brown dark outlines, muted urban plum, brick red and rust, occasional sage or mint detail. Front elevation of one little arcade fortune machine for a cafe COUNTER. A squat tabletop device, warm lilac metal casing with cream and brass trim. Large amber circular display with a crescent moon icon, one deep red button, a horizontal slot with a short white paper receipt neatly curling out below it. Visual hierarchy is moon, button, receipt. Original retro electronics, simple clean game pixel-art clusters, symmetric orthographic front view exactly at dial level. No letters, text, perspective, counter, person, cables, background or drop shadow.",
+    "seed": 79859,
+    "request": {
+      "view": "side",
+      "size": [
+        104,
+        80
+      ],
+      "transparent": true
+    },
+    "usage": {
+      "type": "usd",
+      "usd": 0.009820114956961737
+    },
+    "processing": "crop transparent margins"
   }
 }

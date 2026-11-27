@@ -178,3 +178,6 @@ sku,category,item,currency,price,previous_game_rubles,previous_stars,cash_payout
 "skin_decor_lost_tapes","decor","Кассеты без подписей","GAME","55000","","",""
 "lux_jump_rope_owl","lux","Сова на скакалке","XTR","149","","",""
 "skin_decor_bluti_fruti","decor","Блути-фрути","GAME","75000","","",""
+"skin_chair_high_five","chair","Кресло «Дай пять»","GAME","325000","","",""
+"skin_decor_receipt_oracle","decor","Автомат «Чек судьбы»","GAME","140000","","",""
+"lux_coffee_ufo","lux","Кофейное НЛО","XTR","179","","",""

@@ -6139,6 +6139,7 @@ cv.addEventListener('pointerdown', e => {
   if(TIPJAR && Math.abs(x-TIPJAR.x)<9 && Math.abs(y-TIPJAR.y)<10){ sfx('tap'); queueModal({kind:'tips'}, true); return; }
   for(const v of EV_SPOTS){ if(x>v.x-16 && x<v.x+16 && y>v.y-52 && y<v.y+4){ sfx('tap'); queueModal({kind:'inc', uid:v.uid}, true); return; } }
   if(bcTapServiceGuest(id,r,x,y))return;
+  if(id==='main' && window.bcTapReceiptOracle?.(x,y)) return;
   let best = null;
   for(const s of workingStaff(id)){ const p = r.staff[s.id]; if(!p || p.x>W+4) continue; const m = META[staffSpr(s)]; const w = m[3]*STAFF_H/m[4]; if(x>p.x-w/2-4 && x<p.x+w/2+4 && y>p.y-62 && y<p.y+4){ if(!best || p.y > best.p.y) best = {s,p}; } }
   if(best){ sfx('tap'); if(best.s.isYou){ toast('Это ты. Тапай по гостю у кассы, по кофемашине и по гостям на выдаче — так работа идёт быстрее'); return; } queueModal({kind:'staff', sid:best.s.id}, true); return; }
@@ -12312,7 +12313,7 @@ window.sceneWall=function(st,id,u,now){
     rect(0,0,W,BACK_Y,E.wall); themeWall(E,now);
   }
   street(now); themeStreet(E,now);
-  wallDecor(now); themeWallProps(E,now); bcDrawLuxuryDecorProps();
+  wallDecor(now); themeWallProps(E,now); bcDrawLuxuryDecorProps(now);
   backBar(u,now); themeBack(E,now);
   ctx.save(); ctx.translate(0,7); if(typeof sceneSign==='function') sceneSign(st,u,now); ctx.restore();
 };
@@ -14672,6 +14673,7 @@ apiPost=function(path,data){return bcStoreApi(path,data).then(function(r){if(r&&
 var bcExecuteStars=buyStars;
 function bcOpenCheckout(sku){
  var p=BC_STORE[sku];if(!p){toast('Цена обновляется. Открой магазин ещё раз');return;}
+ if(p.archived){toast('Предмет снят с продажи');return;}
  queueModal({kind:'bc_checkout',sku:sku},true);
 }
 buyStars=function(sku){bcOpenCheckout(sku);};
@@ -15387,10 +15389,10 @@ window.setInteriorStyle = function(id,roomId='main'){
 const bcLuxury = BrewCrewLuxuryInteriors;
 const bcLuxuryDecor = BrewCrewLuxuryDecor;
 const bcLuxuryDecorBySku = Object.fromEntries(bcLuxuryDecor.map(item=>[item.sku,item]));
-for(const {sku,title,desc,category,skin,currency,price} of bcLuxuryDecor){
-  BC_STORE[sku]={title,desc,category,skin,once:1,oldCoins:0,currency,
+for(const {sku,title,desc,category,skin,currency,price,archived} of bcLuxuryDecor){
+  BC_STORE[sku]={title,desc,category,skin,once:1,oldCoins:0,currency,archived,
     stars:currency==='XTR'?price:0,gamePrice:currency==='GAME'?price:0};
-  if(category==='wall'||category==='floor') SKIN_DEF[category].push([skin,title,price]);
+  if(category==='chair' && !archived) SKIN_DEF.chair.push([skin,title,price]);
 }
 const bcBaseLuxuryDecorPreview=preview;
 preview=function(category,skin){
@@ -15444,13 +15446,50 @@ const bcLuxuryWallDecor=[
   ['lux_pigeon_hole',270,77,42,60],
   ['skin_decor_lost_tapes',41,28,21,43]
 ];
-function bcDrawLuxuryDecorProps(){
+function bcDrawLuxuryDecorProps(now){
+  if(bcLuxuryDecorActive(bcLuxuryDecorBySku.lux_coffee_ufo)){
+    const y=59+Math.round(Math.sin(now*2));
+    bcLuxurySprite('decor/coffee-ufo',269,y,49,59);
+  }
   for(const [sku,x,bottom,height,width] of bcLuxuryWallDecor){
     const item=bcLuxuryDecorBySku[sku];
     if(bcLuxuryDecorActive(item)) bcLuxurySprite('decor/'+item.asset,x,bottom,height,width);
   }
 }
+const bcReceiptOracle={x:84,width:30,height:30};
+const bcReceiptFortunes=[
+  'Будущее туманно. Возможно, это пар от молока.',
+  'Сова на скакалке советует отложить важные решения до второго глотка.',
+  'Ты найдёшь то, что ищешь. Если это розетка, спроси у бариста.',
+  'За соседним столиком сидит человек, который тоже делает вид, что работает.',
+  'Ничего не планируй на ближайшие пять минут. У тебя кофе.',
+  'Твоя сильная сторона — сказать «мне как обычно», зайдя сюда впервые.',
+  'Твой следующий шаг — встать за салфеткой. Капля уже на рукаве.',
+  'Молоко вспенилось. Теперь можно выдохнуть.'
+];
+let bcLastReceiptFortune=-1;
+function bcOpenReceiptOracle(){
+  if(!bcLuxuryDecorActive(bcLuxuryDecorBySku.skin_decor_receipt_oracle)) return false;
+  const fortunes=bcReceiptFortunes.filter((_,i)=>i!==bcLastReceiptFortune);
+  const text=pick(fortunes);
+  bcLastReceiptFortune=bcReceiptFortunes.indexOf(text);
+  queueModal({kind:'receipt_oracle',text},true);
+  return true;
+}
+MODAL15.receipt_oracle=function(box,modal,btn){
+  box.append(el('<h2>Чек судьбы</h2>'),
+    el('<p class="bc-oracle-receipt">'+esc(modal.text)+'</p>'),btn('Забрать чек',closeModal));
+};
+window.bcTapReceiptOracle=function(x,y){
+  const bottom=BT();
+  return Math.abs(x-bcReceiptOracle.x)<=bcReceiptOracle.width/2 && y>=bottom-bcReceiptOracle.height &&
+    y<=bottom && bcOpenReceiptOracle();
+};
 function bcDrawLuxuryCounterDecor(){
+  if(bcLuxuryDecorActive(bcLuxuryDecorBySku.skin_decor_receipt_oracle)){
+    const {x,width,height}=bcReceiptOracle;
+    bcLuxurySprite('decor/receipt-oracle',x,BT(),height,width);
+  }
   if(bcLuxuryDecorActive(bcLuxuryDecorBySku.lux_jump_rope_owl)) bcLuxurySprite('decor/jump-rope-owl',111,BT(),27,24);
   if(bcLuxuryDecorActive(bcLuxuryDecorBySku.skin_decor_bluti_fruti)) bcLuxurySprite('decor/bluti-fruti',178,BAR_BOT-7,29,46);
 }
@@ -15566,6 +15605,13 @@ sceneTable = function(st,x,y,L,i){
 };
 const bcBaseLuxuryChair = drawSide;
 drawSide = function(x,y,d){
+  if(window.CHAIR_SKIN==='high_five' && bcLuxuryDecorImage('skin_chair_high_five')){
+    ctx.save();ctx.translate(x,y+8);
+    if(d===7) ctx.scale(-1,1);
+    bcLuxurySprite('decor/hand-seat',0,0,42,33);
+    ctx.restore();
+    return;
+  }
   const id = themeKey();
   if(!bcLuxury.styles[id] || (window.CHAIR_SKIN && window.CHAIR_SKIN!=='walnut')){
     return bcBaseLuxuryChair(x,y,d);
@@ -15715,7 +15761,17 @@ function bcLuxuryDecorCard(item){
   const actions=card.querySelector('.u6act');
   if(!owned && !lab) actions.append(el('<div class="bc-star-price">'+bcPriceHTML(BC_STORE[sku])+'</div>'));
   actions.append(button);
+  if(on && sku==='skin_decor_receipt_oracle'){
+    const pull=el('<button type="button" class="u6alt">Вытянуть чек</button>');
+    pull.onclick=bcOpenReceiptOracle;
+    actions.append(pull);
+  }
   return card;
+}
+function bcLuxuryDecorSection(items,title){
+  const grid=el('<div class="u6grid bc-lux-decor-grid" aria-label="'+esc(title)+'"></div>');
+  for(const item of items) grid.append(bcLuxuryDecorCard(item));
+  return [el('<h3 class="h">'+esc(title)+'</h3>'),grid];
 }
 const bcBaseLuxuryShop = shopPanel;
 shopPanel = function(p){
@@ -15724,11 +15780,13 @@ shopPanel = function(p){
   if(!baseGrid) return;
   if(window.__shopCat==='style' && (bcLuxuryLabEnabled() || bcLuxuryOwned(bcLuxury.grand))){
     baseGrid.prepend(bcLuxuryCard(bcLuxury.grand));
-  }else if(['lux','atmosphere'].includes(window.__shopCat)){
-    const category=window.__shopCat==='lux'?'lux':'decor';
-    const grid=el('<div class="u6grid bc-lux-decor-grid" aria-label="Декор коллекции «Подвальный клуб»"></div>');
-    for(const item of bcLuxuryDecor.filter(item=>item.category===category)) grid.append(bcLuxuryDecorCard(item));
-    baseGrid.before(el('<h3 class="h">Подвальный клуб</h3>'),grid);
+  }else if(['lux','atmosphere','wall','floor'].includes(window.__shopCat)){
+    const category=window.__shopCat==='atmosphere'?'decor':window.__shopCat;
+    const items=bcLuxuryDecor.filter(item=>item.category===category);
+    const newDecor=items.filter(item=>!item.archived);
+    const ownedArchive=items.filter(item=>item.archived && owns(item.category,item.skin));
+    if(newDecor.length) baseGrid.before(...bcLuxuryDecorSection(newDecor,'Необычный декор'));
+    if(ownedArchive.length) p.append(...bcLuxuryDecorSection(ownedArchive,'Куплено ранее'));
   }else if(window.__shopCat==='lux-interiors'){
     const grid = el('<div class="u6grid u8st bc-luxury-grid" aria-label="Люксовые интерьеры"></div>');
     for(const id of Object.keys(bcLuxury.styles)) if(id!==bcLuxury.grand) grid.append(bcLuxuryCard(id));
@@ -15764,6 +15822,7 @@ html body .bc-luxury-card[data-bc-sku="int_winter_grand"] .bc-luxury-preview{asp
 html body .bc-luxury-card .bc-luxury-preview img{width:100%;height:100%;max-height:none;object-fit:cover;object-position:center 35%;display:block}
 html body .bc-luxury-card .u8ds{margin:4px 0 8px}
 html body .bc-lux-decor-card .u6pv{height:82px;background:#4e4249}
+html body .bc-oracle-receipt{padding:14px 16px;background:#f8e9cc;color:#392c28;border-block:2px dashed #c6ad8d;font-family:'PT Mono',monospace;line-height:1.5}
 html body .bc-lux-decor-card .u6pv img, html body .u6pv img.bc-lux-decor-art{width:100%;height:100%;max-height:none;object-fit:contain;image-rendering:pixelated}
 html body .bc-luxury-dialog{box-sizing:border-box;width:min(92vw,520px);max-height:90vh;border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--card);color:var(--ink)}
 html body .bc-luxury-dialog::backdrop{background:#1b130dcc}

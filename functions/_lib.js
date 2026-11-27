@@ -96,7 +96,7 @@ for (const [sku,stars,cashAmount] of [['cash_s',149,3000000],['cash_m',449,10000
   Object.assign(SHOP[sku],{stars,cashAmount,cashVersion:2});
   SHOP[sku].desc=sku==='starter'?'3 000 000 ₽ в кассу, интерьер «Столовая №1» и двое суток гостей +30%. Один раз.':cashAmount.toLocaleString('ru-RU')+' ₽ в кассу. Фиксированная сумма, не зависит от выручки. Без налога; гостей +20% на сутки.';
 }
-export const GIFTABLE = id => !!SHOP[id] && SHOP[id].currency!=='GAME' && !SHOP[id].sub && id !== 'rename' && id !== 'flagship' && id !== 'starter';
+export const GIFTABLE = id => !!SHOP[id] && !SHOP[id].archived && SHOP[id].currency!=='GAME' && !SHOP[id].sub && id !== 'rename' && id !== 'flagship' && id !== 'starter';
 export async function giftCheck(env, from, to, item) {
   if (!GIFTABLE(item)) return { ok: false, error: 'Это нельзя подарить' };
   if (!to || to === from) return { ok: false, error: 'Выбери другую кофейню' };
