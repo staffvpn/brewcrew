@@ -17002,7 +17002,7 @@ MODAL15.rvreply=function(box,m,btn){ var rv=(S.reviews||[]).find(function(x){ re
     save(); closeModal(); toast('Ответ опубликован'); try{ sfx('tap'); }catch(e){} renderSheet(); }));
   box.append(btn('Отмена',closeModal,'ghost'));
   setTimeout(function(){ try{ ta.focus(); }catch(e){} },150); };
-var _rt=reviewTick; reviewTick=function(){ if(!chance(0.33)) return; return _rt.apply(this,arguments); };
+var _rt=reviewTick; reviewTick=function(){ var need=false; try{ need=(S.tasks||[]).some(function(t){ return t.kind==='reviews'&&!t.done; })&&!(S.reviews||[]).some(function(r){ return !r.reply; }); }catch(e){} if(need){ var n0=(S.reviews||[]).length; for(var i=0;i<3&&(S.reviews||[]).length===n0;i++) _rt.apply(this,arguments); return; } if(!chance(0.33)) return; return _rt.apply(this,arguments); };
 var _nt=newTasks; newTasks=function(){ var r=_nt.apply(this,arguments); try{ (S.tasks||[]).forEach(function(t){ if(t.kind==='reviews'&&!t.done&&!t.prog){ t.goal=1; t.label='Ответить на отзыв'; } }); }catch(e){} return r; };
 try{ (S&&S.tasks||[]).forEach(function(t){ if(t.kind==='reviews'&&!t.done&&t.goal>1&&!t.prog){ t.goal=1; t.label='Ответить на отзыв'; } }); }catch(e){}
 try{ var css=document.createElement('style'); css.textContent='.rv-ta{width:100%;box-sizing:border-box;border:1.5px solid #e2cfae;border-radius:10px;padding:9px 10px;font:500 15px/1.35 "Golos Text",sans-serif;background:#fffaf0;color:#2a1a10;resize:none;margin:6px 0 2px}.rv-cnt{font-size:11px;opacity:.6;text-align:right;margin-bottom:8px}'; document.head.appendChild(css); }catch(e){}
@@ -17108,9 +17108,9 @@ var _bt=bubblesTick; bubblesTick=function(dt){ _bt.apply(this,arguments); try{ i
   if(PHONE&&Date.now()-PHONE.t>22000){ PHONE=null; }
   brT-=dt; if(brT<=0){ brT=R(360,600); if(!BIRD&&S.active==='main'){ var tbs=(function(){try{return bcPlacesTables();}catch(e){return [];}})().filter(function(t){ return t&&t.x!=null; }); var tb=tbs.length?pick(tbs):null; if(tb) BIRD={x:tb.x+(chance(0.5)?-13:13), y:tb.y-13, t:Date.now()}; } }
   if(BIRD&&Date.now()-BIRD.t>25000){ BIRD=null; spend(M(150),'other','Птица утащила выпечку'); chat('Мойщица', pick(STEAL)); }
-  mkT-=dt; if(mkT<=0){ mkT=mkTry()?R(330,520):30; }
+  mkT-=dt; if(mkT<=0){ mkT=mkTry()?R(170,280):25; }
 }catch(e){} };
-mkT=R(150,240);
+mkT=R(70,130);
 
 /* ---------- закреплённые значки от администрации ---------- */
 function pinSlot(id){ try{ var sl=bcBadgeSlots().filter(function(x){ return x&&x!==id; }); S.badgeSlots=[id].concat(sl).slice(0,3); while(S.badgeSlots.length<3) S.badgeSlots.push(null); }catch(e){} S.badgeOn=id; }
