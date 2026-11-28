@@ -17301,7 +17301,7 @@ def('of3',{cat:'story',t:'Офисники недовольны',x:'«Галак
  {t:'Объявить «Галактике» войну',fx:function(){ beat(1,'ow1'); return {fx:{pathos:2},out:'Бариста повесил на дверь табличку «Офисникам с седьмого этажа обслуживание по записи». Записи нет.'}; }}]});
 /* ---------- война ---------- */
 def('ow1',{cat:'story',t:'Война с «Галактикой»',x:'Седьмой этаж повесил в лифте листовку: «Не ходите в кофейню напротив». Команда в ярости. Бариста предлагает внести офисников в чёрный список.',o:[
- {t:'Чёрный список: офисников выгонять',fx:function(){ var o=O(); o.war=1; o.side='war'; beat(2,'ow2'); return {fx:{pathos:2,mod:['traffic',0.95,72,'Война с «Галактикой»']},out:'Теперь у офисников с бейджами «Галактики» над головой красный знак. Тапни, чтобы выставить.'}; }},
+ {t:'Чёрный список: офисников выгонять',fx:function(){ var o=O(); o.war=1; o.side='war'; beat(2,'ow2'); return {fx:{pathos:2,mod:['traffic',0.95,72,'Война с «Галактикой»']},out:'Теперь над офисниками «Галактики» в зале красный знак. Тапни, чтобы выставить.'}; }},
  {t:'Повесить свою листовку: «Скидка 20% всем, кроме седьмого этажа»',fx:function(){ O().side='war'; beat(2,'ow2'); return {fx:{chaos:1,mod:['traffic',1.06,48,'Листовка против «Галактики»']},out:'Шестой и восьмой этажи пришли за скидкой и смеялись над седьмым. Седьмой не смеялся.'}; }},
  {t:'Пойти мириться с тортом',fx:function(){ if(chance(0.5)){ O().side='good'; beat(2,'og1'); return {fx:{m:-M(4000),soul:2},out:'Торт съели, листовку сняли. Начальник седьмого этажа сказал: «Ладно, посмотрим».'}; } beat(2,'ow2'); return {fx:{m:-M(4000)},out:'Торт съели. Листовку не сняли. Рядом повесили вторую: «Спасибо за торт, всё равно не пойдём».'}; }}]});
 def('ow2',{cat:'story',t:'Ответный удар',x:'Из «Галактики» пришёл заказ на доставку: сорок капучино на седьмой этаж. Курьер приехал, а офис закрыт, на двери записка: «Мы на обеде. Навсегда».',o:[
@@ -17342,9 +17342,8 @@ var _sg=spawnGuest; spawnGuest=function(id,reg){ var r=_sg.apply(this,arguments)
   if(chance(o.war?0.28:0.2)){ g.office=1; } }catch(e){} return r; };
 function GH(g){ return 62*((g.h||56)/56); }
 var _sup=sceneUpgradeProps; sceneUpgradeProps=function(st,u,items,now,r){ _sup.apply(this,arguments); try{ if(st.outdoor||!S||!S.ofc||!S.ofc.on) return; var war=S.ofc.war;
-  rt(S.active).guests.forEach(function(g){ if(!g.office||g.hidden||g.state==='leave') return; items.push({y:g.y+0.55,f:function(){ var H=GH(g), x=g.x, cy=g.y-H*0.52;
-    ctx.strokeStyle='#2f6fd0'; ctx.lineWidth=0.9; ctx.beginPath(); ctx.moveTo(x-3,cy-H*0.14); ctx.lineTo(x,cy); ctx.lineTo(x+3,cy-H*0.14); ctx.stroke();
-    ctx.fillStyle='#fff'; ctx.fillRect(x-2,cy,4,5); ctx.fillStyle='#2f6fd0'; ctx.fillRect(x-2,cy,4,1.4);
+  rt(S.active).guests.forEach(function(g){ if(!g.office||g.hidden||g.state==='leave') return; if(!war) return; items.push({y:g.y+0.55,f:function(){ var H=GH(g), x=g.x;
+    /* 28.11: бейдж на шнурке убран — криво сидел на сидящих и повёрнутых спиной */
     if(war){ var y=g.y-H-7+Math.sin(now/240)*1.1; ctx.fillStyle='#c8361f'; ctx.beginPath(); ctx.arc(x,y,5.4,0,7); ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(x-3,y); ctx.lineTo(x+3,y); ctx.stroke(); } }}); }); }catch(e){} };
 window.sceneUpgradeProps=sceneUpgradeProps;
 var KICK=['Я вообще-то просто погреться','Мы ещё вернёмся. С юристом','Вы пожалеете. В нашем чате 400 человек','Я с шестого этажа! А, нет, с седьмого','Ну и ладно, у нас автомат','Я на вас напишу. В Slack','Это дискриминация по бейджу'];
