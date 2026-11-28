@@ -185,13 +185,20 @@ async function goalTick(env, origin) {
 }
 
 // решение канала: раз в неделю опрос, победитель случается у всех на следующий день
-export const WORLD_OPTS = { goose: 'Гусь в каждой кофейне', water: 'Отключат горячую воду', blogger: 'Блогер-миллионник идёт по району', heat: 'Аномальная жара', inspect: 'Санэпид обходит всех', strike: 'Курьеры бастуют', pens: 'День пенсионера: кофе по 50 рублей' };
+export const WORLD_OPTS = { goose: 'Гусь в каждой кофейне', water: 'Отключат горячую воду', blogger: 'Блогер-миллионник идёт по району', heat: 'Аномальная жара', inspect: 'Санэпид обходит всех', strike: 'Курьеры бастуют', pens: 'День пенсионера: кофе по 50 рублей', frog: 'Жабья среда (неважно, какой сегодня день)', rain: 'Ливень на весь день', blackout: 'Отключат свет на час', trend: 'Тренд в тиктоке: голубой латте', exes: 'День бывших', mayor: 'Глава района пьёт кофе инкогнито', crypto: 'Биткоин упал', doom: 'Конец света в 18:00' };
 async function pollTick(env, origin) {
-  const wk = tourWeek(); const pk = 'poll_' + wk; const p = await posted(env, pk);
+  const wk = tourWeek(); const pk = 'poll_' + wk; let p = await posted(env, pk);
+  // 28.11: опрос этой недели вышел со старыми вариантами — заменяем один раз на новый, с жабьей средой
+  if (p && wk === '2026-11-23' && p.ok && p.msg_id) { let ids0 = []; try { ids0 = JSON.parse(p.info) || []; } catch {}
+    if (!ids0.includes('frog') && !(await posted(env, 'world_' + wk))) { try { await tgApi(env, 'deleteMessage', { chat_id: env.CHANNEL_ID, message_id: p.msg_id }); } catch {} await env.DB.prepare('DELETE FROM posts WHERE key = ?1').bind(pk).run(); p = null; } }
   const d = new Date(Date.now() + 3 * 3600000); const dow = d.getUTCDay(), hr = d.getUTCHours();
   if (!p) {
     if (dow !== 6 || hr < 12) return false; // суббота, после полудня по Москве
-    const ids = Object.keys(WORLD_OPTS).sort(() => Math.random() - 0.5).slice(0, 4);
+    // не повторяем варианты прошлого опроса; жабья среда в опросе 28.11 обязательно
+    let prev = []; try { const pp = await env.DB.prepare("SELECT info FROM posts WHERE key LIKE 'poll_%' AND key != ?1 ORDER BY at DESC LIMIT 1").bind(pk).first(); prev = pp && pp.info ? JSON.parse(pp.info) : []; } catch {}
+    const force = wk === '2026-11-23' ? ['frog'] : [];
+    let pool = Object.keys(WORLD_OPTS).filter(k => !prev.includes(k) && !force.includes(k)); if (pool.length < 4 - force.length) pool = Object.keys(WORLD_OPTS).filter(k => !force.includes(k));
+    const ids = force.concat(pool.sort(() => Math.random() - 0.5).slice(0, 4 - force.length)).sort(() => Math.random() - 0.5);
     const r = await tgApi(env, 'sendPoll', { chat_id: env.CHANNEL_ID, question: 'Что завтра случится во всех кофейнях игры? Победитель произойдёт у каждого', options: ids.map(id => ({ text: WORLD_OPTS[id] })), is_anonymous: true });
     await env.DB.prepare('INSERT OR REPLACE INTO posts (key, at, ok, info, msg_id, caption) VALUES (?1, ?2, ?3, ?4, ?5, ?6)').bind(pk, Date.now(), r && r.ok ? 1 : 0, JSON.stringify(ids), r && r.ok ? r.result.message_id : null, 'Опрос: что случится у всех').run();
     return true;
